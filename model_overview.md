@@ -15,7 +15,7 @@ For example, model input variables used to denote agricutlural activity emission
 
 As a tangible example, the CO$_2$ emission factor for banana production, which captures crop burning, decomposition, and other factors, would be entered as `banana_ef_kg_co2_ha` since, in this case, `$CAT-CROP$ = banana`, `$EMISSION-GAS$ = co2`, `$UNIT-AREA$ = ha`, `$UNIT-MASS$ = kg`. Similarly, the N$_2$O factor, which includes crop liming and fertilization, would be captured as `banana_ef_kg_n2o_ha`.
 
-These are _metavariables_, which characterize and describe the notation for naming model input variables. Each variable is associated with some _schema_. In the following sections, data requirements and the associated naming schema for `model_input_variables.csv` are 
+These are _metavariables_, which characterize and describe the notation for naming model input variables. Each variable is associated with some _schema_. In the following sections, data requirements and the associated naming schema for `model_input_variables.csv` are
 
 
 #Preliminary Variable Estimates for Calibration
@@ -25,7 +25,7 @@ These are _metavariables_, which characterize and describe the notation for nami
 
 #Entering Variable Trajectories for Model Runs
 
-The input sheet `model_input_variables.csv` stores input variables trajectories for all variables and parameters that are included in the 
+The input sheet `model_input_variables.csv` stores input variables trajectories for all variables and parameters that are included in the
 ### continue description here....
 <br><br>
 
@@ -34,11 +34,11 @@ The input sheet `model_input_variables.csv` stores input variables trajectories 
 
 ## Emission Attributes and Information
 
-| Gas | Name | CO2 equivalent factor | `$EMISSION-GAS$` |
-| --------- | --------- | --------- | ----------- |
-| CH4 | Methane | 25 | `ch4` |
-| CO2 | Carbon Dioxide | 1 | `co2` |
-| N2O | Nitrus Oxide | 310 | `n2o` |
+| Gas | Name | CO2 equivalent factor | `$EMISSION-GAS$` | Data Repository | Data Viz |
+| --------- | --------- | --------- | ----------- | ----------- |----------- |
+| CH4 | Methane | 25 | `ch4` |     |      |
+| CO2 | Carbon Dioxide | 1 | `co2` |     |      |       
+| N2O | Nitrus Oxide | 310 | `n2o` |     |      |
 | Refrigerants... | | | |
 ### continue description here and more gasses....
 <br>
@@ -78,7 +78,7 @@ The following variables are required for each country.
 ### <u>Agriculture</u>
 
 #### Categories
-Agriculture is divided into the following categories (crops), given by `$CAT-AGRICULTURE$`. If a crop is not present in a country, set all associated factors to 0. 
+Agriculture is divided into the following categories (crops), given by `$CAT-AGRICULTURE$`. If a crop is not present in a country, set all associated factors to 0.
 
 | Category Name | `$CAT-AGRICULTURE$` | Description |
 | --------- | --------- | ----------- |
@@ -97,7 +97,7 @@ Agriculture is divided into the following categories (crops), given by `$CAT-AGR
 
 #### Information by Category
 
-For each agricultural category, trajectories of the following variables are needed. 
+For each agricultural category, trajectories of the following variables are needed.
 
 | Variable | Information | Variable Schema |
 | --------- | --------- | ----------- |
@@ -122,7 +122,7 @@ Forest should divided into the following categories, given by `$CAT-FOREST$`.
 
 
 #### Data Requirements by Category
-For each forest category, the following variables are needed. 
+For each forest category, the following variables are needed.
 
 | Variable | Information | Variable Schema |
 | --------- | --------- | ----------- |
@@ -134,7 +134,7 @@ For each forest category, the following variables are needed.
 ### <u>Land Use</u>
 
 #### Categories
-Land use should be divided into the following categories, given by `$CAT-LANDUSE$`. Note that the sum of land use area across all land use, forestry, agriculture, and livestock land use categories should equal the total amount of land available in the country. 
+Land use should be divided into the following categories, given by `$CAT-LANDUSE$`. Note that the sum of land use area across all land use, forestry, agriculture, and livestock land use categories should equal the total amount of land available in the country.
 
 | Category Name | `$CAT-LANDUSE$` | Definition |
 | --------- | --------- | ----------- |
@@ -145,7 +145,7 @@ Land use should be divided into the following categories, given by `$CAT-LANDUSE
 
 
 #### Data Requirements by Category
-For each forest category, the following variables are needed. 
+For each forest category, the following variables are needed.
 
 | Variable | Information | Variable Schema |
 | --------- | --------- | ----------- |
