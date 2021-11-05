@@ -37,8 +37,8 @@ The input sheet `model_input_variables.csv` stores input variables trajectories 
 | Gas | Name | CO2 equivalent factor | `$EMISSION-GAS$` | Data Repository | Data Viz |
 | --------- | --------- | --------- | ----------- | ----------- |----------- |
 | CH4 | Methane | 25 | `ch4` | [here](https://github.com/owid/co2-data)    | [here](https://public.tableau.com/app/profile/edmundo.molina/viz/LAC_emissions/GHGperType)|
-| CO2 | Carbon Dioxide | 1 | `co2` |     |      |       
-| N2O | Nitrus Oxide | 310 | `n2o` |     |      |
+| CO2 | Carbon Dioxide | 1 | `co2` | [here](https://github.com/owid/co2-data)    |  [here](https://public.tableau.com/app/profile/edmundo.molina/viz/LAC_emissions/GHGperType)    |       
+| N2O | Nitrus Oxide | 310 | `n2o` | [here](https://github.com/owid/co2-data)    |  [here](https://public.tableau.com/app/profile/edmundo.molina/viz/LAC_emissions/GHGperType)    |
 | Refrigerants... | | | |
 ### continue description here and more gasses....
 <br>
