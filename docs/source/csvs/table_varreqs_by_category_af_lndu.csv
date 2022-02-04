@@ -1,0 +1,3 @@
+﻿Variable,Information,Variable Schema,Variable Type,Notes
+Land Use Area Proportion,Proportion of total **country** area (%/100),``frac_lu_$CAT-LANDUSE$``,,
+Land Use Transition Probability,Transition probability in steady state Markov Chain Model,``pij_$CAT-LANDUSE-I$_$CAT-LANDUSE-J$``,,

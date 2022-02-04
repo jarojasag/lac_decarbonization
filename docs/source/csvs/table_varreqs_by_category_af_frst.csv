@@ -1,0 +1,4 @@
+﻿Variable,Information,Variable Schema,Variable Type,Notes
+Forest Area Proportion,"Proportion of total **forested** area (%/100), where forested area is calculated as the product of the country's area (``area_country_ha``) and the fraction of land use that is devoted to forested land (``frac_lu_forest``)",``frac_area_forest_$CAT-FOREST$``,,
+Forest Sequestration Emission Factor,Annual average :math:`\text{CO}_2` emitted per ha from sequestration (< 0 – this is a negative number),"``ef_sequestration_$CAT-FOREST$_$UNIT-MASS$_$EMISSION-GAS$_$UNIT-AREA$`` (``$EMISSION-GAS$ = co2``, ``$UNIT-AREA$ = ha``)",,
+Forest Fire Emission Factor,Annual average :math:`\text{CO}_2` emitted per ha due to forest fires (≥ 0),"``ef_forestfires_$CAT-FOREST$_$UNIT-MASS$_$EMISSION-GAS$_$UNIT-AREA$`` (``$EMISSION-GAS$ = co2``, ``$UNIT-AREA$ = ha``)",,

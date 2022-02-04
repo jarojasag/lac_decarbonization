@@ -1,0 +1,11 @@
+﻿Category Name,``$CAT-WASTE-SOLID$``,Description,Data Source,Hyperlink,Notes
+Chemical,``chemical``,"Industrial and chemical solid waste - includes mercury containing devices, computers and electronics, batteries, silica gel, and other chemical solid waste.",,,See `Princeton Environmental Health and Safety <https://ehs.princeton.edu/laboratory-research/chemical-safety/chemical-waste/chemical-waste-solids>`_ for the delineation of these categories.
+Food,``food``,Food waste,,,
+Metals,``metal``,Metals,,,
+Other,``other``,Other waste not mentioned in any other category,,,
+Paper,``paper``,Paper products,,,
+Plastic,``plastic``,Plastic and ,,,
+Sanitary Napkins and Diapers,``sanitary_napkins``,Sanitary napkins and diapers,,,
+Textiles,``textiles``,Clothing and textiles,,,
+Wood,``wood``,Wood and wood products,,,
+Yard,``yard``,Garden and yard waste,,,

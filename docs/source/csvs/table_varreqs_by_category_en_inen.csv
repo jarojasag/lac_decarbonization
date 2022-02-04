@@ -1,0 +1,4 @@
+﻿Variable,Information,Variable Schema,Variable Type,Notes,,,,
+Per Unit Production Energy Demand,Demand per production (measured in value added) by each industrial category $CAT-INDUSTRY$,"``dem_energy_$CAT-INDUSTRY$_$UNIT-ENERGY$_$UNIT-VA$`` (``$EMISSION-GAS$ = ch4``, ``$UNIT-AREA$ = ha``)",,,,,,
+,,,,,,,,
+,,,,,,,, 

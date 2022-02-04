@@ -1,0 +1,8 @@
+﻿Category Name,``$CAT-TRANSPORTATION$``,Description,Data Source,Hyperlink,Notes
+Aviation,``aviation``,International and domestic civil (passenger and freight) and military aviation.,,,
+Light Road,``light_road``,"Transportation from public and private road-going automobiles, inluding cars and light duty trucks. NOTE: public fleets of cars (e.g., postal delivery vehicles or light-duty utility service vehicles) should be included here",,,
+Other,``other_transportation``,"Includes motorcycles, etc.",,,
+Private Heavy Road,``private_heavy_road``,"Private heavy vehicles, including heavy duty trucks (including semis) and private busses",,,
+Public Heavy Road,``public_heavy_road``,"Road-based public transport, including busses, tolleys, and streetcars",,,
+Rail,``rail``,"Passenger and Freight rail transport, including heavy freight, heavy passenger, and light passenger rail",,,
+Water-borne,``water_borne``,"Emissions from fuels used by domestic water-borne trips and international water-borne trips (incl. the sea, inland water channels, and lakes)",,,

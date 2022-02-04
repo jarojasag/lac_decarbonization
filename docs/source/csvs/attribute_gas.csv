@@ -1,0 +1,12 @@
+﻿﻿ Gas , Name ,:math:`\text{CO}_2` equivalent factor , ``$EMISSION-GAS$`` 
+:math:`\text{CH}_4` , Methane ,27.9,``ch4``
+:math:`\text{CO}_2` , Carbon Dioxide ,1,``co2``
+ HFC-23 , HFC-23 ,14600,``hfc23``
+ HFC-32 , HFC-32 ,771,``hfc32``
+ HFC-125 , HFC-32 ,3740,``hfc125``
+ HFC-134a , HFC-134a ,1530,``hfc134a``
+ HFC-143a , HFC-143a ,5810,``hfc143a``
+ HFC-152 , HFC-152 ,21.5,``hfc152``
+ HFC-152a , HFC-152a ,164,``hfc152a``
+:math:`\text{N}_2\text{O}` , Nitrus Oxide ,273,``n2o``
+ SF6 , Sulfur Hexflouride ,25200,``sf6``

@@ -1,0 +1,3 @@
+﻿Category Name,``$CAT-WASTE-LIQUID$``,Description,Data Source,Hyperlink,Notes
+Domestic Liquid Waste,``wl_domestic``,Domestic liquid waste--generally composed of human waste (sewage) and driven by population,,,
+Industrial Liquid Waste,``wl_industrial``,"Industrial liquid waste, driven by the production of industrial goods",,,

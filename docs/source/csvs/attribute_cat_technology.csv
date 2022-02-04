@@ -1,0 +1,11 @@
+﻿Category Name,``$CAT-TECHNOLOGY$``,Description,Data Source,Hyperlink,Notes
+Biomass,``pp_biomass``,Biomass power plants,,,
+Coal,``pp_coal``,Coal fired power plants,,,
+Gas,``pp_gas``,Natural gas power plants,,,
+Geothermal,``pp_geothermal``,Geotherml power plants,,,
+Hydropower,``pp_hydropower``,Hydropower power plants,,,
+Nuclear,``pp_nuclear``,Nuclear (fission) power plants,,,
+Oil,``pp_oil``,Oil power plants,,,
+Other,``pp_other``,"Other power plants not listed here, including petcoke, waste to energy, and others",,,
+Solar,``pp_solar``,Solar (photovoltaic) power plants,,,
+Wind,``pp_wind``,"Wind power plants, both on- and off-shore",,,

@@ -1,0 +1,27 @@
+﻿Category Name,``$REGION$``,Description,Powerplant Data,IO Data
+Argentina,``arg``,,Yes,Yes
+Bahamas,``bhs``,,No,No
+Barbados,``brb``,,No,No
+Belize,``blz``,,No,No
+Bolivia,``bol``,,Yes,Yes
+Brazil,``bra``,,Yes,Yes
+Chile,``chl``,,Yes,Yes
+Colombia,``col``,,Yes,Yes
+Costa Rica,``cri``,,Yes,Yes
+Dominican Republic,``dom``,,Yes,Yes
+Ecuador,``ecu``,,Yes,Yes
+El Salvador,``slv``,,Yes,Yes
+Guatemala,``gtm``,,Yes,Yes
+Guyana,``guy``,,Yes,No
+Haiti,``hti``,,No,No
+Honduras,``hnd``,,Yes,Yes
+Jamaica,``jam``,,Yes,No
+Mexico,``mex``,,Yes,Yes
+Nicaragua,``nic``,,Yes,Yes
+Panama,``pan``,,Yes,Yes
+Paraguay,``pry``,,Yes,Yes
+Peru,``per``,,Yes,Yes
+Suriname,``sur``,,Yes,No
+Trinidad and Tobago,``tto``,,Yes,No
+Uruguay,``ury``,,Yes,Yes
+Venezuela,``ven``,,Yes,Yes

@@ -1,0 +1,4 @@
+﻿Variable,Information,Variable Schema,Categories,Variable Type,Notes
+Land Use Soil Carbon :math:`\text{CO}_2` Emission Factor,Annual average :math:`\text{CO}_2` emitted per ha due to soil carbon release from grazing (**CHECK THIS**),"``ef_soil_carbon_$CAT-LANDUSE$_$UNIT-MASS$_$EMISSION-GAS$_$UNIT-AREA$`` (``$EMISSION-GAS$ = co2``, ``$UNIT-AREA$ = ha``)",``pasture``,,
+Land Use Pasture :math:`\text{N}_2\text{O}` Emission Factor,Annual average :math:`\text{N}_2\text{O}` emitted per ha from liming and fertilization,"``ef_existence_$CAT-LANDUSE$_$UNIT-MASS$_$EMISSION-GAS$_$UNIT-AREA$`` (``$EMISSION-GAS$ = n2o``, ``$UNIT-AREA$ = ha``)",``pasture``,,
+Land Use BOC :math:`\text{CH}_4` Emission Factor,Annual average :math:`\text{CH}_4` emitted per ha due decay of organic matter (**CHECK THIS**).,"``ef_boc_$CAT-LANDUSE$_$UNIT-MASS$_$EMISSION-GAS$_$UNIT-AREA$`` (``$EMISSION-GAS$ = ch4``, ``$UNIT-AREA$ = ha``)",``wetlands``,,
