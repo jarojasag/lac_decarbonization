@@ -1,9 +1,9 @@
 ﻿Category Name,``$CAT-LANDUSE$``,Definition,Data Source,Hyperlink,Notes
-Cropland,``cropland``,Area of land devoted to growing crops for consumption and industrial purposes. Does not include pastures.
-Forests,``forest``,Area of land covered in forest (including mangroves)
-Grasslands,``grassland``,Area of non-pasture grassland
-Other,``other``,Other land use categories
-Pastures,``pasture``,Area of land used to support grazing for livestock
-Settlements,``settlement``,Area of land devoted to urban/suburban development. Assume no emissions from land use (primary emissions captured elsewhere).
-Water,``water``,Area of the country considered to be water (non-land area).
-Wetlands,``wetlands``,"Wetlands, which emit :math:`\text{CH}_4`"
+Croplands,``croplands``,"Area of land devoted to growing crops for consumption, export, and industrial use. Does not include pastures.",,,
+Forests - Mangroves,``forests_mangroves``,Area with mangroves,,,
+Forests - Primary,``forests_primary``,"Area of land covered in primary forest (e.g., old growth)",,,
+Forests - Secondary,``forests_secondary``,"Area of land covered in secondary forest, including plantations",,,
+Grasslands,``grasslands``,"Area of grasslands, including native and pastures (both degraded and improved)",,,
+Other,``other``,"Other land use categories (including savannah, shrublands, etc.)",,,
+Settlements,``settlements``,Area of land devoted to urban/suburban development. Assume no emissions from land use (primary emissions captured elsewhere).,,,
+Wetlands,``wetlands``,"Wetlands, which emit :math:`\text{CH}_4`",,,

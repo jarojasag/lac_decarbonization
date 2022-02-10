@@ -44,10 +44,20 @@ Variables by Category
    :widths: 20, 30, 30, 10, 10
    :header-rows: 1
 
+Variables by Partial Category
+-----------------------------
+
+Forestry includes some variables that apply only to a subset of categories. These variables are described below. The categories that variables apply to are described in the ``category`` column.
+
+.. csv-table:: Trajectories of the following variables are needed for **some** forest categories. If they are independent of categories, the category will show up as **none**.
+   :file: ./csvs/table_varreqs_by_partial_category_af_frst.csv
+   :widths: 15, 15, 20, 10, 10, 10, 10, 10
+   :header-rows: 1
+
 Categories
 ----------
 
-Forestry is divided into the following categories. These categories reflect an aggregation of forestry types into emission-relevant categories.
+Forestry is divided into the following categories. These categories reflect an aggregation of forestry types into emission-relevant categories. Note that areas of forested land are determined in the **Land Use** subsector. The land use at time *t* is determined by an ergodic Markov Chain (probabilities are set in the variable input table and subject to uncertainty using the mixing approach)
 
 .. csv-table:: Forest categories (``$CAT-FOREST$`` attribute table)
    :file: ./csvs/attribute_cat_forest.csv
@@ -73,11 +83,11 @@ Variables by Partial Category
 Land use includes some variables that apply only to a subset of categories. These variables are described below. The categories that variables apply to are described in the ``category`` column.
 
 .. note::
-   Note that the sum of all land use categories *u* at time period *t* should be should equal 1, i.e. :math:`\sum_u \varphi_u(t) = 1`, where :math:`\varphi_{\text{$CAT-LANDUSE$}}(t) \to` ``frac_lu_$CAT-LANDUSE$`` at period *t*.
+   Note that the sum of all initial fractions of area across land use categories *u* should be should equal 1to , i.e. :math:`\sum_u \varphi_u = 1`, where :math:`\varphi_{\text{$CAT-LANDUSE$}} \to` ``frac_lu_$CAT-LANDUSE$`` at period *t*.
 
 .. csv-table:: Trajectories of the following variables are needed for **some** land use categories.
    :file: ./csvs/table_varreqs_by_partial_category_af_lndu.csv
-   :widths: 20, 25, 25, 10, 10, 10
+   :widths: 15, 15, 20, 10, 10, 10, 10, 10
    :header-rows: 1
 
 Categories
@@ -104,6 +114,16 @@ Variables by Category
 .. csv-table:: For each livestock category, trajectories of the following variables are needed.
    :file: ./csvs/table_varreqs_by_category_af_lvst.csv
    :widths: 15, 20, 15, 10, 20, 10, 10
+   :header-rows: 1
+
+Variables by Partial Category
+-----------------------------
+
+Livestock includes some variables that apply only to a subset of categories. These variables are described below. The categories that variables apply to are described in the ``category`` column.
+
+.. csv-table:: Trajectories of the following variables are needed for **some** livestock categories.
+   :file: ./csvs/table_varreqs_by_partial_category_af_lvst.csv
+   :widths: 15, 15, 20, 10, 10, 10, 10, 10
    :header-rows: 1
 
 Categories

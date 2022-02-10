@@ -1,0 +1,8 @@
+Variable,Information,Variable Schema,Dashboard,Notes,Data Link,Reference
+Population,Units: # of people ,``population_$CAT-GENERAL$`` ," | `Urban Population Dashboard <https://public.tableau.com/app/profile/fernando8493/viz/UrbanPopulation_16422202338390/Dashboard1>`_
+ | 
+ | `Rural Population Dashboard <https://public.tableau.com/app/profile/fernando8493/viz/RuralPopulation_16424430407410/Dashboard1>`_
+",,," | `World Bank — Urban Population <https://data.worldbank.org/indicator/SP.URB.TOTL>`_
+ | 
+ | `World Bank — Rural Population <https://data.worldbank.org/indicator/SP.RUR.TOTL>`_
+"

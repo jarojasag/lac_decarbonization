@@ -1,4 +1,4 @@
-Category Name,``$CAT-LIVESTOCK$``,Definition,Notes
+﻿Category Name,``$CAT-LIVESTOCK$``,Definition,Notes
 Buffalo,``buffalo``,Buffalo livestock," | Head count (stocks)/Products - Live Animals: **buffalo**
  | 
  | CH4 Enteric Fermentation: *none* (NEED ASSUMPTION)
@@ -9,12 +9,7 @@ Cattle - Dairy,``cattle_dairy``,Cattle livestock raised for dairy only," | Head 
  | CH4 Enteric Fermentation: **cattle dairy**
  |
  | CH4 Manure Management: **cattle dairy**"
-Cattle - Dual Purpose,``cattle_dual_purpose``,"Cattle livestock raised for dairy, then meat"," | Head count (stocks)/Products - Live Animals: **cattle**
- |
- | CH4 Enteric Fermentation: **cattle non-dairy**
- |
- | CH4 Manure Management: **cattle non-dairy**"
-Cattle - Meat,``cattle_meat``,Cattle livestock raised exclusively for meat," | Head count (stocks)/Products - Live Animals: **cattle**
+Cattle - Non-Dairy,``cattle_nondairy``,All non-dairy cattle--including those raised exclusively for meat.," | Head count (stocks)/Products - Live Animals: **cattle**
  |
  | CH4 Enteric Fermentation: **cattle non-dairy**
  |

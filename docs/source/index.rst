@@ -35,8 +35,9 @@ Contents
    analytical_parameters
    dimensions_of_analysis
    general_data
-   economic_impact
+   economic_impacte
    afolu
    circular_economy
    energy
    ippu
+   socioeconomic

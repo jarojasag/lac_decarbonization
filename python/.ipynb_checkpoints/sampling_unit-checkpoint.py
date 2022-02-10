@@ -305,6 +305,7 @@ class sampling_unit:
         v_1 = np.array(vec_b1)
         v_m = np.array(vec_mix)
 
+
         if constraints_mix != None:
             if constraints_mix[0] >= constraints_mix[1]:
                 raise ValueError("Constraints to the mixing vector should be passed as (min, max)")

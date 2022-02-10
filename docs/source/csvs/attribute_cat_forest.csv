@@ -1,6 +1,4 @@
 ﻿Category Name,``$CAT-FOREST$``,Description,Data Source,Hyperlink,Notes
 Mangroves,``mangroves``,,,,
-Primary Wet Forest,``primary_wet``,,,,
-Primary Dry Forest,``primary_dry``,,,,
-Secondary Wet Forest,``secondary_wet``,,,,
-Secondary Dry Forest,``secondary_dry``,,,,
+Primary,``primary``,,,,
+Secondary,``secondary``,,,,

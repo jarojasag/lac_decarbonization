@@ -1,0 +1,2 @@
+﻿﻿Variable,Information,Variable Schema,Categories,Dashboard,Notes,Data Link,Reference
+Gross Domestic Product,Units: Billion USD (2020$),``gdp_mmm_usd``,none,`GDP Dashboard <https://public.tableau.com/app/profile/fernando8493/viz/GDP_16423551657970/Dashboard1>`_,Data are at constant 2015 prices.There are no data for Venezuela.,,`World Bank GDP <https://data.worldbank.org/indicator/NY.GDP.MKTP.KD>`_

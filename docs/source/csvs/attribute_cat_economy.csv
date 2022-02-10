@@ -1,0 +1,6 @@
+﻿Category Name,``$CAT-ECONOMY$``,Definition,Data Source,Hyperlink,Notes
+Agriculture and Livestock,``agliv``,DEF HERE,,`World Bank Agriculture VA <https://data.worldbank.org/indicator/NV.AGR.TOTL.KD>`_,"There are no Agricultural VA data for Barbados and Venezuela. Includes Agriculture, Fishing, and Forestry. This is used as a driver for agriculture, livestock, and fishing activities."
+Commercial,``commercial``,DEF HERE,,Pendiente,
+Industrial,``industrial``,DEF HERE,,`World Bank Industrial VA <https://data.worldbank.org/indicator/NV.IND.MANF.KD>`_,There are no Industrial VA data for Barbados and Venezuela.
+Manufacturing,``manufacturing``,DEF HERE,,`World Bank Manufacturing VA <https://data.worldbank.org/indicator/NV.IND.TOTL.KD>`_,There are no Manufacturing VA data for Barbados and Venezuela.
+Mining,``mining``,DEF HERE,,Pendiente,

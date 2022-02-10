@@ -38,11 +38,11 @@ def check_path(fp, create_q = False):
     elif create_q:
         os.mkdirs(fp, exist_ok = True)
     else:
-        raise ValueError(f"Path '{fp}' not found, and it will not be created.")
+        raise ValueError(f"Path '{fp}' not found. It will not be created.")
         
 # simple but often used function
-def format_print_list(list_in):
-    return (", ".join(["'%s'" for x in range(len(list_in))]))%tuple(list_in)
+def format_print_list(list_in, delim = ","):
+    return ((f"{delim} ").join(["'%s'" for x in range(len(list_in))]))%tuple(list_in)
 
 # check a data frame
 def check_fields(df, fields):
@@ -67,7 +67,7 @@ def check_keys(dict_in, keys):
         raise ValueError(f"Required keys {fields_missing} not found in the dictionary.")
 
 # 
-def clean_field_names(nms, dict_repl: dict = {"  ": " ", " ": "_", "$": "", "\$": "", "`": "", "-": "_", ".": "_"}):
+def clean_field_names(nms, dict_repl: dict = {"  ": " ", " ": "_", "$": "", "\\": "", "\$": "", "`": "", "-": "_", ".": "_", "\ufeff": "", ":math:text": "", "{": "", "}": ""}):
     
     # check return type
     return_df_q =  False
@@ -78,12 +78,17 @@ def clean_field_names(nms, dict_repl: dict = {"  ": " ", " ": "_", "$": "", "\$"
     
     # get namses to clean, then loop
     nms = [str_replace(nm.lower(), dict_repl) for nm in nms]
+    
     for i in range(len(nms)):
         nm = nms[i]
+        # drop characters in front 
         while (nm[0] in ["_", "-", "."]) and (len(nm) > 1):
             nm = nm[1:]
+        # drop trailing characters 
+        while (nm[-1] in ["_", "-", "."]) and (len(nm) > 1):
+            nm = nm[0:-1]
         nms[i] = nm
-
+        
     if return_df_q:
         nms = df.rename(columns = dict(zip(list(df.columns), nms)))
         

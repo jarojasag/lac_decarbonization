@@ -1,5 +1,7 @@
+============
 General Data
 ============
+
 
 Gasses
 ------
@@ -21,7 +23,7 @@ Each of the four key sectors are divided into several subsectors, detailed below
 
 .. csv-table:: Subsectors modeled in LAC-IDPM
    :file: ./csvs/attribute_subsector.csv
-   :widths: 20, 20, 10, 40, 10
+   :widths: 20, 20, 10, 20, 20, 10
    :header-rows: 1
 
 Regions (Countries)
@@ -32,23 +34,4 @@ The **MODELNAMEHERE** encompasses 26 countries, or, more generally, regions. The
 .. csv-table:: The following REGION dimensions are specified for the **MODELNAMEHERE** NemoMod model.
    :file: ./csvs/attribute_cat_region.csv
    :widths: 20, 20, 20, 20, 20
-   :header-rows: 1
-
-
-General Variables by Region
-----------------------------
-The following variables are required for each region (or country).
-
-.. csv-table:: General variables required for each county
-   :file: ./csvs/table_varreqs_by_country_general.csv
-   :widths: 15, 20, 15, 10, 20, 10, 10
-   :header-rows: 1
-
-
-Economic Variables by Country
------------------------------
-
-.. csv-table:: Economic variables required for each county
-   :file: ./csvs/table_varreqs_by_country_economic.csv
-   :widths: 15, 20, 15, 10, 20, 10, 10
    :header-rows: 1

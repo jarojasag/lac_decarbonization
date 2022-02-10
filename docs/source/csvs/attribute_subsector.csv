@@ -1,12 +1,14 @@
-﻿﻿ Sector,Subsector,``$ABBREVIATION-SUBSECTOR$``,Description,Model
-AFOLU,Agriculture,``agrc``,Agricultural activity ....,Python
-AFOLU,Forest,``frst``,Forest activity ....,Python
-AFOLU,Land Use,``lndu``,Land use activity ....,Python
-AFOLU,Livestock,``lvst``,Livestock activity ....,Python
-Circular Economy,Liquid Waste,``wali``,Activity (demand and emission) associated with emissions from domestic and industrial liquid waste disposal and treatment,Python
-Circular Economy,Solid Waste,``waso``,Activity (demand and emission) associated with emissions from domestic and industrial solid waste disposal and treatment ,Python
-Energy,Other Energy: Stationary Emissions and Carbon Capture and Sequestration,``oesc``,"Stationary emissions from residential, commercial, and municipal activities; agricultural fuel combustion; and carbon capture and sequestration. ",Python
-Energy,Electricity Generation,``elec``,Activity (demand and emission) associated with the generation of electricity ....,Julia
-Energy,Industrial Energy,``inen``,Activity (demand and emission) associated with the energy generation and use in industry,Python
-Energy,Transportation,``trns``,Activity (demand and emission) associated with the generation of electricity ....,Python
-IPPU,IPPU,``ippu``,Activity (demand and emission) associated with industrial processes and product use,Python
+ Sector,Subsector,``$ABBREVIATION-SUBSECTOR$``,Primary Category,Description,Model
+AFOLU,Agriculture,``agrc``,``$CAT-AGRICULTURE$``,Agricultural activity ....,Python
+AFOLU,Forest,``frst``,``$CAT-FOREST$``,Forest activity ....,Python
+AFOLU,Land Use,``lndu``,``$CAT-LANDUSE$``,Land use activity ....,Python
+AFOLU,Livestock,``lvst``,``$CAT-LIVESTOCK$``,Livestock activity ....,Python
+Circular Economy,Liquid Waste,``wali``,``$CAT-WASTE-LIQUID$``,Activity (demand and emission) associated with emissions from domestic and industrial liquid waste disposal and treatment,Python
+Circular Economy,Solid Waste,``waso``,``$CAT-WASTE-SOLID$``,Activity (demand and emission) associated with emissions from domestic and industrial solid waste disposal and treatment ,Python
+Energy,Other Energy: Stationary Emissions and Carbon Capture and Sequestration,``oesc``,``$CAT-OESC$``,"Stationary emissions from residential, commercial, and municipal activities; agricultural fuel combustion; and carbon capture and sequestration. ",Python
+Energy,Electricity Generation,``elec``,NONE,Activity (demand and emission) associated with the generation of electricity ....,Julia
+Energy,Industrial Energy,``inen``,``$CAT-INDUSTRY$``,Activity (demand and emission) associated with the energy generation and use in industry,Python
+Energy,Transportation,``trns``,``$CAT-TRANSPORTATION$``,Activity (demand and emission) associated with the generation of electricity ....,Python
+IPPU,IPPU,``ippu``,``$CAT-INDUSTRY$``,Activity (demand and emission) associated with industrial processes and product use,Python
+Socioeconomic,Economy,``econ``,``$CAT-ECONOMY$``,Economic activity driving emissions.,None
+Socioeconomic,General,``gnrl``,``$CAT-GENERAL$``,"Other non-economic drivers of emissios, including demographics.",None
