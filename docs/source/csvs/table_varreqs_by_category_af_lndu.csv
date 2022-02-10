@@ -1,4 +1,4 @@
-Variable,Information,Variable Schema,Variable Type,Notes
+﻿Variable,Information,Variable Schema,Variable Type,Notes
 Initial Land Use Area Proportion,Proportion of total **country land** area (%/100) at time :math:`t_0`,``frac_lu_initial_$CAT-LANDUSE$``,,
 Unadjusted Land Use Transition Probability,Transition probability in Markov Chain model,``pij_$CAT-LANDUSE-I$_to_$CAT-LANDUSE-J$``,,
 :math:`\text{CO}_2` Land Use Conversion Emission Factor,Annual :math:`\text{CO}_2` emission factor for conversion of land use of type ``$CAT-LANDUSE-I$`` to ``$CAT-LANDUSE-J$``,"``ef_luconversion_$CAT-LANDUSE-I$_to_$CAT-LANDUSE-J$_$UNIT-MASS$_$EMISSION-GAS$_$UNIT-AREA$`` (``$UNIT-MASS$ = gg``, ``$EMISSION-GAS$ = co2``, ``$UNIT-AREA$ = ha``)",,
