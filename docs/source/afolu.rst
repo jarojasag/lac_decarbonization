@@ -69,6 +69,11 @@ Forestry is divided into the following categories. These categories reflect an a
 Land Use
 ========
 
+Land use projections are driven by a Markov Chain, represented by a transition matrix :math:`Q(t)` (the matrix is specified for each time period in the ``model_input_variables.csv`` file). The model requires initial states (entered as a fraction of total land area) for all land use categories ``$CAT-LANDUSE$``
+
+.. note::
+   The entries :math:`Q_{ij}(t)` give the transition probability of land use category :math:`i` to land use category :math:`j`. :math:`Q` is row stochastic, so that :math:`\sum_{j}Q_{ij}(t) = 1` for each land use category :math:`i` and time period :math:`t`. To preserve row stochasticity, it is highly recommended that strategies and uncertainty be represented using the trajectory mixing approach, where bounding trajectories on transitions probabilities are specified and uncertainty exploration gives a mix between them.
+
 Variables by Category
 ---------------------
 
