@@ -45,6 +45,8 @@ The *Economy* subsector is used to represent exogenous economic drivers of emiss
 
 .. note:: Gross Domestic Product (GDP) is *not* entered as a variable. Instead, it is calculated as the total of all value added trajectories included under ``$CAT-ECONOMY$``. The categories specified under ``$CAT-ECONOMY$`` do not have to be mutually exclusive, but those value added trajectories that should be summed to give GDP can be specified as under the ``GDP Component`` column in ``attribute_cat_economy.csv``.
 
+The `GDP Dashboard <https://public.tableau.com/app/profile/fernando8493/viz/GDP_16423551657970/Dashboard1>`_ is available on Tableau to explore historical GDP and projections, while historical GDP projections are available from the `World Bank GDP <https://data.worldbank.org/indicator/NY.GDP.MKTP.KD>`_.
+
 Variables by Category
 ---------------------
 
@@ -56,7 +58,6 @@ Variables by Category
 
 Categories
 ----------
-
 Economic value added trajectories should be divided into the following categories, given by ``$CAT-ECONOMY$``. Note that the GDP is calculated as the sum of these value added trajectories and is **not** entered as a separate variable.
 
 .. csv-table:: Economy categories (``$CAT-ECONOMY$`` attribute table)
