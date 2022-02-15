@@ -1,45 +1,45 @@
-﻿Category Name,``$CAT-LIVESTOCK$``,Definition,Notes
-Buffalo,``buffalo``,Buffalo livestock," | Head count (stocks)/Products - Live Animals: **buffalo**
+﻿Category Name,``$CAT-LIVESTOCK$``,Definition,Demand Elasticity Category,Notes
+Buffalo,``buffalo``,Buffalo livestock,``cattle_nondairy``," | Head count (stocks)/Products - Live Animals: **buffalo**
  | 
  | CH4 Enteric Fermentation: *none* (NEED ASSUMPTION)
  |
  | CH4 Manure Management: *none*  (NEED ASSUMPTION)"
-Cattle - Dairy,``cattle_dairy``,Cattle livestock raised for dairy only," | Head count (stocks)/Products - Live Animals: **cattle**
+Cattle - Dairy,``cattle_dairy``,Cattle livestock raised for dairy only,``cattle_dairy``," | Head count (stocks)/Products - Live Animals: **cattle**
  |
  | CH4 Enteric Fermentation: **cattle dairy**
  |
  | CH4 Manure Management: **cattle dairy**"
-Cattle - Non-Dairy,``cattle_nondairy``,All non-dairy cattle--including those raised exclusively for meat.," | Head count (stocks)/Products - Live Animals: **cattle**
+Cattle - Non-Dairy,``cattle_nondairy``,All non-dairy cattle--including those raised exclusively for meat.,``cattle_nondairy``," | Head count (stocks)/Products - Live Animals: **cattle**
  |
  | CH4 Enteric Fermentation: **cattle non-dairy**
  |
  | CH4 Manure Management: **cattle non-dairy**"
-Chickens,``chickens``,Chicken livestock," | Head count (stocks)/Products - Live Animals: **chickens**
+Chickens,``chickens``,Chicken livestock,``chickens``," | Head count (stocks)/Products - Live Animals: **chickens**
  |
  | CH4 Enteric Fermentation: *none* (NO ENTERIC FERMENTATION FOR CHICKENS, ASSUME 0)
  |
  | CH4 Manure Management: **chickens, broilers, chickens layers**"
-Goats,``goats``,Goats livestock," | Head count (stocks)/Products - Live Animals: **goats**
+Goats,``goats``,Goats livestock,``sheep``," | Head count (stocks)/Products - Live Animals: **goats**
  |
  | CH4 Enteric Fermentation: **goats**
  |
  | CH4 Manure Management: **goats**"
-Horses,``horses``,Horses livestock," | Head count (stocks)/Products - Live Animals: **horses**
+Horses,``horses``,Horses livestock,``sheep``," | Head count (stocks)/Products - Live Animals: **horses**
  |
  | CH4 Enteric Fermentation: **horses**
  |
  | CH4 Manure Management: **horses**"
-Mules,``mules``,Mules livestock," | Head count (stocks)/Products - Live Animals: **mules**
+Mules,``mules``,Mules livestock,``sheep``," | Head count (stocks)/Products - Live Animals: **mules**
  |
  | CH4 Enteric Fermentation: **mules**
  |
  | CH4 Manure Management: **mules**"
-Pigs,``pigs``,Pigs livestock," | Head count (stocks)/Products - Live Animals: **pigs**
+Pigs,``pigs``,Pigs livestock,``pigs``," | Head count (stocks)/Products - Live Animals: **pigs**
  |
  | CH4 Enteric Fermentation: *none* (NO ENTERIC FERMENTATION FOR PIGS, ASSUME 0)
  |
  | CH4 Manure Management: *none* (NEED TO CHECK)"
-Sheep,``sheep``,Sheep livestock," | Head count (stocks)/Products - Live Animals: **sheep**
+Sheep,``sheep``,Sheep livestock,``sheep``," | Head count (stocks)/Products - Live Animals: **sheep**
  |
  | CH4 Enteric Fermentation: **sheep**
  |

@@ -1,3 +1,3 @@
 ﻿Variable,Information,Variable Schema,Categories,Variable Type,Notes
-Annual per Capita Solid Domestic Waste Generated,"Represents the estimated quantity, in CONTINUE",,,,
-Annual per VA Solid Industrial Waste Generated,,,,,
+Annual per Capita Solid Domestic Waste Generated,"Represents the estimated quantity, in CONTINUE",liquid_waste_per_capita,none,,
+Annual per VA Solid Industrial Waste Generated,,liquid_waste_per_va,none,,

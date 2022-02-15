@@ -22,5 +22,4 @@ All industrial categorization is derived from the *2019 Refinement to the 2006 I
 
 .. csv-table:: Industrial categories (``$CAT-INDUSTRY$`` attribute table)
    :file: ./csvs/attribute_cat_industry.csv
-   :widths: 15,15,30,15,10,15
    :header-rows: 1

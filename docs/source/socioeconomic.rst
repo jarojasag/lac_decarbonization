@@ -12,7 +12,6 @@ Variables by Category
 
 .. csv-table:: For each general category category, trajectories of the following variables are needed.
    :file: ./csvs/table_varreqs_by_category_se_gnrl.csv
-   :widths: 15, 20, 15, 10, 20, 10, 10
    :header-rows: 1
 
 Variables by Partial Category
@@ -22,7 +21,6 @@ The general socioeconomic subsector includes some variables that apply only to a
 
 .. csv-table:: Trajectories of the following variables are needed for **some** (or no) general categories.
    :file: ./csvs/table_varreqs_by_partial_category_se_gnrl.csv
-   :widths: 15, 15, 20, 10, 10, 10, 10, 10
    :header-rows: 1
 
 Categories
@@ -32,7 +30,6 @@ General should be divided into the following categories, given by ``$CAT-GENERAL
 
 .. csv-table:: General categories (``$CAT-GENERAL$`` attribute table)
    :file: ./csvs/attribute_cat_general.csv
-   :widths: 15,15,30,15,10,15
    :header-rows: 1
 
 ----
@@ -42,17 +39,13 @@ Economy
 =======
 
 The *Economy* subsector is used to represent exogenous economic drivers of emissions and is separate from the economic impact analysis.
-
-.. note:: Gross Domestic Product (GDP) is *not* entered as a variable. Instead, it is calculated as the total of all value added trajectories included under ``$CAT-ECONOMY$``. The categories specified under ``$CAT-ECONOMY$`` do not have to be mutually exclusive, but those value added trajectories that should be summed to give GDP can be specified as under the ``GDP Component`` column in ``attribute_cat_economy.csv``.
-
-The `GDP Dashboard <https://public.tableau.com/app/profile/fernando8493/viz/GDP_16423551657970/Dashboard1>`_ is available on Tableau to explore historical GDP and projections, while historical GDP projections are available from the `World Bank GDP <https://data.worldbank.org/indicator/NY.GDP.MKTP.KD>`_.
+.. .. note:: Gross Domestic Product (GDP) is *not* entered as a variable. Instead, it is calculated as the total of all value added trajectories included under ``$CAT-ECONOMY$``. The categories specified under ``$CAT-ECONOMY$`` do not have to be mutually exclusive, but those value added trajectories that should be summed to give GDP can be specified as under the ``GDP Component`` column in ``attribute_cat_economy.csv``.
 
 Variables by Category
 ---------------------
 
 .. csv-table:: For each general exogenous economic category, trajectories of the following variables are needed.
    :file: ./csvs/table_varreqs_by_category_se_econ.csv
-   :widths: 15, 10, 20, 10, 20, 10, 15
    :header-rows: 1
 
 
@@ -62,5 +55,4 @@ Economic value added trajectories should be divided into the following categorie
 
 .. csv-table:: Economy categories (``$CAT-ECONOMY$`` attribute table)
    :file: ./csvs/attribute_cat_economy.csv
-   :widths: 15,15,20,10,15,10,15
    :header-rows: 1

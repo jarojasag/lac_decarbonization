@@ -1,6 +1,6 @@
 ﻿Category Name,``$CAT-OESC$``,Description,Data Source,Hyperlink,Notes
 Residential Stationary Emissions,``residential``,"Stationary emissions in the residential sector, including emissions from cooking, water heaters, etc. (residential buildings)",,,
-Commercial and Municipal,``commercial_and_municipal``,"Stationary emissions from commercial and municipal buildings, including commercial cooking in restaurants",,,
+Commercial and Municipal,``commercial_municipal``,"Stationary emissions from commercial and municipal buildings, including commercial cooking in restaurants",,,
 "Agriculture, Forestry, and Livestock Fuel Combustion",``afl_combustion``,"Stationary emissions from fuel combustion in agriculture, forestry, fishing, and livestock (including generators, operation of farm equipment, etc.)",,,
 Other Stationary Emissions,``other_se``,Other stationary emissions not captured elsewhere,,,
 Carbon Capture and Sequestration,``ccs``,Sequestration from carbon capture and sequestration,,,

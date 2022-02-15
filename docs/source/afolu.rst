@@ -15,8 +15,9 @@ Agriculture requires the following variables.
 
 .. csv-table:: For each agricultural category, trajectories of the following variables are needed.
    :file: ./csvs/table_varreqs_by_category_af_agrc.csv
-   :widths: 20, 30, 30, 10, 10
    :header-rows: 1
+.. :widths: 20, 30, 30, 10, 10
+
 
 Categories
 ----------
@@ -25,8 +26,9 @@ Agriculture is divided into the following categories.
 
 .. csv-table:: Agricultural categories (``$CAT-AGRICULTURE$`` attribute table)
    :file: ./csvs/attribute_cat_agriculture.csv
-   :widths: 15,15,30,15,10,15
    :header-rows: 1
+..   :widths: 15,15,30,15,10,15
+
 
 
 **Costs to be added**
@@ -41,7 +43,6 @@ Variables by Category
 
 .. csv-table:: For each forest category, trajectories of the following variables are needed.
    :file: ./csvs/table_varreqs_by_category_af_frst.csv
-   :widths: 20, 30, 30, 10, 10
    :header-rows: 1
 
 Variables by Partial Category
@@ -51,7 +52,6 @@ Forestry includes some variables that apply only to a subset of categories. Thes
 
 .. csv-table:: Trajectories of the following variables are needed for **some** forest categories. If they are independent of categories, the category will show up as **none**.
    :file: ./csvs/table_varreqs_by_partial_category_af_frst.csv
-   :widths: 15, 15, 20, 10, 10, 10, 10, 10
    :header-rows: 1
 
 Categories
@@ -61,8 +61,9 @@ Forestry is divided into the following categories. These categories reflect an a
 
 .. csv-table:: Forest categories (``$CAT-FOREST$`` attribute table)
    :file: ./csvs/attribute_cat_forest.csv
-   :widths: 15,15,30,15,10,15
    :header-rows: 1
+..   :widths: 15,15,30,15,10,15
+
 
 ----
 
@@ -79,7 +80,6 @@ Variables by Category
 
 .. csv-table:: For each land use category, trajectories of the following variables are needed.
    :file: ./csvs/table_varreqs_by_category_af_lndu.csv
-   :widths: 20, 30, 30, 10, 10
    :header-rows: 1
 
 Variables by Partial Category
@@ -92,8 +92,8 @@ Land use includes some variables that apply only to a subset of categories. Thes
 
 .. csv-table:: Trajectories of the following variables are needed for **some** land use categories.
    :file: ./csvs/table_varreqs_by_partial_category_af_lndu.csv
-   :widths: 15, 15, 20, 10, 10, 10, 10, 10
    :header-rows: 1
+.. :widths: 15, 15, 20, 10, 10, 10, 10, 10
 
 Categories
 ----------
@@ -102,7 +102,6 @@ Land use should be divided into the following categories, given by ``$CAT-LANDUS
 
 .. csv-table:: Land Use categories (``$CAT-LANDUSE$`` attribute table)
    :file: ./csvs/attribute_cat_land_use.csv
-   :widths: 15,15,30,15,10,15
    :header-rows: 1
 
 ----
@@ -118,7 +117,6 @@ Variables by Category
 
 .. csv-table:: For each livestock category, trajectories of the following variables are needed.
    :file: ./csvs/table_varreqs_by_category_af_lvst.csv
-   :widths: 15, 20, 15, 10, 20, 10, 10
    :header-rows: 1
 
 Variables by Partial Category
@@ -128,7 +126,6 @@ Livestock includes some variables that apply only to a subset of categories. The
 
 .. csv-table:: Trajectories of the following variables are needed for **some** livestock categories.
    :file: ./csvs/table_varreqs_by_partial_category_af_lvst.csv
-   :widths: 15, 15, 20, 10, 10, 10, 10, 10
    :header-rows: 1
 
 Categories
@@ -138,5 +135,4 @@ Livestock should be divided into the following categories, given by ``$CAT-LIVES
 
 .. csv-table:: Livestock categories (``$CAT-LIVESTOCK$`` attribute table)
    :file: ./csvs/attribute_cat_livestock.csv
-   :widths: 25, 25, 25, 25
    :header-rows: 1

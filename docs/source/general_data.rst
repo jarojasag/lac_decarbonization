@@ -5,9 +5,10 @@ General Data
 
 Gasses
 ------
+Emissions are calculated in MT for each relevant gas included. For :math:`\text{CO}_2\text{e}` conversions, the default Global Warming Potential (GWP) time horizon is 100 years. However, the GWP time horizon can be changed in the `Analytical Parameters <../analytical_parameters>`_ configuration file. The GWP conversion factors below are taken from `IPCC AR6 WG1 Chapter 7 - Table 7.SM.7 <https://www.ipcc.ch/report/ar6/wg1/downloads/report/IPCC_AR6_WGI_Chapter_07_Supplementary_Material.pdf>`_.
+
 .. csv-table:: Gasses potentially included in LAC-IDPM and their CO2 equivalent
    :file: ./csvs/attribute_gas.csv
-   :widths: 25, 35, 20, 20
    :header-rows: 1
 
 Sectors and Subsectors
@@ -16,14 +17,12 @@ LAC-IPDM models emissions in four key sectors: AFOLU, Circular Economy, Energy, 
 
 .. csv-table:: Emissions sectors in LAC-IDPM
    :file: ./csvs/attribute_sector.csv
-   :widths: 20, 20, 20, 40
    :header-rows: 1
 
 Each of the four key sectors are divided into several subsectors, detailed below.
 
 .. csv-table:: Subsectors modeled in LAC-IDPM
    :file: ./csvs/attribute_subsector.csv
-   :widths: 20, 20, 10, 20, 20, 10
    :header-rows: 1
 
 Regions (Countries)
@@ -33,5 +32,4 @@ The **MODELNAMEHERE** encompasses 26 countries, or, more generally, regions. The
 
 .. csv-table:: The following REGION dimensions are specified for the **MODELNAMEHERE** NemoMod model.
    :file: ./csvs/attribute_cat_region.csv
-   :widths: 20, 20, 20, 20, 20
    :header-rows: 1

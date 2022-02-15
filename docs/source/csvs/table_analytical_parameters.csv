@@ -1,2 +1,0 @@
-﻿Configuration File Parameter,Analytical Parameter Name,Information,Notes
-discount_rate,Discount Rate,The discount rate used for analyzing all costs and benefits. This parameter is required and is passed to NemoMod (NemoMod_DiscountRate) to find for the least cost solution.,

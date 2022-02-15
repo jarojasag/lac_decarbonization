@@ -1,2 +1,2 @@
-﻿Variable,Information,Variable Schema,Categories,Variable Type,Notes
-Annual per Capita Domestic Waste,"Represents the estimated quantity, in kg/year, that each person produces in human waste ",,,,
+﻿Variable,Information,Variable Schema,Categories,Variable Type,Notes,Internal Model Variable
+Annual per Capita Domestic Solid Waste,"Represents the estimated quantity, in kg/year, that each person produces in human waste ",solid_waste_per_capita,none,,,0

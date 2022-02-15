@@ -1,4 +1,4 @@
-﻿Category Name,``$CAT-INDUSTRY$``,Definition,Data Source,Hyperlink,Notes
+﻿Category Name,``$CAT-INDUSTRY$``,Definition,Value Added Category,Data Source,Hyperlink,Notes
 Mineral Industry,``minerals``,"Includes
 
 * Cement production
@@ -9,7 +9,7 @@ Mineral Industry,``minerals``,"Includes
   * Ceramics
   * Non-Metallurgical Magnesia Production
   * Other uses of Soda Ash
-  * Others",,,
+  * Others",``mining``,,,
 Chemical Industry,``chemicals``,"Includes production of
 
 * Adipic acid production
@@ -38,7 +38,7 @@ Chemical Industry,``chemicals``,"Includes production of
 
 * Soda Ash production
 * Titanium Dioxide
-* Others",,,
+* Others",``manufacturing``,,,
 Metals,``metals``,"Includes emissions from
 
 * Aluminium production
@@ -50,13 +50,13 @@ Metals,``metals``,"Includes emissions from
 * Rare Earths production
 * Steel production
 * Zinc production
-* Other Metals production",,,
+* Other Metals production",``industrial``,,,
 Non-Energy Product,``non_energy_products``,"Includes the use of the substances in industrial processes that cause emissions, including
 
 * Lubricants
 * Paraffin Waxmean
 * Solvents
-* Others",,,
+* Others",``industrial``,,,
 Electronics,``electronics``,"Includes emissions (especially F-GHGs) from processes and product use involved with the production of
 
 * Displays
@@ -64,7 +64,7 @@ Electronics,``electronics``,"Includes emissions (especially F-GHGs) from process
 * Microelectromechanical systems
 * Photovoltaics
 * Others
-",,,
+",``manufacturing``,,,
 Ozone-Depleting Substitutes,``ods_products``,"Includes the use of products common in industrial processes, such as HFCs, PFCs, SF6, and other ODS products that are intended to replace ozone-depleting CFCs. These products include
 
 * Aerosols
@@ -72,7 +72,7 @@ Ozone-Depleting Substitutes,``ods_products``,"Includes the use of products commo
 * Foam Blowing Agents
 * Refrigeration and Air Conditioning (both Stationary and Mobile)
 * Solvents
-* Other Applications",,,
+* Other Applications",``industrial``,,,
 Other Product and Manufacture Use,``other_product_manufacturing``,"This category is used to account for emissions from other industrial production processes and product uses, including
 
 * Electrical Equipment
@@ -91,9 +91,9 @@ Other Product and Manufacture Use,``other_product_manufacturing``,"This category
   * Accelerators
   * Waterproofing of Electronic Circuits
   * Other
-* Other",,,
+* Other",``industrial``,,,
 Other,``other_industries``,"This category includes emissions from industrial processes and product use in other industrial categories not covered above, including
 
 * Food and Beverages Industry
 * Pulp and Paper Industry
-* Other",,,
+* Other",``industrial``,,,

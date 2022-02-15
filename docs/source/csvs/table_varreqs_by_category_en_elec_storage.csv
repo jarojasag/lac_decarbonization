@@ -1,2 +1,2 @@
-﻿Variable,Information,Variable Schema,Variable Type,Notes
-NemoMod_CapitalCostStorage,Cost to build a unit of capacity for the specified storage,cost_capital_elec_stor_$CAT-STORAGE$_$UNIT-COST$ (``$UNIT-COST$`` is fixed),,
+﻿Variable,Information,Variable Schema,Variable Type,Notes,Internal Model Variable
+NemoMod_CapitalCostStorage,Cost to build a unit of capacity for the specified storage,cost_capital_elec_stor_$CAT-STORAGE$_$UNIT-COST$ (``$UNIT-COST$`` is fixed),,,0

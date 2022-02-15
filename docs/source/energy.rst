@@ -21,7 +21,6 @@ Categories - FUEL
 
 .. csv-table:: The following FUEL dimensions are specified for the **MODELNAMEHERE** NemoMod model.
    :file: ./csvs/attribute_cat_fuel.csv
-   :widths: 20, 25, 25, 10, 10, 10
    :header-rows: 1
 
 Variables by Categories - FUEL
@@ -51,7 +50,6 @@ Categories - STORAGE
 
 .. csv-table:: The following STORAGE dimensions are specified for the **MODELNAMEHERE** NemoMod model.
    :file: ./csvs/attribute_cat_storage.csv
-   :widths: 20, 25, 25, 10, 10, 10
    :header-rows: 1
 
 Variables by Categories - STORAGE
@@ -66,7 +64,6 @@ The **MODELNAMEHERE** model (v1.0) uses NemoMod *only* to model the electricity 
 
 .. csv-table:: The following TECHNOLOGY dimensions are specified for the **MODELNAMEHERE** NemoMod model.
    :file: ./csvs/attribute_cat_technology.csv
-   :widths: 20, 25, 25, 10, 10, 10
    :header-rows: 1
 
 Variables by Categories - TECHNOLOGY
@@ -88,7 +85,6 @@ OESC (**O**\ther **E**\nergy: **S**\tationary emissions and **C**\arbon capture 
 
 .. csv-table:: For different OESC categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
    :file: ./csvs/table_varreqs_by_partial_category_en_oesc.csv
-   :widths: 20, 25, 25, 10, 10, 10
    :header-rows: 1
 
 
@@ -99,7 +95,6 @@ OESC is divided into the following categories, which
 
 .. csv-table:: Other categories (``$CAT-OESC$`` attribute table)
    :file: ./csvs/attribute_cat_oesc.csv
-   :widths: 15, 15, 30, 15, 10, 15
    :header-rows: 1
 
 ----

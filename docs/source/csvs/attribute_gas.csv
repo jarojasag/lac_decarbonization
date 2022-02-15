@@ -1,12 +1,12 @@
-﻿﻿ Gas ,Name ,:math:`\text{CO}_2` equivalent factor ,``$EMISSION-GAS$`` 
-:math:`\text{CH}_4` ,Methane ,27.9,``ch4``
-:math:`\text{CO}_2` ,Carbon Dioxide ,1.0,``co2``
-HFC-23 ,HFC-23 ,14600.0,``hfc23``
-HFC-32 ,HFC-32 ,771.0,``hfc32``
-HFC-125 ,HFC-32 ,3740.0,``hfc125``
-HFC-134a ,HFC-134a ,1530.0,``hfc134a``
-HFC-143a ,HFC-143a ,5810.0,``hfc143a``
-HFC-152 ,HFC-152 ,21.5,``hfc152``
-HFC-152a ,HFC-152a ,164.0,``hfc152a``
-:math:`\text{N}_2\text{O}` ,Nitrus Oxide ,273.0,``n2o``
-SF6 ,Sulfur Hexflouride ,25200.0,``sf6``
+﻿﻿ Gas ,``$EMISSION-GAS$`` ,Name ,Global Warming Potential 20,Global Warming Potential 100,Global Warming Potential 500
+:math:`\text{CH}_4` ,``ch4``,Methane ,81.2,27.9,7.95
+:math:`\text{CO}_2` ,``co2``,Carbon Dioxide ,1,1,1
+HFC-23 ,``hfc23``,HFC-23 ,12400,14600,10500
+HFC-32 ,``hfc32``,HFC-32 ,2690,771,220
+HFC-125 ,``hfc125``,HFC-125,6740,3740,1110
+HFC-134a ,``hfc134a``,HFC-134a ,4140,1530,436
+HFC-143a ,``hfc143a``,HFC-143a ,7840,5810,1940
+HFC-152 ,``hfc152``,HFC-152 ,77.6,21.5,6.14
+HFC-152a ,``hfc152a``,HFC-152a ,591,164,46.8
+:math:`\text{N}_2\text{O}` ,``n2o``,Nitrus Oxide ,273,273,130
+SF6 ,``sf6``,Sulfur Hexflouride ,18300,25200,34100

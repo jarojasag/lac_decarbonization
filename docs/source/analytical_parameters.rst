@@ -9,6 +9,5 @@ Fundamentally, the model is based on the concept of a Directed Acyclic Graph (DA
 Each run is based on a set of analytical parameters. These parameters are governed in a configuration file. The analytical parameters differ from model input variables in some key ways...
 
 .. csv-table:: Analytical Parameters delineated in **CONFIGNAME.config**.
-   :file: ./csvs/table_analytical_parameters.csv
-   :widths: 15, 15, 50, 20
+   :file: ./csvs/analytical_parameters.csv
    :header-rows: 1
