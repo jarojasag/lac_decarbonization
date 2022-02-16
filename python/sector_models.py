@@ -1,711 +1,582 @@
-import multiprocessing as mp
-import csv
-import xlrd
-import os, os.path
-from copy import deepcopy
-import itertools
-import numpy
-import errno
-import math
-import time
+import support_functions as sf
+import data_structures as ds
 import pandas as pd
 import numpy as np
+import time
+
+######################
+#     AFOLU MODEL    #
+######################
+
+class AFOLU:
+
+    def __init__(self, attributes: ds.ModelAttributes):
+
+        self.model_attributes = attributes
+        self.required_dimensions = self.get_required_dimensions()
+        self.required_subsectors, self.required_base_subsectors = self.get_required_subsectors()
+        self.required_variables, self.output_variables = self.get_afolu_input_output_fields()
+
+        ##  set some model fields to connect to the attribute tables
+
+        # agricultural model variables
+        self.modvar_agrc_area_prop = "Cropland Area Proportion"
+        self.modvar_agrc_area_crop = "Crop Area"
+        self.modvar_agrc_ef_ch4 = ":math:\\text{CH}_4 Crop Activity Emission Factor"
+        self.modvar_agrc_ef_n2o = ":math:\\text{CO}_2 Crop Activity Emission Factor"
+        self.modvar_agrc_ef_co2 = ":math:\\text{N}_2\\text{O} Crop Activity Emission Factor"
+        self.modvar_agrc_elas_crop_demand_income = "Crop Demand Income Elasticity"
+        self.modvar_agrc_emissions_ch4_crops = ":math:\\text{CH}_4 Emissions from Crop Activity"
+        self.modvar_agrc_emissions_co2_crops = ":math:\\text{CO}_2 Emissions from Crop Activity"
+        self.modvar_agrc_emissions_n2o_crops = ":math:\\text{N}_2\\text{O} Emissions from Crop Activity"
+        self.modvar_agrc_net_imports = "Crop Surplus Demand"
+        self.modvar_agrc_yf = "Crop Yield Factor"
+        self.modvar_agrc_yield = "Crop Yield"
+        # forest model variables
+        self.modvar_frst_elas_wood_demand = "Elasticity of Wood Products Demand to Value Added"
+        self.modvar_frst_ef_fires = "Forest Fire Emission Factor"
+        self.modvar_frst_ef_ch4 = "Forest Methane Emissions"
+        self.modvar_frst_emissions_sequestration = ":math:\\text{CO}_2 Emissions from Forest Sequestration"
+        self.modvar_frst_emissions_methane = ":math:\\text{CH}_4 Emissions from Forests"
+        self.modvar_frst_sq_co2 = "Forest Sequestration Emission Factor"
+        # land use model variables
+        self.modvar_lndu_area_by_cat = "Land Use Area"
+        self.modvar_lndu_ef_co2_conv = ":math:\\text{CO}_2 Land Use Conversion Emission Factor"
+        self.modvar_lndu_emissions_conv = ":math:\\text{CO}_2 Emissions from Land Use Conversion"
+        self.modvar_lndu_emissions_ch4_from_wetlands = ":math:\\text{CH}_4 Emissions from Wetlands"
+        self.modvar_lndu_emissions_n2o_from_pastures = ":math:\\text{N}_2\\text{O} Emissions from Pastures"
+        self.modvar_lndu_emissions_co2_from_pastures = ":math:\\text{CO}_2 Emissions from Pastures"
+        self.modvar_lndu_initial_frac = "Initial Land Use Area Proportion"
+        self.modvar_lndu_ef_ch4_boc = "Land Use BOC :math:\\text{CH}_4 Emission Factor"
+        self.modvar_lndu_ef_n2o_past = "Land Use Pasture :math:\\text{N}_2\\text{O} Emission Factor"
+        self.modvar_lndu_ef_co2_soilcarb = "Land Use Soil Carbon :math:\\text{CO}_2 Emission Factor"
+        self.modvar_lndu_prob_transition = "Unadjusted Land Use Transition Probability"
+        # livestock model variables
+        self.modvar_lvst_carrying_capacity_scalar = "Carrying Capacity Scalar"
+        self.modvar_lvst_dry_matter_consumption = "Daily Dry Matter Consumption"
+        self.modvar_lvst_ef_ch4_ef = ":math:\\text{CH}_4 Enteric Fermentation Emission Factor"
+        self.modvar_lvst_ef_ch4_mm = ":math:\\text{CH}_4 Manure Management Emission Factor"
+        self.modvar_lvst_ef_n2o_mm = ":math:\\text{N}_2\\text{O} Manure Management Emission Factor"
+        self.modvar_lvst_elas_lvst_demand = "Elasticity of Livestock Demand to GDP per Capita"
+        self.modvar_lvst_emissions_ch4_ef = ":math:\\text{CH}_4 Emissions from Livestock Enteric Fermentation"
+        self.modvar_lvst_emissions_ch4_mm = ":math:\\text{CH}_4 Emissions from Livestock Manure"
+        self.modvar_lvst_emissions_n2o_mm = ":math:\\text{N}_2\\text{O} Emissions from Livestock Manure"
+        self.modvar_lvst_frac_meat_import = "Fraction of Meat Consumption from Imports"
+        self.modvar_lvst_meat_demand_scalar = "Red Meat Demand Scalar"
+        self.modvar_lvst_net_imports = "Livestock Surplus Demand"
+        self.modvar_lvst_pop = "Livestock Head Count"
+        self.modvar_lvst_pop_init = "Initial Livestock Head Count"
+
+
+        # economy and general variables
+        self.modvar_econ_gdp = "GDP"
+        self.modvar_econ_va = "Value Added"
+        self.modvar_gnrl_area = "Area of Country"
+        self.modvar_gnrl_occ = "National Occupation Rate"
+        self.modvar_gnrl_subpop = "Population"
+        self.modvar_gnrl_pop_total = "Total Population"
+
+        ##  MISCELLANEOUS VARIABLES
+
+        self.time_periods, self.n_time_periods = self.get_time_periods()
+
+        # TEMP:SET TO DERIVE FROM ATTRIBUTE TABLES---
+        self.cat_lu_crop = "croplands"
+        self.cat_lu_grazing = "grasslands"
+        self.varchar_str_emission_gas = "$EMISSION-GAS$"
+        self.varchar_str_unit_mass = "$UNIT-MASS$"
+
+    ##  FUNCTIONS FOR MODEL ATTRIBUTE DIMENSIONS
+
+    def check_df_fields(self, df_afolu_trajectories):
+        check_fields = self.required_variables
+        # check for required variables
+        if not set(check_fields).issubset(df_afolu_trajectories.columns):
+            set_missing = list(set(check_fields) - set(df_afolu_trajectories.columns))
+            set_missing = sf.format_print_list(set_missing)
+            raise KeyError(f"AFOLU projection cannot proceed: The fields {set_missing} are missing.")
+
+
+    def get_required_subsectors(self):
+        subsectors = list(sf.subset_df(self.model_attributes.dict_attributes["abbreviation_subsector"].table, {"sector": ["AFOLU"]})["subsector"])
+        subsectors_base = subsectors.copy()
+        subsectors += ["Economy", "General"]
+        return subsectors, subsectors_base
+
+    def get_required_dimensions(self):
+        ## TEMPORARY - derive from attributes later
+        required_doa = [self.model_attributes.dim_time_period]
+        return required_doa
+
+    def get_afolu_input_output_fields(self):
+        required_doa = [self.model_attributes.dim_time_period]
+        required_vars, output_vars = self.model_attributes.get_input_output_fields(self.required_subsectors)
+        return required_vars + self.get_required_dimensions(), output_vars
+
+
+    # define a function to clean up code
+    def get_standard_variables(self, df_in, modvar, override_vector_for_single_mv_q: bool = False, return_type: str = "data_frame"):
+        flds = self.model_attributes.dict_model_variables_to_variables[modvar]
+        flds = flds[0] if ((len(flds) == 1) and not override_vector_for_single_mv_q) else flds
+
+        valid_rts = ["data_frame", "array_base", "array_units_corrected"]
+        if return_type not in valid_rts:
+            vrts = sf.format_print_list(valid_rts)
+            raise ValueError(f"Invalid return_type in get_standard_variables: valid types are {vrts}.")
+
+        # initialize output, apply various common transformations based on type
+        out = df_in[flds]
+        if return_type != "data_frame":
+            out = np.array(out)
+            if return_type == "array_units_corrected":
+                out *= self.get_scalar(modvar, "total")
+
+        return out
+
+
+    def get_time_periods(self):
+        pydim_time_period = self.model_attributes.get_dimensional_attribute("time_period", "pydim")
+        time_periods = self.model_attributes.dict_attributes[pydim_time_period].key_values
+        return time_periods, len(time_periods)
+
+
+    ##  STREAMLINING FUNCTIONS
+
+    # convert an array to a varibale out dataframe
+    def array_to_df(self, arr_in, modvar: str, include_scalars = False) -> pd.DataFrame:
+        # get subsector and fields to name based on variable
+        subsector = self.model_attributes.dict_model_variable_to_subsector[modvar]
+        fields = self.model_attributes.build_varlist(subsector, variable_subsec = modvar)
+
+        scalar_em = 1
+        scalar_me = 1
+        if include_scalars:
+            # get scalars
+            gas = self.model_attributes.get_variable_characteristic(modvar, self.varchar_str_emission_gas)
+            mass = self.model_attributes.get_variable_characteristic(modvar, self.varchar_str_unit_mass)
+            # will conver ch4 to co2e e.g. + kg to MT
+            scalar_em = 1 if not gas else self.model_attributes.get_gwp(gas.lower())
+            scalar_me = 1 if not mass else self.model_attributes.get_mass_equivalent(mass.lower())
+
+        # raise error if there's a shape mismatch
+        if len(fields) != arr_in.shape[1]:
+            flds_print = sf.format_print_list(fields)
+            raise ValueError(f"Array shape mismatch for fields {flds_print}: the array only has {arr_in.shape[1]} columns.")
+
+        return pd.DataFrame(arr_in*scalar_em*scalar_me, columns = fields)
+
+    # some scalars
+    def get_scalar(self, modvar: str, return_type: str = "total"):
+
+        valid_rts = ["total", "gas", "mass"]
+        if return_type not in valid_rts:
+            tps = sf.format_print_list(valid_rts)
+            raise ValueError(f"Invalid return type '{return_type}' in get_scalar: valid types are {tps}.")
+
+        # get scalars
+        gas = self.model_attributes.get_variable_characteristic(modvar, self.varchar_str_emission_gas)
+        scalar_gas = 1 if not gas else self.model_attributes.get_gwp(gas.lower())
+        #
+        mass = self.model_attributes.get_variable_characteristic(modvar, self.varchar_str_unit_mass)
+        scalar_mass = 1 if not mass else self.model_attributes.get_mass_equivalent(mass.lower())
+
+        if return_type == "gas":
+            out = scalar_gas
+        elif return_type == "mass":
+            out = scalar_mass
+        elif return_type == "total":
+            out = scalar_gas*scalar_mass
+
+        return out
+
+    # loop over a dictionary of simple variables that map an emission factor () to build out
+    def get_simple_input_to_output_emission_arrays(self, df_ef: pd.DataFrame, df_driver: pd.DataFrame, dict_vars: dict, variable_driver: str):
+        """
+            NOTE: this only works w/in subsector
+        """
+
+        df_out = []
+        subsector_driver = self.model_attributes.dict_model_variable_to_subsector[variable_driver]
+
+        for var in dict_vars.keys():
+            subsector_var = self.model_attributes.dict_model_variable_to_subsector[var]
+            if subsector_driver != subsector_driver:
+                warnings.warn(f"In get_simple_input_to_output_emission_arrays, driver variable '{variable_driver}' and emission variable '{var}' are in different sectors. This instance will be skipped.")
+            else:
+                # get emissions factor fields and apply scalar using get_standard_variables
+                arr_ef = np.array(self.get_standard_variables(df_ef, var, True, "array_units_corrected"))
+                # get the emissions driver array (driver must h)
+                arr_driver = np.array(df_driver[self.model_attributes.build_target_varlist_from_source_varcats(var, variable_driver)])
+                df_out.append(self.array_to_df(arr_driver*arr_ef, dict_vars[var]))
+
+        return df_out
+
+    # add subsector emission totals
+    def add_subsector_emissions_aggregates(self, df_in: pd.DataFrame, stop_on_missing_fields_q: bool = False):
+        # loop over base subsectors
+        for subsector in self.required_base_subsectors:
+            vars_subsec = self.model_attributes.dict_model_variables_by_subsector[subsector]
+            # add subsector abbreviation
+            fld_nam = self.model_attributes.get_subsector_attribute(subsector, "abv_subsector")
+            fld_nam = f"emission_co2e_subsector_total_{fld_nam}"
+
+            flds_add = []
+            for var in vars_subsec:
+                var_type = self.model_attributes.get_variable_attribute(var, "variable_type").lower()
+                gas = self.model_attributes.get_variable_characteristic(var, "$EMISSION-GAS$")
+                if (var_type == "output") and gas:
+                    flds_add +=  self.model_attributes.dict_model_variables_to_variables[var]
+
+            # check for missing fields; notify
+            missing_fields = [x for x in flds_add if x not in df_in.columns]
+            if len(missing_fields) > 0:
+                str_mf = print_setdiff(set(df_in.columns), set(flds_add))
+                str_mf = f"Missing fields {str_mf}.%s"
+                if stop_on_missing_fields_q:
+                    raise ValueError(str_mf%(" Subsector emission totals will not be added."))
+                else:
+                    warnings.warn(str_mf%(" Subsector emission totals will exclude these fields."))
+
+            keep_fields = [x for x in flds_add if x in df_in.columns]
+            df_in[fld_nam] = df_in[keep_fields].sum(axis = 0)
+
+
+    ######################################
+    #    SUBSECTOR SPECIFIC FUNCTIONS    #
+    ######################################
+
+
+    ###   AGRICULTURE
+
+    def check_cropland_fractions(self, df_in, thresh_for_correction: float = 0.01):
+
+            arr = self.get_standard_variables(df_in, self.modvar_agrc_area_prop, True, "array_base")
+            totals = sum(arr.transpose())
+            m = max(np.abs(totals - 1))
+
+            if m > thresh_for_correction:
+                raise ValueError(f"Invalid crop areas found in check_cropland_fractions. The maximum fraction total was {m}; the maximum allowed deviation from 1 is {thresh_for_correction}.")
+            else:
+                arr = (arr.transpose()/totals).transpose()
+
+            return arr
+
+
+    ###   LAND USE
+
+    ##  check the shape of transition/emission factor matrices sent to project_land_use
+    def check_markov_shapes(self, arrs: np.ndarray, function_var_name:str):
+            # get land use info
+            pycat_lndu = self.model_attributes.get_subsector_attribute("Land Use", "pycategory_primary")
+            attr_lndu = self.model_attributes.dict_attributes[pycat_lndu]
+
+            if len(arrs.shape) < 3:
+                raise ValueError(f"Invalid shape for array {function_var_name}; the array must be a list of square matrices.")
+            elif arrs.shape[1:3] != (attr_lndu.n_key_values, attr_lndu.n_key_values):
+                raise ValueError(f"Invalid shape of matrices in {function_var_name}. They must have shape ({attr_lndu.n_key_values}, {attr_lndu.n_key_values}).")
+
+    ##  get the transition and emission factors matrices from the data frame
+    def get_markov_matrices(self, df_ordered_trajectories, thresh_correct = 0.0001):
+        """
+            - assumes that the input data frame is ordered by time_period
+            - thresh_correct is used to decide whether or not to correct the transition matrix (assumed to be row stochastic) to sum to 1; if the abs of the sum is outside this range, an error will be thrown
+            - fields_pij and fields_efc will be properly ordered by categories for this transformation
+        """
 
-################################
-#    AGRICULTURAL EMISSIONS    #
-################################
-
-def sm_agriculture(df_in, all_ag, area):
-  	
-	#initialize dict of output
-	dict_out = {}
-	#initialize total
-	vec_total_emit = 0.
-	#gdp based
-	for ag in all_ag:
-		#idenfity some fields
-		field_area = "frac_lu_" + ag
-		field_ef = ag + "_kg_co2e_ha"
-		#emission total fields
-		field_emit = "emissions_agriculture_" + ag + "_MT_co2e"
-		#update total emissions (gg co2e)
-		vec_emit = area*(np.array(df_in[field_area])*np.array(df_in[field_ef])*(10**(-6))).astype(float)
-		#conver to MT
-		vec_emit = vec_emit/1000
-		#add to dictionary
-		dict_out.update({field_emit: vec_emit})
-		#update
-		vec_total_emit = vec_total_emit + vec_emit
-	#add to dictionary
-	dict_out.update({"emissions_agriculture_crops_total_MT_co2e": vec_total_emit})
-    #return
-	return dict_out
-
-
-
-
-###################
-#    BUILDINGS    #
-###################
-
-def sm_buildings(df_in):
-
-	
-	#dictionary of fields to apply scalar to
-	all_builds = ["agriculture", "commercial", "industry", "residential"]
-	#dictionary to map sectors to shorthand
-	dict_shorthand = dict([[x, x[0:3]] for x in all_builds])
-	
-	
-	#output dictionary
-	dict_out = {}
-	#gdp based
-	for build in list(set(all_builds) - {"residential"}):
-		
-		if build == "commercial":
-			field_emit = "emissions_buildings_stationary_MT_co2e_com"
-		else:
-			field_emit = "emissions_" + build + "_energy_input_MT_co2e"
-		#add in livestock
-		if build == "agriculture":
-			additional_gdp = np.array(df_in["va_livestock"])
-		else:
-			additional_gdp = float(0)
-			
-		#update field for energy consumption
-		field_energy_demand_elec = "energy_consumption_electricity_PJ_" + dict_shorthand[build]
-		field_energy_demand_nonelec = "energy_consumption_non_electricity_PJ_" + dict_shorthand[build]
-		#some components
-		field_dem_fac = build + "_df_pj_per_million_gdp"
-		field_factor = build + "_ef_kt_co2e_per_pj"
-		field_elec_frac = build + "_frac_electric"
-		field_va = "va_" + build
-		#energy demand
-		dem_ener = (np.array(df_in[field_va]) + additional_gdp)*np.array(df_in[field_dem_fac])
-		frac_elec = np.array(df_in[field_elec_frac])
-		vec_out = (1 - frac_elec)*dem_ener*np.array(df_in[field_factor])
-		#convert to megatons
-		vec_out = vec_out/1000
-		#
-		dict_out.update({
-			field_emit: vec_out,
-			field_energy_demand_elec: frac_elec*dem_ener,
-			field_energy_demand_nonelec: (1 - frac_elec)*dem_ener
-		})
-		
-	# RESIDENTIAL
-	build = "residential"
-	field_emit = "emissions_buildings_stationary_MT_co2e_res"
-	#some components
-	field_dem_fac = build + "_df_pj_per_hh"
-	field_factor = build + "_ef_kt_co2e_per_pj"
-	field_elec_frac = build + "_frac_electric"
-	field_or = "occ_rate"
-	#energy demand
-	field_energy_demand_elec = "energy_consumption_electricity_PJ_" + dict_shorthand[build]
-	field_energy_demand_nonelec = "energy_consumption_non_electricity_PJ_" + dict_shorthand[build]
-	#number of households
-	vec_hh = np.array(df_in["total_population"])/np.array(df_in[field_or])
-	#energy demand
-	dem_ener = vec_hh*np.array(df_in[field_dem_fac])
-	frac_elec = np.array(df_in[field_elec_frac])
-	#output emissions
-	vec_out = (1 - frac_elec)*dem_ener*np.array(df_in[field_factor])
-	vec_out = vec_out/1000
-	
-	dict_out.update({
-		field_emit: vec_out,
-		field_energy_demand_elec: frac_elec*dem_ener,
-		field_energy_demand_nonelec: (1 - frac_elec)*dem_ener
-	})
-
-	
-	#fields to sum for buildings total over
-	fields_total = ["emissions_buildings_stationary_MT_co2e_" + x for x in ["res", "com"]]
-	#set total vector
-	total_em = sum(np.array([dict_out[x] for x in fields_total]))
-	#update
-	dict_out.update({"emissions_buildings_total_MT_co2e": total_em})
-
-	#return
-	return dict_out
-
-
-
-
-
-
-################
-#    ENERGY    #
-################
-
-def sm_energy(vec_pop, vec_gdp, vec_dem_pgdp_grid_com, vec_dem_pgdp_ind, vec_dem_pc_grid_res, frac_ind_energy_elec, vec_ef_per_energy_ind, dict_pp_props, dict_pp_ef, dict_co2e):
-		
-	# vec_pop is the population in millions
-	# vec_gdp is total gdp in billion $USD
-	# vec_dem_pgdp_grid_com is commercial demand factor in PJ/billion $USD
-	# vec_dem_pgdp_grid_ind is industrial demand factor in PJ/billion $USD
-	# vec_dem_pc_grid_res is residential demand factor in PJ/million people
-	# frac_ind_energy_elec is the fraction of industrial energy that comes from electricity
-	# vec_ef_per_energy_ind is the emissions factor for non-electric industrial energy (KTCO2e/PJ)
-	# dict_pp_props is a dictionary (power plant, subtype) of proportion of power provided by each type
-	# dict_pp_ef is a dictionary (gas, power plant, pp subtype) of emissions factors by gas, pp, and pps
-	# dict_co2e gives the co2e transformations for different gasses
-
-	#names from each dictionary
-
-	#set all classes
-	all_pp = [x for x in dict_pp_props.keys()]
-	all_pps = [x for x in dict_pp_props[all_pp[0]]]
-	all_gasses = [x for x in dict_co2e if (x in dict_pp_ef.keys())]
-
-	#generate total grid demand by sector
-	dem_grid_com = vec_gdp * vec_dem_pgdp_grid_com
-	dem_grid_ind = vec_gdp * vec_dem_pgdp_ind * frac_ind_energy_elec
-	dem_grid_res = vec_pop * vec_dem_pc_grid_res
-	
-	#get non-electric industrial energy emissions
-	dem_nongrid_ind = vec_gdp * vec_dem_pgdp_ind * (1 - frac_ind_energy_elec)
-	em_nonelectric_energy_ind = dem_nongrid_ind * vec_ef_per_energy_ind
-	
-	
-	#initialize each grid emissions type
-	grid_em_com = [0 for x in range(len(vec_gdp))]
-	grid_em_ind = [0 for x in range(len(vec_gdp))]
-	grid_em_res = [0 for x in range(len(vec_pop))]
-
-	#loop over gas types to generate emissions totals
-	for gas in all_gasses:
-		#multiply by co2e
-		equiv = dict_co2e[gas]
-		#loop over each power plant type
-		for ppt in all_pp:
-			for ppst in all_pps:
-				#get proportion of emissions from the type
-				prop = dict_pp_props[ppt][ppst]
-				#get emissions factors per PJ
-				ef = dict_pp_ef[gas][ppt][ppst]
-				#get total commercial and residential grid demand satisfied
-				grid_em_com = grid_em_com + ef * prop * dem_grid_com
-				grid_em_ind = grid_em_ind + ef * prop * dem_grid_ind
-				grid_em_res = grid_em_res + ef * prop * dem_grid_res
-				
-	#set total vector
-	total_em_grid = [(grid_em_com[x] + grid_em_ind[x] + grid_em_res[x])/1000 for x in range(len(grid_em_com))]
-	#set total vector
-	total_em = [(total_em_grid[x] + (em_nonelectric_energy_ind[x]/1000)) for x in range(len(grid_em_com))]
-				
-	#set output
-	dict_output = {
-		"energy_consumption_electricity_PJ_com": dem_grid_com,
-		"energy_consumption_electricity_PJ_ind": dem_grid_ind,
-		"energy_consumption_electricity_PJ_res": dem_grid_res,
-		"energy_consumption_non_electricity_PJ_ind": dem_nongrid_ind,
-		"emissions_electricity_MT_co2e_com": grid_em_com/1000,
-		"emissions_electricity_MT_co2e_ind": grid_em_ind/1000,
-		"emissions_electricity_MT_co2e_res": grid_em_res/1000,
-		"emissions_non_electricity_energy_MT_co2e_ind": em_nonelectric_energy_ind/1000,
-		"emissions_electricity_total_MT_co2e": total_em_grid,
-		"emissions_energy_sector_total_MT_co2e": total_em
-	}
-	#return
-	return dict_output
-
-
-
-#####################################
-#    INDUSTRY - PROCESS EMISSIONS   #
-#####################################
-    
-def sm_industrial(df_in, dict_gdp_field):
-    #initialize output dictionary
-	dict_out = {}
-	vec_total_emit = 0.
-	#gdp based
-	for prod in ["carburo", "cal", "vidrio", "industry_at_large"]:
-		if prod != "industry_at_large":
-			field_emit = "emissions_industry_indproc_" + prod + "_MT_co2e"
-		else:
-			field_emit = "emissions_industry_indproc_general_use_MT_co2e"
-		field_gdp = dict_gdp_field[prod]
-		field_factor = prod + "_kt_co2e_per_million_usd"
-		#update emissions
-		vec_emit = np.array(df_in[field_gdp])*np.array(df_in[field_factor])/1000
-		#add to total
-		vec_total_emit = vec_total_emit + vec_emit
-		#update dictionary
-		dict_out.update({field_emit: vec_emit})
-		
-	#cement
-	prod = "cemento"
-	field_emit = "emissions_industry_indproc_" + prod + "_MT_co2e"
-	field_prod = "production_industry_" + prod + "_KT"
-	field_gdp = dict_gdp_field[prod]
-	field_factor = prod + "_kt_co2e_per_kt_prod"
-	field_prod_factor = prod + "_kt_prod_per_million_usd"
-	#estimate production
-	vec_prod = np.array(df_in[field_prod_factor])*np.array(df_in[field_gdp])
-	#calculate emissions
-	vec_emit = vec_prod*np.array(df_in[field_factor])/1000
-	#add to total
-	vec_total_emit = vec_total_emit + vec_emit
-	#update emissions
-	dict_out.update({
-		field_prod: vec_prod,
-		field_emit: vec_emit,
-		"emissions_industry_indproc_total_MT_co2e": vec_total_emit
-	})
-
-	#return
-	return dict_out
-
-
-
-##################
-#    LAND USE    #
-##################
-
-##TEMPORARY MODEL
-def sm_land_use(df_in, all_lu, all_forest, all_lu_conv, tuple_my_dim, area, use_lu_diff_for_conv_q):
-
-	dict_out = {}
-	#
-	#NOTE: assumes that df_in is sorted by master id, then year
-	#tuple_my_dim = (n_master, n_year)
-	#
-	n_master = tuple_my_dim[0]
-	n_year = tuple_my_dim[1]
-	#initialize totals
-	vec_total_emit = 0.
-	vec_forest_emit = 0.
-	#gdp based
-	for lu in (all_lu + all_forest):
-		#idenfity some fields
-		field_area = "frac_lu_" + lu
-		field_ef = lu + "_ef_c1_gg_co2e_ha"
-		#emission total fields
-		field_emit = "emissions_land_use_existence_" + lu + "_MT_co2e"
-		#update total emissions
-		vec_emit = area*np.array(df_in[field_area])*np.array(df_in[field_ef])/1000
-		#update
-		dict_out.update({field_emit: vec_emit})
-		#add
-		vec_total_emit = vec_total_emit + vec_emit
-		#update forest emissions
-		if lu in all_forest:
-			vec_forest_emit = vec_forest_emit + vec_emit
-			
-		#check for conversion
-		if lu in all_lu_conv:
-			#initialize
-			field_emit_conv = "emissions_land_use_conversion_" + lu + "_MT_co2e"
-			#use difference in area, or is there
-			if use_lu_diff_for_conv_q:
-				#vector of area
-				vec_area = area*np.array(df_in[field_area]).astype(float)
-				#get vec of diffs
-				vec_diff = vec_area[1:len(vec_area)] - vec_area[0:(len(vec_area) - 1)]
-				vec_diff = np.array([vec_diff[0]] + list(vec_diff)).astype(float)
-				#vector of differences in years
-				vec_diff_years = np.array(df_in["year"])
-				vec_diff_years = vec_diff_years[1:len(vec_diff_years)] - vec_diff_years[0:(len(vec_diff_years) - 1)]
-				vec_diff_years = np.array([vec_diff_years[0]] + list(vec_diff_years))
-
-				#update differences so that base year is properly accounted for
-				for i in range(0, n_master):
-					#get min range
-					r_min = i*n_year
-					r_max = (i + 1)*n_year
-					#update
-					vec_diff[r_min] = vec_diff[r_min + 1]
-					vec_diff_years[r_min] = vec_diff_years[r_min + 1]
-
-				#get estimated emissions
-				est_ce = vec_diff*vec_ef/vec_diff_years
-				#convert to zero
-				est_ce[np.where(est_ce < 0)] = 0
-			else:
-				#initialize new estimate of conversion emissions
-				est_ce = 0.
-
-				#get conversion fields
-				fields_ef_conv = [x + "_to_" + lu + "_ef_conversion_c1_gg_co2e_ha" for x in all_forest]
-				fields_area_conv = [x + "_conv_to_" + lu + "_area_ha" for x in all_forest]
-				#array of emissions factors/areas
-				array_ef = np.array(df_in[fields_ef_conv]).astype(float)
-				array_area = np.array(df_in[fields_area_conv]).astype(float)
-				#add conversion emissions estimate
-				est_ce = sum((array_ef*array_area).transpose())
-				
-			#convert to MT
-			est_ce = est_ce/1000
-			#add to dictionary
-			dict_out.update({field_emit_conv: est_ce})
-			#add to total
-			vec_total_emit = vec_total_emit + est_ce
-	#add to dictionary
-	dict_out.update({
-		"emissions_land_use_forested_MT_co2e": vec_forest_emit,
-		"emissions_land_use_net_MT_co2e": vec_total_emit
-	})
-	
-	return dict_out
-
-
-
-
-###################
-#    LIVESTOCK    #
-###################
-
-def sm_livestock(df_in, all_ls):
-
-	#initialize output dictionary
-	dict_out = {}
-	#initialize total emissions by type
-	vec_total_emit_man = 0.0
-	vec_total_emit_fer = 0.0
-	vec_total_emit = 0.0
-	#gdp based
-	for lsc in all_ls:
-		#idenfity some fields
-		field_count = lsc
-		#get emissions factors fields
-		field_ef_f = lsc + "_fermentation_ef_c1_gg_co2e_head"
-		field_ef_m = lsc + "_manure_ef_c1_gg_co2e_head"
-		#emission total fields
-		field_emit_f = "emissions_livestock_" + lsc + "_fermentation_MT_co2e"
-		field_emit_m = "emissions_livestock_" + lsc + "_manure_MT_co2e"
-		#update emissions by type for this livestock class
-		vec_emit_man = np.array(df_in[field_count])*np.array(df_in[field_ef_m]).astype(float)/1000
-		vec_emit_fer = np.array(df_in[field_count])*np.array(df_in[field_ef_f]).astype(float)/1000
-		#update totals by type
-		vec_total_emit_man = vec_total_emit_man + vec_emit_man
-		vec_total_emit_fer = vec_total_emit_fer + vec_emit_fer
-		#add to dictionary
-		dict_out.update({
-			field_emit_f: vec_emit_fer,
-			field_emit_m: vec_emit_man
-		})
-	
-	#update total emissions for livestock
-	vec_total_emit = vec_total_emit_man + vec_total_emit_fer
-	#add to dictionary
-	dict_out.update({
-		"emissions_livestock_fermentation_MT_co2e": vec_total_emit_fer,
-		"emissions_livestock_manure_MT_co2e": vec_total_emit_man,
-		"emissions_livestock_total_MT_co2e": vec_total_emit
-	})
-
-	#return
-	return dict_out
-
-
-
-###############
-#    WASTE    #
-###############
-
-def sm_waste(
-	waste_df,
-	waste_df_base,
-	gasses,
-	all_keys_sdrd,
-	all_ar,
-	dict_proportion_group_substrs,
-	param_m,
-	param_docf,
-	param_f,
-	dict_gas_co2e,
-	dict_fields = {"population": "total_population", "gdp_ind": "va_industry"},
-	compost_reciclaje_keys = set({"alimiento", "jardin"})
-):
-
-	###   SOME FIELDS
-	
-	field_pop = dict_fields["population"]
-	field_gdp = dict_fields["gdp_ind"]
-	
-	#proportion of non-recycled waste heading to landfill
-	field_frac_sdrd = "frac_rso_sdrd"
-	field_frac_quemado = "frac_rso_quemado"
-	if "year" in waste_df.columns:
-		field_year = "year"
-	elif "Year" in waste_df.columns:
-		field_year = "Year"
-	elif "anho" in waste_df.columns:
-		field_year = "anho"
-
-	
-	###   BUILD SDRD DATA
-	
-	fields_waste_sdrd = [x for x in waste_df_base.columns if (x in waste_df.columns)]
-	waste_df_sdrd = pd.concat([waste_df_base[fields_waste_sdrd], waste_df[fields_waste_sdrd]])
-	#length of waste_df
-	n_wdf = len(waste_df)
-	
-	###   PARAMTERS OF INTEREST
-
-	years = waste_df[field_year]
-	methane_proportion_captured = np.array(waste_df_sdrd["frac_recap"])
-	factor_ggri_per_bilpib = waste_df_sdrd["ggri_per_bilpib"]
-	
-	#conversion factors for CH4 and N20 to CO2e -- these are unique and taken from estimates
-	#dict_gas_co2e = {}
-	#set n; TEMP: USE ONLY BASELINE VALUE
-	#n = 0#len(waste_df) - 1
-	#for gas in gasses:
-	#	field_wdf = gas + "_to_co2e"
-	#	dict_gas_co2e.update({gas: waste_df[field_wdf][n]})
-
-	###   WASTE TOTALS
-
-	##  SDRD
-	
-	#get population in millions
-	pop_millions = np.array(waste_df[field_pop])*(10**(-6))
-	pop_millions_sdrd = np.array(waste_df_sdrd[field_pop])*(10**(-6))
-	#build total waste
-	rso_produced_sdrd = pop_millions_sdrd * waste_df_sdrd["residuos_per_capita_per_anho_kg"]
-	#industrial waste totals (gdp will be in millions of dollars, not billions)
-	sdrd_waste_ind = np.array(waste_df_sdrd[field_gdp])*factor_ggri_per_bilpib/1000
-
-	##  OTHER SOLID WASTE METHODS
-	rso_produced = np.array(pop_millions * waste_df["residuos_per_capita_per_anho_kg"])
-	#get proportion of waste to landfill
-	rso_frac_sdrd = np.array(waste_df_sdrd["frac_rso_sdrd"])
-	
-	##  NET EMISSIONS FROM RECYCLING/COMPOST
-	em_recycling = 0.
-	em_compost = 0.
-	
-	#fraction
-	if True:
-		#get substring id to get proportion of waste by type
-		substr_identifier_pwt = str(dict_proportion_group_substrs["typo_de_residuo_en_sdrd"])
-		#initialize dictionary of waste output by type
-		dict_rso_by_type = {}
-		#initialize vectors of quantities
-		vec_recycled = 0.
-		vec_sdrd = 0.
-		vec_compost = 0.
-		vec_otro = 0.
-		vec_quemado = 0.
-		#recycle/compost keys
-		keys_rc = list(set(all_keys_sdrd) - set({"industrial"}))
-		keys_rc.sort()
-		#loop
-		for wc in keys_rc:
-			#initialize the dictionary that splits out quantities of waste by type (rec/sdrd)
-			dict_rso_by_type.update({wc: {}})
-			#check for field
-			field_rec = "frac_" + wc + "_rec"
-			#field giving proportion of waste heading to landfill that is of type wc
-			field_frac_rso = "sdrd_frac_" + wc
-			#field giving the emissions factors by type
-			field_ef_wc = "ef_rec_" + wc
-			#total rso representing waste of type wc (estimated)
-			rso_produced_wc = np.array(rso_produced_sdrd)*np.array(waste_df_sdrd[field_frac_rso])
-			#get quantity of produced waste of type wc that is recycled
-			rso_recycled = rso_produced_wc*np.array(waste_df_sdrd[field_rec])
-			#get quantity that heads to landfill
-			rso_sdrd = (rso_produced_wc - rso_recycled)*np.array(waste_df_sdrd[field_frac_sdrd])
-			#get fraction burned
-			rso_quemado = (rso_produced_wc - (rso_recycled + rso_sdrd))*np.array(waste_df_sdrd[field_frac_quemado])
-			#waste that is unaccounted for
-			rso_otro = rso_produced_wc - (rso_recycled + rso_sdrd + rso_quemado)
-			#add to recycling
-			if wc not in compost_reciclaje_keys:
-				vec_recycled = vec_recycled + rso_recycled
-				#get emissions
-				em_recycling = em_recycling + rso_recycled*np.array(waste_df_sdrd[field_ef_wc])
-			else:
-				vec_compost = vec_compost + rso_recycled
-				#get emissions
-				em_compost = em_recycling + rso_recycled*np.array(waste_df_sdrd[field_ef_wc])
-
-			#update other values (index only to waste_df)
-			vec_otro = vec_otro + rso_otro[-n_wdf:]
-			vec_quemado = vec_quemado + rso_quemado[-n_wdf:]
-			vec_sdrd = vec_sdrd + rso_sdrd[-n_wdf:]
-			#add to dictionary
-			dict_rso_by_type[wc].update({"recycled": rso_recycled, "sdrd": rso_sdrd, "burned": rso_quemado, "other": rso_otro})
-
-	#generate estimate of rso that is burned (quemado)
-	rso_quemado = vec_quemado
-	#other rso
-	rso_otro = vec_otro
-	#reduce recycling and compost to waste_df length
-	vec_recycled = vec_recycled[-n_wdf:]
-	em_recycling = em_recycling[-n_wdf:]
-	
-	vec_compost = vec_compost[-n_wdf:]
-	em_compost = em_compost[-n_wdf:]
-
-	##  DOMESTIC/INDUSTRIAL SEWAGE, GG
-	em_industrial_inc_dbo = 0.25
-	#kT waste (pop is in millions)
-	dbo_waste_dom = pop_millions * waste_df["kg_dbo5_per_capita_per_anho"]
-	dbo_waste_ind = dbo_waste_dom * em_industrial_inc_dbo#waste_df["em_industrial_inc_dbo"]
-	
-
-	######################
-	#    BURNED WASTE    #
-	######################
-
-	#estimate emissions from burned waste
-	em_quemado = np.array([0 for x in range(len(rso_quemado))])
-	#set all emissions types
-	for emt in gasses:
-		#get
-		key = "tonne_rq_gg_em_" + emt
-		#add?
-		if key in waste_df.columns:
-			#get emissions factor
-			factor_em = dict_gas_co2e[emt]
-			#return emissions; multiply by 1000 since rso_quemado is in terms of KT (GG), needs to be in tonnes
-			em_quemado = em_quemado + 1000 * rso_quemado * waste_df[key] * factor_em
-
-
-	####################
-	#    SDRD WASTE    #
-	####################
-
-	#get monthly exponent component
-	exp_comp_month = (13 - param_m)/12
-	#set molecular weight ratio of ch4 to c
-	weight_ratio = 4/3
-
-	#set output
-	dict_em_rso = {}
-	dict_em_rso_all_years = {}
-	dict_arrays = {}
-	dict_earrays = {}
-	dict_ddoc_waste = {}
-	#get substring id to get proportion of waste by type
-	substr_identifier = str(dict_proportion_group_substrs["typo_de_residuo_en_sdrd"])
-
-	#loop over names
-	for wt in all_keys_sdrd:
-		#get appropriate fields
-		field_k = "rso_k_" + wt
-		field_doc = "rso_doc_" + wt
-		field_mcf = "mean_mcf_sdrd"
-		#get emissions decay factor (k)
-		k = list(waste_df_sdrd[field_k])
-		#TEMPORARY AS OF 20191217 - INDEX TO FIRST YEAR TO ELIMINATE UNCERTAINTY SPREAD; APPLIES TO k AND doc
-		k = k[0]#k[len(k) - 1]
-		#get doc
-		doc = list(waste_df_sdrd[field_doc])
-		doc = doc[0]#doc[len(doc) - 1]
-		#get mcf vector
-		mcf_vector = np.array(waste_df_sdrd[field_mcf])
-		#check
-		
-		#get proportion of all sdrd waste that is of type wt
-		field_wt = substr_identifier + wt
-
-		if field_wt in waste_df.columns:
-			#set total waste
-			residuos_vol = np.array(dict_rso_by_type[wt]["sdrd"])
-		else:
-			residuos_vol = sdrd_waste_ind
-
-		#get the estimated mass of decompostable degradable organic carbon (DDOC) deposited each year
-		ddoc_waste = list(residuos_vol * doc * param_docf * mcf_vector)
-
-		#gives proportion of mass that has decayed during time period i (index 1, the second element, represents waste deposited in year 0 decaying in year 1)
-		vec_decay_prop = [0] + [(math.e**(-k * (x - 1)))*(1 - math.e**(-k)) for x in range(1, len(ddoc_waste))]
-		#build matrix where each row i represents the proportion of waste deposited at time i that emits in time j
-		array_decay_prop = [([0 for y in range(0, int(x))] + vec_decay_prop[0:(len(vec_decay_prop) - (int(x)))]) for x in range(0, len(vec_decay_prop))]
-		array_decay_prop = np.array(array_decay_prop)
-		#build array where each row i, column j gives total amount of CH4 emissions at time j due to waste deposited at time i
-		emissions_array = np.array([ddoc_waste[int(x)] * param_f * weight_ratio * array_decay_prop[int(x)] for x in range(0, len(array_decay_prop))])
-		#get
-		y = list(emissions_array.sum(axis = 0))
-		#incorporate capture proportion
-		y = list(np.array(y) * (1 - np.array(methane_proportion_captured)) * dict_gas_co2e["ch4"])
-		#reduce y for only applicable model years
-		y_red = [y[x] for x in range(len(waste_df_sdrd)) if (list(waste_df_sdrd[field_year])[x] >= min(waste_df[field_year]))]
-
-		dict_ddoc_waste.update({wt: ddoc_waste})
-		dict_arrays.update({wt: array_decay_prop})
-		dict_earrays.update({wt: emissions_array})
-		dict_em_rso_all_years.update({wt: y})
-		dict_em_rso.update({wt: y_red})
-
-	#get total
-	em_rso_total = [0 for x in range(0, len(dict_em_rso["jardin"]))]
-	em_rso_total_all_years = [0 for x in range(0, len(dict_em_rso_all_years["jardin"]))]
-
-	for key in list(dict_em_rso.keys()):
-		em_rso_total = [em_rso_total[int(x)] + dict_em_rso[key][int(x)] for x in range(0, len(dict_em_rso[key]))]
-		em_rso_total_all_years = [em_rso_total_all_years[int(x)] + dict_em_rso_all_years[key][int(x)] for x in range(0, len(dict_em_rso_all_years[key]))]
-	em_rso_total = em_rso_total + em_recycling + em_compost
-	#add to dictionary
-	dict_em_rso.update({"total": em_rso_total})
-	dict_em_rso_all_years.update({"total": em_rso_total_all_years})
-
-
-	################################
-	#    AGUAS RESIDUALES WASTE    #
-	################################
-
-	#initialize mcf for ar
-	ar_mcf = np.array([0 for x in range(len(waste_df))])
-	#loop to build mean mcf
-	for art in all_ar:
-		#set fields
-		field_ar_prop = dict_proportion_group_substrs["typo_de_ar"] + art
-		field_ar_mcf = "ar_typo_mcf_" + art
-		ar_mcf = ar_mcf + waste_df[field_ar_prop] * waste_df[field_ar_mcf]
-	em_dbo_dom = ar_mcf * dbo_waste_dom * waste_df["max_ch4_per_dbo"] * dict_gas_co2e["ch4"]
-	em_dbo_ind = ar_mcf * dbo_waste_ind * waste_df["max_ch4_per_dbo"] * dict_gas_co2e["ch4"]
-
-
-	#########################
-	#    PROTEINAS WASTE    #
-	#########################
-
-	#define conversion factor from IPCC model kg N2O-N into kg N2O (44/28)
-	factor_n2on_n2o = 11/7
-	#calculate total volume of protein (n2o, not ch4, emissions)
-	vec_proteina = np.array(pop_millions * waste_df["kg_por_persona_proteina_per_anho"] * waste_df["factor_nonconsum_ind_proteina"] * waste_df["factor_nonconsum_dom_proteina"])
-	#note: calculations in 0 SCS *exclude* the 1.25 industrial factor. These are included here
-	em_n20_proteina = vec_proteina * factor_n2on_n2o * np.array(waste_df["kg_n2_per_kg_proteina"] * waste_df["kg_n2o_per_kg_n"])
-	#convert
-	em_proteina = em_n20_proteina * dict_gas_co2e["n2o"]
-
-	###   GET THE TOTAL WASTE
-	total_waste = np.array(dict_em_rso["total"]) + np.array(em_quemado) + np.array(em_dbo_dom) + np.array(em_dbo_ind) + np.array(em_proteina)
-
-	###   OUTPUT DICTIONARY - divide by 1000 to convert to megatons
-	dict_out = {
-		"year": list(waste_df[field_year]),
-		"emissions_waste_total_MT_co2e": total_waste/1000,
-		"emissions_waste_dbo_industrial_MT_co2e": np.array(em_dbo_ind)/1000,
-		"emissions_waste_dbo_domestico_MT_co2e": np.array(em_dbo_dom)/1000,
-		"emissions_waste_rso_quemado_MT_co2e": np.array(em_quemado)/1000,
-		"emissions_waste_proteina_MT_co2e": np.array(em_proteina)/1000,
-		"emissions_waste_compost_MT_co2e": np.array(em_compost)/1000,
-		"emissions_waste_recycling_MT_co2e": np.array(em_recycling)/1000,
-		"waste_generated_recycled_KT": vec_recycled,
-		"waste_generated_compost_KT": vec_compost,
-		"waste_generated_landfill_KT": vec_sdrd,
-		"waste_generated_burned_KT": vec_quemado,
-		"waste_generated_other_KT": vec_otro,
-		"wastewater_generated_protein_n2o_KT": vec_proteina,
-		"wastewater_generated_bdo_domestic_ch4_KT": dbo_waste_dom,
-		"wastewater_generated_bdo_industrial_ch4_KT": dbo_waste_ind,
-		"wastewater_generated_total_KT": (vec_proteina + dbo_waste_dom + dbo_waste_ind)
-	}
-
-	for wt in all_keys_sdrd:
-		#new field name
-		field_new = "emissions_waste_sdrd_" + wt
-		#add to dictionary
-		dict_out.update({field_new: np.array(dict_em_rso[wt])/1000})
-
-	return pd.DataFrame(dict_out)
+        fields_pij = self.model_attributes.dict_model_variables_to_variables[self.modvar_lndu_prob_transition]
+        fields_efc = self.model_attributes.dict_model_variables_to_variables[self.modvar_lndu_ef_co2_conv]
+        sf.check_fields(df_ordered_trajectories, fields_pij + fields_efc)
+
+        pycat_landuse = self.model_attributes.get_subsector_attribute("Land Use", "pycategory_primary")
+
+        n_categories = len(self.model_attributes.dict_attributes[pycat_landuse].key_values)
 
+        # fetch arrays of transition probabilities and co2 emission factors
+        arr_pr = np.array(df_ordered_trajectories[fields_pij])
+        arr_pr = arr_pr.reshape((self.n_time_periods, n_categories, n_categories))
+        arr_ef = np.array(df_ordered_trajectories[fields_efc])
+        arr_ef = arr_ef.reshape((self.n_time_periods, n_categories, n_categories))
 
+        return arr_pr, arr_ef
+
+    ##  project land use
+    def project_land_use(self, vec_initial_area: np.ndarray, arrs_transitions: np.ndarray, arrs_efs: np.ndarray):
+
+        t0 = time.time()
+
+        # check shapes
+        self.check_markov_shapes(arrs_transitions, "arrs_transitions")
+        self.check_markov_shapes(arrs_efs, "arrs_efs")
+
+        # get land use info
+        pycat_lndu = self.model_attributes.get_subsector_attribute("Land Use", "pycategory_primary")
+        attr_lndu = self.model_attributes.dict_attributes[pycat_lndu]
+
+        # intilize the land use and conversion emissions array
+        shp_init = (self.n_time_periods, attr_lndu.n_key_values)
+        arr_land_use = np.zeros(shp_init)
+        arr_emissions_conv = np.zeros(shp_init)
+        arrs_land_conv = np.zeros((self.n_time_periods, attr_lndu.n_key_values, attr_lndu.n_key_values))
+
+        # running matrix Q_i; initialize as identity. initialize running matrix of land use are
+        Q_i = np.identity(attr_lndu.n_key_values)
+        x = vec_initial_area
+        i = 0
+
+        while i < self.n_time_periods:
+
+            # check emission factor index
+            i_ef = i if (i < len(arrs_efs)) else len(arrs_efs) - 1
+            if i_ef != i:
+                print(f"No emission factor matrix found for time period {self.time_periods[i]}; using the matrix from period {len(arrs_efs) - 1}.")
+            # check transition matrix index
+            i_tr = i if (i < len(arrs_transitions)) else len(arrs_transitions) - 1
+            if i_tr != i:
+                print(f"No transition matrix found for time period {self.time_periods[i]}; using the matrix from period {len(arrs_efs) - 1}.")
+
+            # calculate land use, conversions, and emissions
+            vec_land_use = np.matmul(vec_initial_area, Q_i)
+            vec_emissions_conv = sum((arrs_transitions[i_tr] * arrs_efs[i_ef]).transpose()*x.transpose())
+            arr_land_conv = (arrs_transitions[i_tr].transpose()*x.transpose()).transpose()
+
+            # update matrices
+            rng_put = np.arange(i*attr_lndu.n_key_values, (i + 1)*attr_lndu.n_key_values)
+            np.put(arr_land_use, rng_put, vec_land_use)
+            np.put(arr_emissions_conv, rng_put, vec_emissions_conv)
+            np.put(arrs_land_conv, np.arange(i*attr_lndu.n_key_values**2, (i + 1)*attr_lndu.n_key_values**2), arr_land_conv)
+
+            # update transition matrix and land use matrix
+            Q_i = np.matmul(Q_i, arrs_transitions[i_tr])
+            x = vec_land_use
+
+            i += 1
+
+        t1 = time.time()
+        t_elapse = round(t1 - t0, 2)
+        print(f"Land use projection complete in {t_elapse} seconds.")
+
+        return arr_emissions_conv, arr_land_use, arrs_land_conv
+
+
+    ##  LIVESTOCK
+
+
+    def reassign_pops_from_proj_to_carry(self, arr_lu_derived, arr_dem_based):
+        """
+            Before assigning net imports, there are many non-grazing animals to consider (note that these animals are generally not emission-intensive animals)
+            Due to 0 graze area, their estimated population is infinite, or stored as a negative
+            We assign their population as the demand-estimated population
+        """
+        if arr_lu_derived.shape != arr_dem_based.shape:
+            raise ValueError(f"Error in reassign_pops_from_proj_to_carry: array dimensions do not match: arr_lu_derived = {arr_lu_derived.shape}, arr_dem_based = {arr_dem_based.shape}.")
+
+        cols = np.where(arr_lu_derived[0] < 0)[0]
+        n_row, n_col = arr_lu_derived.shape
+
+        for w in cols:
+            rng = np.arange(w*n_row, (w + 1)*n_row)
+            np.put(arr_lu_derived.transpose(), rng, arr_dem_based[:, w])
+
+        return arr_lu_derived
+
+
+
+    ####################################
+    ###                              ###
+    ###    PRIMARY MODEL FUNCTION    ###
+    ###                              ###
+    ####################################
+
+    def project(self, df_afolu_trajectories):
+
+        """
+            - AFOLU.project takes a data frame (ordered by time series) and returns a data frame of the same order
+            - designed to be parallelized or called from command line via __main__ in run_afolu.py
+        """
+
+        ##  CHECKS
+
+        # check for internal variables and add if necessary; note, this can be defined for different variables (see model attributes)
+        self.model_attributes.manage_pop_to_df(df_afolu_trajectories, "add")
+        df_afolu_trajectories.sort_values(by = [self.model_attributes.dim_time_period], inplace = True)
+        # check that all required fields are contained—assume that it is ordered by time period
+        self.check_df_fields(df_afolu_trajectories)
+
+
+        ##  CATEGORY INITIALIZATION
+
+        pycat_agrc = self.model_attributes.get_subsector_attribute("Agriculture", "pycategory_primary")
+        pycat_frst = self.model_attributes.get_subsector_attribute("Forest", "pycategory_primary")
+        pycat_lndu = self.model_attributes.get_subsector_attribute("Land Use", "pycategory_primary")
+        pycat_lvst = self.model_attributes.get_subsector_attribute("Livestock", "pycategory_primary")
+        # attribute tables
+        attr_agrc = self.model_attributes.dict_attributes[pycat_agrc]
+        attr_frst = self.model_attributes.dict_attributes[pycat_frst]
+        attr_lndu = self.model_attributes.dict_attributes[pycat_lndu]
+        attr_lvst = self.model_attributes.dict_attributes[pycat_lvst]
+
+        ##  FIELD INITIALIZATION
+
+        # get the gdp and total population fields
+        field_gdp = self.model_attributes.build_varlist("Economy", variable_subsec = self.modvar_econ_gdp)[0]
+        field_pop = self.model_attributes.build_varlist("General", variable_subsec = self.modvar_gnrl_pop_total)[0]
+
+
+        ##  ECON/GNRL VECTOR AND ARRAY INITIALIZATION
+
+        # get some vectors
+        vec_gdp = self.get_standard_variables(df_afolu_trajectories, self.modvar_econ_gdp, False, return_type = "array_base")#np.array(df_afolu_trajectories[field_gdp])
+        vec_pop = self.get_standard_variables(df_afolu_trajectories, self.modvar_gnrl_pop_total, False, return_type = "array_base")
+        vec_gdp_per_capita = vec_gdp/vec_pop
+        # growth rates
+        vec_rates_gdp = vec_gdp[1:]/vec_gdp[0:-1] - 1
+        vec_rates_gdp_per_capita = vec_gdp_per_capita[1:]/vec_gdp_per_capita[0:-1] - 1
+
+
+        ##  OUTPUT INITIALIZATION
+
+        df_out = [df_afolu_trajectories[self.required_dimensions].copy()]
+
+
+
+        ##################
+        #    LAND USE    #
+        ##################
+
+        # area of the country
+        area = float(self.get_standard_variables(df_afolu_trajectories, self.modvar_gnrl_area, return_type = "array_base")[0])
+
+        ##  LU MARKOV
+
+        # get the initial distribution of land
+        vec_modvar_lndu_initial_frac = self.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_initial_frac, return_type = "array_base")[0]
+        vec_modvar_lndu_initial_area = vec_modvar_lndu_initial_frac*area
+        self.vec_modvar_lndu_initial_area = vec_modvar_lndu_initial_area
+        self.mat_trans, self.mat_ef = self.get_markov_matrices(df_afolu_trajectories)
+        # get land use projections (np arrays) - note, arrs_land_conv returns a list of matrices for troubleshooting
+        arr_lndu_emissions_conv, arr_land_use, arrs_land_conv = self.project_land_use(vec_modvar_lndu_initial_area, *self.get_markov_matrices(df_afolu_trajectories))
+        # scale emissions
+        arr_lndu_emissions_conv *= self.get_scalar(self.modvar_lndu_ef_co2_conv, "total")
+        df_lndu_emissions_conv = self.array_to_df(arr_lndu_emissions_conv, self.modvar_lndu_emissions_conv)
+        df_land_use = self.array_to_df(arr_land_use, self.modvar_lndu_area_by_cat)
+        # add to output data frame
+        df_out.append(df_lndu_emissions_conv)
+        df_out.append(df_land_use)
+
+        ##  EXISTENCE EMISSIONS FOR OTHER LANDS, INCLUDING AG ACTIVITY ON PASTURES
+
+        # dictionary variables mapping emission factor variables to output variables
+        dict_modvars_lndu_simple_efs = {
+            self.modvar_lndu_ef_n2o_past: self.modvar_lndu_emissions_n2o_from_pastures,
+            self.modvar_lndu_ef_co2_soilcarb: self.modvar_lndu_emissions_co2_from_pastures,
+            self.modvar_lndu_ef_ch4_boc: self.modvar_lndu_emissions_ch4_from_wetlands
+        }
+        # add to output dataframe
+        df_out += self.get_simple_input_to_output_emission_arrays(df_afolu_trajectories, df_land_use, dict_modvars_lndu_simple_efs, self.modvar_lndu_area_by_cat)
+
+
+
+        ##################
+        #    FORESTRY    #
+        ##################
+
+        # get ordered fields from land use
+        fields_lndu_forest_ordered = [self.model_attributes.matchstring_landuse_to_forests + x for x in self.model_attributes.dict_attributes[pycat_frst].key_values]
+        arr_area_frst = np.array(df_land_use[self.model_attributes.build_varlist("Land Use", variable_subsec = self.modvar_lndu_area_by_cat, restrict_to_category_values = fields_lndu_forest_ordered)])
+        # get different variables
+        arr_frst_ef_sequestration = self.get_standard_variables(df_afolu_trajectories, self.modvar_frst_sq_co2, True, "array_units_corrected")
+        arr_frst_ef_methane = self.get_standard_variables(df_afolu_trajectories, self.modvar_frst_ef_ch4, True, "array_units_corrected")
+        # build output variables
+        df_out += [
+            self.array_to_df(-1*arr_area_frst*arr_frst_ef_sequestration, self.modvar_frst_emissions_sequestration),
+            self.array_to_df(arr_area_frst*arr_frst_ef_methane, self.modvar_frst_emissions_methane)
+        ]
+
+        ##  NEEDED: FOREST FIRES (ADD HERE)
+        ##  NEEDED: WOOD PRODUCTS (ADD HERE)
+
+
+
+        #####################
+        #    AGRICULTURE    #
+        #####################
+
+        # get area of cropland
+        field_crop_array = self.model_attributes.build_varlist("Land Use", variable_subsec = self.modvar_lndu_area_by_cat, restrict_to_category_values = [self.cat_lu_crop])[0]
+        vec_cropland_area = np.array(df_land_use[field_crop_array])
+        # fraction of cropland represented by each crop
+        arr_agrc_frac_cropland_area = self.check_cropland_fractions(df_afolu_trajectories)
+        arr_agrc_crop_area = (arr_agrc_frac_cropland_area.transpose()*vec_cropland_area.transpose()).transpose()
+        # area-corrected emission factors
+        arr_agrc_ef_ch4 = self.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_ch4, True, "array_units_corrected")
+        arr_agrc_ef_co2 = self.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_co2, True, "array_units_corrected")
+        arr_agrc_ef_n2o = self.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_n2o, True, "array_units_corrected")
+        # estimate yield capacity
+        arr_agrc_yf = self.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_yf, True, "array_base")
+        arr_yield = arr_agrc_yf*arr_agrc_crop_area
+        # estimate demand for crops (used in CBA)
+        arr_agrc_elas_crop_demand = self.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_elas_crop_demand_income, False, "array_base")
+        arr_agrc_yield_dem_scale_proj = (vec_rates_gdp_per_capita.transpose()*arr_agrc_elas_crop_demand[0:-1].transpose()).transpose()
+        arr_agrc_yield_dem_scale_proj = np.cumprod(1 + arr_agrc_yield_dem_scale_proj, axis = 0)
+        arr_agrc_yield_dem_scale_proj = np.concatenate([np.ones((1,len(arr_agrc_yield_dem_scale_proj[0]))), arr_agrc_yield_dem_scale_proj])
+        # estimate net imports (surplus demand)
+        arr_agrc_net_imports = arr_agrc_yield_dem_scale_proj*arr_yield[0] - arr_yield
+        # add to output dataframe
+        df_out += [
+            self.array_to_df(arr_agrc_crop_area, self.modvar_agrc_area_crop),
+            self.array_to_df(arr_yield, self.modvar_agrc_yield),
+            self.array_to_df(arr_agrc_ef_ch4, self.modvar_agrc_emissions_ch4_crops),
+            self.array_to_df(arr_agrc_ef_co2, self.modvar_agrc_emissions_co2_crops),
+            self.array_to_df(arr_agrc_ef_n2o, self.modvar_agrc_emissions_n2o_crops),
+            self.array_to_df(arr_agrc_net_imports, self.modvar_agrc_net_imports)
+        ]
+
+
+
+        ###################
+        #    LIVESTOCK    #
+        ###################
+
+        # get area of grassland/pastures
+        field_lvst_graze_array = self.model_attributes.build_varlist("Land Use", variable_subsec = self.modvar_lndu_area_by_cat, restrict_to_category_values = [self.cat_lu_grazing])[0]
+        vec_lvst_graze_area = np.array(df_land_use[field_lvst_graze_array])
+        # get weights for allocating grazing area to animals - based on first year only
+        vec_lvst_base_graze_weights = self.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_dry_matter_consumption, True, "array_base")[0]
+        vec_modvar_lvst_pop_init = self.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_pop_init, True, "array_base")[0]
+        vec_lvst_grassland_allocation_weights = (vec_modvar_lvst_pop_init*vec_lvst_base_graze_weights)/np.dot(vec_modvar_lvst_pop_init, vec_lvst_base_graze_weights)
+        # estimate the total area used for grazing, then get the number of livestock/area
+        arr_lvst_graze_area = np.outer(vec_lvst_graze_area, vec_lvst_grassland_allocation_weights)
+        vec_lvst_carry_capacity_scale = self.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_carrying_capacity_scalar, False, "array_base")
+        vec_lvst_carry_capacity = vec_modvar_lvst_pop_init/arr_lvst_graze_area[0]
+        arr_lvst_carry_capacity = np.outer(vec_lvst_carry_capacity_scale, vec_lvst_carry_capacity)
+        # estimate the total number of livestock that are raised, then get emission factors
+        arr_lvst_pop = np.array(arr_lvst_carry_capacity*arr_lvst_graze_area).astype(int)
+        arr_lvst_emissions_ch4_ef = self.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_ef_ch4_ef, True, "array_units_corrected")
+        arr_lvst_emissions_ch4_mm = self.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_ef_ch4_mm, True, "array_units_corrected")
+        arr_lvst_emissions_n2o_mm = self.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_ef_n2o_mm, True, "array_units_corrected")
+        # estimate demand for livestock (used in CBA)
+        fields_lvst_elas = self.model_attributes.switch_variable_category("Livestock", self.modvar_lvst_elas_lvst_demand, "demand_elasticity_category")
+        arr_lvst_elas_demand = np.array(df_afolu_trajectories[fields_lvst_elas])
+        # get the demand scalar, then apply to the initial population
+        arr_lvst_dem_scale_proj = (vec_rates_gdp_per_capita.transpose()*arr_lvst_elas_demand[0:-1].transpose()).transpose()
+        arr_lvst_dem_scale_proj = np.cumprod(1 + arr_lvst_dem_scale_proj, axis = 0)
+        arr_lvst_dem_scale_proj= np.concatenate([np.ones((1,len(arr_lvst_dem_scale_proj[0]))), arr_lvst_dem_scale_proj])
+        arr_lvst_dem_pop = np.array(arr_lvst_dem_scale_proj*vec_modvar_lvst_pop_init).astype(int)
+        # clean the population and grab net imports
+        arr_lvst_pop = self.reassign_pops_from_proj_to_carry(arr_lvst_pop, arr_lvst_dem_pop)
+        arr_lvst_net_imports = arr_lvst_dem_pop - arr_lvst_pop
+
+        # add to output dataframe
+        df_out += [
+            self.array_to_df(arr_lvst_emissions_ch4_ef*arr_lvst_pop, self.modvar_lvst_emissions_ch4_ef),
+            self.array_to_df(arr_lvst_emissions_ch4_mm*arr_lvst_pop, self.modvar_lvst_emissions_ch4_mm),
+            self.array_to_df(arr_lvst_emissions_n2o_mm*arr_lvst_pop, self.modvar_lvst_emissions_n2o_mm),
+            self.array_to_df(arr_lvst_pop, self.modvar_lvst_pop),
+            self.array_to_df(arr_lvst_net_imports, self.modvar_lvst_net_imports)
+        ]
+
+
+        df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
+        self.add_subsector_emissions_aggregates(df_out, False)
+
+        return df_out

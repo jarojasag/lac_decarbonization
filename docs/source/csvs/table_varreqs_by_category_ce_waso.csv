@@ -1,3 +1,3 @@
-﻿Variable,Information,Variable Schema,Variable Type,Notes,Internal Model Variable
-K,,physparam_k_$CAT-WASTE-SOLID$,,,0
-BOC,,physparam_boc_$CAT-WASTE-SOLID$,,,0
+﻿Variable Type,Variable,Information,Variable Schema,Notes,Internal Model Variable
+Input,BOC,,physparam_boc_$CAT-WASTE-SOLID$,,0
+Input,K,,physparam_k_$CAT-WASTE-SOLID$,,0

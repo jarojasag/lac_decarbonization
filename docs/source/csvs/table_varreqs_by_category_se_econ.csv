@@ -1,5 +1,5 @@
-﻿Variable,Information,Variable Schema,Dashboard,Notes,Data Link,Reference,Internal Model Variable
-Value Added,Value added trajectories for different sectors of the economy. Units: Billion USD (2020$),``va_$CAT-ECONOMY$_mmm_usd``,,Raw data are in 2015 USD.,," | `World Bank Industrial VA <https://data.worldbank.org/indicator/NV.IND.MANF.KD>`_
+﻿Variable Type,Variable,Information,Variable Schema,Dashboard,Notes,Data Link,Reference,Internal Model Variable
+Input,Value Added,Value added trajectories for different sectors of the economy. Units: Billion USD (2020$),``va_$CAT-ECONOMY$_mmm_usd``,,Raw data are in 2015 USD.,," | `World Bank Industrial VA <https://data.worldbank.org/indicator/NV.IND.MANF.KD>`_
  | 
  | `World Bank Manufacturing VA <https://data.worldbank.org/indicator/NV.IND.TOTL.KD>`_
  | 

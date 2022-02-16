@@ -1,4 +1,4 @@
-﻿﻿ Gas ,``$EMISSION-GAS$`` ,Name ,Global Warming Potential 20,Global Warming Potential 100,Global Warming Potential 500
+﻿Gas,``$EMISSION-GAS$``,Name,Global Warming Potential 20,Global Warming Potential 100,Global Warming Potential 500
 :math:`\text{CH}_4` ,``ch4``,Methane ,81.2,27.9,7.95
 :math:`\text{CO}_2` ,``co2``,Carbon Dioxide ,1,1,1
 HFC-23 ,``hfc23``,HFC-23 ,12400,14600,10500

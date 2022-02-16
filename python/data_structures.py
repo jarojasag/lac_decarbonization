@@ -83,6 +83,7 @@ class ModelAttributes:
 
         # set some basic properties
         self.attribute_file_extension = ".csv"
+        self.matchstring_landuse_to_forests = "forests_"
         self.substr_analytical_parameters = "analytical_parameters"
         self.substr_dimensions = "attribute_dim_"
         self.substr_categories = "attribute_"
@@ -115,9 +116,11 @@ class ModelAttributes:
     def check_config_defaults(self, val, param):
         if param == "Global Warming Potential":
             val = int(val)
-
         elif param == "Discount Rate":
-            val = min(max(val, 0), 1)
+            val = min(max(float(val), 0), 1)
+        elif param == "Emissions Mass":
+            val = str(val)
+
         return val
 
     # check the configuration dictionary
@@ -148,7 +151,6 @@ class ModelAttributes:
 
     # retrieve and format attribute tables for use
     def get_attribute_tables(self, dir_att):
-
         # get available types
         all_types = [x for x in os.listdir(dir_att) if (self.attribute_file_extension in x) and ((self.substr_categories in x) or (self.substr_varreqs_allcats in x) or (self.substr_varreqs_partialcats in x) or (self.substr_analytical_parameters in x))]
         all_categories = []
@@ -204,16 +206,6 @@ class ModelAttributes:
 
         return (all_categories, all_dims, all_types, configuration_requirements, dict_attributes, dict_varreqs)
 
-    # get gwp
-    def get_gwp(self, gas):
-        gwp = int(self.configuration["global_warming_potential"])
-        key_dict = f"emission_gas_to_global_warming_potential_{gwp}"
-
-        if gas in self.dict_attributes["emission_gas"].field_maps[key_dict].keys():
-            return self.dict_attributes["emission_gas"].field_maps[key_dict][gas]
-        else:
-            valid_vals = sf.format_print_list(self.dict_attributes["emission_gas"].key_values)
-            raise KeyError(f"Invalid gas '{gas}': defined gasses are {valid_vals}.")
 
     # get different dimensions
     def get_sector_dims(self):
@@ -288,6 +280,33 @@ class ModelAttributes:
         return modvars_all, dict_vars_to_fields
 
 
+    #########################################################################
+    #    QUICK RETRIEVAL OF FUNDAMENTAL TRANSFORMATIONS (GWP, MASS, ETC)    #
+    #########################################################################
+
+    # get gwp
+    def get_gwp(self, gas):
+        gwp = int(self.configuration["global_warming_potential"])
+        key_dict = f"emission_gas_to_global_warming_potential_{gwp}"
+
+        if gas in self.dict_attributes["emission_gas"].field_maps[key_dict].keys():
+            return self.dict_attributes["emission_gas"].field_maps[key_dict][gas]
+        else:
+            valid_vals = sf.format_print_list(self.dict_attributes["emission_gas"].key_values)
+            raise KeyError(f"Invalid gas '{gas}': defined gasses are {valid_vals}.")
+
+    # get mass
+    def get_mass_equivalent(self, mass):
+        me = str(self.configuration["emissions_mass"]).lower()
+        key_dict = f"unit_mass_to_mass_equivalent_{me}"
+
+        if mass in self.dict_attributes["unit_mass"].field_maps[key_dict].keys():
+            return self.dict_attributes["unit_mass"].field_maps[key_dict][mass]
+        else:
+            valid_vals = sf.format_print_list(self.dict_attributes["unit_mass"].key_values)
+            raise KeyError(f"Invalid mass '{mass}': defined gasses are {valid_vals}.")
+
+
     ####################################################
     #    SECTOR-SPECIFIC AND CROSS SECTORIAL CHECKS    #
     ####################################################
@@ -302,7 +321,7 @@ class ModelAttributes:
         attribute_landuse = self.dict_attributes[catstr_landuse]
         cats_forest = attribute_forest.key_values
         cats_landuse = attribute_landuse.key_values
-        matchstr_forest = "forests_"
+        matchstr_forest = self.matchstring_landuse_to_forests
 
         ##  check that all forest categories are in land use and that all categories specified as forest are in the land use table
         set_cats_forest_in_land_use = set([matchstr_forest + x for x in cats_forest])
@@ -402,8 +421,26 @@ class ModelAttributes:
             return attribute_table.key_values
 
 
-    ##  function for land use, which introduces an outer product between categories
-    def build_varlist(self, subsector: str, variable_subsec = None, restrict_to_category_values = None, dict_force_override_vrp_vvs_cats = None) -> list:
+    # function to build a variable using an ordered set of categories associated with another variable
+    def build_target_varlist_from_source_varcats(self, modvar_source: str, modvar_target: str):
+        # get source categories
+        cats_source = self.get_categories(modvar_source)
+        # build the target variable list using the source categories
+        subsector_target = self.dict_model_variable_to_subsector[modvar_target]
+        vars_target = self.build_varlist(subsector_target, variable_subsec = modvar_target, restrict_to_category_values = cats_source)
+
+        return vars_target
+
+
+    ##  function for building a list of variables (fields) for data tables
+    def build_varlist(
+        self,
+        subsector: str,
+        variable_subsec = None,
+        restrict_to_category_values = None,
+        dict_force_override_vrp_vvs_cats = None,
+        variable_type = None
+    ) -> list:
         """
             dict_force_override_vrp_vvs_cats can be set do a dictionary of the form
             {MODEL_VAR_NAME: [catval_a, catval_b, catval_c, ... ]}
@@ -416,14 +453,14 @@ class ModelAttributes:
         valid_cats = self.check_category_restrictions(restrict_to_category_values, attribute_table)
 
         # get dictionary of variable to variable schema and id variables that are in the outer (Cartesian) product (i x j)
-        dict_vr_vvs, dict_vr_vvs_outer = self.separate_varreq_dict_for_outer(subsector, "key_varreqs_all", category_ij_tuple, variable = variable_subsec)
+        dict_vr_vvs, dict_vr_vvs_outer = self.separate_varreq_dict_for_outer(subsector, "key_varreqs_all", category_ij_tuple, variable = variable_subsec, variable_type = variable_type)
         # build variables that apply to all categories
         vars_out = self.build_vars_basic(dict_vr_vvs, dict(zip(list(dict_vr_vvs.keys()), [valid_cats for x in dict_vr_vvs.keys()])), category)
         if len(dict_vr_vvs_outer) > 0:
             vars_out += self.build_vars_outer(dict_vr_vvs_outer, dict(zip(list(dict_vr_vvs_outer.keys()), [valid_cats for x in dict_vr_vvs_outer.keys()])), category)
 
         # build those that apply to partial categories
-        dict_vrp_vvs, dict_vrp_vvs_outer = self.separate_varreq_dict_for_outer(subsector, "key_varreqs_partial", category_ij_tuple, variable = variable_subsec)
+        dict_vrp_vvs, dict_vrp_vvs_outer = self.separate_varreq_dict_for_outer(subsector, "key_varreqs_partial", category_ij_tuple, variable = variable_subsec, variable_type = variable_type)
         dict_vrp_vvs_cats, dict_vrp_vvs_cats_outer = self.get_partial_category_dictionaries(subsector, category_ij_tuple, variable_in = variable_subsec, restrict_to_category_values = restrict_to_category_values)
 
         # check dict_force_override_vrp_vvs_cats - use w/caution if not none. Cannot use w/outer
@@ -456,9 +493,56 @@ class ModelAttributes:
                     warnings.warn(f"clean_partial_category_dictionary: Invalid categories values {missing_vals} dropped when cleaning the dictionary. Category values not found.")
         return dict_in
 
+    # function to retrieve an (ordered) list of categories for a variable
+    def get_categories(self, variable: str):
+        if variable not in self.all_model_variables:
+            raise ValueError(f"Invalid variable '{variable}': variable not found.")
+        # initialize as all categories
+        subsector = self.dict_model_variable_to_subsector[variable]
+        all_cats = self.dict_attributes[self.get_subsector_attribute(subsector, "pycategory_primary")].key_values
+        if self.dict_model_variable_to_category_restriction[variable] == "partial":
+            cats = self.get_variable_attribute(variable, "categories")
+            if "none" not in cats.lower():
+                cats = cats.replace("`", "").split("|")
+                cats = [x for x in cats if x in all_cats]
+            else:
+                cats = None
+        else:
+            cats = all_cats
+        return cats
+
+    # function for getting input/output fields for a list of subsectors
+    def get_input_output_fields(self, subsectors_required: list, build_df_q = False):
+        # initialize output lists
+        vars_out = []
+        vars_req = []
+        subsectors_out = []
+
+        for subsector in subsectors_required:
+            vars_subsector_req = self.build_varlist(subsector, variable_type = "input")
+            vars_subsector_out = self.build_varlist(subsector, variable_type = "output")
+            vars_req += vars_subsector_req
+            vars_out += vars_subsector_out
+            if build_df_q:
+                subsectors_out += [subsector for x in vars_subsector]
+
+        if build_df_q:
+            vars_req = pd.DataFrame({"subsector": subsectors_out, "variable": vars_req}).sort_values(by = ["subsector", "variable"]).reset_index(drop = True)
+            vars_out = pd.DataFrame({"subsector": subsectors_out, "variable": vars_out}).sort_values(by = ["subsector", "variable"]).reset_index(drop = True)
+
+        return vars_req, vars_out
 
     # function to build a dictionary of categories applicable to a give variable; split by unidim/outer
-    def get_partial_category_dictionaries(self, subsector: str, category_outer_tuple: tuple, key_type: str = "key_varreqs_partial", delim: str = "|", variable_in = None, restrict_to_category_values = None):
+    def get_partial_category_dictionaries(
+        self,
+        subsector: str,
+        category_outer_tuple: tuple,
+        key_type: str = "key_varreqs_partial",
+        delim: str = "|",
+        variable_in = None,
+        restrict_to_category_values = None,
+        var_type = None
+    ):
         # key_type = key_varreqs_all, key_varreqs_partial
 
         key_attribute = self.get_subsector_attribute(subsector, key_type)
@@ -466,7 +550,7 @@ class ModelAttributes:
         valid_cats = self.check_category_restrictions(restrict_to_category_values, self.dict_attributes[self.get_subsector_attribute(subsector, "pycategory_primary")])
 
         if key_attribute != None:
-            dict_vr_vvs_cats_ud, dict_vr_vvs_cats_outer = self.separate_varreq_dict_for_outer(subsector, key_type, category_outer_tuple, target_field = "categories", variable = variable_in)
+            dict_vr_vvs_cats_ud, dict_vr_vvs_cats_outer = self.separate_varreq_dict_for_outer(subsector, key_type, category_outer_tuple, target_field = "categories", variable = variable_in, variable_type = var_type)
             dict_vr_vvs_cats_ud = self.clean_partial_category_dictionary(dict_vr_vvs_cats_ud, valid_cats, delim)
             dict_vr_vvs_cats_outer = self.clean_partial_category_dictionary(dict_vr_vvs_cats_outer, valid_cats, delim)
 
@@ -479,7 +563,7 @@ class ModelAttributes:
     def get_variable_attribute(self, variable: str, attribute: str) -> str:
         # check variable first
         if variable not in self.all_model_variables:
-            raise ValueError(f"Invalid model variable '{valid}' found in get_variable_characteristic.")
+            raise ValueError(f"Invalid model variable '{variable}' found in get_variable_characteristic.")
 
         subsector = self.dict_model_variable_to_subsector[variable]
         cat_restriction_type = self.dict_model_variable_to_category_restriction[variable]
@@ -500,7 +584,7 @@ class ModelAttributes:
 
 
     ##  function to get all variables associated with a subsector (will not function if there is no primary category)
-    def get_subsector_variables(self, subsector: str) -> list:
+    def get_subsector_variables(self, subsector: str, var_type = None) -> list:
         # get some information used
         category = self.dict_attributes["abbreviation_subsector"].field_maps["abbreviation_subsector_to_primary_category"][self.get_subsector_attribute(subsector, "abv_subsector")].replace("`", "")
         category_ij_tuple = self.format_category_for_outer(category, "-I", "-J")
@@ -508,7 +592,7 @@ class ModelAttributes:
         vars_by_subsector = []
         dict_var_type = {}
         for key_type in ["key_varreqs_all", "key_varreqs_partial"]:
-            dicts = self.separate_varreq_dict_for_outer(subsector, key_type, category_ij_tuple)
+            dicts = self.separate_varreq_dict_for_outer(subsector, key_type, category_ij_tuple, variable_type = var_type)
             for x in dicts:
                 l_vars = list(x.keys())
                 vars_by_subsector += l_vars
@@ -539,7 +623,16 @@ class ModelAttributes:
 
 
     # separate a variable requirement dictionary into those associated with simple vars and those with outer
-    def separate_varreq_dict_for_outer(self, subsector: str, key_type: str, category_outer_tuple: tuple, target_field: str = "variable_schema", field_to_split_on: str = "variable_schema", variable = None) -> tuple:
+    def separate_varreq_dict_for_outer(
+        self,
+        subsector: str,
+        key_type: str,
+        category_outer_tuple: tuple,
+        target_field: str = "variable_schema",
+        field_to_split_on: str = "variable_schema",
+        variable = None,
+        variable_type = None
+    ) -> tuple:
         # field_to_split_on gives the field from the attribute table to use to split between outer and unidim
         # target field is the field to return in the dictionary
         # key_type = key_varreqs_all, key_varreqs_partial
@@ -547,11 +640,24 @@ class ModelAttributes:
         if key_attribute != None:
             dict_vr_vvs = self.dict_varreqs[self.get_subsector_attribute(subsector, key_type)].field_maps[f"variable_to_{field_to_split_on}"].copy()
             dict_vr_vtf = self.dict_varreqs[self.get_subsector_attribute(subsector, key_type)].field_maps[f"variable_to_{target_field}"].copy()
+
+            # filter on variable type if specified
+            if variable_type != None:
+                if variable != None:
+                    warnings.warn(f"variable and variable_type both specified in separate_varreq_dict_for_outer: the variable assignment is higher priority, and variable_type will be ignored.")
+                else:
+                    dict_var_types = self.dict_varreqs[self.get_subsector_attribute(subsector, key_type)].field_maps[f"variable_to_variable_type"]
+                    drop_vars = [x for x in dict_var_types.keys() if dict_var_types[x].lower() != variable_type.lower()]
+                    [dict_vr_vvs.pop(x) for x in drop_vars]
+                    [dict_vr_vtf.pop(x) for x in drop_vars]
+
             dict_vr_vtf_outer = dict_vr_vtf.copy()
+
             vars_outer = [x for x in dict_vr_vtf.keys() if (category_outer_tuple[0] in dict_vr_vvs[x]) and (category_outer_tuple[1] in dict_vr_vvs[x])]
             vars_unidim = [x for x in dict_vr_vtf.keys() if (x not in vars_outer)]
             [dict_vr_vtf_outer.pop(x) for x in vars_unidim]
             [dict_vr_vtf.pop(x) for x in vars_outer]
+
             if variable != None:
                 vars_outer = list(dict_vr_vtf_outer.keys())
                 vars_unidim = list(dict_vr_vtf.keys())
@@ -656,9 +762,9 @@ def clean_schema(var_schema: str, return_default_dict_q: bool = False) -> str:
     var_schema = var_schema.split("(")
     var_schema[0] = var_schema[0].replace("`", "").replace(" ", "")
 
+    dict_repls = {}
     if len(var_schema) > 1:
         repls =  var_schema[1].replace("`", "").split(",")
-        dict_repls = {}
         for dr in repls:
             dr0 = dr.replace(" ", "").replace(")", "").split("=")
             var_schema[0] = var_schema[0].replace(dr0[0], dr0[1])
