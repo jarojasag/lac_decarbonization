@@ -15,7 +15,7 @@ def parse_arguments() -> dict:
     parser.add_argument("--input", type = str,
                         help = f"Path to an input CSV, long by {sa.model_attributes.dim_time_period}, that contains required input variables.")
     parser.add_argument("--output", type = str,
-                        help="Path to output csv file", default = os.path.join(sa.dir_out, "single_run_output.csv"))
+                        help="Path to output csv file", default = sa.fp_csv_default_single_run_out)
     parser.add_argument(
         "--models",
         type = str,
@@ -57,20 +57,21 @@ def main(args: dict) -> None:
             raise ValueError(f"Input file '{fp_in}' not found.")
 
     # notify of output path
-    print(f"*** STARTING MODELS ***\n\nOutput file will be written to {fp_out}.\n")
+    print(f"\n\n*** STARTING MODELS ***\n\nOutput file will be written to {fp_out}.\n")
 
     # set up models
     if "AFOLU" in models_run:
-        print("\n\tRunning AFOLU...")
+        print("\nRunning AFOLU...")
         model_afolu = sm.AFOLU(sa.model_attributes)
         df_output_data = model_afolu.project(df_input_data)
 
     ## other models
+    print("\n*** MODEL RUNS COMPLETE ***\n")
 
     # write output
-    print(f"Writing data to {fp_out}...")
+    print(f"\nWriting data to {fp_out}...")
     df_output_data.to_csv(fp_out, index = None, encoding = "UTF-8")
-    print("Done. Adios damas y caballeros.")
+    print("\n*** MODEL RUNS SUCCESSFULLY COMPLETED. Q les vayan bien damas y caballeros.")
 
 if __name__ == "__main__":
 

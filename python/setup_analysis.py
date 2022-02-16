@@ -9,8 +9,9 @@ import importlib
 importlib.reload(sf)
 importlib.reload(ds)
 
-# setup some 
+# setup some
 dir_py = os.path.dirname(os.path.realpath(__file__))
+print(dir_py)
 dir_proj = os.path.dirname(dir_py)
 
 # key subdirectories for the project
@@ -19,7 +20,7 @@ dir_out = sf.check_path(os.path.join(dir_proj, "out"), True)
 dir_ref = sf.check_path(os.path.join(dir_proj, "ref"), False)
 
 # attribute tables and readthedocs
-dir_docs = sf.check_path(os.path.join(os.path.dirname(os.getcwd()), "docs", "source"), False)
+dir_docs = sf.check_path(os.path.join(os.path.dirname(dir_py), "docs", "source"), False)
 dir_attribute_tables = sf.check_path(os.path.join(dir_docs, "csvs"), False)
 
 
@@ -27,6 +28,5 @@ dir_attribute_tables = sf.check_path(os.path.join(dir_docs, "csvs"), False)
 model_attributes = ds.ModelAttributes(dir_attribute_tables)
 
 
-
-
-
+##  some paths
+fp_csv_default_single_run_out = os.path.join(dir_out, "single_run_output.csv")
