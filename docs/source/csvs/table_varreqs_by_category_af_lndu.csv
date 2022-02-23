@@ -1,6 +1,6 @@
 ﻿Variable Type,Variable,Information,Variable Schema,Notes,Internal Model Variable
-Input,:math:`\text{CO}_2` Land Use Conversion Emission Factor,Annual :math:`\text{CO}_2` emission factor for conversion of land use of type ``$CAT-LANDUSE-I$`` to ``$CAT-LANDUSE-J$``,"``ef_luconversion_$CAT-LANDUSE-I$_to_$CAT-LANDUSE-J$_$UNIT-MASS$_$EMISSION-GAS$_$UNIT-AREA$`` (``$UNIT-MASS$ = gg``, ``$EMISSION-GAS$ = co2``, ``$UNIT-AREA$ = ha``)",,0
-Input,Initial Land Use Area Proportion,Proportion of total **country land** area (%/100) at time :math:`t_0`,``frac_lu_initial_$CAT-LANDUSE$``,,0
+Input,:math:`\text{CO}_2` Land Use Conversion Emission Factor,Annual :math:`\text{CO}_2` emission factor for conversion of land use of type ``$CAT-LANDUSE-I$`` to ``$CAT-LANDUSE-J$``,"``ef_lnduconv_$CAT-LANDUSE-I$_to_$CAT-LANDUSE-J$_$UNIT-MASS$_$EMISSION-GAS$_$UNIT-AREA$`` (``$UNIT-MASS$ = gg``, ``$EMISSION-GAS$ = co2``, ``$UNIT-AREA$ = ha``)",,0
+Input,Initial Land Use Area Proportion,Proportion of total **country land** area (%/100) at time :math:`t_0`,``frac_lndu_initial_$CAT-LANDUSE$``,,0
 Input,Unadjusted Land Use Transition Probability,Transition probability in Markov Chain model,``pij_$CAT-LANDUSE-I$_to_$CAT-LANDUSE-J$``,,0
 Output,:math:`\text{CO}_2` Emissions from Land Use Conversion,Emissions calculated by converting away from each land use type,``emission_co2e_$EMISSION-GAS$_lndu_conversion_$CAT-LANDUSE$`` (``$EMISSION-GAS$ = co2``),,1
 Output,Land Use Area,Area of each land use category,``area_lndu_$CAT-LANDUSE$_$UNIT-AREA$`` (``$UNIT-AREA$ = ha``),Internally calcualted using Markov with non-stationary transition probabilities.,1
