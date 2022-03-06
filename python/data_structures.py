@@ -247,6 +247,18 @@ class ModelAttributes:
             warnings.warn(f"Invalid dimensional attribute '{return_type}'. Valid return type values are:{valid_rts}")
             return None
 
+    # function for grabbing an attribute column from an attribute table ordered the same as key values
+    def get_ordered_category_attribute(self, subsector: str, attribute: str) -> list:
+        pycat = self.get_subsector_attribute(subsector, "pycategory_primary")
+        attr_cur = self.dict_attributes[pycat]
+
+        if attribute not in attr_cur.table.columns:
+            raise ValueError(f"Missing attribute column '{attribute}': attribute not found in '{subsector}' attribute table.")
+
+        # get the dictionary and order
+        dict_map = sf.build_dict(attr_cur.table[[attr_cur.key, attribute]])
+        return [dict_map[x] for x in attr_cur.key_values]
+
     # function for retrieving different attributes associated with a subsector
     def get_subsector_attribute(self, subsector, return_type):
         dict_out = {

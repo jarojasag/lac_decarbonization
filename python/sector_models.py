@@ -307,13 +307,15 @@ class AFOLU:
         if type(dem_pc_scalar_exog) == type(None):
             vec_demscale_exog = np.ones(len(pop))
         else:
-            if dem_pc_scalar_exog.shape != pop.shape:
-                raise ValueError(f"Invalid shape of dem_pc_scalar_exog: the shape should match the population trajectory, which has shape {pop.shape}")
+            if dem_pc_scalar_exog.shape == pop.shape:
+                arr_dem_base = np.outer(pop*dem_pc_scalar_exog, dem_0/pop[0])
+            elif dem_pc_scalar_exog.shape == dem_scale_proj_pc.shape:
+                arr_pc = (dem_0/pop[0])*dem_pc_scalar_exog
+                arr_dem_base = (pop*arr_pc.transpose()).transpose()
             else:
-                vec_demscale_exog = dem_pc_scalar_exog
+                raise ValueError(f"Invalid shape of dem_pc_scalar_exog: valid shapes are '{pop.shape}' and '{dem_scale_proj_pc.shape}'.")
 
         # get the total demand
-        arr_dem_base = np.outer(pop*vec_demscale_exog, dem_0/pop[0])
         arr_dem_base = np.array(dem_scale_proj_pc*arr_dem_base).astype(return_type)
 
         return arr_dem_base
@@ -650,7 +652,11 @@ class AFOLU:
         # project ag demand for crops that are driven by gdp/capita - set demand scalar for crop demand (increases based on reduction in red meat demand) - depends on how many people eat red meat (vec_lvst_demscale)
         vec_agrc_diet_exchange_scalar = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_vdes, False, "array_base", var_bounds = (0, np.inf))
         vec_agrc_demscale = vec_lvst_demscale + vec_agrc_diet_exchange_scalar - vec_lvst_demscale*vec_agrc_diet_exchange_scalar
-        arr_agrc_nonfeeddem_yield = self.project_per_capita_demand(vec_agrc_yield_init_nonlvstfeed, vec_pop, vec_rates_gdp_per_capita, arr_agrc_elas_crop_demand, vec_agrc_demscale, float)
+        # get categories that need to be scaled
+        vec_agrc_scale_demands_for_veg = np.array(self.model_attributes.get_ordered_category_attribute("Agriculture", "apply_vegetarian_exchange_scalar"))
+        arr_agrc_demscale = np.outer(vec_agrc_demscale, vec_agrc_scale_demands_for_veg)
+        arr_agrc_demscale = arr_agrc_demscale + np.outer(np.ones(len(vec_agrc_demscale)), 1 - vec_agrc_scale_demands_for_veg)
+        arr_agrc_nonfeeddem_yield = self.project_per_capita_demand(vec_agrc_yield_init_nonlvstfeed, vec_pop, vec_rates_gdp_per_capita, arr_agrc_elas_crop_demand, arr_agrc_demscale, float)
         # array gives the total yield of crop type i allocated to livestock type j at time 0
         arr_lndu_yield_i_reqd_lvst_j_init = np.outer(vec_agrc_yield_init_lvstfeed, vec_lvst_feed_allocation_weights)
 

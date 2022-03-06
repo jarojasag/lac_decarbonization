@@ -1,13 +1,13 @@
-﻿Category Name,``$CAT-AGRICULTURE$``,Description,Data Source,Hyperlink,Notes
-Beverage crops,``bevs_and_spices``,"tea, cinnamon, vanilla, cocoa, matte, ginger, peppermint...",,,
-Coffee (café),``coffee``,Coffee crops,,,
-Fibers,``fibers``,"Cotton, tobacco, flax, hemp...",,,
-Fruits (frutas),``fruits``,"Fruits including bananas, mangoes, plantains, oranges, lemons, apples...",,,
-Maize (maize),``maize``,Corn (maize) crops,,,
-Nuts,``nuts``,"brazil nuts, cashew nuts, chestnuts, almonds, walnuts, pistachios, hazelnuts, kolanuts...",,,
-Pulses and derived crops,``pulses``,"Pulses include dry beans, peas, lentils, ...",,,
-Oil bearing crops,``oil_bearing``,"Perennial crops used primarily for oil, including soy, palm, coconuts, olives...",,,
-Other Cereal and Grains,``cereals``,"Crops including wheat, sorghum, barley...",,,
-Rice,``rice``,Paddy rice crops (methane emitting),,,
-Roots and Tubers,``tubers``,"Roots and tubers, including cassava, potatoes, yams...",,,
-Vegetables,``vegetables``,"Vegetables including cabbages, artichokes, asparagus, lettuce, spinach, tomatoes, cauliflower, chilies, eggplant, onions, garlic...",,,
+﻿Category Name,``$CAT-AGRICULTURE$``,Description,Data Source,Hyperlink,Notes,Apply Vegetarian Exchange Scalar
+Beverage crops,``bevs_and_spices``,"tea, cinnamon, vanilla, cocoa, matte, ginger, peppermint...",,,,0
+Coffee (café),``coffee``,Coffee crops,,,,0
+Fibers,``fibers``,"Cotton, tobacco, flax, hemp...",,,,0
+Fruits (frutas),``fruits``,"Fruits including bananas, mangoes, plantains, oranges, lemons, apples...",,,,1
+Maize (maize),``maize``,Corn (maize) crops,,,,0
+Nuts,``nuts``,"brazil nuts, cashew nuts, chestnuts, almonds, walnuts, pistachios, hazelnuts, kolanuts...",,,,1
+Pulses and derived crops,``pulses``,"Pulses include dry beans, peas, lentils, ...",,,,1
+Oil bearing crops,``oil_bearing``,"Perennial crops used primarily for oil, including soy, palm, coconuts, olives...",,,,1
+Other Cereal and Grains,``cereals``,"Crops including wheat, sorghum, barley...",,,,1
+Rice,``rice``,Paddy rice crops (methane emitting),,,,1
+Roots and Tubers,``tubers``,"Roots and tubers, including cassava, potatoes, yams...",,,,1
+Vegetables,``vegetables``,"Vegetables including cabbages, artichokes, asparagus, lettuce, spinach, tomatoes, cauliflower, chilies, eggplant, onions, garlic...",,,,1
