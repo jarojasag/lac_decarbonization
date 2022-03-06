@@ -13,7 +13,6 @@ class AttributeTable:
         table = pd.read_csv(sf.check_path(fp_table, False), skipinitialspace = True)
         fields_to_dict = [x for x in fields_to_dict if x != key]
 
-
         # clean the fields in the attribute table?
         dict_fields_clean_to_fields_orig = {}
         if clean_table_fields:
@@ -58,7 +57,6 @@ class AttributeTable:
             if (len(vals_unique) == len(table)):
                 field_maps.update({field_rev: sf.build_dict(table[[fld, key]])})
 
-
         self.dict_fields_clean_to_fields_orig = dict_fields_clean_to_fields_orig
         self.field_maps = field_maps
         self.fp_table = fp_table
@@ -66,6 +64,12 @@ class AttributeTable:
         self.key_values = key_values
         self.n_key_values = len(key_values)
         self.table = table
+
+    # function for the getting the index of a key value
+    def get_key_value_index(self, key_value):
+        if key_value not in self.key_values:
+            raise KeyError(f"Error: invalid AttributeTable key value {key_value}.")
+        return self.key_values.index(key_value)
 
 
 
@@ -91,6 +95,9 @@ class ModelAttributes:
         self.substr_varreqs_allcats = f"{self.substr_varreqs}category_"
         self.substr_varreqs_partialcats = f"{self.substr_varreqs}partial_category_"
 
+        # temporary - but read from config
+        self.varchar_str_emission_gas = "$EMISSION-GAS$"
+        self.varchar_str_unit_mass = "$UNIT-MASS$"
 
         # add attributes and dimensional information
         self.attribute_directory = dir_attributes
@@ -306,6 +313,30 @@ class ModelAttributes:
             valid_vals = sf.format_print_list(self.dict_attributes["unit_mass"].key_values)
             raise KeyError(f"Invalid mass '{mass}': defined gasses are {valid_vals}.")
 
+    # get scalar
+    def get_scalar(self, modvar: str, return_type: str = "total"):
+
+        valid_rts = ["total", "gas", "mass"]
+        if return_type not in valid_rts:
+            tps = sf.format_print_list(valid_rts)
+            raise ValueError(f"Invalid return type '{return_type}' in get_scalar: valid types are {tps}.")
+
+        # get scalars
+        gas = self.get_variable_characteristic(modvar, self.varchar_str_emission_gas)
+        scalar_gas = 1 if not gas else self.get_gwp(gas.lower())
+        #
+        mass = self.get_variable_characteristic(modvar, self.varchar_str_unit_mass)
+        scalar_mass = 1 if not mass else self.get_mass_equivalent(mass.lower())
+
+        if return_type == "gas":
+            out = scalar_gas
+        elif return_type == "mass":
+            out = scalar_mass
+        elif return_type == "total":
+            out = scalar_gas*scalar_mass
+
+        return out
+
 
     ####################################################
     #    SECTOR-SPECIFIC AND CROSS SECTORIAL CHECKS    #
@@ -341,6 +372,60 @@ class ModelAttributes:
     #########################################################
     #    VARIABLE REQUIREMENT AND MANIPULATION FUNCTIONS    #
     #########################################################
+
+    ##  add subsector emissions aggregates to an output dataframe
+    def add_subsector_emissions_aggregates(self, df_in: pd.DataFrame, list_subsectors: list, stop_on_missing_fields_q: bool = False):
+        # loop over base subsectors
+        for subsector in list_subsectors:#self.required_base_subsectors:
+            vars_subsec = self.dict_model_variables_by_subsector[subsector]
+            # add subsector abbreviation
+            fld_nam = self.get_subsector_attribute(subsector, "abv_subsector")
+            fld_nam = f"emission_co2e_subsector_total_{fld_nam}"
+
+            flds_add = []
+            for var in vars_subsec:
+                var_type = self.get_variable_attribute(var, "variable_type").lower()
+                gas = self.get_variable_characteristic(var, self.varchar_str_emission_gas)
+                if (var_type == "output") and gas:
+                    flds_add +=  self.dict_model_variables_to_variables[var]
+
+            # check for missing fields; notify
+            missing_fields = [x for x in flds_add if x not in df_in.columns]
+            if len(missing_fields) > 0:
+                str_mf = print_setdiff(set(df_in.columns), set(flds_add))
+                str_mf = f"Missing fields {str_mf}.%s"
+                if stop_on_missing_fields_q:
+                    raise ValueError(str_mf%(" Subsector emission totals will not be added."))
+                else:
+                    warnings.warn(str_mf%(" Subsector emission totals will exclude these fields."))
+
+            keep_fields = [x for x in flds_add if x in df_in.columns]
+            df_in[fld_nam] = df_in[keep_fields].sum(axis = 1)
+
+
+    ##  function for converting an array to a variable out dataframe (used in sector models)
+    def array_to_df(self, arr_in, modvar: str, include_scalars = False) -> pd.DataFrame:
+        # get subsector and fields to name based on variable
+        subsector = self.dict_model_variable_to_subsector[modvar]
+        fields = self.build_varlist(subsector, variable_subsec = modvar)
+
+        scalar_em = 1
+        scalar_me = 1
+        if include_scalars:
+            # get scalars
+            gas = self.get_variable_characteristic(modvar, self.varchar_str_emission_gas)
+            mass = self.get_variable_characteristic(modvar, self.varchar_str_unit_mass)
+            # will conver ch4 to co2e e.g. + kg to MT
+            scalar_em = 1 if not gas else self.get_gwp(gas.lower())
+            scalar_me = 1 if not mass else self.get_mass_equivalent(mass.lower())
+
+        # raise error if there's a shape mismatch
+        if len(fields) != arr_in.shape[1]:
+            flds_print = sf.format_print_list(fields)
+            raise ValueError(f"Array shape mismatch for fields {flds_print}: the array only has {arr_in.shape[1]} columns.")
+
+        return pd.DataFrame(arr_in*scalar_em*scalar_me, columns = fields)
+
 
     ##  function for bulding a basic variable list from the (no complexitiies)
     def build_vars_basic(self, dict_vr_varschema: dict, dict_vars_to_cats: dict, category_to_replace: str) -> list:
@@ -583,6 +668,64 @@ class ModelAttributes:
         return dict_out.get(characteristic)
 
 
+    ##  function to extract a variable (with applicable categories from an input data frame)
+    def get_standard_variables(self,
+        df_in: pd.DataFrame,
+        modvar: str,
+        override_vector_for_single_mv_q: bool = False,
+        return_type: str = "data_frame",
+        var_bounds = None,
+        force_boundary_restriction: bool = True
+    ):
+
+        flds = self.dict_model_variables_to_variables[modvar]
+        flds = flds[0] if ((len(flds) == 1) and not override_vector_for_single_mv_q) else flds
+
+        valid_rts = ["data_frame", "array_base", "array_units_corrected"]
+        if return_type not in valid_rts:
+            vrts = sf.format_print_list(valid_rts)
+            raise ValueError(f"Invalid return_type in get_standard_variables: valid types are {vrts}.")
+
+        # initialize output, apply various common transformations based on type
+        out = df_in[flds]
+        if return_type != "data_frame":
+            out = np.array(out)
+            if return_type == "array_units_corrected":
+                out *= self.get_scalar(modvar, "total")
+
+        if type(var_bounds) in [tuple, list, np.ndarray]:
+            # get numeric values and check
+            var_bounds = [x for x in var_bounds if type(x) in [int, float]]
+            if len(var_bounds) <= 1:
+                raise ValueError(f"Invalid specification of variable bounds '{var_bounds}': there must be a maximum and a minimum numeric value specified.")
+
+            # ensure array
+            out = np.array(out)
+            b_0, b_1 = np.min(var_bounds), np.max(var_bounds)
+            m_0, m_1 = np.min(out), np.max(out)
+
+            # check bounds
+            if m_1 > b_1:
+                str_warn = f"Invalid maximum value of '{varname}': specifed value of {m_1} exceeds bound {b_1}."
+                if force_restriction:
+                    warnings.warn(str_warn + "\nForcing maximum value in trajectory.")
+                else:
+                    raise ValueError(str_warn)
+            # check min
+            if m_0 < b_0:
+                str_warn = f"Invalid minimum value of '{varname}': specifed value of {m_0} below bound {b_0}."
+                if force_restriction:
+                    warnings.warn(str_warn + "\nForcing minimum value in trajectory.")
+                else:
+                    raise ValueError(str_warn)
+
+            if force_boundary_restriction:
+                out = sf.vec_bounds(out, var_bounds)
+            out = pd.DataFrame(out, flds) if (return_type == "data_frame") else out
+
+        return out
+
+
     ##  function to get all variables associated with a subsector (will not function if there is no primary category)
     def get_subsector_variables(self, subsector: str, var_type = None) -> list:
         # get some information used
@@ -751,8 +894,6 @@ class ModelAttributes:
         return self.manage_internal_variable_to_df(df_in, "Economy", "GDP", "Value Added", "gdp_component", action)
     def manage_pop_to_df(self, df_in: pd.DataFrame, action: str = "add"):
         return self.manage_internal_variable_to_df(df_in, "General", "Total Population", "Population", "total_population_component", action)
-
-
 
 
 

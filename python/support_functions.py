@@ -136,6 +136,11 @@ def print_setdiff(superset: set, subset: set) -> str:
     missing_vals.sort()
     return format_print_list(missing_vals)
 
+# set a vector to element-wise stay within bounds
+def scalar_bounds(scalar, bounds: tuple):
+    bounds = np.array(bounds).astype(float)
+    return min([max([scalar, min(bounds)]), max(bounds)])
+
 # subset a data frame using a dictionary
 def subset_df(df, dict_in):
     for k in dict_in.keys():
@@ -146,3 +151,11 @@ def subset_df(df, dict_in):
                 val = dict_in[k]
             df = df[df[k].isin(val)]
     return df
+
+# set a vector to element-wise stay within bounds
+def vec_bounds(vec, bounds: tuple):
+    def f(x):
+        return scalar_bounds(x, bounds)
+    f_z = np.vectorize(f)
+
+    return f_z(vec).astype(float)

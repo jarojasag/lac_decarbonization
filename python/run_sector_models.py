@@ -73,6 +73,7 @@ def main(args: dict) -> None:
     df_output_data.to_csv(fp_out, index = None, encoding = "UTF-8")
     print("\n*** MODEL RUNS SUCCESSFULLY COMPLETED. Q les vayan bien damas y caballeros.")
 
+
 if __name__ == "__main__":
 
     args = parse_arguments()

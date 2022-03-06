@@ -20,16 +20,19 @@ class AFOLU:
         ##  set some model fields to connect to the attribute tables
 
         # agricultural model variables
-        self.modvar_agrc_area_prop = "Cropland Area Proportion"
+        self.modvar_agrc_area_prop_calc = "Cropland Area Proportion"
+        self.modvar_agrc_area_prop_init = "Initial Cropland Area Proportion"
         self.modvar_agrc_area_crop = "Crop Area"
-        self.modvar_agrc_ef_ch4 = ":math:\\text{CH}_4 Crop Activity Emission Factor"
-        self.modvar_agrc_ef_n2o = ":math:\\text{CO}_2 Crop Activity Emission Factor"
-        self.modvar_agrc_ef_co2 = ":math:\\text{N}_2\\text{O} Crop Activity Emission Factor"
+        self.modvar_agrc_ef_ch4 = ":math:\\text{CH}_4 Crop Anaerobic Decomposition Emission Factor"
+        self.modvar_agrc_ef_co2 = ":math:\\text{CO}_2 Crop Soil Carbon Emission Factor"
+        self.modvar_agrc_ef_co2_yield = ":math:\\text{CO}_2 Crop Biomass Emission Factor"
+        self.modvar_agrc_ef_n2o = ":math:\\text{N}_2\\text{O} Crop Biomass Burning Emission Factor"
         self.modvar_agrc_elas_crop_demand_income = "Crop Demand Income Elasticity"
         self.modvar_agrc_emissions_ch4_crops = ":math:\\text{CH}_4 Emissions from Crop Activity"
         self.modvar_agrc_emissions_co2_crops = ":math:\\text{CO}_2 Emissions from Crop Activity"
         self.modvar_agrc_emissions_n2o_crops = ":math:\\text{N}_2\\text{O} Emissions from Crop Activity"
-        self.modvar_agrc_net_imports = "Crop Surplus Demand"
+        self.modvar_agrc_frac_animal_feed = "Crop Fraction Animal Feed"
+        self.modvar_agrc_net_imports = "Change to Net Imports of Crops"
         self.modvar_agrc_yf = "Crop Yield Factor"
         self.modvar_agrc_yield = "Crop Yield"
         # forest model variables
@@ -51,6 +54,8 @@ class AFOLU:
         self.modvar_lndu_ef_n2o_past = "Land Use Pasture :math:\\text{N}_2\\text{O} Emission Factor"
         self.modvar_lndu_ef_co2_soilcarb = "Land Use Soil Carbon :math:\\text{CO}_2 Emission Factor"
         self.modvar_lndu_prob_transition = "Unadjusted Land Use Transition Probability"
+        self.modvar_lndu_reallocation_factor = "Land Use Yield Reallocation Factor"
+        self.modvar_lndu_vdes = "Vegetarian Diet Exchange Scalar"
         # livestock model variables
         self.modvar_lvst_carrying_capacity_scalar = "Carrying Capacity Scalar"
         self.modvar_lvst_dry_matter_consumption = "Daily Dry Matter Consumption"
@@ -61,13 +66,10 @@ class AFOLU:
         self.modvar_lvst_emissions_ch4_ef = ":math:\\text{CH}_4 Emissions from Livestock Enteric Fermentation"
         self.modvar_lvst_emissions_ch4_mm = ":math:\\text{CH}_4 Emissions from Livestock Manure"
         self.modvar_lvst_emissions_n2o_mm = ":math:\\text{N}_2\\text{O} Emissions from Livestock Manure"
-        self.modvar_lvst_frac_meat_import = "Fraction of Meat Consumption from Imports"
-        self.modvar_lvst_meat_demand_scalar = "Red Meat Demand Scalar"
-        self.modvar_lvst_net_imports = "Livestock Surplus Demand"
+        self.modvar_lvst_frac_eating_red_meat = "Fraction Eating Red Meat"
+        self.modvar_lvst_net_imports = "Change to Net Imports of Livestock"
         self.modvar_lvst_pop = "Livestock Head Count"
         self.modvar_lvst_pop_init = "Initial Livestock Head Count"
-
-
         # economy and general variables
         self.modvar_econ_gdp = "GDP"
         self.modvar_econ_va = "Value Added"
@@ -81,10 +83,9 @@ class AFOLU:
         self.time_periods, self.n_time_periods = self.get_time_periods()
 
         # TEMP:SET TO DERIVE FROM ATTRIBUTE TABLES---
-        self.cat_lu_crop = "croplands"
-        self.cat_lu_grazing = "grasslands"
-        self.varchar_str_emission_gas = "$EMISSION-GAS$"
-        self.varchar_str_unit_mass = "$UNIT-MASS$"
+        self.cat_lndu_crop = "croplands"
+        self.cat_lndu_grazing = "grasslands"
+
 
     ##  FUNCTIONS FOR MODEL ATTRIBUTE DIMENSIONS
 
@@ -114,26 +115,6 @@ class AFOLU:
         return required_vars + self.get_required_dimensions(), output_vars
 
 
-    # define a function to clean up code
-    def get_standard_variables(self, df_in, modvar, override_vector_for_single_mv_q: bool = False, return_type: str = "data_frame"):
-        flds = self.model_attributes.dict_model_variables_to_variables[modvar]
-        flds = flds[0] if ((len(flds) == 1) and not override_vector_for_single_mv_q) else flds
-
-        valid_rts = ["data_frame", "array_base", "array_units_corrected"]
-        if return_type not in valid_rts:
-            vrts = sf.format_print_list(valid_rts)
-            raise ValueError(f"Invalid return_type in get_standard_variables: valid types are {vrts}.")
-
-        # initialize output, apply various common transformations based on type
-        out = df_in[flds]
-        if return_type != "data_frame":
-            out = np.array(out)
-            if return_type == "array_units_corrected":
-                out *= self.get_scalar(modvar, "total")
-
-        return out
-
-
     def get_time_periods(self):
         pydim_time_period = self.model_attributes.get_dimensional_attribute("time_period", "pydim")
         time_periods = self.model_attributes.dict_attributes[pydim_time_period].key_values
@@ -142,59 +123,11 @@ class AFOLU:
 
     ##  STREAMLINING FUNCTIONS
 
-    # convert an array to a varibale out dataframe
-    def array_to_df(self, arr_in, modvar: str, include_scalars = False) -> pd.DataFrame:
-        # get subsector and fields to name based on variable
-        subsector = self.model_attributes.dict_model_variable_to_subsector[modvar]
-        fields = self.model_attributes.build_varlist(subsector, variable_subsec = modvar)
-
-        scalar_em = 1
-        scalar_me = 1
-        if include_scalars:
-            # get scalars
-            gas = self.model_attributes.get_variable_characteristic(modvar, self.varchar_str_emission_gas)
-            mass = self.model_attributes.get_variable_characteristic(modvar, self.varchar_str_unit_mass)
-            # will conver ch4 to co2e e.g. + kg to MT
-            scalar_em = 1 if not gas else self.model_attributes.get_gwp(gas.lower())
-            scalar_me = 1 if not mass else self.model_attributes.get_mass_equivalent(mass.lower())
-
-        # raise error if there's a shape mismatch
-        if len(fields) != arr_in.shape[1]:
-            flds_print = sf.format_print_list(fields)
-            raise ValueError(f"Array shape mismatch for fields {flds_print}: the array only has {arr_in.shape[1]} columns.")
-
-        return pd.DataFrame(arr_in*scalar_em*scalar_me, columns = fields)
-
-    # some scalars
-    def get_scalar(self, modvar: str, return_type: str = "total"):
-
-        valid_rts = ["total", "gas", "mass"]
-        if return_type not in valid_rts:
-            tps = sf.format_print_list(valid_rts)
-            raise ValueError(f"Invalid return type '{return_type}' in get_scalar: valid types are {tps}.")
-
-        # get scalars
-        gas = self.model_attributes.get_variable_characteristic(modvar, self.varchar_str_emission_gas)
-        scalar_gas = 1 if not gas else self.model_attributes.get_gwp(gas.lower())
-        #
-        mass = self.model_attributes.get_variable_characteristic(modvar, self.varchar_str_unit_mass)
-        scalar_mass = 1 if not mass else self.model_attributes.get_mass_equivalent(mass.lower())
-
-        if return_type == "gas":
-            out = scalar_gas
-        elif return_type == "mass":
-            out = scalar_mass
-        elif return_type == "total":
-            out = scalar_gas*scalar_mass
-
-        return out
-
-    # loop over a dictionary of simple variables that map an emission factor () to build out
+    # loop over a dictionary of simple variables that map an emission factor to a driver within the sector
     def get_simple_input_to_output_emission_arrays(self, df_ef: pd.DataFrame, df_driver: pd.DataFrame, dict_vars: dict, variable_driver: str):
         """
             NOTE: this only works w/in subsector
         """
-
         df_out = []
         subsector_driver = self.model_attributes.dict_model_variable_to_subsector[variable_driver]
 
@@ -204,41 +137,12 @@ class AFOLU:
                 warnings.warn(f"In get_simple_input_to_output_emission_arrays, driver variable '{variable_driver}' and emission variable '{var}' are in different sectors. This instance will be skipped.")
             else:
                 # get emissions factor fields and apply scalar using get_standard_variables
-                arr_ef = np.array(self.get_standard_variables(df_ef, var, True, "array_units_corrected"))
+                arr_ef = np.array(self.model_attributes.get_standard_variables(df_ef, var, True, "array_units_corrected"))
                 # get the emissions driver array (driver must h)
                 arr_driver = np.array(df_driver[self.model_attributes.build_target_varlist_from_source_varcats(var, variable_driver)])
-                df_out.append(self.array_to_df(arr_driver*arr_ef, dict_vars[var]))
+                df_out.append(self.model_attributes.array_to_df(arr_driver*arr_ef, dict_vars[var]))
 
         return df_out
-
-    # add subsector emission totals
-    def add_subsector_emissions_aggregates(self, df_in: pd.DataFrame, stop_on_missing_fields_q: bool = False):
-        # loop over base subsectors
-        for subsector in self.required_base_subsectors:
-            vars_subsec = self.model_attributes.dict_model_variables_by_subsector[subsector]
-            # add subsector abbreviation
-            fld_nam = self.model_attributes.get_subsector_attribute(subsector, "abv_subsector")
-            fld_nam = f"emission_co2e_subsector_total_{fld_nam}"
-
-            flds_add = []
-            for var in vars_subsec:
-                var_type = self.model_attributes.get_variable_attribute(var, "variable_type").lower()
-                gas = self.model_attributes.get_variable_characteristic(var, "$EMISSION-GAS$")
-                if (var_type == "output") and gas:
-                    flds_add +=  self.model_attributes.dict_model_variables_to_variables[var]
-
-            # check for missing fields; notify
-            missing_fields = [x for x in flds_add if x not in df_in.columns]
-            if len(missing_fields) > 0:
-                str_mf = print_setdiff(set(df_in.columns), set(flds_add))
-                str_mf = f"Missing fields {str_mf}.%s"
-                if stop_on_missing_fields_q:
-                    raise ValueError(str_mf%(" Subsector emission totals will not be added."))
-                else:
-                    warnings.warn(str_mf%(" Subsector emission totals will exclude these fields."))
-
-            keep_fields = [x for x in flds_add if x in df_in.columns]
-            df_in[fld_nam] = df_in[keep_fields].sum(axis = 0)
 
 
     ######################################
@@ -248,9 +152,14 @@ class AFOLU:
 
     ###   AGRICULTURE
 
-    def check_cropland_fractions(self, df_in, thresh_for_correction: float = 0.01):
+    def check_cropland_fractions(self, df_in, frac_type = "initial", thresh_for_correction: float = 0.01):
 
-            arr = self.get_standard_variables(df_in, self.modvar_agrc_area_prop, True, "array_base")
+            if frac_type not in ["initial", "calculated"]:
+                raise ValueError(f"Error in frac_type '{frac_type}': valid values are 'initial' and 'calculated'.")
+            else:
+                varname = self.modvar_agrc_area_prop_init if (frac_type == "initial") else self.modvar_agrc_area_prop_calc
+
+            arr = self.model_attributes.get_standard_variables(df_in, varname, True, "array_base")
             totals = sum(arr.transpose())
             m = max(np.abs(totals - 1))
 
@@ -263,6 +172,84 @@ class AFOLU:
 
 
     ###   LAND USE
+
+    ## apply a scalar to columns or points, then adjust transition probabilites out of a state accordingly. Applying large scales will lead to dominance, and eventually singular values
+    def adjust_transition_matrix(self,
+        mat: np.ndarray,
+        dict_tuples_scale: dict,
+        ignore_diag_on_col_scale: bool = False,
+        # set max/min for scaled values. Can be used to prevent increasing a single probability to 1
+        mat_bounds: tuple = (0, 1),
+        response_columns = None
+    ) -> np.ndarray:
+        """
+            dict_tuples_scale has tuples for keys
+            - to scale an entire column, enter a single tuple (j, )
+            - to scale a point, use (i, j)
+            - no way to scale a row--in a row-stochastic matrix, this wouldn't make sense
+        """
+
+        # assume that the matrix is square - get the scalar, then get the mask to use adjust transition probabilities not specified as a scalar
+        mat_scale = np.ones(mat.shape)
+        mat_pos_scale = np.zeros(mat.shape)
+        mat_mask = np.ones(mat.shape)
+
+        # assign columns that will be adjusted in response to changes - default to all that aren't scaled
+        if (response_columns == None):
+            mat_mask_response_nodes = np.ones(mat.shape)
+        else:
+            mat_mask_response_nodes = np.zeros(mat.shape)
+            for col in [x for x in response_columns if x < mat.shape[0]]:
+                mat_mask_response_nodes[:, col] = 1
+
+        m = mat_scale.shape[0]
+
+
+        ##  PERFORM SCALING
+
+        # adjust columns first
+        for ind in [x for x in dict_tuples_scale.keys() if len(x) == 1]:
+            # overwrite the column
+            mat_scale[:, ind[0]] = np.ones(m)*dict_tuples_scale[ind]
+            mat_pos_scale[:, ind[0]] = np.ones(m)
+            mat_mask[:, ind[0]] = np.zeros(m)
+        # it may be of interest to ignore the diagonals when scaling columns
+        if ignore_diag_on_col_scale:
+            mat_diag = np.diag(tuple(np.ones(m)))
+            # reset ones on the diagonal
+            mat_scale = (np.ones(mat.shape) - mat_diag)*mat_scale + mat_diag
+            mat_pos_scale = sf.vec_bounds(mat_pos_scale - mat_diag, (0, 1))
+            mat_mask =  sf.vec_bounds(mat_mask + mat_diag, (0, 1))
+        # next, adjust points - operate on the transpose of the matrix
+        for ind in [x for x in dict_tuples_scale.keys() if len(x) == 2]:
+            mat_scale[ind[0], ind[1]] = dict_tuples_scale[ind]
+            mat_pos_scale[ind[0], ind[1]] = 1
+            mat_mask[ind[0], ind[1]] = 0
+
+
+        """
+            Get the total that needs to be removed from masked elements (those that are not scaled)
+
+            NOTE: bound scalars at the low end by 0 (if mask_shift_total_i > sums_row_mask_i, then the scalar is negative.
+            This occurs if the row total of the adjusted values exceeds 1)
+            Set mask_scalar using a minimum value of 0 and implement row normalization—if there's no way to rebalance response columns, everything gets renormalized
+            We correct for this below by implementing row normalization to mat_out
+        """
+        # get new mat and restrict values to 0, 1
+        mat_new_scaled = sf.vec_bounds(mat*mat_scale, mat_bounds)
+        sums_row = sum(mat_new_scaled.transpose())
+        sums_row_mask = sum((mat_mask_response_nodes*mat_mask*mat).transpose())
+        # get shift and positive scalar to apply to valid masked elements
+        mask_shift_total = sums_row - 1
+        mask_scalar = sf.vec_bounds((sums_row_mask - mask_shift_total)/sums_row_mask, (0, np.inf))
+        # get the masked nodes, multiply by the response scalar (at applicable columns, denoted by mat_mask_response_nodes), then add to
+        mat_out = ((mat_mask_response_nodes*mat_mask*mat).transpose() * mask_scalar).transpose()
+        mat_out += sf.vec_bounds(mat_mask*(1 - mat_mask_response_nodes), (0, 1))*mat
+        mat_out += mat_pos_scale*mat_new_scaled
+        mat_out = (mat_out.transpose()/sum(mat_out.transpose())).transpose()
+
+        return sf.vec_bounds(mat_out, (0, 1))
+
 
     ##  check the shape of transition/emission factor matrices sent to project_land_use
     def check_markov_shapes(self, arrs: np.ndarray, function_var_name:str):
@@ -299,6 +286,183 @@ class AFOLU:
 
         return arr_pr, arr_ef
 
+
+    ##  project demand for ag/livestock
+    def project_per_capita_demand(self,
+        dem_0: np.ndarray, # initial demand (e.g., total yield/livestock produced per acre) ()
+        pop: np.ndarray, # population (vec_pop)
+        gdp_per_capita_rates: np.ndarray, # driver of demand growth: gdp/capita (vec_rates_gdp_per_capita)
+        elast: np.ndarray, # elasticity of demand per capita to growth in gdp/capita (e.g., arr_lvst_elas_demand)
+        dem_pc_scalar_exog = None, # exogenous demand per capita scalar representing other changes in the exogenous per-capita demand (can be used to represent population changes)
+        # self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_frac_eating_red_meat, False, "array_base")
+        return_type: type = float # return type of array
+    ):
+
+        # get the demand scalar to apply to per-capita demands
+        dem_scale_proj_pc = (gdp_per_capita_rates.transpose()*elast[0:-1].transpose()).transpose()
+        dem_scale_proj_pc = np.cumprod(1 + dem_scale_proj_pc, axis = 0)
+        dem_scale_proj_pc = np.concatenate([np.ones((1,len(dem_scale_proj_pc[0]))), dem_scale_proj_pc])
+
+        # estimate demand for livestock (used in CBA) - start with livestock population per capita
+        if type(dem_pc_scalar_exog) == type(None):
+            vec_demscale_exog = np.ones(len(pop))
+        else:
+            if dem_pc_scalar_exog.shape != pop.shape:
+                raise ValueError(f"Invalid shape of dem_pc_scalar_exog: the shape should match the population trajectory, which has shape {pop.shape}")
+            else:
+                vec_demscale_exog = dem_pc_scalar_exog
+
+        # get the total demand
+        arr_dem_base = np.outer(pop*vec_demscale_exog, dem_0/pop[0])
+        arr_dem_base = np.array(dem_scale_proj_pc*arr_dem_base).astype(return_type)
+
+        return arr_dem_base
+
+
+    ##  integrated land use model, which performas required land use transition adjustments
+    def project_integrated_land_use(self,
+        vec_initial_area: np.ndarray,
+        arrs_transitions: np.ndarray,
+        arrs_efs: np.ndarray,
+        arr_agrc_nonfeeddem_yield: np.ndarray,
+        arr_agrc_yield_factors: np.ndarray,
+        arr_lndu_yield_by_lvst: np.ndarray,
+        arr_lvst_dem: np.ndarray,
+        vec_agrc_frac_cropland_area: np.ndarray,
+        vec_lndu_yrf: np.ndarray,
+        vec_lvst_pop_init: np.ndarray,
+        vec_lvst_pstr_weights: np.ndarray,
+        vec_lvst_scale_cc: np.ndarray
+    ) -> tuple:
+
+        t0 = time.time()
+
+        # check shapes
+        self.check_markov_shapes(arrs_transitions, "arrs_transitions")
+        self.check_markov_shapes(arrs_efs, "arrs_efs")
+
+        # get attributes
+        pycat_agrc = self.model_attributes.get_subsector_attribute("Agriculture", "pycategory_primary")
+        attr_agrc = self.model_attributes.dict_attributes[pycat_agrc]
+        pycat_lndu = self.model_attributes.get_subsector_attribute("Land Use", "pycategory_primary")
+        attr_lndu = self.model_attributes.dict_attributes[pycat_lndu]
+        pycat_lvst = self.model_attributes.get_subsector_attribute("Livestock", "pycategory_primary")
+        attr_lvst = self.model_attributes.dict_attributes[pycat_lvst]
+        # set some commonly called attributes and indices in arrays
+        m = attr_lndu.n_key_values
+        ind_crop = attr_lndu.get_key_value_index("croplands")
+        ind_pstr = attr_lndu.get_key_value_index("grasslands")
+
+        # initialize variables
+        arr_lvst_dem_gr = np.cumprod(arr_lvst_dem/arr_lvst_dem[0], axis = 0)
+        vec_lvst_cc_init = vec_lvst_pop_init/(vec_initial_area[ind_pstr]*vec_lvst_pstr_weights)
+
+        # intilize output arrays, including land use, land converted, emissions, and adjusted transitions
+        arr_agrc_frac_cropland = np.array([vec_agrc_frac_cropland_area for k in range(self.n_time_periods)])
+        arr_agrc_net_import_increase = np.zeros((self.n_time_periods, attr_agrc.n_key_values))
+        arr_agrc_yield = np.array([(vec_initial_area[ind_crop]*vec_agrc_frac_cropland_area*arr_agrc_yield_factors[0]) for k in range(self.n_time_periods)])
+        arr_emissions_conv = np.zeros((self.n_time_periods, attr_lndu.n_key_values))
+        arr_land_use = np.array([vec_initial_area for k in range(self.n_time_periods)])
+        arr_lvst_net_import_increase = np.zeros((self.n_time_periods, attr_lvst.n_key_values))
+        arrs_land_conv = np.zeros((self.n_time_periods, attr_lndu.n_key_values, attr_lndu.n_key_values))
+        arrs_transitions_adj = np.zeros(arrs_transitions.shape)
+        arrs_yields_per_livestock = np.array([arr_lndu_yield_by_lvst for k in range(self.n_time_periods)])
+
+        # initialize running matrix of land use and iteration index i
+        x = vec_initial_area
+        i = 0
+
+        while i < self.n_time_periods - 1:
+            # check emission factor index
+            i_ef = i if (i < len(arrs_efs)) else len(arrs_efs) - 1
+            if i_ef != i:
+                print(f"No emission factor matrix found for time period {self.time_periods[i]}; using the matrix from period {len(arrs_efs) - 1}.")
+            # check transition matrix index
+            i_tr = i if (i < len(arrs_transitions)) else len(arrs_transitions) - 1
+            if i_tr != i:
+                print(f"No transition matrix found for time period {self.time_periods[i]}; using the matrix from period {len(arrs_efs) - 1}.")
+
+            # calculate the unadjusted land use areas (projected to time step i + 1)
+            area_crop_cur = x[ind_crop]
+            area_crop_proj = np.dot(x, arrs_transitions[i_tr][:, ind_crop])
+            area_pstr_cur = x[ind_pstr]
+            area_pstr_proj = np.dot(x, arrs_transitions[i_tr][:, ind_pstr])
+
+            vec_agrc_cropland_area_proj = area_crop_proj*arr_agrc_frac_cropland[i]
+
+            # LIVESTOCK - calculate carrying capacities, demand used for pasture reallocation, and net surplus
+            vec_lvst_cc_proj = vec_lvst_scale_cc[i + 1]*vec_lvst_cc_init
+            vec_lvst_prod_proj = vec_lvst_cc_proj*area_pstr_proj*vec_lvst_pstr_weights
+            vec_lvst_net_surplus = np.nan_to_num(arr_lvst_dem[i + 1] - vec_lvst_prod_proj)
+            vec_lvst_reallocation = vec_lvst_net_surplus*vec_lndu_yrf[i + 1] # demand for livestock met by reallocating land
+            vec_lvst_net_import_increase = vec_lvst_net_surplus - vec_lvst_reallocation # demand for livestock met by increasing net imports (neg => net exports)
+
+            # calculate required increase in transition probabilities
+            area_lndu_pstr_increase = sum(np.nan_to_num(vec_lvst_reallocation/vec_lvst_cc_proj))
+            scalar_lndu_pstr = (area_pstr_cur + area_lndu_pstr_increase)/np.dot(x, arrs_transitions[i_tr][:, ind_pstr])
+
+            # AGRICULTURE - calculate demand increase in crops, which is a function of gdp/capita (exogenous) and livestock demand (used for feed)
+            vec_agrc_feed_dem_yield = sum((arr_lndu_yield_by_lvst*arr_lvst_dem_gr[i + 1]).transpose())
+            vec_agrc_total_yield = (arr_agrc_nonfeeddem_yield[i + 1] + vec_agrc_feed_dem_yield)
+            vec_agrc_dem_cropareas = vec_agrc_total_yield/arr_agrc_yield_factors[i + 1]
+            vec_agrc_net_surplus_cropland_area_cur = vec_agrc_dem_cropareas - vec_agrc_cropland_area_proj
+            vec_agrc_reallocation = vec_agrc_net_surplus_cropland_area_cur*vec_lndu_yrf[i + 1]
+            # get surplus yield (increase to net imports)
+            vec_agrc_net_imports_increase_yield = (vec_agrc_net_surplus_cropland_area_cur - vec_agrc_reallocation)*arr_agrc_yield_factors[i + 1]
+            vec_agrc_cropareas_adj = vec_agrc_cropland_area_proj + vec_agrc_reallocation
+            scalar_lndu_crop = sum(vec_agrc_cropareas_adj)/np.dot(x, arrs_transitions[i_tr][:, ind_crop])
+
+            # adjust the transition matrix
+            trans_adj = self.adjust_transition_matrix(arrs_transitions[i_tr], {(ind_pstr, ): scalar_lndu_pstr, (ind_crop, ): scalar_lndu_crop})
+            # calculate final land conversion and emissions
+            arr_land_conv = (trans_adj.transpose()*x.transpose()).transpose()
+            vec_emissions_conv = sum((trans_adj*arrs_efs[i_ef]).transpose()*x.transpose())
+
+            if i + 1 < self.n_time_periods:
+                # update arrays
+                rng_agrc = list(range((i + 1)*attr_agrc.n_key_values, (i + 2)*attr_agrc.n_key_values))
+                np.put(arr_agrc_net_import_increase, rng_agrc, np.round(vec_agrc_net_imports_increase_yield), 2)
+                np.put(arr_agrc_frac_cropland, rng_agrc, vec_agrc_cropareas_adj/sum(vec_agrc_cropareas_adj))
+                np.put(arr_agrc_yield, rng_agrc, vec_agrc_total_yield)
+                arr_lvst_net_import_increase[i + 1] = np.round(vec_lvst_net_import_increase).astype(int)
+
+            # non-ag arrays
+            rng_put = np.arange((i)*attr_lndu.n_key_values, (i + 1)*attr_lndu.n_key_values)
+            np.put(arr_land_use, rng_put, x)
+            np.put(arr_emissions_conv, rng_put, vec_emissions_conv)
+
+            arrs_land_conv[i] = arr_land_conv
+            arrs_transitions_adj[i] = trans_adj
+
+            # update land use vector and iterate
+            x = np.matmul(x, trans_adj)
+            i += 1
+
+        # add on final time step
+        trans_adj = arrs_transitions[len(arrs_transitions) - 1]
+        # calculate final land conversion and emissions
+        arr_land_conv = (trans_adj.transpose()*x.transpose()).transpose()
+        vec_emissions_conv = sum((trans_adj*arrs_efs[len(arrs_efs) - 1]).transpose()*x.transpose())
+        # add to tables
+        rng_put = np.arange((i)*attr_lndu.n_key_values, (i + 1)*attr_lndu.n_key_values)
+        np.put(arr_land_use, rng_put, x)
+        np.put(arr_emissions_conv, rng_put, vec_emissions_conv)
+        arrs_land_conv[i] = arr_land_conv
+        arrs_transitions_adj[i] = trans_adj
+
+        return (
+            arr_agrc_frac_cropland,
+            arr_agrc_net_import_increase,
+            arr_agrc_yield,
+            arr_emissions_conv,
+            arr_land_use,
+            arr_lvst_net_import_increase,
+            arrs_land_conv,
+            arrs_transitions_adj,
+            arrs_yields_per_livestock
+        )
+
+
     ##  project land use
     def project_land_use(self, vec_initial_area: np.ndarray, arrs_transitions: np.ndarray, arrs_efs: np.ndarray):
 
@@ -318,13 +482,11 @@ class AFOLU:
         arr_emissions_conv = np.zeros(shp_init)
         arrs_land_conv = np.zeros((self.n_time_periods, attr_lndu.n_key_values, attr_lndu.n_key_values))
 
-        # running matrix Q_i; initialize as identity. initialize running matrix of land use are
-        Q_i = np.identity(attr_lndu.n_key_values)
+        # initialize running matrix of land use and iteration index i
         x = vec_initial_area
         i = 0
 
         while i < self.n_time_periods:
-
             # check emission factor index
             i_ef = i if (i < len(arrs_efs)) else len(arrs_efs) - 1
             if i_ef != i:
@@ -333,21 +495,16 @@ class AFOLU:
             i_tr = i if (i < len(arrs_transitions)) else len(arrs_transitions) - 1
             if i_tr != i:
                 print(f"No transition matrix found for time period {self.time_periods[i]}; using the matrix from period {len(arrs_efs) - 1}.")
-
             # calculate land use, conversions, and emissions
-            vec_land_use = np.matmul(vec_initial_area, Q_i)
             vec_emissions_conv = sum((arrs_transitions[i_tr] * arrs_efs[i_ef]).transpose()*x.transpose())
             arr_land_conv = (arrs_transitions[i_tr].transpose()*x.transpose()).transpose()
-
             # update matrices
             rng_put = np.arange(i*attr_lndu.n_key_values, (i + 1)*attr_lndu.n_key_values)
-            np.put(arr_land_use, rng_put, vec_land_use)
+            np.put(arr_land_use, rng_put, x)
             np.put(arr_emissions_conv, rng_put, vec_emissions_conv)
             np.put(arrs_land_conv, np.arange(i*attr_lndu.n_key_values**2, (i + 1)*attr_lndu.n_key_values**2), arr_land_conv)
-
-            # update transition matrix and land use matrix
-            Q_i = np.matmul(Q_i, arrs_transitions[i_tr])
-            x = vec_land_use
+            # update land use vector
+            x = np.matmul(x, arrs_transitions[i_tr])
 
             i += 1
 
@@ -425,8 +582,8 @@ class AFOLU:
         ##  ECON/GNRL VECTOR AND ARRAY INITIALIZATION
 
         # get some vectors
-        vec_gdp = self.get_standard_variables(df_afolu_trajectories, self.modvar_econ_gdp, False, return_type = "array_base")#np.array(df_afolu_trajectories[field_gdp])
-        vec_pop = self.get_standard_variables(df_afolu_trajectories, self.modvar_gnrl_pop_total, False, return_type = "array_base")
+        vec_gdp = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_econ_gdp, False, return_type = "array_base")#np.array(df_afolu_trajectories[field_gdp])
+        vec_pop = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_gnrl_pop_total, False, return_type = "array_base")
         vec_gdp_per_capita = vec_gdp/vec_pop
         # growth rates
         vec_rates_gdp = vec_gdp[1:]/vec_gdp[0:-1] - 1
@@ -438,30 +595,105 @@ class AFOLU:
         df_out = [df_afolu_trajectories[self.required_dimensions].copy()]
 
 
-
-        ##################
-        #    LAND USE    #
-        ##################
+        ########################################
+        #    LAND USE - UNADJUSTED VARIABLES   #
+        ########################################
 
         # area of the country
-        area = float(self.get_standard_variables(df_afolu_trajectories, self.modvar_gnrl_area, return_type = "array_base")[0])
-
-        ##  LU MARKOV
-
+        area = float(self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_gnrl_area, return_type = "array_base")[0])
         # get the initial distribution of land
-        vec_modvar_lndu_initial_frac = self.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_initial_frac, return_type = "array_base")[0]
+        vec_modvar_lndu_initial_frac = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_initial_frac, return_type = "array_base")[0]
         vec_modvar_lndu_initial_area = vec_modvar_lndu_initial_frac*area
         self.vec_modvar_lndu_initial_area = vec_modvar_lndu_initial_area
-        self.mat_trans, self.mat_ef = self.get_markov_matrices(df_afolu_trajectories)
+        self.mat_trans_unadj, self.mat_ef = self.get_markov_matrices(df_afolu_trajectories)
+        # factor for reallocating land in adjustment
+        vec_lndu_reallocation_factor = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_reallocation_factor, False, "array_base")
+        # common indices
+        cat_lndu_ind_pstr = self.model_attributes.dict_attributes["cat_landuse"].get_key_value_index("grasslands")
+        cat_lndu_ind_crop = self.model_attributes.dict_attributes["cat_landuse"].get_key_value_index("croplands")
+
+        ###########################
+        #    CALCULATE DEMANDS    #
+        ###########################
+
+        ##  livestock demands (calculated exogenously)
+
+        # variables requried to estimate demand
+        vec_modvar_lvst_pop_init = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_pop_init, True, "array_base")[0]
+        fields_lvst_elas = self.model_attributes.switch_variable_category("Livestock", self.modvar_lvst_elas_lvst_demand, "demand_elasticity_category")
+        arr_lvst_elas_demand = np.array(df_afolu_trajectories[fields_lvst_elas])
+        # get the "vegetarian" factor and use to estimate livestock pop
+        vec_lvst_demscale = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_frac_eating_red_meat, False, "array_base", var_bounds = (0, np.inf))
+        arr_lvst_dem_pop = self.project_per_capita_demand(vec_modvar_lvst_pop_init, vec_pop, vec_rates_gdp_per_capita, arr_lvst_elas_demand, vec_lvst_demscale, int)
+        # get weights for allocating grazing area and feed requirement to animals - based on first year only
+        vec_lvst_base_graze_weights = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_dry_matter_consumption, True, "array_base")[0]
+        vec_lvst_feed_allocation_weights = (vec_modvar_lvst_pop_init*vec_lvst_base_graze_weights)/np.dot(vec_modvar_lvst_pop_init, vec_lvst_base_graze_weights)
+        # get information used to calculate carrying capacity of land
+        vec_lvst_carry_capacity_scale = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_carrying_capacity_scalar, False, "array_base", var_bounds = (0, np.inf))
+
+
+        ##  agricultural demands
+
+        # variables required for demand
+        arr_agrc_elas_crop_demand = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_elas_crop_demand_income, False, "array_base")
+        arr_agrc_frac_feed = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_frac_animal_feed, False, "array_base")
+        # get initial cropland area
+        area_agrc_cropland_init = area*vec_modvar_lndu_initial_frac[cat_lndu_ind_crop]
+        vec_agrc_frac_cropland_area = self.check_cropland_fractions(df_afolu_trajectories, "initial")[0]
+        vec_agrc_cropland_area = area_agrc_cropland_init*vec_agrc_frac_cropland_area
+        # get initial yield
+        arr_agrc_yf = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_yf, True, "array_base")
+        vec_agrc_yield_init = arr_agrc_yf[0]*vec_agrc_cropland_area
+        # split into yield for livestock feed (responsive to changes in livestock population) and yield for consumption and export (nonlvstfeed)
+        vec_agrc_yield_init_lvstfeed = vec_agrc_yield_init*arr_agrc_frac_feed[0]
+        vec_agrc_yield_init_nonlvstfeed = vec_agrc_yield_init - vec_agrc_yield_init_lvstfeed
+        # project ag demand for crops that are driven by gdp/capita - set demand scalar for crop demand (increases based on reduction in red meat demand) - depends on how many people eat red meat (vec_lvst_demscale)
+        vec_agrc_diet_exchange_scalar = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_vdes, False, "array_base", var_bounds = (0, np.inf))
+        vec_agrc_demscale = vec_lvst_demscale + vec_agrc_diet_exchange_scalar - vec_lvst_demscale*vec_agrc_diet_exchange_scalar
+        arr_agrc_nonfeeddem_yield = self.project_per_capita_demand(vec_agrc_yield_init_nonlvstfeed, vec_pop, vec_rates_gdp_per_capita, arr_agrc_elas_crop_demand, vec_agrc_demscale, float)
+        # array gives the total yield of crop type i allocated to livestock type j at time 0
+        arr_lndu_yield_i_reqd_lvst_j_init = np.outer(vec_agrc_yield_init_lvstfeed, vec_lvst_feed_allocation_weights)
+
+
+        ################################################
+        #    CALCULATE LAND USE + AGRC/LVST DRIVERS    #
+        ################################################
+
         # get land use projections (np arrays) - note, arrs_land_conv returns a list of matrices for troubleshooting
-        arr_lndu_emissions_conv, arr_land_use, arrs_land_conv = self.project_land_use(vec_modvar_lndu_initial_area, *self.get_markov_matrices(df_afolu_trajectories))
+        arr_agrc_frac_cropland, arr_agrc_net_import_increase, arr_agrc_yield, arr_lndu_emissions_conv, arr_land_use, arr_lvst_net_import_increase, self.arrs_land_conv, self.mat_trans_adj, self.yields_per_livestock = self.project_integrated_land_use(
+            vec_modvar_lndu_initial_area,
+            self.mat_trans_unadj,
+            self.mat_ef,
+            arr_agrc_nonfeeddem_yield,
+            arr_agrc_yf,
+            arr_lndu_yield_i_reqd_lvst_j_init,
+            arr_lvst_dem_pop,
+            vec_agrc_frac_cropland_area,
+            vec_lndu_reallocation_factor,
+            vec_modvar_lvst_pop_init,
+            vec_lvst_feed_allocation_weights,
+            vec_lvst_carry_capacity_scale
+        )
+
         # scale emissions
-        arr_lndu_emissions_conv *= self.get_scalar(self.modvar_lndu_ef_co2_conv, "total")
-        df_lndu_emissions_conv = self.array_to_df(arr_lndu_emissions_conv, self.modvar_lndu_emissions_conv)
-        df_land_use = self.array_to_df(arr_land_use, self.modvar_lndu_area_by_cat)
+        #arr_lndu_emissions_conv *= self.model_attributes.get_scalar(self.modvar_lndu_ef_co2_conv, "total")
+        df_lndu_emissions_conv = self.model_attributes.array_to_df(arr_lndu_emissions_conv, self.modvar_lndu_emissions_conv, True)
+        # assign other variables
+        df_agrc_frac_cropland = self.model_attributes.array_to_df(arr_agrc_frac_cropland, self.modvar_agrc_area_prop_calc)
+        df_agrc_net_import_increase = self.model_attributes.array_to_df(arr_agrc_net_import_increase, self.modvar_agrc_net_imports)
+        df_agrc_yield = self.model_attributes.array_to_df(arr_agrc_yield, self.modvar_agrc_yield)
+        df_land_use = self.model_attributes.array_to_df(arr_land_use, self.modvar_lndu_area_by_cat)
+        df_lvst_net_import_increase = self.model_attributes.array_to_df(arr_lvst_net_import_increase, self.modvar_lvst_net_imports)
+
         # add to output data frame
-        df_out.append(df_lndu_emissions_conv)
-        df_out.append(df_land_use)
+        df_out += [
+            df_agrc_frac_cropland,
+            df_agrc_net_import_increase,
+            df_lndu_emissions_conv,
+            df_land_use,
+            df_lvst_net_import_increase
+        ]
+
 
         ##  EXISTENCE EMISSIONS FOR OTHER LANDS, INCLUDING AG ACTIVITY ON PASTURES
 
@@ -484,12 +716,12 @@ class AFOLU:
         fields_lndu_forest_ordered = [self.model_attributes.matchstring_landuse_to_forests + x for x in self.model_attributes.dict_attributes[pycat_frst].key_values]
         arr_area_frst = np.array(df_land_use[self.model_attributes.build_varlist("Land Use", variable_subsec = self.modvar_lndu_area_by_cat, restrict_to_category_values = fields_lndu_forest_ordered)])
         # get different variables
-        arr_frst_ef_sequestration = self.get_standard_variables(df_afolu_trajectories, self.modvar_frst_sq_co2, True, "array_units_corrected")
-        arr_frst_ef_methane = self.get_standard_variables(df_afolu_trajectories, self.modvar_frst_ef_ch4, True, "array_units_corrected")
+        arr_frst_ef_sequestration = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_sq_co2, True, "array_units_corrected")
+        arr_frst_ef_methane = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_ef_ch4, True, "array_units_corrected")
         # build output variables
         df_out += [
-            self.array_to_df(-1*arr_area_frst*arr_frst_ef_sequestration, self.modvar_frst_emissions_sequestration),
-            self.array_to_df(arr_area_frst*arr_frst_ef_methane, self.modvar_frst_emissions_methane)
+            self.model_attributes.array_to_df(-1*arr_area_frst*arr_frst_ef_sequestration, self.modvar_frst_emissions_sequestration),
+            self.model_attributes.array_to_df(arr_area_frst*arr_frst_ef_methane, self.modvar_frst_emissions_methane)
         ]
 
         ##  NEEDED: FOREST FIRES (ADD HERE)
@@ -502,33 +734,23 @@ class AFOLU:
         #####################
 
         # get area of cropland
-        field_crop_array = self.model_attributes.build_varlist("Land Use", variable_subsec = self.modvar_lndu_area_by_cat, restrict_to_category_values = [self.cat_lu_crop])[0]
+        field_crop_array = self.model_attributes.build_varlist("Land Use", variable_subsec = self.modvar_lndu_area_by_cat, restrict_to_category_values = [self.cat_lndu_crop])[0]
         vec_cropland_area = np.array(df_land_use[field_crop_array])
         # fraction of cropland represented by each crop
-        arr_agrc_frac_cropland_area = self.check_cropland_fractions(df_afolu_trajectories)
+        arr_agrc_frac_cropland_area = self.check_cropland_fractions(df_agrc_frac_cropland, "calculated")
         arr_agrc_crop_area = (arr_agrc_frac_cropland_area.transpose()*vec_cropland_area.transpose()).transpose()
-        # area-corrected emission factors
-        arr_agrc_ef_ch4 = self.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_ch4, True, "array_units_corrected")
-        arr_agrc_ef_co2 = self.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_co2, True, "array_units_corrected")
-        arr_agrc_ef_n2o = self.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_n2o, True, "array_units_corrected")
-        # estimate yield capacity
-        arr_agrc_yf = self.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_yf, True, "array_base")
-        arr_yield = arr_agrc_yf*arr_agrc_crop_area
-        # estimate demand for crops (used in CBA)
-        arr_agrc_elas_crop_demand = self.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_elas_crop_demand_income, False, "array_base")
-        arr_agrc_yield_dem_scale_proj = (vec_rates_gdp_per_capita.transpose()*arr_agrc_elas_crop_demand[0:-1].transpose()).transpose()
-        arr_agrc_yield_dem_scale_proj = np.cumprod(1 + arr_agrc_yield_dem_scale_proj, axis = 0)
-        arr_agrc_yield_dem_scale_proj = np.concatenate([np.ones((1,len(arr_agrc_yield_dem_scale_proj[0]))), arr_agrc_yield_dem_scale_proj])
-        # estimate net imports (surplus demand)
-        arr_agrc_net_imports = arr_agrc_yield_dem_scale_proj*arr_yield[0] - arr_yield
+        # unit-corrected emission factors
+        arr_agrc_ef_ch4 = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_ch4, True, "array_units_corrected")
+        arr_agrc_ef_co2 = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_co2, True, "array_units_corrected")
+        arr_agrc_ef_co2_yield = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_co2_yield, True, "array_units_corrected")
+        arr_agrc_ef_n2o = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_n2o, True, "array_units_corrected")
+
         # add to output dataframe
         df_out += [
-            self.array_to_df(arr_agrc_crop_area, self.modvar_agrc_area_crop),
-            self.array_to_df(arr_yield, self.modvar_agrc_yield),
-            self.array_to_df(arr_agrc_ef_ch4, self.modvar_agrc_emissions_ch4_crops),
-            self.array_to_df(arr_agrc_ef_co2, self.modvar_agrc_emissions_co2_crops),
-            self.array_to_df(arr_agrc_ef_n2o, self.modvar_agrc_emissions_n2o_crops),
-            self.array_to_df(arr_agrc_net_imports, self.modvar_agrc_net_imports)
+            self.model_attributes.array_to_df(arr_agrc_crop_area, self.modvar_agrc_area_crop),
+            self.model_attributes.array_to_df(arr_agrc_ef_ch4*arr_agrc_crop_area, self.modvar_agrc_emissions_ch4_crops),
+            self.model_attributes.array_to_df(arr_agrc_ef_co2*arr_agrc_crop_area + arr_agrc_yield*arr_agrc_ef_co2_yield, self.modvar_agrc_emissions_co2_crops),
+            self.model_attributes.array_to_df(arr_agrc_ef_n2o*arr_agrc_crop_area, self.modvar_agrc_emissions_n2o_crops)
         ]
 
 
@@ -538,45 +760,23 @@ class AFOLU:
         ###################
 
         # get area of grassland/pastures
-        field_lvst_graze_array = self.model_attributes.build_varlist("Land Use", variable_subsec = self.modvar_lndu_area_by_cat, restrict_to_category_values = [self.cat_lu_grazing])[0]
+        field_lvst_graze_array = self.model_attributes.build_varlist("Land Use", variable_subsec = self.modvar_lndu_area_by_cat, restrict_to_category_values = [self.cat_lndu_grazing])[0]
         vec_lvst_graze_area = np.array(df_land_use[field_lvst_graze_array])
-        # get weights for allocating grazing area to animals - based on first year only
-        vec_lvst_base_graze_weights = self.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_dry_matter_consumption, True, "array_base")[0]
-        vec_modvar_lvst_pop_init = self.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_pop_init, True, "array_base")[0]
-        vec_lvst_grassland_allocation_weights = (vec_modvar_lvst_pop_init*vec_lvst_base_graze_weights)/np.dot(vec_modvar_lvst_pop_init, vec_lvst_base_graze_weights)
-        # estimate the total area used for grazing, then get the number of livestock/area
-        arr_lvst_graze_area = np.outer(vec_lvst_graze_area, vec_lvst_grassland_allocation_weights)
-        vec_lvst_carry_capacity_scale = self.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_carrying_capacity_scalar, False, "array_base")
-        vec_lvst_carry_capacity = vec_modvar_lvst_pop_init/arr_lvst_graze_area[0]
-        arr_lvst_carry_capacity = np.outer(vec_lvst_carry_capacity_scale, vec_lvst_carry_capacity)
-        # estimate the total number of livestock that are raised, then get emission factors
-        arr_lvst_pop = np.array(arr_lvst_carry_capacity*arr_lvst_graze_area).astype(int)
-        arr_lvst_emissions_ch4_ef = self.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_ef_ch4_ef, True, "array_units_corrected")
-        arr_lvst_emissions_ch4_mm = self.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_ef_ch4_mm, True, "array_units_corrected")
-        arr_lvst_emissions_n2o_mm = self.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_ef_n2o_mm, True, "array_units_corrected")
-        # estimate demand for livestock (used in CBA)
-        fields_lvst_elas = self.model_attributes.switch_variable_category("Livestock", self.modvar_lvst_elas_lvst_demand, "demand_elasticity_category")
-        arr_lvst_elas_demand = np.array(df_afolu_trajectories[fields_lvst_elas])
-        # get the demand scalar, then apply to the initial population
-        arr_lvst_dem_scale_proj = (vec_rates_gdp_per_capita.transpose()*arr_lvst_elas_demand[0:-1].transpose()).transpose()
-        arr_lvst_dem_scale_proj = np.cumprod(1 + arr_lvst_dem_scale_proj, axis = 0)
-        arr_lvst_dem_scale_proj= np.concatenate([np.ones((1,len(arr_lvst_dem_scale_proj[0]))), arr_lvst_dem_scale_proj])
-        arr_lvst_dem_pop = np.array(arr_lvst_dem_scale_proj*vec_modvar_lvst_pop_init).astype(int)
-        # clean the population and grab net imports
-        arr_lvst_pop = self.reassign_pops_from_proj_to_carry(arr_lvst_pop, arr_lvst_dem_pop)
-        arr_lvst_net_imports = arr_lvst_dem_pop - arr_lvst_pop
-
+        # estimate the total number of livestock that are raised, then get emission factor
+        arr_lvst_emissions_ch4_ef = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_ef_ch4_ef, True, "array_units_corrected")
+        arr_lvst_emissions_ch4_mm = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_ef_ch4_mm, True, "array_units_corrected")
+        arr_lvst_emissions_n2o_mm = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_ef_n2o_mm, True, "array_units_corrected")
+        arr_lvst_pop = arr_lvst_dem_pop - arr_lvst_net_import_increase
         # add to output dataframe
         df_out += [
-            self.array_to_df(arr_lvst_emissions_ch4_ef*arr_lvst_pop, self.modvar_lvst_emissions_ch4_ef),
-            self.array_to_df(arr_lvst_emissions_ch4_mm*arr_lvst_pop, self.modvar_lvst_emissions_ch4_mm),
-            self.array_to_df(arr_lvst_emissions_n2o_mm*arr_lvst_pop, self.modvar_lvst_emissions_n2o_mm),
-            self.array_to_df(arr_lvst_pop, self.modvar_lvst_pop),
-            self.array_to_df(arr_lvst_net_imports, self.modvar_lvst_net_imports)
+            self.model_attributes.array_to_df(arr_lvst_emissions_ch4_ef*arr_lvst_pop, self.modvar_lvst_emissions_ch4_ef),
+            self.model_attributes.array_to_df(arr_lvst_emissions_ch4_mm*arr_lvst_pop, self.modvar_lvst_emissions_ch4_mm),
+            self.model_attributes.array_to_df(arr_lvst_emissions_n2o_mm*arr_lvst_pop, self.modvar_lvst_emissions_n2o_mm),
+            self.model_attributes.array_to_df(arr_lvst_pop, self.modvar_lvst_pop)
         ]
 
 
         df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
-        self.add_subsector_emissions_aggregates(df_out, False)
+        self.model_attributes.add_subsector_emissions_aggregates(df_out, self.required_base_subsectors, False)
 
         return df_out

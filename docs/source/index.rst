@@ -35,7 +35,7 @@ Contents
    analytical_parameters
    dimensions_of_analysis
    general_data
-   economic_impacte
+   economic_impact
    afolu
    circular_economy
    energy

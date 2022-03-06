@@ -8,6 +8,8 @@ Agriculture
 
 The **Agriculture** subsector is used to quantify emissions associated with growing crops, including emissions from the release of soil carbon, fertilizer applications and crop liming, crop burning, methane emissions from paddy rice fields, **AND MORE;CONTINUE**. Agriculture is divided into the following categories (crops), given by the metavariable ``$CAT-AGRICULTURE$``. Each crop should be associated an FAO classifications. `See the FAO <https://www.fao.org/waicent/faoinfo/economic/faodef/annexe.htm>`_ for the source of these classifications and a complete mapping of crop types to categories. On the git, the table ``ingestion/FAOSTAT/ref/attribute_fao_crop.csv`` contains the information mapping each crop to this crop type. Note, this table can be used to merge and aggregate data from FAO into these categories. If a crop type is not present in a country, set the associated area as a fraction of crop area to 0.
 
+.. note:: Carbon stocks are scaled by 44/12 to estimate :math:`\text{CO}_2` emissions. See Section 2.2.3 of the `IPCC Guidelines for National Greenhouse Gas Inventories <https://www.ipcc.ch/report/2019-refinement-to-the-2006-ipcc-guidelines-for-national-greenhouse-gas-inventories/>`_.
+
 Variables by Category
 ---------------------
 
@@ -123,7 +125,7 @@ The **MODELNAMEHERE** does not calculate a general equilibrium for land use dema
 
    * The net surplus demand for livestock of type *v* at time *t* is :math:`S_v^{(lvst)}(t) = D_v^{(lvst)}(t) - \tilde{P}_v^{(lvst)}(t)`
 
-   * In the **MODELNAMEHERE** model, some of this surplus demand can be met endogenously (by adjusting the land use transition), while some can be met from net imports. The quantity used to adjust the land-use transition is found as :math:`\alpha S_v^{(lvst)}`, where :math:`0 \leq \alpha \leq 1` is the **Land Use Reallocation Factor**.
+   * In the **MODELNAMEHERE** model, some of this surplus demand can be met endogenously (by adjusting the land use transition), while some can be met from net imports. The quantity used to adjust the land-use transition is found as :math:`\alpha S_v^{(lvst)}`, where :math:`0 \leq \eta \leq 1` is the **Land Use Yield Reallocation Factor**.
       * If :math:`S_v^{(lvst)}(t) < 0`, the area of grassland will be reapportioned back to cropland, where a second adjustment occurs. Excess cropland is
 
 #. **Estimate cropland demand and unadjusted prudction**
@@ -132,6 +134,10 @@ The **MODELNAMEHERE** does not calculate a general equilibrium for land use dema
 #. **Adjust cropland area to reflect demand changes and crop import factor**
 
 #. **Calculate adjusted transitions and emissions from conversion**
+
+.. note::
+   **MODELNAMEHERE** Accounts for increases in crop demand for livestock feed, but changes to diet are not reflected in crop mix.
+
 
 Variables by Category
 ---------------------
