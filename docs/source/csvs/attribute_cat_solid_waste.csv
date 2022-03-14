@@ -1,11 +1,13 @@
 ﻿Category Name,``$CAT-WASTE-SOLID$``,Description,Data Source,Hyperlink,Notes
-Chemical,``chemical``,"Industrial and chemical solid waste - includes mercury containing devices, computers and electronics, batteries, silica gel, and other chemical solid waste.",,,See `Princeton Environmental Health and Safety <https://ehs.princeton.edu/laboratory-research/chemical-safety/chemical-waste/chemical-waste-solids>`_ for the delineation of these categories.
-Food,``food``,Food waste,,,
+Chemical and Industrial,``chemical_industrial``,"Industrial and chemical solid waste - includes mercury containing devices, computers and electronics, batteries, silica gel, and other chemical solid waste.",,,See `Princeton Environmental Health and Safety <https://ehs.princeton.edu/laboratory-research/chemical-safety/chemical-waste/chemical-waste-solids>`_ for the delineation of these categories.
+Food,``food``,"Food and organic waste, excluding yard and garden waste",,,
+Glass,``glass``,Glass,,,
 Metals,``metal``,Metals,,,
-Other,``other``,Other waste not mentioned in any other category,,,
-Paper,``paper``,Paper products,,,
-Plastic,``plastic``,Plastic and ,,,
-Sanitary Napkins and Diapers,``sanitary_napkins``,Sanitary napkins and diapers,,,
+Other,``other``,"Other waste not mentioned in any other category, including sanitary napkins and diapers.",,,
+Paper,``paper``,"Paper products, including cardboard",,,
+Plastic,``plastic``,Plastic ,,,
+Rubber and Leather,``rubber_leather``,Rubber and leather,,,
+Sanitary Napkins,``nappies``,"Sanitary napkins, nappies, diapers",,,
 Textiles,``textiles``,Clothing and textiles,,,
 Wood,``wood``,Wood and wood products,,,
 Yard,``yard``,Garden and yard waste,,,

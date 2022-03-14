@@ -121,30 +121,6 @@ class AFOLU:
         return time_periods, len(time_periods)
 
 
-    ##  STREAMLINING FUNCTIONS
-
-    # loop over a dictionary of simple variables that map an emission factor to a driver within the sector
-    def get_simple_input_to_output_emission_arrays(self, df_ef: pd.DataFrame, df_driver: pd.DataFrame, dict_vars: dict, variable_driver: str):
-        """
-            NOTE: this only works w/in subsector
-        """
-        df_out = []
-        subsector_driver = self.model_attributes.dict_model_variable_to_subsector[variable_driver]
-
-        for var in dict_vars.keys():
-            subsector_var = self.model_attributes.dict_model_variable_to_subsector[var]
-            if subsector_driver != subsector_driver:
-                warnings.warn(f"In get_simple_input_to_output_emission_arrays, driver variable '{variable_driver}' and emission variable '{var}' are in different sectors. This instance will be skipped.")
-            else:
-                # get emissions factor fields and apply scalar using get_standard_variables
-                arr_ef = np.array(self.model_attributes.get_standard_variables(df_ef, var, True, "array_units_corrected"))
-                # get the emissions driver array (driver must h)
-                arr_driver = np.array(df_driver[self.model_attributes.build_target_varlist_from_source_varcats(var, variable_driver)])
-                df_out.append(self.model_attributes.array_to_df(arr_driver*arr_ef, dict_vars[var]))
-
-        return df_out
-
-
     ######################################
     #    SUBSECTOR SPECIFIC FUNCTIONS    #
     ######################################
@@ -405,8 +381,8 @@ class AFOLU:
 
             # AGRICULTURE - calculate demand increase in crops, which is a function of gdp/capita (exogenous) and livestock demand (used for feed)
             vec_agrc_feed_dem_yield = sum((arr_lndu_yield_by_lvst*arr_lvst_dem_gr[i + 1]).transpose())
-            vec_agrc_total_yield = (arr_agrc_nonfeeddem_yield[i + 1] + vec_agrc_feed_dem_yield)
-            vec_agrc_dem_cropareas = vec_agrc_total_yield/arr_agrc_yield_factors[i + 1]
+            vec_agrc_total_dem_yield = (arr_agrc_nonfeeddem_yield[i + 1] + vec_agrc_feed_dem_yield)
+            vec_agrc_dem_cropareas = vec_agrc_total_dem_yield/arr_agrc_yield_factors[i + 1]
             vec_agrc_net_surplus_cropland_area_cur = vec_agrc_dem_cropareas - vec_agrc_cropland_area_proj
             vec_agrc_reallocation = vec_agrc_net_surplus_cropland_area_cur*vec_lndu_yrf[i + 1]
             # get surplus yield (increase to net imports)
@@ -425,7 +401,7 @@ class AFOLU:
                 rng_agrc = list(range((i + 1)*attr_agrc.n_key_values, (i + 2)*attr_agrc.n_key_values))
                 np.put(arr_agrc_net_import_increase, rng_agrc, np.round(vec_agrc_net_imports_increase_yield), 2)
                 np.put(arr_agrc_frac_cropland, rng_agrc, vec_agrc_cropareas_adj/sum(vec_agrc_cropareas_adj))
-                np.put(arr_agrc_yield, rng_agrc, vec_agrc_total_yield)
+                np.put(arr_agrc_yield, rng_agrc, vec_agrc_total_dem_yield)
                 arr_lvst_net_import_increase[i + 1] = np.round(vec_lvst_net_import_increase).astype(int)
 
             # non-ag arrays
@@ -546,7 +522,7 @@ class AFOLU:
     ###                              ###
     ####################################
 
-    def project(self, df_afolu_trajectories):
+    def project(self, df_afolu_trajectories: pd.DataFrame, projection_time_periods = None) -> pd.DataFrame:
 
         """
             - AFOLU.project takes a data frame (ordered by time series) and returns a data frame of the same order
@@ -710,7 +686,7 @@ class AFOLU:
             self.modvar_lndu_ef_ch4_boc: self.modvar_lndu_emissions_ch4_from_wetlands
         }
         # add to output dataframe
-        df_out += self.get_simple_input_to_output_emission_arrays(df_afolu_trajectories, df_land_use, dict_modvars_lndu_simple_efs, self.modvar_lndu_area_by_cat)
+        df_out += self.model_attributes.get_simple_input_to_output_emission_arrays(df_afolu_trajectories, df_land_use, dict_modvars_lndu_simple_efs, self.modvar_lndu_area_by_cat)
 
 
 

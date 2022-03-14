@@ -39,7 +39,7 @@ def check_fields(df, fields):
         return True
     else:
         fields_missing = format_print_list(s_fields_check - s_fields_df)
-        raise ValueError(f"Required fields {fields_missing} not fields_df in the data frame.")
+        raise ValueError(f"Required fields {fields_missing} not found in the data frame.")
 
 # check that a dictionary contains the required keys
 def check_keys(dict_in, keys):

@@ -23,7 +23,7 @@ class sampling_unit:
         self.variable_trajectory_group = self.get_trajgroup(df_var)
         self.uncertainty_fan_function_parameters = self.get_fan_function_parameters(fan_function_specification)
         self.uncertainty_ramp_vector = self.build_ramp_vector(self.uncertainty_fan_function_parameters)
-        
+
         self.data_table, self.id_coordinates = self.check_scenario_variables(df_var, self.fields_id)
         self.dict_id_values, self.dict_baseline_ids = self.get_scenario_values(self.data_table, self.fields_id, dict_baseline_ids)
         self.num_scenarios = len(self.id_coordinates)
@@ -31,12 +31,12 @@ class sampling_unit:
         self.dict_variable_info = self.get_variable_dictionary(self.data_table, self.fields_id, self.fields_time_periods, self.variable_specifications, self.field_max_scalar, self.field_min_scalar)
         self.ordered_trajectory_arrays = self.get_ordered_trajectory_arrays(self.data_table, self.fields_id, self.fields_time_periods, self.variable_specifications)
         self.scalar_diff_arrays = self.get_scalar_diff_arrays()
-        
+
         # important components for different design ids + assessing uncertainty in lever acheivement
         self.fields_order_strat_diffs = [x for x in self.fields_id if (x != self.field_strategy_id)] + [self.field_var_spec, self.field_trajgroup_spec]
         self.xl_type, self.dict_strategy_info = self.infer_sampling_unit_type()
 
-        
+
 
     # initialize some attributes
     field_trajgroup = "variable_trajectory_group"
@@ -190,9 +190,9 @@ class sampling_unit:
 
     # the variable dictionary includes information on sampling ranges for time period scalars, wether the variables should be scaled uniformly, and the trajectories themselves
     def get_variable_dictionary(
-        self, 
-        df_in: pd.DataFrame, 
-        fields_id: list, 
+        self,
+        df_in: pd.DataFrame,
+        fields_id: list,
         fields_time_periods: list,
         variable_specifications: list,
         field_max: str,
@@ -211,7 +211,7 @@ class sampling_unit:
                     df_cur = sf.subset_df(df_in, {self.field_var_spec: vs})
                 else:
                     df_cur = sf.subset_df(df_in, {self.field_var_spec: vs, self.field_trajgroup_spec: tgs})
-                    
+
                 dict_vs = {
                     "max_scalar": sf.build_dict(df_cur[fields_id + [field_max]]),
                     "min_scalar": sf.build_dict(df_cur[fields_id + [field_min]]),
@@ -237,7 +237,7 @@ class sampling_unit:
         fields_base = list(df_base.columns)
 
         dict_out = {
-            "baseline_strategy_data_table": df_base, 
+            "baseline_strategy_data_table": df_base,
             "baseline_strategy_array": arr_base,
             "difference_arrays_by_strategy": {}
         }
@@ -297,8 +297,8 @@ class sampling_unit:
                 dict_out.update({(vs, tgs): dict_tp_end_delta})
 
         return dict_out
-    
-    
+
+
     def mix_tensors(self, vec_b0, vec_b1, vec_mix, constraints_mix: tuple = (0, 1)):
 
         v_0 = np.array(vec_b0)
@@ -323,7 +323,7 @@ class sampling_unit:
 
         return v_0*(1 - v_alpha) + v_1*v_alpha
 
-    
+
     def ordered_by_ota_from_fid_dict(self, dict_in: dict, key_tuple: tuple):
         return np.array([dict_in[tuple(x)] for x in np.array(self.ordered_trajectory_arrays[key_tuple]["id_coordinates"])])
 
@@ -331,7 +331,7 @@ class sampling_unit:
 
 
     ## uncertainty fan functions
-    
+
      # construct the "ramp" vector for uncertainties
     def build_ramp_vector(self, tuple_param):
 
@@ -351,8 +351,8 @@ class sampling_unit:
         #
         # *defaults*
         #
-        # for linear: 
-        #    set a = 0, b = 2, c = 1, d = n/2 
+        # for linear:
+        #    set a = 0, b = 2, c = 1, d = n/2
         # for sigmoid:
         #    set a = 1, b = 0, c = math.e, d = n/2
         #
@@ -376,7 +376,7 @@ class sampling_unit:
 
     # verify fan function parameters
     def get_fan_function_parameters(self, fan_type):
-        
+
         if type(fan_type) == str:
             n = len(self.time_periods) - self.time_period_end_certainty
             keys = self.get_f_fan_function_parameter_defaults(n, fan_type, "keys")
@@ -393,20 +393,20 @@ class sampling_unit:
                     raise ValueError(f"Error: fan parameter specification {fan_type} contains invalid parameters. Ensure they are numeric (int or float)")
             else:
                 raise ValueError(f"Error: fan parameter specification {fan_type} invalid. 4 Parameters are required.")
-            
-   
+
+
 
     def build_futures(self, n_samples: int, random_seed: int):
         print(f"sampling {self.id_values}")
 
-        
+
     def generate_future(self, lhs_trial: float, lhs_trial_design: float = 1.0, constraints_mix_tg: tuple = (0, 1), baseline_future_q: bool = False):
-        
+
         # index by variable_specification at keys
         dict_out = {}
-        
+
         if not self.variable_trajectory_group == None:
-            
+
             #list(set([x[0] for x in self.ordered_trajectory_arrays.keys()]))
             cat_mix = self.dict_required_tg_spec_fields["mixing_trajectory"]
             cat_b0 = self.dict_required_tg_spec_fields["trajectory_boundary_0"]
@@ -416,7 +416,7 @@ class sampling_unit:
 
             # use mix between 0/1 (0 = 100% trajectory_boundary_0, 1 = 100% trajectory_boundary_1)
             for vs in self.variable_specifications:
-                
+
                 dict_arrs = {
                     cat_b0: self.ordered_trajectory_arrays[(vs, cat_b0)]["data"],
                     cat_b1: self.ordered_trajectory_arrays[(vs, cat_b1)]["data"],
@@ -431,35 +431,35 @@ class sampling_unit:
                     arr_out = self.mix_tensors(dict_arrs[cat_b0], dict_arrs[cat_b1], lhs_trial, constraints_mix_tg)
 
                 if self.xl_type == "L":
-                    
+
                     if lhs_trial_design < 0:
                         raise ValueError(f"The value of lhs_trial_design = {lhs_trial_design} is invalid. lhs_trial_design must be >= 0.")
                     #
                     # if the XL is an L, then we use the modified future as a base (reduce to include only baseline strategy), then add the uncertainty around the strategy effect
                     #
-                    
+
                     n_strat = len(self.dict_id_values[self.field_strategy_id])
                     # get id coordinates( any of cat_mix, cat_b0, or cat_b1 would work -- use cat_mix)
                     df_ids_ota = pd.concat([self.ordered_trajectory_arrays[(vs, cat_mix)]["id_coordinates"].copy().reset_index(drop = True), pd.DataFrame(arr_out, columns = self.fields_time_periods)], axis = 1)
                     w = np.where(df_ids_ota[self.field_strategy_id] == self.dict_baseline_ids[self.field_strategy_id])
                     df_ids_ota = df_ids_ota.iloc[w[0].repeat(n_strat)].reset_index(drop = True)
                     arr_out = np.array(df_ids_ota[self.fields_time_periods])
-                    
+
                     l_modified_cats = []
                     inds0 = set(np.where(self.dict_strategy_info["baseline_strategy_data_table"][self.field_var_spec] == vs)[0])
-                    
+
                     for cat_cur in [cat_b0, cat_b1, cat_mix]:
-                        
+
                         # get the index for the current vs/cat_cur
                         inds = np.sort(np.array(list(inds0 & set(np.where(self.dict_strategy_info["baseline_strategy_data_table"][self.field_trajgroup_spec] == cat_cur)[0]))))
                         n_inds = len(inds)
                         df_ids0 = self.dict_strategy_info["baseline_strategy_data_table"][[x for x in self.fields_id if (x != self.field_strategy_id)]].loc[inds.repeat(n_strat)].reset_index(drop = True)
                         new_strats = list(np.zeros(len(df_ids0)).astype(int))
-                        
+
                         # initialize as list - we only do this to guarantee the sort is correct
                         df_future_strat = np.zeros((n_inds*len(self.dict_id_values[self.field_strategy_id]), len(self.fields_time_periods)))
                         ind_repl = 0
-                        
+
                         ##  start loop
                         for strat in self.dict_id_values[self.field_strategy_id]:
 
@@ -470,9 +470,9 @@ class sampling_unit:
                             df_repl = np.zeros((n_inds, len(self.fields_time_periods))) if (strat == self.dict_baseline_ids[self.field_strategy_id]) else self.dict_strategy_info["difference_arrays_by_strategy"][strat][inds, :]*lhs_trial_design
                             #df_repl = pd.concat([df_ids.reset_index(drop = True), pd.DataFrame(df_repl, columns = self.fields_time_periods)], axis = 1)
                             #df_repl = pd.DataFrame(df_repl, columns = self.fields_time_periods)
-                            
+
                             np.put(df_future_strat, range(n_inds*len(self.fields_time_periods)*ind_repl, n_inds*len(self.fields_time_periods)*(ind_repl + 1)), df_repl)
-                            
+
                             #if init_q:
                             #    df_future_strat = [df_repl for x in self.dict_id_values[self.field_strategy_id]]
                             #    init_q = False
@@ -485,34 +485,34 @@ class sampling_unit:
                         df_ids0[self.field_strategy_id] = new_strats
                         df_future_strat = pd.concat([df_ids0, pd.DataFrame(df_future_strat, columns = self.fields_time_periods)], axis = 1).sort_values(by = self.fields_id).reset_index(drop = True)
                         l_modified_cats.append(dict_arrs[cat_cur] + np.array(df_future_strat[self.fields_time_periods]))
-                        
+
                     arr_out = self.mix_tensors(*l_modified_cats, constraints_mix_tg)
-                    
+
                     #
                     # one option for this approach is to compare the difference between the "L" design uncertainty and the baseline and add this to the uncertain future (final array)
                     #
-                    
+
                 dict_out.update({vs: arr_out})
 
-                
+
         else:
-             
+
             rv = self.uncertainty_ramp_vector
-            
+
             for vs in self.variable_specifications:
                 # order the uniform scaling by the ordered trajectory arrays
                 vec_unif_scalar = self.ordered_by_ota_from_fid_dict(self.dict_variable_info[(vs, None)]["uniform_scaling_q"], (vs, None))
-                # gives 1s where we keep standard fanning (using the ramp vector) and 0s where we use uniform scaling 
+                # gives 1s where we keep standard fanning (using the ramp vector) and 0s where we use uniform scaling
                 vec_base = 1 - vec_unif_scalar
-                
+
                 if max(vec_unif_scalar) > 0:
                     vec_max_scalar = self.ordered_by_ota_from_fid_dict(self.dict_variable_info[(vs, None)]["max_scalar"], (vs, None))
                     vec_min_scalar = self.ordered_by_ota_from_fid_dict(self.dict_variable_info[(vs, None)]["min_scalar"], (vs, None))
                     vec_unif_scalar = vec_unif_scalar*(vec_min_scalar + lhs_trial*(vec_max_scalar - vec_min_scalar))
-                    
+
                 vec_unif_scalar = np.array([vec_unif_scalar]).transpose()
                 vec_base = np.array([vec_base]).transpose()
-                
+
                 delta_max = self.scalar_diff_arrays[(vs, None)]["max_tp_end_delta"]
                 delta_min = self.scalar_diff_arrays[(vs, None)]["min_tp_end_delta"]
                 delta_diff = delta_max - delta_min
@@ -520,7 +520,7 @@ class sampling_unit:
 
                 array_out = self.ordered_trajectory_arrays[(vs, None)]["data"] + (rv * np.array([delta_val]).transpose())
                 array_out = array_out*vec_base + vec_unif_scalar*self.ordered_trajectory_arrays[(vs, None)]["data"]
-                
+
                 dict_out.update({vs: array_out})
 
         return dict_out

@@ -1,3 +1,8 @@
 ﻿Variable Type,Variable,Information,Variable Schema,Notes,Internal Model Variable
-Input,BOC,,physparam_boc_$CAT-WASTE-SOLID$,,0
-Input,K,,physparam_k_$CAT-WASTE-SOLID$,,0
+Input,BOC,The average biodegradable organic carbon,physparam_boc_$CAT-WASTE-SOLID$,,0
+Input,Composition Fraction Domestic Solid Waste,Represents the fraction of all domestic solid waste represented by this type,frac_waso_composition_dom_$CAT-WASTE-SOLID$,,0
+Input,Composition Fraction Industrial Solid Waste,Represents the fraction of all industrial solid waste represented by this type,frac_waso_composition_ind_$CAT-WASTE-SOLID$,,0
+Input,Energy Demand to Recycle Waste ,,endem_waso_recycle_$CAT-WASTE-SOLID$,,0
+Input,Fraction of Waste Recycled,"Fraction of waste in category ``CAT-WASTE-SOLID`` that is recycled. This value should be :math:`\in [0, 1]`. Recycling of food and yard waste categories is assumed to be sent to compost.",frac_waso_recycled_$CAT-WASTE-SOLID$,,0
+Input,K,"Methane Generation Rate :math:`k`, a physical parameter characterizing each type of waste that is landfilled.",physparam_k_$CAT-WASTE-SOLID$,,0
+Input,Virgin Production Energy Demand Reduction Factor,Represents the reduction in demand for virgin production of raw materials that comes from increased recycling. Related to production of that material in the economy.,virgprod_edrf_$CAT-WASTE-SOLID$,,0

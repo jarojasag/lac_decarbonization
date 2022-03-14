@@ -1,3 +1,8 @@
 ﻿Variable Type,Variable,Information,Variable Schema,Categories,Notes
-Input,Annual per Capita Solid Domestic Waste Generated,"Represents the estimated quantity, in CONTINUE",liquid_waste_per_capita,none,
-Input,Annual per VA Solid Industrial Waste Generated,,liquid_waste_per_va,none,
+Input,Initial Per Capita Annual Domestic Solid Waste Generated,"Represents the estimated quantity, in kg/person, of solid waste generated per person at *t = 0*. The total waste generated per person is then estimated as a function of the elasticity of waste production to income (GDP/Capita). ",qty_waso_domestic_waste_per_capita,none,
+Input,Elasticity of Waste Produced to GDP/Capita,"The elasticity of waste per capita to GDP per capita, which is used to estimate increases in waste as population and GDP/capita rise.",elasticity_waso_to_gdppc,none,
+Input,Initial Per VA Solid Industrial Waste Generated,Industrial waste generated per value added,qty_waso_industrial_waste_per_va,none,
+Input,Fraction of Landfill Gas Captured at Landfills,"Represents the proportion of methane emitted at landfills that is captured. This represents an average over the country across all landfills, as the **MODELNAMEHERE** does not distinguish between sanitary landfills, controlled landfills, or other landfills.",frac_waso_methane_capture,none,
+Input,Fraction of Non-Recycled Domestic Solid Waste Burned,Proportion of non-recycled waste that is burned in incineration facilities and in open burn sites. ,frac_waso_non_recyled_burned,none,
+Input,Fraction of Non-Recycled Domestic Solid Waste Landfilled,Proportion of non-recycled waste that is landfilled. Landfills include different levels of management,frac_waso_non_recyled_landfilled,none,
+Input,Fraction of Non-Recycled Domestic Solid Waste Open Dumps,Proportion of non-recycled waste that is ends up in open dumpsites,frac_was_non_recycled_open_dump,none,

@@ -83,7 +83,8 @@ class ModelAttributes:
         self.dim_future_id = "future_id"
         self.dim_strategy_id = "strategy_id"
         self.dim_primary_id = "primary_id"
-        self.dimensions_of_analysis = [self.dim_time_period, self.dim_design_id, self.dim_future_id, self.dim_strategy_id, self.dim_primary_id]
+        # ordered by sort hierarchy
+        self.sort_ordered_dimensions_of_analysis = [self.dim_primary_id, self.dim_design_id, self.dim_strategy_id, self.dim_future_id, self.dim_time_period]
 
         # set some basic properties
         self.attribute_file_extension = ".csv"
@@ -97,6 +98,7 @@ class ModelAttributes:
 
         # temporary - but read from config
         self.varchar_str_emission_gas = "$EMISSION-GAS$"
+        self.varchar_str_unit_energy = "$UNIT-ENERGY$"
         self.varchar_str_unit_mass = "$UNIT-MASS$"
 
         # add attributes and dimensional information
@@ -143,8 +145,8 @@ class ModelAttributes:
 
     # ensure dimensions of analysis are properly specified
     def check_dimensions_of_analysis(self):
-        if not set(self.dimensions_of_analysis).issubset(set(self.all_dims)):
-            missing_vals = sf.print_setdiff(set(self.dimensions_of_analysis), set(self.all_dims))
+        if not set(self.sort_ordered_dimensions_of_analysis).issubset(set(self.all_dims)):
+            missing_vals = sf.print_setdiff(set(self.sort_ordered_dimensions_of_analysis), set(self.all_dims))
             raise ValueError(f"Missing specification of required dimensions of analysis: no attribute tables for dimensions {missing_vals} found in directory '{self.attribute_directory}'.")
 
     # get subsectors that have a primary cateogry; these sectors can leverage the functions below effectively
@@ -303,6 +305,17 @@ class ModelAttributes:
     #    QUICK RETRIEVAL OF FUNDAMENTAL TRANSFORMATIONS (GWP, MASS, ETC)    #
     #########################################################################
 
+    # get energy unit_mass_to_mass_equivalent_
+    def get_energy_equivalent(self, mass):
+        me = str(self.configuration["energy_units"]).lower()
+        key_dict = f"unit_energy_to_energy_equivalent_{me}"
+
+        if mass in self.dict_attributes["unit_energy"].field_maps[key_dict].keys():
+            return self.dict_attributes["unit_energy"].field_maps[key_dict][mass]
+        else:
+            valid_vals = sf.format_print_list(self.dict_attributes["unit_energy"].key_values)
+            raise KeyError(f"Invalid energy '{energy}': defined energy units are {valid_vals}.")
+
     # get gwp
     def get_gwp(self, gas):
         gwp = int(self.configuration["global_warming_potential"])
@@ -323,17 +336,20 @@ class ModelAttributes:
             return self.dict_attributes["unit_mass"].field_maps[key_dict][mass]
         else:
             valid_vals = sf.format_print_list(self.dict_attributes["unit_mass"].key_values)
-            raise KeyError(f"Invalid mass '{mass}': defined gasses are {valid_vals}.")
+            raise KeyError(f"Invalid mass '{mass}': defined masses are {valid_vals}.")
 
     # get scalar
     def get_scalar(self, modvar: str, return_type: str = "total"):
 
-        valid_rts = ["total", "gas", "mass"]
+        valid_rts = ["total", "gas", "mass", "energy"]
         if return_type not in valid_rts:
             tps = sf.format_print_list(valid_rts)
             raise ValueError(f"Invalid return type '{return_type}' in get_scalar: valid types are {tps}.")
 
         # get scalars
+        energy = self.get_variable_characteristic(modvar, self.varchar_str_unit_energy)
+        scalar_energy = 1 if not energy else self.get_energy_equivalent(energy.lower())
+        #
         gas = self.get_variable_characteristic(modvar, self.varchar_str_emission_gas)
         scalar_gas = 1 if not gas else self.get_gwp(gas.lower())
         #
@@ -345,6 +361,7 @@ class ModelAttributes:
         elif return_type == "mass":
             out = scalar_mass
         elif return_type == "total":
+            # total is used for scaling gas & mass to co2e in proper units
             out = scalar_gas*scalar_mass
 
         return out
@@ -378,6 +395,75 @@ class ModelAttributes:
             extra_vals = set_land_use_forest_cats - set(cats_forest)
             extra_vals = sf.format_print_list(extra_vals)
             raise KeyError(f"Undefined forest categories specified in land use attribute file '{attribute_landuse.fp_table}': did not find forest categories {extra_vals}.")
+
+
+    # available for use by all sectors
+    def check_projection_input_df(self,
+        df_project: pd.DataFrame,
+        # options for formatting the input data frame to correct for errors
+        interpolate_missing_q: bool = True,
+        strip_dims: bool = True,
+        drop_invalid_time_periods: bool = True
+    ):
+        # check for required fields
+        sf.check_fields(df_project, [self.dim_time_period])
+
+        # field initialization
+        fields_dat = [x for x in df_project.columns if (x not in self.sort_ordered_dimensions_of_analysis)]
+        fields_dims_notime = [x for x in self.sort_ordered_dimensions_of_analysis if (x != self.dim_time_period) and (x in df_project.columns)]
+
+        # check that there's only one primary key included (or one dimensional vector)
+        if len(fields_dims_notime) > 0:
+            df_fields_dims_notime = df_project[fields_dims_notime].drop_duplicates()
+            if len(df_fields_dims_notime) > 1:
+                raise ValueError(f"Error in project: the input data frame contains multiple dimensions of analysis. The project method is restricted to a single dimension of analysis. The following dimensions were found:\n{df_fields_dims_notime}")
+            else:
+                dict_dims = dict(zip(fields_dims_notime, list(df_fields_dims_notime.iloc[0])))
+        else:
+            dict_dims = {}
+
+        # next, check time periods
+        df_time = self.dict_attributes["dim_time_period"].table[[self.dim_time_period]]
+        set_times_project = set(df_project[self.dim_time_period])
+        set_times_defined = set(df_time[self.dim_time_period])
+        set_times_keep = set_times_project & set_times_defined
+
+        # raise errors if issues occur
+        if (not set_times_project.issubset(set_times_defined)) and (not drop_invalid_time_periods):
+            sf.check_set_values(set_times_project, set_times_defined, " in projection dataframe. Set 'drop_invalid_time_periods = True' to drop these time periods and proceed.")
+
+        # intiialize interpolation_q and check for consecutive time steps to determine if a merge + interpolation is needed
+        interpolate_q = False
+
+        if (set_times_keep != set(range(min(set_times_keep), max(set_times_keep) + 1))):
+            if not interpolate_missing_q:
+                raise ValueError(f"Error in specified times: some time periods are missing and interpolate_missing_q = False. Modeling will not proceed. Set interpolate_missing_q = True to interpolate missing values.")
+            else:
+                set_times_keep = set(range(min(set_times_keep), max(set_times_keep) + 1))
+                df_project = pd.merge(
+                    df_time[df_time[self.dim_time_period].isin(set_times_keep)],
+                    df_project,
+                    how = "left",
+                    on = [self.dim_time_period]
+                )
+                interpolate_q = True
+
+        elif len(df_project[fields_dat].dropna()) != len(df_project):
+                interpolate_q = True
+
+        # set some information on time series
+        projection_time_periods = list(set_times_keep)
+        projection_time_periods.sort()
+        n_projection_time_periods = len(projection_time_periods)
+
+        # format data frame
+        df_project = df_project.interpolate() if interpolate_q else df_project
+        df_project = df_project[df_project[self.dim_time_period].isin(set_times_keep)]
+        df_project.sort_values(by = [self.dim_time_period], inplace = True)
+        df_project = df_project[[self.dim_time_period] + fields_dat] if strip_dims else df_project[fields_dims_notime + [self.dim_time_period] + fields_dat]
+
+        return dict_dims, df_project, n_projection_time_periods, projection_time_periods
+
 
 
 
@@ -539,9 +625,22 @@ class ModelAttributes:
         variable_type = None
     ) -> list:
         """
-            dict_force_override_vrp_vvs_cats can be set do a dictionary of the form
-            {MODEL_VAR_NAME: [catval_a, catval_b, catval_c, ... ]}
-            where catval_i are not all unique; this is useful for making a variable that maps unique categories to a subset of non-unique categories that represent proxies (e.g., buffalo -> cattle_dairy, )
+
+        Build a list of fields (complete variable schema from a data frame) based on the subsector and variable name.
+
+            subsector: the subsector to build the variable list for.
+
+            variable_subsec: default is None. If None, then builds varlist of all variables required for this variable.
+
+            restrict_to_category_values: default is None. If None, applies to all categories specified in attribute tables. Otherwise, will restrict to specified categories.
+
+
+            dict_force_override_vrp_vvs_cats: dict_force_override_vrp_vvs_cats can be set do a dictionary of the form
+                {MODEL_VAR_NAME: [catval_a, catval_b, catval_c, ... ]}
+                where catval_i are not all unique; this is useful for making a variable that maps unique categories to a subset of non-unique categories that represent proxies (e.g., buffalo -> cattle_dairy, )
+
+            variable_type: input or output. If None, defaults to input.
+
         """
         # get some subsector info
         category = self.dict_attributes["abbreviation_subsector"].field_maps["abbreviation_subsector_to_primary_category"][self.get_subsector_attribute(subsector, "abv_subsector")].replace("`", "")
@@ -861,7 +960,7 @@ class ModelAttributes:
     #    INTERNALLY-CALCULATED VARIABLES    #
     #########################################
 
-    # retrives mutually-exclusive fields used to sum to generate internal variables
+    ##  retrives mutually-exclusive fields used to sum to generate internal variables
     def get_mutex_cats_for_internal_variable(self, subsector: str, variable: str, attribute_sum_specification_field: str, return_type: str = "fields"):
         # attribute_sum_specification_field gives the field in the category attribute table that defines what to sum over (e.g., gdp component in the value added)
         # get categories to sum over
@@ -878,8 +977,26 @@ class ModelAttributes:
         else:
             raise ValueError(f"Invalid return_type '{return_type}'. Please specify 'fields' or 'category_values'.")
 
+    ##  useful function for calculating simple driver*emission factor emissions
+    def get_simple_input_to_output_emission_arrays(self, df_ef: pd.DataFrame, df_driver: pd.DataFrame, dict_vars: dict, variable_driver: str):
+        """
+            NOTE: this only works w/in subsector
+        """
+        df_out = []
+        subsector_driver = self.dict_model_variable_to_subsector[variable_driver]
+        for var in dict_vars.keys():
+            subsector_var = self.dict_model_variable_to_subsector[var]
+            if subsector_driver != subsector_driver:
+                warnings.warn(f"In get_simple_input_to_output_emission_arrays, driver variable '{variable_driver}' and emission variable '{var}' are in different sectors. This instance will be skipped.")
+            else:
+                # get emissions factor fields and apply scalar using get_standard_variables
+                arr_ef = np.array(self.get_standard_variables(df_ef, var, True, "array_units_corrected"))
+                # get the emissions driver array (driver must h)
+                arr_driver = np.array(df_driver[self.build_target_varlist_from_source_varcats(var, variable_driver)])
+                df_out.append(self.array_to_df(arr_driver*arr_ef, dict_vars[var]))
+        return df_out
 
-    # function to add GDP based on value added
+    ##  function to add GDP based on value added
     def manage_internal_variable_to_df(self, df_in:pd.DataFrame, subsector: str, internal_variable: str, component_variable: str, attribute_sum_specification_field: str, action: str = "add"):
         # get the gdp field
         field_check = self.build_varlist(subsector, variable_subsec = internal_variable)[0]
@@ -901,7 +1018,7 @@ class ModelAttributes:
                 df_in[field_check] = df_in[fields_sum].sum(axis = 1)
 
 
-    # manage internal variables in data frames
+    ##  manage internal variables in data frames
     def manage_gdp_to_df(self, df_in: pd.DataFrame, action: str = "add"):
         return self.manage_internal_variable_to_df(df_in, "Economy", "GDP", "Value Added", "gdp_component", action)
     def manage_pop_to_df(self, df_in: pd.DataFrame, action: str = "add"):
