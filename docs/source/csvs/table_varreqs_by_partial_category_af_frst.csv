@@ -1,2 +1,2 @@
-﻿Variable Type,Variable,Information,Variable Schema,Categories,Dashboard,Notes,Data Link,Reference,Internal Model Variable
-Input,Elasticity of Wood Products Demand to Value Added,Elasticity of wood products to the value added used to  whichever value added trajectory is used to represent construction and manufacturing demand.,``elasticity_wood_products_demand_to_va``,none,,,,,0
+﻿Variable Type,Variable,Information,Variable Schema,Dashboard,Categories,Notes,Data Link,Reference,Internal Model Variable,Default LHS Scalar Minimum at Final Time Period,Default LHS Scalar Maximum at Final Time Period
+Input,Elasticity of Wood Products Demand to Value Added,Elasticity of wood products to the value added used to  whichever value added trajectory is used to represent construction and manufacturing demand.,``elasticity_wood_products_demand_to_va``,,none,,,,0,1,1

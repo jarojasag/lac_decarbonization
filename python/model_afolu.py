@@ -82,7 +82,7 @@ class AFOLU:
 
         ##  MISCELLANEOUS VARIABLES
 
-        self.time_periods, self.n_time_periods = self.get_time_periods()
+        self.time_periods, self.n_time_periods = self.model_attributes.get_time_periods()
 
         # TEMP:SET TO DERIVE FROM ATTRIBUTE TABLES---
         self.cat_lndu_crop = "croplands"
@@ -116,11 +116,6 @@ class AFOLU:
         required_vars, output_vars = self.model_attributes.get_input_output_fields(self.required_subsectors)
         return required_vars + self.get_required_dimensions(), output_vars
 
-
-    def get_time_periods(self):
-        pydim_time_period = self.model_attributes.get_dimensional_attribute("time_period", "pydim")
-        time_periods = self.model_attributes.dict_attributes[pydim_time_period].key_values
-        return time_periods, len(time_periods)
 
 
     ######################################
@@ -241,13 +236,18 @@ class AFOLU:
                 raise ValueError(f"Invalid shape of matrices in {function_var_name}. They must have shape ({attr_lndu.n_key_values}, {attr_lndu.n_key_values}).")
 
     ##  get the transition and emission factors matrices from the data frame
-    def get_markov_matrices(self, df_ordered_trajectories, thresh_correct = 0.0001):
+    def get_markov_matrices(self,
+        df_ordered_trajectories: pd.DataFrame,
+        n_tp = None,
+        thresh_correct: float = 0.0001
+    ) -> tuple:
         """
             - assumes that the input data frame is ordered by time_period
+            - n_tp gives the number of time periods. Default value is None, which implies all time periods
             - thresh_correct is used to decide whether or not to correct the transition matrix (assumed to be row stochastic) to sum to 1; if the abs of the sum is outside this range, an error will be thrown
             - fields_pij and fields_efc will be properly ordered by categories for this transformation
         """
-
+        n_tp = n_tp if (n_tp != None) else self.n_time_periods
         fields_pij = self.model_attributes.dict_model_variables_to_variables[self.modvar_lndu_prob_transition]
         fields_efc = self.model_attributes.dict_model_variables_to_variables[self.modvar_lndu_ef_co2_conv]
         sf.check_fields(df_ordered_trajectories, fields_pij + fields_efc)
@@ -258,9 +258,9 @@ class AFOLU:
 
         # fetch arrays of transition probabilities and co2 emission factors
         arr_pr = np.array(df_ordered_trajectories[fields_pij])
-        arr_pr = arr_pr.reshape((self.n_time_periods, n_categories, n_categories))
+        arr_pr = arr_pr.reshape((n_tp, n_categories, n_categories))
         arr_ef = np.array(df_ordered_trajectories[fields_efc])
-        arr_ef = arr_ef.reshape((self.n_time_periods, n_categories, n_categories))
+        arr_ef = arr_ef.reshape((n_tp, n_categories, n_categories))
 
         return arr_pr, arr_ef
 
@@ -312,12 +312,14 @@ class AFOLU:
         vec_lndu_yrf: np.ndarray,
         vec_lvst_pop_init: np.ndarray,
         vec_lvst_pstr_weights: np.ndarray,
-        vec_lvst_scale_cc: np.ndarray
+        vec_lvst_scale_cc: np.ndarray,
+        n_tp: int = None
     ) -> tuple:
 
         t0 = time.time()
 
         # check shapes
+        n_tp = n_tp if (n_tp != None) else self.n_time_periods
         self.check_markov_shapes(arrs_transitions, "arrs_transitions")
         self.check_markov_shapes(arrs_efs, "arrs_efs")
 
@@ -338,21 +340,21 @@ class AFOLU:
         vec_lvst_cc_init = vec_lvst_pop_init/(vec_initial_area[ind_pstr]*vec_lvst_pstr_weights)
 
         # intilize output arrays, including land use, land converted, emissions, and adjusted transitions
-        arr_agrc_frac_cropland = np.array([vec_agrc_frac_cropland_area for k in range(self.n_time_periods)])
-        arr_agrc_net_import_increase = np.zeros((self.n_time_periods, attr_agrc.n_key_values))
-        arr_agrc_yield = np.array([(vec_initial_area[ind_crop]*vec_agrc_frac_cropland_area*arr_agrc_yield_factors[0]) for k in range(self.n_time_periods)])
-        arr_emissions_conv = np.zeros((self.n_time_periods, attr_lndu.n_key_values))
-        arr_land_use = np.array([vec_initial_area for k in range(self.n_time_periods)])
-        arr_lvst_net_import_increase = np.zeros((self.n_time_periods, attr_lvst.n_key_values))
-        arrs_land_conv = np.zeros((self.n_time_periods, attr_lndu.n_key_values, attr_lndu.n_key_values))
+        arr_agrc_frac_cropland = np.array([vec_agrc_frac_cropland_area for k in range(n_tp)])
+        arr_agrc_net_import_increase = np.zeros((n_tp, attr_agrc.n_key_values))
+        arr_agrc_yield = np.array([(vec_initial_area[ind_crop]*vec_agrc_frac_cropland_area*arr_agrc_yield_factors[0]) for k in range(n_tp)])
+        arr_emissions_conv = np.zeros((n_tp, attr_lndu.n_key_values))
+        arr_land_use = np.array([vec_initial_area for k in range(n_tp)])
+        arr_lvst_net_import_increase = np.zeros((n_tp, attr_lvst.n_key_values))
+        arrs_land_conv = np.zeros((n_tp, attr_lndu.n_key_values, attr_lndu.n_key_values))
         arrs_transitions_adj = np.zeros(arrs_transitions.shape)
-        arrs_yields_per_livestock = np.array([arr_lndu_yield_by_lvst for k in range(self.n_time_periods)])
+        arrs_yields_per_livestock = np.array([arr_lndu_yield_by_lvst for k in range(n_tp)])
 
         # initialize running matrix of land use and iteration index i
         x = vec_initial_area
         i = 0
 
-        while i < self.n_time_periods - 1:
+        while i < n_tp - 1:
             # check emission factor index
             i_ef = i if (i < len(arrs_efs)) else len(arrs_efs) - 1
             if i_ef != i:
@@ -398,7 +400,7 @@ class AFOLU:
             arr_land_conv = (trans_adj.transpose()*x.transpose()).transpose()
             vec_emissions_conv = sum((trans_adj*arrs_efs[i_ef]).transpose()*x.transpose())
 
-            if i + 1 < self.n_time_periods:
+            if i + 1 < n_tp:
                 # update arrays
                 rng_agrc = list(range((i + 1)*attr_agrc.n_key_values, (i + 2)*attr_agrc.n_key_values))
                 np.put(arr_agrc_net_import_increase, rng_agrc, np.round(vec_agrc_net_imports_increase_yield), 2)
@@ -444,11 +446,14 @@ class AFOLU:
 
 
     ##  project land use
-    def project_land_use(self, vec_initial_area: np.ndarray, arrs_transitions: np.ndarray, arrs_efs: np.ndarray):
+    def project_land_use(self, vec_initial_area: np.ndarray, arrs_transitions: np.ndarray, arrs_efs: np.ndarray, n_tp: int = None):
 
         t0 = time.time()
 
+        np.seterr(divide = "ignore", invalid = "ignore")
+
         # check shapes
+        n_tp = n_tp if (n_tp != None) else self.n_time_periods
         self.check_markov_shapes(arrs_transitions, "arrs_transitions")
         self.check_markov_shapes(arrs_efs, "arrs_efs")
 
@@ -457,16 +462,16 @@ class AFOLU:
         attr_lndu = self.model_attributes.dict_attributes[pycat_lndu]
 
         # intilize the land use and conversion emissions array
-        shp_init = (self.n_time_periods, attr_lndu.n_key_values)
+        shp_init = (n_tp, attr_lndu.n_key_values)
         arr_land_use = np.zeros(shp_init)
         arr_emissions_conv = np.zeros(shp_init)
-        arrs_land_conv = np.zeros((self.n_time_periods, attr_lndu.n_key_values, attr_lndu.n_key_values))
+        arrs_land_conv = np.zeros((n_tp, attr_lndu.n_key_values, attr_lndu.n_key_values))
 
         # initialize running matrix of land use and iteration index i
         x = vec_initial_area
         i = 0
 
-        while i < self.n_time_periods:
+        while i < n_tp:
             # check emission factor index
             i_ef = i if (i < len(arrs_efs)) else len(arrs_efs) - 1
             if i_ef != i:
@@ -524,20 +529,22 @@ class AFOLU:
     ###                              ###
     ####################################
 
-    def project(self, df_afolu_trajectories: pd.DataFrame, projection_time_periods = None) -> pd.DataFrame:
+    def project(self, df_afolu_trajectories: pd.DataFrame) -> pd.DataFrame:
 
         """
             - AFOLU.project takes a data frame (ordered by time series) and returns a data frame of the same order
             - designed to be parallelized or called from command line via __main__ in run_afolu.py
+            - df_afolu_trajectories should have all input fields required (see AFOLU.required_variables for a list of variables to be defined)
+            - the AFOLU.project method will run on valid time periods from 1 .. k, where k <= n (n is the number of time periods). By default, it drops invalid time periods. If there are missing time_periods between the first and maximum, data are interpolated.
         """
 
         ##  CHECKS
 
         # check for internal variables and add if necessary; note, this can be defined for different variables (see model attributes)
         self.model_attributes.manage_pop_to_df(df_afolu_trajectories, "add")
-        df_afolu_trajectories.sort_values(by = [self.model_attributes.dim_time_period], inplace = True)
         # check that all required fields are contained—assume that it is ordered by time period
         self.check_df_fields(df_afolu_trajectories)
+        dict_dims, df_afolu_trajectories, n_projection_time_periods, projection_time_periods = self.model_attributes.check_projection_input_df(df_afolu_trajectories, True, True, True)
 
 
         ##  CATEGORY INITIALIZATION
@@ -585,7 +592,7 @@ class AFOLU:
         vec_modvar_lndu_initial_frac = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_initial_frac, return_type = "array_base")[0]
         vec_modvar_lndu_initial_area = vec_modvar_lndu_initial_frac*area
         self.vec_modvar_lndu_initial_area = vec_modvar_lndu_initial_area
-        self.mat_trans_unadj, self.mat_ef = self.get_markov_matrices(df_afolu_trajectories)
+        self.mat_trans_unadj, self.mat_ef = self.get_markov_matrices(df_afolu_trajectories, n_projection_time_periods)
         # factor for reallocating land in adjustment
         vec_lndu_reallocation_factor = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_reallocation_factor, False, "array_base")
         # common indices
@@ -656,7 +663,8 @@ class AFOLU:
             vec_lndu_reallocation_factor,
             vec_modvar_lvst_pop_init,
             vec_lvst_feed_allocation_weights,
-            vec_lvst_carry_capacity_scale
+            vec_lvst_carry_capacity_scale,
+            n_projection_time_periods
         )
 
         # scale emissions

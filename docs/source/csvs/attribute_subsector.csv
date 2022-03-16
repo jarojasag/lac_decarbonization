@@ -6,7 +6,9 @@ AFOLU,Livestock,``lvst``,``$CAT-LIVESTOCK$``,Livestock activity ....,Python
 Circular Economy,Liquid Waste,``wali``,``$CAT-WASTE-LIQUID$``,Activity (demand and emission) associated with emissions from domestic and industrial liquid waste disposal and treatment,Python
 Circular Economy,Solid Waste,``waso``,``$CAT-WASTE-SOLID$``,Activity (demand and emission) associated with emissions from domestic and industrial solid waste disposal and treatment ,Python
 Energy,Other Energy: Stationary Emissions and Carbon Capture and Sequestration,``oesc``,``$CAT-OESC$``,"Stationary emissions from residential, commercial, and municipal activities; agricultural fuel combustion; and carbon capture and sequestration. ",Python
-Energy,Electricity Generation,``elec``,NONE,Activity (demand and emission) associated with the generation of electricity ....,Julia
+Energy,Electricity Generation Technology,``eltc``,``$CAT-TECHNOLOGY$``,"Technology associated with the generation of electricity--in particular, power plants.",Julia
+Energy,Electricity Generation Fuel,``elfu``,``$CAT-FUEL$``,Fuel used in electricity generation.,Julia
+Energy,Electricity Generation Storage,``elst``,``$CAT-STORAGE$``,Storage technologies used in n energy system. ,Julia
 Energy,Industrial Energy,``inen``,``$CAT-INDUSTRY$``,Activity (demand and emission) associated with the energy generation and use in industry,Python
 Energy,Transportation,``trns``,``$CAT-TRANSPORTATION$``,Activity (demand and emission) associated with the generation of electricity ....,Python
 IPPU,IPPU,``ippu``,``$CAT-INDUSTRY$``,Activity (demand and emission) associated with industrial processes and product use,Python

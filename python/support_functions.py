@@ -56,7 +56,8 @@ def check_path(fp, create_q = False):
     if os.path.exists(fp):
         return fp
     elif create_q:
-        os.mkdirs(fp, exist_ok = True)
+        os.makedirs(fp, exist_ok = True)
+        return fp
     else:
         raise ValueError(f"Path '{fp}' not found. It will not be created.")
 
@@ -94,6 +95,12 @@ def clean_field_names(nms, dict_repl: dict = {"  ": " ", " ": "_", "$": "", "\\"
         nms = df.rename(columns = dict(zip(list(df.columns), nms)))
 
     return nms
+
+# export a dictionary of data frames to an excel
+def dict_to_excel(fp_out: str, dict_out: dict) -> None:
+    with pd.ExcelWriter(fp_out) as excel_writer:
+        for k in dict_out.keys():
+            dict_out[k].to_excel(excel_writer, sheet_name = str(k), index = False, encoding = "UTF-8")
 
 #
 def df_get_missing_fields_from_source_df(df_target, df_source, side = "right", column_vector = None):

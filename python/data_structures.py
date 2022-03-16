@@ -73,9 +73,161 @@ class AttributeTable:
 
 
 
+
+##  CONFIGURATION file
+class Configuration:
+
+    def __init__(self,
+        fp_config: str,
+        attr_energy: AttributeTable,
+        attr_gas: AttributeTable,
+        attr_mass: AttributeTable,
+        attr_required_parameters: AttributeTable = None
+    ):
+        self.fp_config = fp_config
+        self.attr_required_parameters = attr_required_parameters
+        self.dict_config = self.get_config_information(attr_energy, attr_gas, attr_mass, attr_required_parameters)
+
+
+
+    # some restrictions on the config values
+    def check_config_defaults(self,
+        param,
+        val,
+        dict_valid_values: dict = dict({})
+    ):
+        if param in ["global_warming_potential"]:
+            val = int(val)
+        elif param in ["energy_units", "emissions_mass"]:
+            val = str(val)
+        elif param in ["discount_rate"]:
+            val = min(max(float(val), 0), 1)
+
+        if param in dict_valid_values.keys():
+            if val not in dict_valid_values[param]:
+                valid_vals = sf.format_print_list(dict_valid_values[param])
+                raise ValueError(f"Invalid specification of parameter '{param}': valid values are {valid_vals}")
+
+        return val
+
+    # function to retrieve a configuration value
+    def get(self, key: str):
+        if key in self.dict_config.keys():
+            return self.dict_config[key]
+        else:
+            raise KeyError(f"Configuration parameter '{key}' not found.")
+
+
+    # function for retrieving a configuration file and population missing values with defaults
+    def get_config_information(self,
+        attr_energy: AttributeTable,
+        attr_gas: AttributeTable,
+        attr_mass: AttributeTable,
+        attr_parameters_required: AttributeTable = None,
+        field_req_param: str = "configuration_file_parameter",
+        field_default_val: str = "default_value"
+    ) -> dict:
+
+        # check path and parse the config if it exists
+        dict_conf = {}
+        if self.fp_config != None:
+            if os.path.exists(self.fp_config):
+                dict_conf = self.parse_config(self.fp_config)
+
+        # update with defaults if a value is missing in the specified configuration
+        if attr_parameters_required != None:
+            if attr_parameters_required.key != field_req_param:
+                # add defaults
+                for k in attr_parameters_required.key_values:
+                    param_config = attr_parameters_required.field_maps[f"{attr_parameters_required.key}_to_{field_req_param}"][k] if (attr_parameters_required.key != field_req_param) else k
+                    if param_config not in dict_conf.keys():
+                        val_default = self.infer_types(attr_parameters_required.field_maps[f"{attr_parameters_required.key}_to_{field_default_val}"][k])
+                        dict_conf.update({param_config: val_default})
+
+        # check valid configuration values and update where appropriate
+        valid_energy = self.get_valid_values_from_attribute_column(attr_energy, "energy_equivalent_", str, "unit_energy_to_energy")
+        valid_gwp = self.get_valid_values_from_attribute_column(attr_gas, "global_warming_potential_", int)
+        valid_mass = self.get_valid_values_from_attribute_column(attr_mass, "mass_equivalent_", str, "unit_mass_to_mass")
+        dict_checks = {
+            "energy_units": valid_energy,
+            "emissions_mass": valid_mass,
+            "global_warming_potential": valid_gwp
+        }
+        keys_check = list(dict_conf.keys())
+        for k in keys_check:
+            dict_conf.update({k: self.check_config_defaults(k, dict_conf[k], dict_checks)})
+
+        self.valid_energy = valid_energy
+        self.valid_gwp = valid_gwp
+        self.valid_mass = valid_mass
+        return dict_conf
+
+    # function to retrieve available emission mass specifications
+    def get_valid_values_from_attribute_column(self,
+        attribute_table: AttributeTable,
+        column_match_str: str,
+        return_type: type = None,
+        field_map_to_val: str = None
+    ):
+        cols = [x.replace(column_match_str, "") for x in attribute_table.table.columns if (x[0:min(len(column_match_str), len(x))] == column_match_str)]
+        if return_type != None:
+            cols = [return_type(x) for x in cols]
+        # if a dictionary is specified, map the values to a name
+        if field_map_to_val != None:
+            if field_map_to_val in attribute_table.field_maps.keys():
+                cols = [attribute_table.field_maps[field_map_to_val][x] for x in cols]
+            else:
+                raise KeyError(f"Error in get_valid_values_from_attribute_column: the field map '{field_map_to_val}' is not defined.")
+
+        return cols
+
+    # guess the input type for a configuration file
+    def infer_type(self, val):
+        if val != None:
+            val = str(val)
+            if val.replace(".", "").replace(",", "").isnumeric():
+                num = float(val)
+                val = int(num) if (num == int(num)) else float(num)
+        return val
+
+    # apply to a list if necessary
+    def infer_types(self, val_in, delim = ","):
+        if val_in != None:
+            return [self.infer_type(x) for x in val_in.split(delim)] if (delim in val_in) else self.infer_type(val_in)
+        else:
+            return None
+
+    # function for parsing a configuration file into a dictionary
+    def parse_config(self, fp_config: str) -> dict:
+        """
+            parse_config returns a dictionary of configuration values
+        """
+
+        #read in aws initialization
+        if os.path.exists(fp_config):
+        	with open(fp_config) as fl:
+        		lines_config = fl.readlines()
+        else:
+            raise ValueError(f"Invalid configuation file {fp_config} specified: file not found.")
+
+        dict_out = {}
+        #remove unwanted blank characters
+        for ln in lines_config:
+            ln_new = sf.str_replace(ln.split("#")[0], {"\n": "", "\t": ""})
+            if (":" in ln_new):
+                ln_new = ln_new.split(":")
+                key = str(ln_new[0])
+                val = self.infer_types(str(ln_new[1]).strip())
+                dict_out.update({key: val})
+
+        return dict_out
+
+
+
+
 class ModelAttributes:
 
-    def __init__(self, dir_attributes: str, dict_config: dict = {}):
+    def __init__(self, dir_attributes: str, fp_config: str = None):
 
         # initialize dimensions of analysis - later, check for presence
         self.dim_time_period = "time_period"
@@ -112,7 +264,13 @@ class ModelAttributes:
         # run checks and raise errors if invalid data, are entered
         #self.check_dimensions_of_analysis()
         self.check_land_use_tables()
-        self.configuration = self.check_configuration(dict_config)
+        self.configuration = Configuration(
+            fp_config,
+            self.dict_attributes["unit_energy"],
+            self.dict_attributes["emission_gas"],
+            self.dict_attributes["unit_mass"],
+            self.configuration_requirements
+        )
 
 
 
@@ -120,28 +278,6 @@ class ModelAttributes:
     ############################################################
     #   FUNCTIONS FOR ATTRIBUTE TABLES, DIMENSIONS, SECTORS    #
     ############################################################
-
-    # some restrictions on the config values
-    def check_config_defaults(self, val, param):
-        if param == "Global Warming Potential":
-            val = int(val)
-        elif param == "Discount Rate":
-            val = min(max(float(val), 0), 1)
-        elif param == "Emissions Mass":
-            val = str(val)
-
-        return val
-
-    # check the configuration dictionary
-    def check_configuration(self, dict_in):
-        # required config keys are set here; defaults can be added
-        required_keys = []
-        dict_aps = self.configuration_requirements.field_maps["analytical_parameter_to_configuration_file_parameter"]
-        dict_def = self.configuration_requirements.field_maps["analytical_parameter_to_default_value"]
-        for k in dict_aps.keys():
-            val = self.check_config_defaults(dict_def[k], k) if (dict_aps[k] not in dict_in.keys()) else self.check_config_defaults(dict_aps[k], k)
-            dict_in.update({dict_aps[k]: val})
-        return dict_in
 
     # ensure dimensions of analysis are properly specified
     def check_dimensions_of_analysis(self):
@@ -215,22 +351,6 @@ class ModelAttributes:
 
         return (all_categories, all_dims, all_types, configuration_requirements, dict_attributes, dict_varreqs)
 
-
-    # get different dimensions
-    def get_sector_dims(self):
-        # sector info
-        all_sectors = list(self.dict_attributes["abbreviation_sector"].table["sector"])
-        all_sectors.sort()
-        all_sectors_abvs = list(self.dict_attributes["abbreviation_sector"].table["abbreviation_sector"])
-        all_sectors_abvs.sort()
-        # subsector info
-        all_subsectors = list(self.dict_attributes["abbreviation_subsector"].table["subsector"])
-        all_subsectors.sort()
-        all_subsector_abvs = list(self.dict_attributes["abbreviation_subsector"].table["abbreviation_subsector"])
-        all_subsector_abvs.sort()
-
-        return (all_sectors, all_sectors_abvs, all_subsectors, all_subsector_abvs)
-
     # function for dimensional attributes
     def get_dimensional_attribute(self, dimension, return_type):
         if dimension not in self.all_dims:
@@ -249,6 +369,27 @@ class ModelAttributes:
             warnings.warn(f"Invalid dimensional attribute '{return_type}'. Valid return type values are:{valid_rts}")
             return None
 
+    # get different dimensions
+    def get_sector_dims(self):
+        # sector info
+        all_sectors = list(self.dict_attributes["abbreviation_sector"].table["sector"])
+        all_sectors.sort()
+        all_sectors_abvs = list(self.dict_attributes["abbreviation_sector"].table["abbreviation_sector"])
+        all_sectors_abvs.sort()
+        # subsector info
+        all_subsectors = list(self.dict_attributes["abbreviation_subsector"].table["subsector"])
+        all_subsectors.sort()
+        all_subsector_abvs = list(self.dict_attributes["abbreviation_subsector"].table["abbreviation_subsector"])
+        all_subsector_abvs.sort()
+
+        return (all_sectors, all_sectors_abvs, all_subsectors, all_subsector_abvs)
+
+    # retrieve time periods
+    def get_time_periods(self):
+        pydim_time_period = self.get_dimensional_attribute("time_period", "pydim")
+        time_periods = self.dict_attributes[pydim_time_period].key_values
+        return time_periods, len(time_periods)
+
     # function for grabbing an attribute column from an attribute table ordered the same as key values
     def get_ordered_category_attribute(self, subsector: str, attribute: str) -> list:
         pycat = self.get_subsector_attribute(subsector, "pycategory_primary")
@@ -260,6 +401,31 @@ class ModelAttributes:
         # get the dictionary and order
         dict_map = sf.build_dict(attr_cur.table[[attr_cur.key, attribute]])
         return [dict_map[x] for x in attr_cur.key_values]
+
+    # function for retrieving different attributes associated with a sector
+    def get_sector_attribute(self, sector, return_type):
+
+        # check sectors
+        if sector not in self.all_sectors:
+            valid_sectors = sf.format_print_list(self.all_sectors)
+            raise ValueError(f"Invalid sector specification in get_sector_attribute: valid sectors are {valid_sectors}")
+        # initialize some key vars
+        match_str_to = "sector_to_" if (return_type == "abbreviation_sector") else "abbreviation_sector_to_"
+        attr_sec = self.dict_attributes["abbreviation_sector"]
+        maps = [x for x in attr_sec.field_maps.keys() if (match_str_to in x)]
+        map_retrieve = f"{match_str_to}{return_type}"
+
+        if not map_retrieve in maps:
+            valid_rts = sf.format_print_list([x.replace(match_str_to, "") for x in maps])
+            # warn user, but still allow a return
+            warnings.warn(f"Invalid sector attribute '{return_type}'. Valid return type values are:{valid_rts}")
+            return None
+        else:
+            # set the key
+            key = sector if (return_type == "abbreviation_sector") else attr_sec.field_maps["sector_to_abbreviation_sector"][sector]
+            sf.check_keys(attr_sec.field_maps[map_retrieve], [key])
+            return attr_sec.field_maps[map_retrieve][key]
+
 
     # function for retrieving different attributes associated with a subsector
     def get_subsector_attribute(self, subsector, return_type):
@@ -307,7 +473,7 @@ class ModelAttributes:
 
     # get energy unit_mass_to_mass_equivalent_
     def get_energy_equivalent(self, mass):
-        me = str(self.configuration["energy_units"]).lower()
+        me = str(self.configuration.get("energy_units")).lower()
         key_dict = f"unit_energy_to_energy_equivalent_{me}"
 
         if mass in self.dict_attributes["unit_energy"].field_maps[key_dict].keys():
@@ -318,7 +484,7 @@ class ModelAttributes:
 
     # get gwp
     def get_gwp(self, gas):
-        gwp = int(self.configuration["global_warming_potential"])
+        gwp = int(self.configuration.get("global_warming_potential"))
         key_dict = f"emission_gas_to_global_warming_potential_{gwp}"
 
         if gas in self.dict_attributes["emission_gas"].field_maps[key_dict].keys():
@@ -329,7 +495,7 @@ class ModelAttributes:
 
     # get mass
     def get_mass_equivalent(self, mass):
-        me = str(self.configuration["emissions_mass"]).lower()
+        me = str(self.configuration.get("emissions_mass")).lower()
         key_dict = f"unit_mass_to_mass_equivalent_{me}"
 
         if mass in self.dict_attributes["unit_mass"].field_maps[key_dict].keys():
@@ -524,6 +690,31 @@ class ModelAttributes:
 
         return pd.DataFrame(arr_in*scalar_em*scalar_me, columns = fields)
 
+
+    ##  function to build a sampling range dataframe from defaults
+    def build_default_sampling_range_df(self):
+        df_out = []
+        # set field names
+        pd_max = max(self.get_time_periods()[0])
+        field_max = f"max_{pd_max}"
+        field_min = f"min_{pd_max}"
+
+        for sector in self.all_sectors:
+            subsectors_cur = list(sf.subset_df(self.dict_attributes["abbreviation_subsector"].table, {"sector": [sector]})["subsector"])
+
+            for subsector in subsectors_cur:
+                for variable in self.dict_model_variables_by_subsector[subsector]:
+                    variable_type = self.get_variable_attribute(variable, "variable_type")
+                    variable_calculation = self.get_variable_attribute(variable, "internal_model_variable")
+                    # check that variables are input/not calculated internally
+                    if (variable_type.lower() == "input") & (variable_calculation == 0):
+                        max_ftp_scalar = self.get_variable_attribute(variable, "default_lhs_scalar_maximum_at_final_time_period")
+                        min_ftp_scalar = self.get_variable_attribute(variable, "default_lhs_scalar_minimum_at_final_time_period")
+                        mvs = self.dict_model_variables_to_variables[variable]
+
+                        df_out.append(pd.DataFrame({"variable": mvs, field_max: [max_ftp_scalar for x in mvs], field_min: [min_ftp_scalar for x in mvs]}))
+
+        return pd.concat(df_out, axis = 0).reset_index(drop = True)
 
     ##  function for bulding a basic variable list from the (no complexitiies)
     def build_vars_basic(self, dict_vr_varschema: dict, dict_vars_to_cats: dict, category_to_replace: str) -> list:

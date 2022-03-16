@@ -1,6 +1,6 @@
 ﻿Energy,``$UNIT-ENERGY$`` ,Name ,Energy Equivalent kJ,Energy Equivalent MJ,Energy Equivalent GJ,Energy Equivalent TJ,Energy Equivalent PJ
-kJ,``kJ``,Kilojoule,1,0.001,1.00E-06,0.000000001,1E-12
-MJ,``MJ``,Megajoule,1000,1,0.001,1.00E-06,0.000000001
-GJ,``GJ``,Gigajoule,1000000,1000,1,0.001,1.00E-06
-TJ,``TJ``,Terajoule,1000000000,1000000,1000,1,0.001
-PJ,``PJ``,Petajoule,1E+12,1000000000,1000000,1000,1
+kJ,``kj``,Kilojoule,1,0.001,1.00E-06,0.000000001,1.00E-12
+MJ,``mj``,Megajoule,1000,1,0.001,1.00E-06,0.000000001
+GJ,``gj``,Gigajoule,1000000,1000,1,0.001,1.00E-06
+TJ,``tj``,Terajoule,1000000000,1000000,1000,1,0.001
+PJ,``pj``,Petajoule,1.00E+12,1000000000,1000000,1000,1

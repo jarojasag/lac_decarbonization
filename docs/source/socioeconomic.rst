@@ -39,7 +39,7 @@ Economy
 =======
 
 The *Economy* subsector is used to represent exogenous economic drivers of emissions and is separate from the economic impact analysis.
-.. .. note:: Gross Domestic Product (GDP) is *not* entered as a variable. Instead, it is calculated as the total of all value added trajectories included under ``$CAT-ECONOMY$``. The categories specified under ``$CAT-ECONOMY$`` do not have to be mutually exclusive, but those value added trajectories that should be summed to give GDP can be specified as under the ``GDP Component`` column in ``attribute_cat_economy.csv``.
+ .. note:: Gross Domestic Product (GDP) is entered as an exogenous uncertainty. Value added trajectories are included under ``$CAT-ECONOMY$`` and represent subsets of economic activity. The categories specified under ``$CAT-ECONOMY$`` do not have to be mutually exclusive, but they are considered exogenous and used to drive industrial emissions.
 
 Variables by Category
 ---------------------
@@ -49,9 +49,20 @@ Variables by Category
    :header-rows: 1
 
 
+Variables by Partial Category
+-----------------------------
+
+   The economy socioeconomic subsector includes some variables that apply only to a subset of categories. These variables are described below. The categories that variables apply to are described in the ``category`` column. If the variable applies to no specific categorical value, the entry will read **none**.
+
+   .. csv-table:: Trajectories of the following variables are needed for **some** (or no) economy categories.
+      :file: ./csvs/table_varreqs_by_partial_category_se_econ.csv
+      :header-rows: 1
+
+
+
 Categories
 ----------
-Economic value added trajectories should be divided into the following categories, given by ``$CAT-ECONOMY$``. Note that the GDP is calculated as the sum of these value added trajectories and is **not** entered as a separate variable.
+Economic value added trajectories should be divided into the following categories, given by ``$CAT-ECONOMY$``.
 
 .. csv-table:: Economy categories (``$CAT-ECONOMY$`` attribute table)
    :file: ./csvs/attribute_cat_economy.csv
