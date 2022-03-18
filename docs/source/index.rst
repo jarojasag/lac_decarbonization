@@ -30,14 +30,35 @@ These components are referred to as *metavariables*--they characterize and descr
 
 Contents
 --------
+.. toc example struct from https://github.com/readthedocs/sphinx_rtd_theme/blob/c9b1bde560d8ee31400e4e4f92f2e8d7a42265ce/docs/index.rst
+.. https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html
 
 .. toctree::
+   :caption:  Getting Started
+   :hidden:
+
+   quick_start
    analytical_parameters
    dimensions_of_analysis
+   running_models
+
+.. toctree::
+   :caption: Variables, Categories, and Data
+   :hidden:
+
    general_data
-   economic_impact
    afolu
    circular_economy
    energy
    ippu
    socioeconomic
+
+.. toctree::
+   :caption: Mathematical Specifications
+   :hidden:
+
+   mathdoc_afolu
+   mathdoc_circular_economy
+   mathdoc_economic_impact
+   mathdoc_energy
+   mathdoc_ippu

@@ -11,7 +11,7 @@ Electricity Generation
 
 The electricity sector is represented one of the most complex modeling approaches include in the **MODELNAMEHERE** framework. It is modeled using `NemoMod <https://sei-international.github.io/NemoMod.jl/stable/>`_ (`access the Julia GitHub repository here <https://github.com/sei-international/NemoMod.jl/>`_), an energy framework developed by the `Stockholm Environmental Institute <https://www.sei.org>`_. However, the **MODELNAMEHERE** model introduces a basic model, guided by simple assumptions, that can be built and improved upon by countries with deeper systemic knowledge at a later date.
 
-NemoMod requires several dimensions of data; these data include FUEL, TECHNOLOGY, EMISSIONS, YEARS, STORAGE, TIMESLICE.
+NemoMod requires several dimensions of data; these data include FUEL, TECHNOLOGY, EMISSIONS, YEARS, STORAGE, TIMESLICE. These dimensions are treated as subsectors in **MODELNAMEHERE** in scripts and attribute table structure.
 
 .. note::
    Most of the variables that are required by category are explained in further detail in the `NemoMod Parameter Documentation <https://sei-international.github.io/NemoMod.jl/stable/parameters/>`_. For example, if it is unclear what the *Capacity Factor* is (see Categories - TECHNOLOGY below), the NemoMod parameter documentation can provide additional information.

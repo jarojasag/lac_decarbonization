@@ -1,8 +1,10 @@
-Economic impact model
-======================
+==================================================
+Mathematical Documentation - Economic Impact Model
+==================================================
 
 Data
------------------------------
+====
+
 * IO Tables
 
 The `Global Input-Output Tables <https://www.cepal.org/en/events/global-input-output-tables-tools-analysis-integration-latin-america-world>`_ is an effort to complete, among other,the multiregional input-output (MRIO) tables in Latin American and Asia Pacific. The institutions that
@@ -152,7 +154,8 @@ The data of 18 Latin America economies is `here <https://public.tableau.com/app/
 * Investment tables (Investment shock per sector and per country, per scenario)
 
 I-O Impact Assessment Model
------------------------------
+===========================
+
 New Industry: The Final-Demand Approach (Miller and Blair, 2009, cap 13)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 For the sake of simplicity, consider an example economy of two sectors

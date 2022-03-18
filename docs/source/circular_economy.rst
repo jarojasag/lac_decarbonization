@@ -52,7 +52,6 @@ Variables by Category
 
 .. csv-table:: The following variables are required for each category ``$CAT-WASTE-LIQUID$`` of liquid waste.
    :file: ./csvs/table_varreqs_by_category_ce_wali.csv
-   :widths: 20, 30, 30, 10, 10
    :header-rows: 1
 
 
@@ -92,7 +91,7 @@ Variables by Category
 Categories
 ----------
 
-Solid waste is divided into the following categories, denoted as ``$CAT-WASTE-SOLID$``.
+Solid waste is divided into the following categories, denoted as ``$CAT-WASTE-SOLID$``. The solid waste attribute table requires the specification of parameters used to characterize different types of waste. These parameters--with the exception of industrial and chemical waste--are derived from default values provided by the IPCC in Volume 5, Chapter 2, Table 2.4 of the `2019 Refinement to the 2006 IPCC Guidelines for National Greenhouse Gas Inventories <https://www.ipcc-nggip.iges.or.jp/public/2019rf/index.html>`_ and the `2006 IPCC Guidelines for National Greenhouse Gas Inventories <https://www.ipcc-nggip.iges.or.jp/public/2006gl/index.html>`_ (which contains the table) for the source of parameters. Industrial parameters come from Volume 5, Chapter 2, Table 2.5.
 
 .. csv-table:: Solid waste categories (``$CAT-WASTE-SOLID$`` attribute table)
    :file: ./csvs/attribute_cat_solid_waste.csv
