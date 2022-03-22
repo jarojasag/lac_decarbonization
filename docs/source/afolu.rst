@@ -3,7 +3,9 @@ Agriculture, Forestry, and Land Use (AFOLU)
 ===========================================
 
 INTRO HERE
+
 See the `AFOLU Mathematical Documentation <./mathdoc_afolu.htm>`_ for more information on the model structure, including mathematical formulae and assumptions.
+
 
 Agriculture
 ===========

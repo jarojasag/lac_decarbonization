@@ -1,15 +1,11 @@
 ﻿Category Name,``$CAT-INDUSTRY$``,Definition,Value Added Category,Data Source,Hyperlink,Notes
-Mineral Industry,``minerals``,"Includes
-
-* Cement production
-* Glass production
-* Lime production
+Lime and Carbonites,``lime_and_carbonite``,"Includes
+ * Lime production
 * Other Process Uses of Carbonites, including
-
-  * Ceramics
   * Non-Metallurgical Magnesia Production
   * Other uses of Soda Ash
   * Others",``mining``,,,
+Cement,``cement``,Cement production,``cement``,,,
 Chemical Industry,``chemicals``,"Includes production of
 
 * Adipic acid production
@@ -39,7 +35,7 @@ Chemical Industry,``chemicals``,"Includes production of
 * Soda Ash production
 * Titanium Dioxide
 * Others",``manufacturing``,,,
-Metals,``metals``,"Includes emissions from
+Metals,``metals``,"Virgin production of metals. Includes emissions from
 
 * Aluminium production
 * Copper production
@@ -50,7 +46,7 @@ Metals,``metals``,"Includes emissions from
 * Rare Earths production
 * Steel production
 * Zinc production
-* Other Metals production",``industrial``,,,
+* Other Metals production",none,,,
 Non-Energy Product,``non_energy_products``,"Includes the use of the substances in industrial processes that cause emissions, including
 
 * Lubricants
@@ -76,7 +72,6 @@ Ozone-Depleting Substitutes,``ods_products``,"Includes the use of products commo
 Other Product and Manufacture Use,``other_product_manufacturing``,"This category is used to account for emissions from other industrial production processes and product uses, including
 
 * Electrical Equipment
-
   * Manufacture of Electrical Equipment (not covered under the ``electronics`` category)
   * Use of Electrical Equipment
   * Disposal of Electrical Equipment (not landfilled or recycled)
@@ -97,3 +92,14 @@ Other,``other_industries``,"This category includes emissions from industrial pro
 * Food and Beverages Industry
 * Pulp and Paper Industry
 * Other",``industrial``,,,
+Glass,``glass``,Virgin production of glass and ceramics. Affected by recycling.,none,,,
+Paper,``paper``,Virgin production of paper. Affected by recycling.,none,,,
+Plastic,``plastic``,Virgin production of plastic. Affected by recycling.,none,,,
+Rubber and Leather,``rubber_and_leather``,Virgin production of rubber and leather. Affected by recycling.,none,,,
+Textiles,``textiles``,Virgin production of textiles. Affected by recycling.,none,,,
+Recycled Glass,``recycled_glass``,Recycling of glass and ceramics. Affects virgin production.,none,,,
+Recycled Paper,``recycled_paper``,Recycling of paper. Affects virgin production.,none,,,
+Recycled Plastic,``recycled_plastic``,Recycling of plastic. Affects virgin production.,none,,,
+Recycled Rubber and Leather,``recycled_rubber_and_leather``,Recycling of rubber and leather. Affects virgin production.,none,,,
+Recycled Textiles,``recycled_textiles``,Recycling of textiles. Affects virgin production.,none,,,
+Recycled Metals,``recycled_metals``,Recycling of metals. Affects virgin production.,none,,,
