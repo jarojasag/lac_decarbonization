@@ -82,11 +82,12 @@ class Configuration:
         attr_energy: AttributeTable,
         attr_gas: AttributeTable,
         attr_mass: AttributeTable,
+        attr_volume: AttributeTable,
         attr_required_parameters: AttributeTable = None
     ):
         self.fp_config = fp_config
         self.attr_required_parameters = attr_required_parameters
-        self.dict_config = self.get_config_information(attr_energy, attr_gas, attr_mass, attr_required_parameters)
+        self.dict_config = self.get_config_information(attr_energy, attr_gas, attr_mass, attr_volume, attr_required_parameters)
 
 
 
@@ -98,7 +99,7 @@ class Configuration:
     ):
         if param in ["global_warming_potential"]:
             val = int(val)
-        elif param in ["energy_units", "emissions_mass"]:
+        elif param in ["energy_units", "emissions_mass", "volume_units"]:
             val = str(val)
         elif param in ["discount_rate"]:
             val = min(max(float(val), 0), 1)
@@ -123,6 +124,7 @@ class Configuration:
         attr_energy: AttributeTable,
         attr_gas: AttributeTable,
         attr_mass: AttributeTable,
+        attr_volume: AttributeTable,
         attr_parameters_required: AttributeTable = None,
         field_req_param: str = "configuration_file_parameter",
         field_default_val: str = "default_value"
@@ -148,10 +150,13 @@ class Configuration:
         valid_energy = self.get_valid_values_from_attribute_column(attr_energy, "energy_equivalent_", str, "unit_energy_to_energy")
         valid_gwp = self.get_valid_values_from_attribute_column(attr_gas, "global_warming_potential_", int)
         valid_mass = self.get_valid_values_from_attribute_column(attr_mass, "mass_equivalent_", str, "unit_mass_to_mass")
+        valid_volume = self.get_valid_values_from_attribute_column(attr_volume, "volume_equivalent_", str)
+
         dict_checks = {
             "energy_units": valid_energy,
             "emissions_mass": valid_mass,
-            "global_warming_potential": valid_gwp
+            "global_warming_potential": valid_gwp,
+            "volume_units": valid_volume
         }
         keys_check = list(dict_conf.keys())
         for k in keys_check:
@@ -160,6 +165,8 @@ class Configuration:
         self.valid_energy = valid_energy
         self.valid_gwp = valid_gwp
         self.valid_mass = valid_mass
+        self.valid_volume = valid_volume
+
         return dict_conf
 
     # function to retrieve available emission mass specifications
@@ -248,10 +255,11 @@ class ModelAttributes:
         self.substr_varreqs_allcats = f"{self.substr_varreqs}category_"
         self.substr_varreqs_partialcats = f"{self.substr_varreqs}partial_category_"
 
-        # temporary - but read from config
+        # temporary - but read from table at some point
         self.varchar_str_emission_gas = "$EMISSION-GAS$"
         self.varchar_str_unit_energy = "$UNIT-ENERGY$"
         self.varchar_str_unit_mass = "$UNIT-MASS$"
+        self.varchar_str_unit_volume = "$UNIT-VOLUME$"
 
         # add attributes and dimensional information
         self.attribute_directory = dir_attributes
@@ -259,7 +267,7 @@ class ModelAttributes:
         self.all_sectors, self.all_sectors_abvs, self.all_subsectors, self.all_subsector_abvs = self.get_sector_dims()
         self.all_subsectors_with_primary_category, self.all_subsectors_without_primary_category = self.get_all_subsectors_with_primary_category()
         self.dict_model_variables_by_subsector, self.dict_model_variable_to_subsector, self.dict_model_variable_to_category_restriction = self.get_variables_by_subsector()
-        self.all_model_variables, self.dict_model_variables_to_variables = self.get_variable_fields_by_variable()
+        self.all_model_variables, self.dict_variables_to_model_variables, self.dict_model_variables_to_variables = self.get_variable_fields_by_variable()
 
         # run checks and raise errors if invalid data, are entered
         #self.check_dimensions_of_analysis()
@@ -269,6 +277,7 @@ class ModelAttributes:
             self.dict_attributes["unit_energy"],
             self.dict_attributes["emission_gas"],
             self.dict_attributes["unit_mass"],
+            self.dict_attributes["unit_volume"],
             self.configuration_requirements
         )
 
@@ -456,15 +465,18 @@ class ModelAttributes:
     # reorganize a bit to create variable fields associated with each variable
     def get_variable_fields_by_variable(self):
         dict_vars_to_fields = {}
+        dict_fields_to_vars = {}
         modvars_all = []
         for subsector in self.all_subsectors_with_primary_category:
             modvars = self.dict_model_variables_by_subsector[subsector]
             modvars.sort()
             modvars_all += modvars
             for var in modvars:
-                dict_vars_to_fields.update({var: self.build_varlist(subsector, variable_subsec = var)})
+                var_lists = self.build_varlist(subsector, variable_subsec = var)
+                dict_vars_to_fields.update({var: var_lists})
+                dict_fields_to_vars.update(dict(zip(var_lists, [var for x in var_lists])))
 
-        return modvars_all, dict_vars_to_fields
+        return modvars_all, dict_fields_to_vars, dict_vars_to_fields
 
 
     #########################################################################
@@ -504,10 +516,21 @@ class ModelAttributes:
             valid_vals = sf.format_print_list(self.dict_attributes["unit_mass"].key_values)
             raise KeyError(f"Invalid mass '{mass}': defined masses are {valid_vals}.")
 
+    # get volume equivalent
+    def get_volume_equivalent(self, volume):
+        vl = str(self.configuration.get("volume_units")).lower()
+        key_dict = f"unit_volume_to_volume_equivalent_{vl}"
+
+        if volume in self.dict_attributes["unit_volume"].field_maps[key_dict].keys():
+            return self.dict_attributes["unit_volume"].field_maps[key_dict][volume]
+        else:
+            valid_vals = sf.format_print_list(self.dict_attributes["unit_volume"].key_values)
+            raise KeyError(f"Invalid volume '{volume}': defined volumes are {valid_vals}.")
+
     # get scalar
     def get_scalar(self, modvar: str, return_type: str = "total"):
 
-        valid_rts = ["total", "gas", "mass", "energy"]
+        valid_rts = ["total", "gas", "mass", "energy", "volume"]
         if return_type not in valid_rts:
             tps = sf.format_print_list(valid_rts)
             raise ValueError(f"Invalid return type '{return_type}' in get_scalar: valid types are {tps}.")
@@ -521,11 +544,19 @@ class ModelAttributes:
         #
         mass = self.get_variable_characteristic(modvar, self.varchar_str_unit_mass)
         scalar_mass = 1 if not mass else self.get_mass_equivalent(mass.lower())
+        #
+        volume = self.get_variable_characteristic(modvar, self.varchar_str_unit_volume)
+        scalar_volume = 1 if not volume else self.get_volume_equivalent(volume.lower())
 
-        if return_type == "gas":
+
+        if return_type == "energy":
+            out = scalar_energy
+        elif return_type == "gas":
             out = scalar_gas
         elif return_type == "mass":
             out = scalar_mass
+        elif return_type == "volume":
+            out = scalar_volume
         elif return_type == "total":
             # total is used for scaling gas & mass to co2e in proper units
             out = scalar_gas*scalar_mass
@@ -825,7 +856,6 @@ class ModelAttributes:
 
             restrict_to_category_values: default is None. If None, applies to all categories specified in attribute tables. Otherwise, will restrict to specified categories.
 
-
             dict_force_override_vrp_vvs_cats: dict_force_override_vrp_vvs_cats can be set do a dictionary of the form
                 {MODEL_VAR_NAME: [catval_a, catval_b, catval_c, ... ]}
                 where catval_i are not all unique; this is useful for making a variable that maps unique categories to a subset of non-unique categories that represent proxies (e.g., buffalo -> cattle_dairy, )
@@ -1044,6 +1074,24 @@ class ModelAttributes:
                 dict_var_type.update(dict(zip(l_vars, [key_type.replace("key_varreqs_", "") for x in l_vars])))
 
         return dict_var_type, vars_by_subsector
+
+    # return a list of variables by sector
+    def get_variables_by_sector(self, sector: str, return_var_type: str = "input") -> list:
+        df_attr_sec = self.dict_attributes["abbreviation_subsector"].table
+        #list_out = list(np.concatenate([self.build_varlist(x) for x in list(df_attr_sec[df_attr_sec["sector"] == sector]["subsector"])]))
+        sectors = list(df_attr_sec[df_attr_sec["sector"] == sector]["subsector"])
+        vars_input, vars_output = self.get_input_output_fields(sectors)
+
+        if return_var_type == "input":
+            return vars_input
+        elif return_var_type == "output":
+            return vars_output
+        elif return_var_type == "both":
+            vars_both = vars_input + vars_output
+            vars_both.sort()
+            return vars_both
+        else:
+            raise ValueError(f"Invalid return_var_type specification '{return_var_type}' in get_variables_by_sector: valid values are 'input', 'output', and 'both'.")
 
 
     # list variables by all valid subsectors (excludes those without a primary category)

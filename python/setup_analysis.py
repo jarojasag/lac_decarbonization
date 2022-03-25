@@ -64,16 +64,21 @@ def excel_template_path(sector: str, region: str, type_db: str, create_export_di
         valid_sectors = sf.format_print_list(model_attributes.all_sectors)
         raise ValueError(f"Invalid sector '{sector}' specified: valid sectors are {valid_sectors}.")
 
-    # check region and create export directory if necessary
-    if region.lower() in model_attributes.dict_attributes["region"].key_values:
-        abv_region = region.lower()
-        if (type_db != "demo"):
-            dir_exp = sf.check_path(os.path.join(dict_valid_types[type_db], abv_region), create_export_dir)
-            print(dir_exp)
-            dict_valid_types.update({type_db: dir_exp})
-    else:
-        valid_regions = sf.format_print_list(model_attributes.dict_attributes["region"].key_values)
-        raise ValueError(f"Invalid region '{region}' specified: valid regions are {valid_regions}.")
+    if type_db != "demo":
+        # check region and create export directory if necessary
+        if region.lower() in model_attributes.dict_attributes["region"].key_values:
+            abv_region = region.lower()
+            if (type_db != "demo"):
+                dir_exp = sf.check_path(os.path.join(dict_valid_types[type_db], abv_region), create_export_dir)
+                print(dir_exp)
+                dict_valid_types.update({type_db: dir_exp})
+        else:
+            valid_regions = sf.format_print_list(model_attributes.dict_attributes["region"].key_values)
+            raise ValueError(f"Invalid region '{region}' specified: valid regions are {valid_regions}.")
 
-    fn_out = f"model_input_variables_{abv_region}_{abv_sector}_{type_db}.xlsx"
+        fn_out = f"model_input_variables_{abv_region}_{abv_sector}_{type_db}.xlsx"
+
+    else:
+        fn_out = f"model_input_variables_{abv_sector}_{type_db}.xlsx"
+
     return os.path.join(dict_valid_types[type_db], fn_out)

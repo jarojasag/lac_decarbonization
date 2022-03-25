@@ -1,0 +1,11 @@
+Category Name,``$CAT-WASTEWATER-TREATMENT$``,Description,Data Source,Hyperlink,Notes,Default TOW Removal Fraction,Default TOW Removal Fraction Lower Bound,Default TOW Removal Fraction Upper Bound
+Untreated No Sewarage,``untreated_no_sewerage``,Wastewater that is untreated without sewerage. Sewerage reduces methane emissions from anaerobic decomposition.,,,,0,0,0.1
+Untreated With Sewerage,``untreated_with_sewerage``,"Wastewater that is sent to sewers, but is not treated afterwards.",,,,0,0,0.1
+Centralized Aerobic Treatment,``treated_cetralized_aerobic``," | Wastewater that is treated in centralized aerobic plants. The :math:`\text{CH}_4` emissions accounted for here account for sludge removal and disposal, not in the process itself. 
+ |
+ | The default TOW range minimum represents the worst performance under mechnical treatment, while the high end represents the best performance under primary, secondary, and tertiary biological treatment.",,,,0.72,0.25,0.95
+Anaerobic Treatment,``treated_anaerobic``," | Wastewater that is treated in anaerobic plants, deep lagoons, and other treatment facilities where biological decomposition creates anaerobic :math:`\text{CH}_4` emissions. Excludes shallow lagoons.
+ |
+ | The default TOW range minimum represents the worst performance under mechnical treatment, while the high end represents the best performance under primary, secondary, and tertiary biological treatment.",,,,0.72,0.25,0.95
+Septic,``treated_septic``,"Septic tanks, which are a common treatment option in rural areas.",,,,0.625,0.5,0.6
+Latrine,``treated_latrine``,Latrines,,,,0.43,0.05,1

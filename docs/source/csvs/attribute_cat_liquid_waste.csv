@@ -1,3 +1,4 @@
-﻿Category Name,``$CAT-WASTE-LIQUID$``,Description,Data Source,Hyperlink,Notes
-Domestic Liquid Waste,``wl_domestic``,Domestic liquid waste--generally composed of human waste (sewage) and driven by population,,,
-Industrial Liquid Waste,``wl_industrial``,"Industrial liquid waste, driven by the production of industrial goods",,,
+﻿Category Name,``$CAT-WASTE-LIQUID$``,Description,Data Source,Hyperlink,Notes,Population Category
+Urban Domestic Wastewater,``ww_domestic_urban``,Domestic urban wastewater--generally composed of human waste (sewage) and driven by population. Urban populations generally have higher access to sewerage.,,,,``rural``
+Rural Domestic Wastewater,``ww_domestic_rural``,Domestic urban wastewater--generally composed of human waste (sewage) and driven by population. Urban populations generally have higher access to sewerage.,,,,``urban``
+Industrial Wastewater,``ww_industrial``,"Industrial liquid waste, driven by the production of industrial goods",,,,none

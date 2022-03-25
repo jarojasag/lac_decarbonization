@@ -76,6 +76,31 @@ Liquid waste includes some variables that apply only to a subset of categories. 
 
 ----
 
+Wastewater Treatment
+====================
+
+Wastewater can be treated using a variety of pathways. Note that aerobic and septic pathways produce sludge, which can disposed of in a variety of ways; the **MODELNAMEHERE** model does not currently integrate sludge removal and disposal from aerobic and septic treatment pathways.
+
+Variables by Category
+---------------------
+
+.. csv-table:: The following variables are required for each category ``$CAT-WASTEWATER-TREATMENT$`` of wastewater treatment pathways.
+   :file: ./csvs/table_varreqs_by_category_ce_trww.csv
+   :header-rows: 1
+
+
+Categories
+----------
+
+Liquid waste is divided into the following categories, denotes as ``$CAT-WASTEWATER-TREATMENT$``.
+
+.. csv-table:: Land Use categories (``$CAT-WASTEWATER-TREATMENT$`` attribute table)
+   :file: ./csvs/attribute_cat_wastewater_treatment.csv
+   :header-rows: 1
+
+----
+
+
 Solid Waste
 ===========
 

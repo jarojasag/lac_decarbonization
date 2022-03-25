@@ -68,7 +68,6 @@ class AFOLU:
         self.modvar_lvst_emissions_ch4_ef = ":math:\\text{CH}_4 Emissions from Livestock Enteric Fermentation"
         self.modvar_lvst_emissions_ch4_mm = ":math:\\text{CH}_4 Emissions from Livestock Manure"
         self.modvar_lvst_emissions_n2o_mm = ":math:\\text{N}_2\\text{O} Emissions from Livestock Manure"
-        self.modvar_lvst_frac_eating_red_meat = "Fraction Eating Red Meat"
         self.modvar_lvst_net_imports = "Change to Net Imports of Livestock"
         self.modvar_lvst_pop = "Livestock Head Count"
         self.modvar_lvst_pop_init = "Initial Livestock Head Count"
@@ -76,6 +75,7 @@ class AFOLU:
         self.modvar_econ_gdp = "GDP"
         self.modvar_econ_va = "Value Added"
         self.modvar_gnrl_area = "Area of Country"
+        self.modvar_gnrl_frac_eating_red_meat = "Fraction Eating Red Meat"
         self.modvar_gnrl_occ = "National Occupation Rate"
         self.modvar_gnrl_subpop = "Population"
         self.modvar_gnrl_pop_total = "Total Population"
@@ -272,7 +272,7 @@ class AFOLU:
         gdp_per_capita_rates: np.ndarray, # driver of demand growth: gdp/capita (vec_rates_gdp_per_capita)
         elast: np.ndarray, # elasticity of demand per capita to growth in gdp/capita (e.g., arr_lvst_elas_demand)
         dem_pc_scalar_exog = None, # exogenous demand per capita scalar representing other changes in the exogenous per-capita demand (can be used to represent population changes)
-        # self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_frac_eating_red_meat, False, "array_base")
+        # self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_gnrl_frac_eating_red_meat, False, "array_base")
         return_type: type = float # return type of array
     ):
 
@@ -610,7 +610,7 @@ class AFOLU:
         fields_lvst_elas = self.model_attributes.switch_variable_category("Livestock", self.modvar_lvst_elas_lvst_demand, "demand_elasticity_category")
         arr_lvst_elas_demand = np.array(df_afolu_trajectories[fields_lvst_elas])
         # get the "vegetarian" factor and use to estimate livestock pop
-        vec_lvst_demscale = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_frac_eating_red_meat, False, "array_base", var_bounds = (0, np.inf))
+        vec_lvst_demscale = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_gnrl_frac_eating_red_meat, False, "array_base", var_bounds = (0, np.inf))
         arr_lvst_dem_pop = self.project_per_capita_demand(vec_modvar_lvst_pop_init, vec_pop, vec_rates_gdp_per_capita, arr_lvst_elas_demand, vec_lvst_demscale, int)
         # get weights for allocating grazing area and feed requirement to animals - based on first year only
         vec_lvst_base_graze_weights = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_dry_matter_consumption, True, "array_base")[0]
