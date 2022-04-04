@@ -1,5 +1,6 @@
 import support_functions as sf
 import data_structures as ds
+from model_socioeconomic import Socioeconomic
 import pandas as pd
 import numpy as np
 import time
@@ -71,14 +72,7 @@ class AFOLU:
         self.modvar_lvst_net_imports = "Change to Net Imports of Livestock"
         self.modvar_lvst_pop = "Livestock Head Count"
         self.modvar_lvst_pop_init = "Initial Livestock Head Count"
-        # economy and general variables
-        self.modvar_econ_gdp = "GDP"
-        self.modvar_econ_va = "Value Added"
-        self.modvar_gnrl_area = "Area of Country"
-        self.modvar_gnrl_frac_eating_red_meat = "Fraction Eating Red Meat"
-        self.modvar_gnrl_occ = "National Occupation Rate"
-        self.modvar_gnrl_subpop = "Population"
-        self.modvar_gnrl_pop_total = "Total Population"
+
 
         ##  MISCELLANEOUS VARIABLES
 
@@ -87,6 +81,9 @@ class AFOLU:
         # TEMP:SET TO DERIVE FROM ATTRIBUTE TABLES---
         self.cat_lndu_crop = "croplands"
         self.cat_lndu_grazing = "grasslands"
+
+        # add socioeconomic
+        self.model_socioeconomic = Socioeconomic(self.model_attributes)
 
 
     ##  FUNCTIONS FOR MODEL ATTRIBUTE DIMENSIONS
@@ -272,7 +269,6 @@ class AFOLU:
         gdp_per_capita_rates: np.ndarray, # driver of demand growth: gdp/capita (vec_rates_gdp_per_capita)
         elast: np.ndarray, # elasticity of demand per capita to growth in gdp/capita (e.g., arr_lvst_elas_demand)
         dem_pc_scalar_exog = None, # exogenous demand per capita scalar representing other changes in the exogenous per-capita demand (can be used to represent population changes)
-        # self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_gnrl_frac_eating_red_meat, False, "array_base")
         return_type: type = float # return type of array
     ):
 
@@ -540,15 +536,14 @@ class AFOLU:
 
         ##  CHECKS
 
-        # check for internal variables and add if necessary; note, this can be defined for different variables (see model attributes)
-        self.model_attributes.manage_pop_to_df(df_afolu_trajectories, "add")
+        # make sure socioeconomic variables are added and
+        df_afolu_trajectories, df_se_internal_shared_variables = self.model_socioeconomic.project(df_afolu_trajectories)
         # check that all required fields are contained—assume that it is ordered by time period
         self.check_df_fields(df_afolu_trajectories)
         dict_dims, df_afolu_trajectories, n_projection_time_periods, projection_time_periods = self.model_attributes.check_projection_input_df(df_afolu_trajectories, True, True, True)
 
 
         ##  CATEGORY INITIALIZATION
-
         pycat_agrc = self.model_attributes.get_subsector_attribute("Agriculture", "pycategory_primary")
         pycat_frst = self.model_attributes.get_subsector_attribute("Forest", "pycategory_primary")
         pycat_lndu = self.model_attributes.get_subsector_attribute("Land Use", "pycategory_primary")
@@ -559,22 +554,15 @@ class AFOLU:
         attr_lndu = self.model_attributes.dict_attributes[pycat_lndu]
         attr_lvst = self.model_attributes.dict_attributes[pycat_lvst]
 
-        ##  FIELD INITIALIZATION
-
-        # get the gdp and total population fields
-        field_gdp = self.model_attributes.build_varlist("Economy", variable_subsec = self.modvar_econ_gdp)[0]
-        field_pop = self.model_attributes.build_varlist("General", variable_subsec = self.modvar_gnrl_pop_total)[0]
-
 
         ##  ECON/GNRL VECTOR AND ARRAY INITIALIZATION
 
         # get some vectors
-        vec_gdp = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_econ_gdp, False, return_type = "array_base")#np.array(df_afolu_trajectories[field_gdp])
-        vec_pop = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_gnrl_pop_total, False, return_type = "array_base")
-        vec_gdp_per_capita = vec_gdp/vec_pop
-        # growth rates
-        vec_rates_gdp = vec_gdp[1:]/vec_gdp[0:-1] - 1
-        vec_rates_gdp_per_capita = vec_gdp_per_capita[1:]/vec_gdp_per_capita[0:-1] - 1
+        vec_gdp = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.model_socioeconomic.modvar_econ_gdp, False, return_type = "array_base")
+        vec_pop = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.model_socioeconomic.modvar_gnrl_pop_total, False, return_type = "array_base")
+        vec_gdp_per_capita = np.array(df_se_internal_shared_variables["vec_gdp_per_capita"])
+        vec_rates_gdp = np.array(df_se_internal_shared_variables["vec_rates_gdp"].dropna())
+        vec_rates_gdp_per_capita = np.array(df_se_internal_shared_variables["vec_rates_gdp_per_capita"].dropna())
 
 
         ##  OUTPUT INITIALIZATION
@@ -587,7 +575,7 @@ class AFOLU:
         ########################################
 
         # area of the country
-        area = float(self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_gnrl_area, return_type = "array_base")[0])
+        area = float(self.model_attributes.get_standard_variables(df_afolu_trajectories, self.model_socioeconomic.modvar_gnrl_area, return_type = "array_base")[0])
         # get the initial distribution of land
         vec_modvar_lndu_initial_frac = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_initial_frac, return_type = "array_base")[0]
         vec_modvar_lndu_initial_area = vec_modvar_lndu_initial_frac*area
@@ -610,7 +598,7 @@ class AFOLU:
         fields_lvst_elas = self.model_attributes.switch_variable_category("Livestock", self.modvar_lvst_elas_lvst_demand, "demand_elasticity_category")
         arr_lvst_elas_demand = np.array(df_afolu_trajectories[fields_lvst_elas])
         # get the "vegetarian" factor and use to estimate livestock pop
-        vec_lvst_demscale = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_gnrl_frac_eating_red_meat, False, "array_base", var_bounds = (0, np.inf))
+        vec_lvst_demscale = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.model_socioeconomic.modvar_gnrl_frac_eating_red_meat, False, "array_base", var_bounds = (0, np.inf))
         arr_lvst_dem_pop = self.project_per_capita_demand(vec_modvar_lvst_pop_init, vec_pop, vec_rates_gdp_per_capita, arr_lvst_elas_demand, vec_lvst_demscale, int)
         # get weights for allocating grazing area and feed requirement to animals - based on first year only
         vec_lvst_base_graze_weights = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_dry_matter_consumption, True, "array_base")[0]

@@ -140,6 +140,9 @@ Categories
 
 Livestock should be divided into the following categories, given by ``$CAT-LIVESTOCK$``.
 
+.. note::
+   Animal weights are only used to estimate the increase in protein consumption in liquid waste (which contribute to :math:`\text{N}_2\text{O}` emissions). All estimates are adapted from `Holechek 1988 <https://journals.uair.arizona.edu/index.php/rangelands/article/download/10362/9633>`_ (using 2.2 lbs/kg) unless otherwise noted.
+
 .. csv-table:: Livestock categories (``$CAT-LIVESTOCK$`` attribute table)
    :file: ./csvs/attribute_cat_livestock.csv
    :header-rows: 1

@@ -1,7 +1,8 @@
 ﻿Variable Type,Variable,Information,Variable Schema,Dashboard,Notes,Data Link,Reference,Internal Model Variable,Default LHS Scalar Minimum at Final Time Period,Default LHS Scalar Maximum at Final Time Period,``$CAT-WASTEWATER-TREATMENT$``
-Input,Fraction of Liquid Waste Untreated Without Sewerage,Open discharge to ,``frac_wali_$CAT-WASTE-LIQUID$_treatment_path_untreated_no_sewarage``,,,,,0,1,1,``untreated_no_sewerage``
-Input,Fraction of Liquid Waste Untreated With Sewerage,,``frac_wali_$CAT-WASTE-LIQUID$_treatment_path_untreated_with_sewerage``,,,,,0,1,1,``untreated_with_sewerage``
-Input,Fraction of Liquid Waste Treated in Centralized Aerobic,,``frac_wali_$CAT-WASTE-LIQUID$_treatment_path_cetralized_aerobic``,,,,,0,1,1,``treated_cetralized_aerobic``
-Input,Fraction of Liquid Waste Treated in Anaerobic Facilities,,``frac_wali_$CAT-WASTE-LIQUID$_treatment_path_anaerobic``,,,,,0,1,1,``treated_anaerobic``
-Input,Fraction of Liquid Waste Treated in Septic Tanks and Latrines,,``frac_wali_$CAT-WASTE-LIQUID$_treatment_path_septic``,,,,,0,1,1,``treated_septic``
-Input,Fraction of Liquid Waste Treated in Decentralized Aerobic,,``frac_wali_$CAT-WASTE-LIQUID$_treatment_path_latrine``,,,,,0,1,1,``treated_latrine``
+Input,Treatment Fraction Aerobic,,``frac_wali_$CAT-WASTE-LIQUID$_treatment_path_aerobic``,,,,,0,1,1,``treated_aerobic``
+Input,Treatment Fraction Anaerobic,,``frac_wali_$CAT-WASTE-LIQUID$_treatment_path_anaerobic``,,,,,0,1,1,``treated_anaerobic``
+Input,Treatment Fraction Septic,,``frac_wali_$CAT-WASTE-LIQUID$_treatment_path_septic``,,,,,0,1,1,``treated_septic``
+Input,Treatment Fraction Improved Latrine,,``frac_wali_$CAT-WASTE-LIQUID$_treatment_path_latrine_improved``,,,,,0,1,1,``treated_latrine_improved``
+Input,Treatment Fraction Unimproved Latrine,,``frac_wali_$CAT-WASTE-LIQUID$_treatment_path_latrine_unimproved``,,,,,0,1,1,``treated_latrine_unimproved``
+Input,Treatment Fraction Untreated No Sewerage,,``frac_wali_$CAT-WASTE-LIQUID$_treatment_path_untreated_no_sewerage``,,,,,0,1,1,``untreated_no_sewerage``
+Input,Treatment Fraction Untreated With Sewerage,,``frac_wali_$CAT-WASTE-LIQUID$_treatment_path_untreated_with_sewerage``,,,,,0,1,1,``untreated_with_sewerage``

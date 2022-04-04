@@ -61,6 +61,20 @@ def check_path(fp, create_q = False):
     else:
         raise ValueError(f"Path '{fp}' not found. It will not be created.")
 
+##  check row sums to ensure they add to 1
+def check_row_sums(
+    array: np.ndarray,
+    sum_restriction: float = 1,
+    thresh_correction: float = 0.001,
+    msg_pass: str = ""
+):
+    sums = array.sum(axis = 1)
+    max_diff = np.max(np.abs(sums - sum_restriction))
+    if max_diff > thresh_correction:
+        raise ValueError(f"Invalid row sums in array{msg_pass}. The maximum deviance is {max_diff}, which is greater than the threshold for correction.")
+    else:
+        return (array.transpose()/sums).transpose()
+
 # print a set difference; sorts to ensure easy reading for user
 def check_set_values(subset: set, superset: set, str_append: str) -> str:
     if not set(subset).issubset(set(superset)):
@@ -131,22 +145,30 @@ def df_get_missing_fields_from_source_df(df_target, df_source, side = "right", c
 def format_print_list(list_in, delim = ","):
     return ((f"{delim} ").join(["'%s'" for x in range(len(list_in))]))%tuple(list_in)
 
-# multiple string replacements using a dictionary
-def str_replace(str_in: str, dict_replace: dict) -> str:
-    for k in dict_replace.keys():
-        str_in = str_in.replace(k, dict_replace[k])
-    return str_in
-
 # print a set difference; sorts to ensure easy reading for user
 def print_setdiff(superset: set, subset: set) -> str:
     missing_vals = list(superset - subset)
     missing_vals.sort()
     return format_print_list(missing_vals)
 
+# replace values in a two-dimensional array
+def repl_array_val_twodim(array, val_repl, val_new):
+    # only for two dimensional arrays
+    w = np.where(array == val_repl)
+    inds = w[0]*len(array[0]) + w[1]
+    np.put(array, inds, val_new)
+    return None
+
 # set a vector to element-wise stay within bounds
 def scalar_bounds(scalar, bounds: tuple):
     bounds = np.array(bounds).astype(float)
     return min([max([scalar, min(bounds)]), max(bounds)])
+
+# multiple string replacements using a dictionary
+def str_replace(str_in: str, dict_replace: dict) -> str:
+    for k in dict_replace.keys():
+        str_in = str_in.replace(k, dict_replace[k])
+    return str_in
 
 # subset a data frame using a dictionary
 def subset_df(df, dict_in):

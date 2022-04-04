@@ -1,7 +1,13 @@
-﻿Variable Type,Variable,Information,Variable Schema,Dashboard,Notes,Data Link,Reference,Internal Model Variable,Default LHS Scalar Minimum at Final Time Period,Default LHS Scalar Maximum at Final Time Period
-Input,Methane Correction Factor,,``mcf_trww_$CAT-WASTEWATER-TREATMENT$``,,See Table 6.3 in IPCC Guidelines for NGHG Inventories,,,,,
-Input,Fraction of Total Organic Waste Removed,,``frac_trww_tow_removed_$CAT-WASTEWATER-TREATMENT$``,,,,,,,
-Input,:math:`\text{CH}_4` Wastewater Treatment Emission Factor,Methane emission factor for wastewater treatment as a function of BOD. Note: divide by 2.4 to get (Per IPCC Guidelines for NGHG Inventories ),"``ef_trww_$UNIT-MASS$_$EMISSION-GAS$_per_tonne_bod`` (``$UNIT-MASS$ = tonne``, ``$EMISSION-GAS$ = ch4``)",,,,,,,
-Output,Total Wastewater Treated,,``qty_trww_treated_$CAT-WASTEWATER-TREATMENT$_$UNIT-VOLUME$`` (``$UNIT-VOLUME$ = m3``),,,,,,,
-Output,:math:`\text{CH}_4` Emissions from Wastewater Treatment,Methane emissions from wastewater treatment,``emission_co2e_$EMISSION-GAS$_trww_$CAT-WASTEWATER-TREATMENT$`` (``$EMISSION-GAS$ = ch4``),,,,,,,
-Output,:math:`\text{N}_2\text{O}` Emissions from Wastewater Treatment,Nitrus oxide emissions from protein content in wastewater.,``emission_co2e_$EMISSION-GAS$_trww_$CAT-WASTEWATER-TREATMENT$`` (``$EMISSION-GAS$ = n2o``),,,,,,,
+﻿Variable Type,Variable,Information,Variable Schema,Dashboard,Notes,Data Link,Reference,Internal Model Variable,Default LHS Scalar Minimum at Final Time Period,Default LHS Scalar Maximum at Final Time Period,james_temp_rmv
+Input,:math:`\text{N}_2\text{O}` Wastewater Treatment Emission Factor,Nitrus oxide emission factor for wastewater treatment as a function of total nitrogen. ,"``ef_trww_$CAT-WASTEWATER-TREATMENT$_$UNIT-MASS$_$EMISSION-GAS$_per_$UNIT-MASS$_n`` (``$UNIT-MASS$ = g``, ``$EMISSION-GAS$ = n2o``)",,"See V5, C6, Equation 6.10 and Table 6A.4 for domestic wastwater and Equation 6.13 for industrial wastewater.",,,0,0.8,1.2,0
+Input,Fraction of Total Organic Waste Removed,,``frac_trww_tow_removed_$CAT-WASTEWATER-TREATMENT$``,,,,,0,0.8,1.2,0
+Input,Methane Correction Factor,,``mcf_trww_$CAT-WASTEWATER-TREATMENT$``,,See Table 6.3 in IPCC Guidelines for NGHG Inventories,,,0,0.8,1.2,0
+Input,Nitrogen Treatment Removal Fraction,"Wastewater treatment removes some fraction of nitrogen, similar to the methane correction factor. See V5, C6, Equation 6.8 and Tables 6.10B and 6.10C.",``frac_trww_nitrogen_removed_$CAT-WASTEWATER-TREATMENT$``,,,,,0,1,1,0
+Output,:math:`\text{CH}_4` Emissions from Wastewater Treatment,Methane emissions from wastewater treatment,``emission_co2e_$EMISSION-GAS$_trww_$CAT-WASTEWATER-TREATMENT$_treatment`` (``$EMISSION-GAS$ = ch4``),,,,,1,1,1,0
+Output,:math:`\text{N}_2\text{O}` Emissions from Wastewater Effluent,Nitrus oxide emissions from protein content in wastewater.,``emission_co2e_$EMISSION-GAS$_trww_$CAT-WASTEWATER-TREATMENT$_effluent`` (``$EMISSION-GAS$ = n2o``),,,,,1,1,1,0
+Output,:math:`\text{N}_2\text{O}` Emissions from Wastewater Treatment,Nitrus oxide emissions from treatment processes.,``emission_co2e_$EMISSION-GAS$_trww_$CAT-WASTEWATER-TREATMENT$_treatment`` (``$EMISSION-GAS$ = n2o``),,,,,1,1,1,0
+Output,Total BOD Organic Waste in Effluent,Total organic waste in effluent released from different pathways from BOD,``qty_trww_tow_in_effluent_bod_$CAT-WASTEWATER-TREATMENT$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,,,,1,1,1,0
+Output,Total BOD Treated,Total BOD treated by wastewater treatment type,``qty_trww_bod_$CAT-WASTEWATER-TREATMENT$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,,,,1,1,1,0
+Output,Total COD Organic Waste in Effluent,Total organic waste in effluent released from different pathways from BOD,``qty_trww_tow_in_effluent_cod_$CAT-WASTEWATER-TREATMENT$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,,,,1,1,1,0
+Output,Total COD Treated,Total COD treated by wastewater treatment type,``qty_trww_cod_$CAT-WASTEWATER-TREATMENT$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,,,,1,1,1,0
+Output,Volume of Wastewater Treated,,``vol_trww_ww_$CAT-WASTEWATER-TREATMENT$_$UNIT-VOLUME$`` (``$UNIT-VOLUME$ = m3``),,,,,1,1,1,0

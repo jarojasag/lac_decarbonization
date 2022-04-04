@@ -1,11 +1,12 @@
 Category Name,``$CAT-WASTEWATER-TREATMENT$``,Description,Data Source,Hyperlink,Notes,Default TOW Removal Fraction,Default TOW Removal Fraction Lower Bound,Default TOW Removal Fraction Upper Bound
-Untreated No Sewarage,``untreated_no_sewerage``,Wastewater that is untreated without sewerage. Sewerage reduces methane emissions from anaerobic decomposition.,,,,0,0,0.1
-Untreated With Sewerage,``untreated_with_sewerage``,"Wastewater that is sent to sewers, but is not treated afterwards.",,,,0,0,0.1
-Centralized Aerobic Treatment,``treated_cetralized_aerobic``," | Wastewater that is treated in centralized aerobic plants. The :math:`\text{CH}_4` emissions accounted for here account for sludge removal and disposal, not in the process itself. 
+Untreated No sewerage,``untreated_no_sewerage``,"Wastewater that is untreated without sewerage. Sewerage reduces methane emissions from anaerobic decomposition. Incudes sea, river, and lake disharge as well as open, stagnant sewers.",,,,0,0,0.1
+Untreated With Sewerage,``untreated_with_sewerage``,"Wastewater that is sent to sewers (clean, closed, moving), but is not treated afterwards. While there are no :math:`\text{CH}_4` emissions from these sewers, effluent contains significant emissions.",,,,0,0,0.1
+Aerobic Treatment,``treated_aerobic``," | Wastewater that is treated in centralized aerobic plants. The :math:`\text{CH}_4` emissions accounted for here account for sludge removal and disposal, not in the process itself. 
  |
- | The default TOW range minimum represents the worst performance under mechnical treatment, while the high end represents the best performance under primary, secondary, and tertiary biological treatment.",,,,0.72,0.25,0.95
+ | The default TOW range minimum represents the worst performance under mechnical treatment, while the high end represents the best performance under primary, secondary, and tertiary biological treatment.",,,"In aerobic treatment facilities, waste is removed as sludge.",0.72,0.25,0.95
 Anaerobic Treatment,``treated_anaerobic``," | Wastewater that is treated in anaerobic plants, deep lagoons, and other treatment facilities where biological decomposition creates anaerobic :math:`\text{CH}_4` emissions. Excludes shallow lagoons.
  |
- | The default TOW range minimum represents the worst performance under mechnical treatment, while the high end represents the best performance under primary, secondary, and tertiary biological treatment.",,,,0.72,0.25,0.95
-Septic,``treated_septic``,"Septic tanks, which are a common treatment option in rural areas.",,,,0.625,0.5,0.6
-Latrine,``treated_latrine``,Latrines,,,,0.43,0.05,1
+ | The default TOW range minimum represents the worst performance under mechnical treatment, while the high end represents the best performance under primary, secondary, and tertiary biological treatment.",,,"In anaerobic treatment facilities, waste is decomposed anaerobically, creating :math:`\text{CH}_4` emissions. ",0.72,0.25,0.95
+Septic,``treated_septic``,"Septic tanks, which are a common treatment option in rural areas.",,,"In properly managed septic tanks, a fraction of waste is removed as sludge, which is then disposed of in the solid waste stream.",0.625,0.5,0.6
+Unimproved Latrine,``treated_latrine_unimproved``,Latrines,,,,0.1,0.05,0.15
+Improved Latrines,``treated_latrine_improved``,"Improvemed latrines are assumed to be associated with higher anaerobic decomposition activity, releasing more methane.",,,,0.6,0.4,1
