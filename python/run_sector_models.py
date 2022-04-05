@@ -109,21 +109,32 @@ def main(args: dict) -> None:
     init_merge_q = True
     df_output_data = []
 
-    # set up models
+    # run AFOLU and collect output
     if "AFOLU" in models_run:
         print("\n\tRunning AFOLU")
         model_afolu = sm.AFOLU(sa.model_attributes)
         df_output_data += [model_afolu.project(df_input_data)]
         init_merge_q = False
 
+    # run CircularEconomy and collect output
     if "CircularEconomy" in models_run:
         print("\n\tRunning CircularEconomy")
         model_circecon = sm.CircularEconomy(sa.model_attributes)
         df_output_data += [model_circecon.project(df_input_data)]
 
-    #########################
-    #   other models here   #
-    #########################
+    # run IPPU and collect output
+    if "IPPU" in models_run:
+        print("\n\t*** NOTE: IPPU INCOMPLETE. IT WILL NOT BE RUN")
+        #print("\n\tRunning IPPU")
+        #model_ippu = sm.IPPU(sa.model_attributes)
+        #df_output_data += [model_ippu.project(df_input_data)]
+
+    # run Energy and collect output
+    if "Energy" in models_run:
+        print("\n\t*** NOTE: Energy INCOMPLETE. IT WILL NOT BE RUN")
+        #print("\n\tRunning Energy")
+        #model_energy = sm.Energy(sa.model_attributes)
+        #df_output_data += [model_energy.project(df_input_data)]
 
     # build output data frame
     df_output_data = merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")

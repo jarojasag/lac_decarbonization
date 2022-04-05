@@ -426,8 +426,14 @@ class ModelAttributes:
         subsector: str,
         attribute: str,
         attr_type: str = "pycategory_primary",
-        skip_none_q: bool = False
+        skip_none_q: bool = False,
+        return_type: type = list
     ) -> list:
+
+        valid_return_types = [list, np.ndarray]
+        if return_type not in valid_return_types:
+            str_valid_types = sf.format_print_list(valid_return_types)
+            raise ValueError(f"Invalid return_type '{return_type}': valid types are {str_valid_types}.")
 
         pycat = self.get_subsector_attribute(subsector, attr_type)
         if attr_type == "pycategory_primary":
@@ -443,7 +449,10 @@ class ModelAttributes:
         # get the dictionary and order
         tab = attr_cur.table[attr_cur.table[attribute] != "none"] if skip_none_q else attr_cur.table
         dict_map = sf.build_dict(tab[[attr_cur.key, attribute]])
-        return [dict_map[x] for x in attr_cur.key_values]
+        out = [dict_map[x] for x in attr_cur.key_values]
+        out = np.array(out) if return_type == np.ndarray else out
+
+        return out
 
 
     ##  fuction to return a list of variables from one subsector that are ordered according to a primary category (which the variables are mapped to) from another subsector
@@ -544,14 +553,23 @@ class ModelAttributes:
 
 
     ##  function to merge an array for a variable with partial categories to all categories
-    def merge_array_var_partial_cat_to_array_all_cats(self, array_vals: np.ndarray, modvar: str, missing_vals: float = 0.0):
+    def merge_array_var_partial_cat_to_array_all_cats(self, array_vals: np.ndarray, modvar: str, missing_vals: float = 0.0) -> np.ndarray:
+        """
+            Reformat a partial category array (with partical categories along columns) to place columns appropriately for a full category array. Useful for simplifying matrix operations between variables.
+
+            - array_vals: input array of data with column categories
+
+            - modvar: the variable associated with the *input* array. This is used to identify which categories are represented in the array's columns.
+
+            - missing_vals: values to set for categories not in array_vals. Default is 0.0.
+        """
+
         # check variable first
         if modvar not in self.all_model_variables:
             raise ValueError(f"Invalid model variable '{modvar}' found in get_variable_characteristic.")
 
-        subsector = self.dict_model_variable_to_subsector[modvar]
-        pycat_subsec = self.get_subsector_attribute(subsector, "pycategory_primary")
-        attr_subsec = self.dict_attributes[pycat_subsec]
+        subsector = self.get_variable_subsector(modvar)
+        attr_subsec = self.get_attribute_table(subsector)
         cat_restriction_type = self.dict_model_variable_to_category_restriction[modvar]
 
         if cat_restriction_type == "all":
@@ -560,12 +578,36 @@ class ModelAttributes:
             array_default = np.ones((len(array_vals), attr_subsec.n_key_values))*missing_vals
             cats = self.get_variable_categories(modvar)
             inds_cats = [attr_subsec.get_key_value_index(x) for x in cats]
-            i = 0
-            for ind in inds_cats:
-                array_default[:, ind] = array_vals[:, i]
-                i += 1
+            inds = np.repeat([inds_cats], len(array_default), axis = 0)
+            np.put_along_axis(array_default, inds, array_vals, axis = 1)
 
             return array_default
+
+
+    ##  function to merge an array for a variable with partial categories to all categories
+    def reduce_all_cats_array_to_partial_cat_array(self, array_vals: np.ndarray, modvar: str) -> np.ndarray:
+        """
+            Reduce an all category array (with all categories along columns) to columns associated with the variable modvar. Inverse of merge_array_var_partial_cat_to_array_all_cats.
+
+            - array_vals: input array of data with column categories
+
+            - modvar: the variable associated with the desired *output* array. This is used to identify which categories should be selected.
+        """
+
+        # check variable first
+        if modvar not in self.all_model_variables:
+            raise ValueError(f"Invalid model variable '{modvar}' found in get_variable_characteristic.")
+
+        subsector = self.get_variable_subsector(modvar)
+        attr_subsec = self.get_attribute_table(subsector)
+        cat_restriction_type = self.dict_model_variable_to_category_restriction[modvar]
+
+        if cat_restriction_type == "all":
+            return array_vals
+        else:
+            cats = self.get_variable_categories(modvar)
+            inds_cats = [attr_subsec.get_key_value_index(x) for x in cats]
+            return array_vals[:, inds_cats]
 
 
     ##  function to retrieve and format attribute tables for use
@@ -968,7 +1010,7 @@ class ModelAttributes:
         """
             use array_to_df to convert an input np.ndarray into a data frame that has the proper variable labels (ordered by category for the appropriate subsector)
 
-            - arr_in: np.ndarray to convert to data frame
+            - arr_in: np.ndarray to convert to data frame. If entered as a vector, it will be converted to a (n x 1) array, where n = len(arr_in)
 
             - modvar: the name of the model variable to use to name the dataframe
 
@@ -981,6 +1023,8 @@ class ModelAttributes:
         # get subsector and fields to name based on variable
         subsector = self.dict_model_variable_to_subsector[modvar]
         fields = self.build_varlist(subsector, variable_subsec = modvar)
+        # transpose if needed
+        arr_in = np.array([arr_in]).transpose() if (len(arr_in.shape) == 1) else arr_in
 
         # is the array that's being passed column-wise associated with all categories?
         if reduce_from_all_cats_to_specified_cats:
@@ -1223,7 +1267,9 @@ class ModelAttributes:
         df_in: pd.DataFrame,
         modvars: list,
         sum_restriction: float,
-        correction_threshold: float = 0.000001
+        correction_threshold: float = 0.000001,
+        force_sum_equality: bool = False,
+        msg_append: str = ""
     ) -> dict:
 
         """
@@ -1236,6 +1282,10 @@ class ModelAttributes:
             - sum_restriction: maximium sum that array may equal
 
             - correction_threshold: tolerance for correcting categories that
+
+            - force_sum_equality: default is False. If True, will force the sum to equal one (overrides correction_threshold)
+
+            - msg_append: use to passage an additional error message to support troubleshooting
 
         """
         # retrieve arrays
@@ -1263,20 +1313,26 @@ class ModelAttributes:
                 dict_arrs.update({modvar: arr_cur})
                 arr += arr_cur
 
-        # correction sums if within correction threshold
-        w = np.where(arr > sum_restriction + correction_threshold)[0]
-        if len(w) > 0:
-            raise ValueError(f"Invalid summations found: some categories exceed the sum threshold.")
+        if force_sum_equality:
+            for modvar in modvars:
+                arr_cur = dict_arrs[modvar]
+                arr_cur = arr_cur/arr
+                dict_arrs.update({modvar: arr_cur})
+        else:
+            # correction sums if within correction threshold
+            w = np.where(arr > sum_restriction + correction_threshold)[0]
+            if len(w) > 0:
+                raise ValueError(f"Invalid summations found: some categories exceed the sum threshold.{msg_append}")
 
-        w = np.where((arr <= sum_restriction + correction_threshold) & (arr > sum_restriction))[0]
-        if len(w) > 0:
-            if np.max(sums - sum_restriction) <= correction_threshold:
-                w = np.where((sums <= sum_restriction + correction_threshold) & (sums > sum_restriction))
-                inds = w[0]*len(arr[0]) + w[1]
-                for modvar in modvars:
-                    arr_cur = dict_arrs[modvar]
-                    np.put(arr_cur, inds, arr_cur[w[0], w[1]].flatten()/arr_cur[w[0], w[1]].flatten())
-                    dict_arrs.update({modvar: arr})
+            w = np.where((arr <= sum_restriction + correction_threshold) & (arr > sum_restriction))[0]
+            if len(w) > 0:
+                if np.max(sums - sum_restriction) <= correction_threshold:
+                    w = np.where((sums <= sum_restriction + correction_threshold) & (sums > sum_restriction))
+                    inds = w[0]*len(arr[0]) + w[1]
+                    for modvar in modvars:
+                        arr_cur = dict_arrs[modvar]
+                        np.put(arr_cur, inds, arr_cur[w[0], w[1]].flatten()/arr_cur[w[0], w[1]].flatten())
+                        dict_arrs.update({modvar: arr_cur})
 
         return dict_arrs
 
@@ -1398,7 +1454,7 @@ class ModelAttributes:
     ):
 
         """
-            use get_standard_variables() to retrieve an array or data frame of input variables. If return_type == "array_units_corrected", then the model_attributes will re-scale emissions factors to reflect the desired output emissions mass (as defined in the configuration)
+            use get_standard_variables() to retrieve an array or data frame of input variables. If return_type == "array_units_corrected", then the model_attributes will re-scale emissions factors to reflect the desired output emissions mass (as defined in the configuration).
 
             - df_in: data frame containing input variables
 
@@ -1419,7 +1475,7 @@ class ModelAttributes:
             flds = self.dict_model_variables_to_variables[modvar]
             flds = flds[0] if ((len(flds) == 1) and not override_vector_for_single_mv_q) else flds
 
-        valid_rts = ["data_frame", "array_base", "array_units_corrected"]
+        valid_rts = ["data_frame", "array_base", "array_units_corrected", "array_units_corrected_gas"]
         if return_type not in valid_rts:
             vrts = sf.format_print_list(valid_rts)
             raise ValueError(f"Invalid return_type in get_standard_variables: valid types are {vrts}.")
@@ -1430,6 +1486,8 @@ class ModelAttributes:
             out = np.array(out)
             if return_type == "array_units_corrected":
                 out *= self.get_scalar(modvar, "total")
+            elif return_type == "array_units_corrected_gas":
+                out *= self.get_scalar(modvar, "gas")
 
         if type(var_bounds) in [tuple, list, np.ndarray]:
             # get numeric values and check
