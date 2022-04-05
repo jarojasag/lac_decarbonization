@@ -139,7 +139,7 @@ def df_get_missing_fields_from_source_df(df_target, df_source, side = "right", c
         df_out = df_out[flds_1 + flds_2]
 
     return df_out
-
+    
 
 # simple but often used function
 def format_print_list(list_in, delim = ","):
@@ -150,6 +150,54 @@ def print_setdiff(superset: set, subset: set) -> str:
     missing_vals = list(superset - subset)
     missing_vals.sort()
     return format_print_list(missing_vals)
+
+# project a vector of growth scalars from a vector of growth rates and elasticities
+def project_growth_scalar_from_elasticity(
+    vec_rates: np.ndarray,
+    vec_elasticity: np.ndarray,
+    rates_are_factors = False,
+    elasticity_type = "standard"
+):
+    """
+        - vec_rates: a vector of growth rates, where the ith entry is the growth rate of the driver from i to i + 1. If rates_are_factors = False (default), rates are proportions (e.g., 0.02). If rates_are_factors = True, then rates are scalars (e.g., 1.02)
+
+        - vec_elasticity: a vector of elasticities.
+
+        - rates_are_factors: Default = False. If True, rates are treated as growth factors (e.g., a 2% growth rate is entered as 1.02). If False, rates are growth rates (e.g., 2% growth rate is 0.02).
+
+        - elasticity_type: Default = "standard"; acceptable options are "standard" or "log"
+
+            If standard, the growth in the demand is 1 + r*e, where r = is the growth rate of the driver and e is the elasiticity.
+
+            If log, the growth in the demand is (1 + r)^e
+    """
+    # CHEKCS
+    if vec_rates.shape[0] + 1 != vec_elasticity.shape[0]:
+        raise ValueError(f"Invalid vector lengths of vec_rates ('{len(vec_rates)}') and vec_elasticity ('{len(vec_elasticity)}'). Length of vec_elasticity should be equal to the length vec_rates + 1.")
+    valid_types = ["standard", "log"]
+    if elasticity_type not in valid_types:
+        v_types = sf.format_print_list(valid_types)
+        raise ValueError(f"Invalid elasticity_type {elasticity_type}: valid options are {v_types}.")
+    # check factors
+    if rates_are_factors:
+        vec_rates = vec_rates - 1 if (elasticity_type == "standard") else vec_rates
+    else:
+        vec_rates = vec_rates if (elasticity_type == "standard") else vec_rates + 1
+    # check if transpose needs to be used
+    transpose_q = True if len(vec_rates.shape) != len(vec_elasticity.shape) else False
+
+    # get scalar
+    if elasticity_type == "standard":
+        rates_adj = (vec_rates.transpose()*vec_elasticity[0:-1].transpose()).transpose() if transpose_q else vec_rates*vec_elasticity[0:-1]
+        vec_growth_scalar = np.cumprod(1 + rates_adj, axis = 0)
+        ones = np.ones(1) if (len(vec_growth_scalar.shape) == 1) else np.ones((1, vec_growth_scalar.shape[1]))
+        vec_growth_scalar = np.concatenate([ones, vec_growth_scalar])
+    elif elasticity_type == "log":
+        ones = np.ones(1) if (len(vec_rates.shape) == 1) else np.ones((1, vec_rates.shape[1]))
+        vec_growth_scalar = np.cumprod(np.concatenate([ones, vec_rates], axis = 0)**vec_elasticity)
+
+    return vec_growth_scalar
+
 
 # replace values in a two-dimensional array
 def repl_array_val_twodim(array, val_repl, val_new):

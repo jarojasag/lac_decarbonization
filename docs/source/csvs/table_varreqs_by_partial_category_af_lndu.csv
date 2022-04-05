@@ -11,6 +11,6 @@ Input,Land Use Yield Reallocation Factor,"The land use yield reallocation factor
  | For :math:`\eta \in (0, 1)`, there is a mix of reallocation and net imports, which scales linearly between extremes.
 ",``lndu_reallocation_factor``,,none,,,,0,0,2
 Input,Vegetarian Diet Exchange Scalar,This scalar is applied to per capita crop demand for the proportion of the population that is vegetarian. ,``vegetarian_dietary_exchange_scalar``,,none,,,,0,0.6,1.4
-Output,:math:`\text{CH}_4` Emissions from Wetlands,,``emissions_co2e_$EMISSION-GAS$_lndu_wetlands`` (``$EMISSION-GAS$ = ch4``),,none,,,,1,1,1
-Output,:math:`\text{CO}_2` Emissions from Pastures,Soil carbon emitted from grasslands,``emissions_co2e_$EMISSION-GAS$_lndu_pastures`` (``$EMISSION-GAS$ = co2``),,none,,,,1,1,1
-Output,:math:`\text{N}_2\text{O}` Emissions from Pastures,Based on the **Land Use Pasture :math:`\text{N}_2\text{O}` Emission Factor** variable,``emissions_co2e_$EMISSION-GAS$_lndu_pastures`` (``$EMISSION-GAS$ = n2o``),,none,,,,1,1,1
+Output,:math:`\text{CH}_4` Emissions from Wetlands,,``emission_co2e_$EMISSION-GAS$_lndu_wetlands`` (``$EMISSION-GAS$ = ch4``),,none,,,,1,1,1
+Output,:math:`\text{CO}_2` Emissions from Pastures,Soil carbon emitted from grasslands,``emission_co2e_$EMISSION-GAS$_lndu_pastures`` (``$EMISSION-GAS$ = co2``),,none,,,,1,1,1
+Output,:math:`\text{N}_2\text{O}` Emissions from Pastures,Based on the **Land Use Pasture :math:`\text{N}_2\text{O}` Emission Factor** variable,``emission_co2e_$EMISSION-GAS$_lndu_pastures`` (``$EMISSION-GAS$ = n2o``),,none,,,,1,1,1

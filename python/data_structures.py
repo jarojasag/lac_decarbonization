@@ -277,10 +277,11 @@ class ModelAttributes:
         self.dict_model_variables_by_subsector, self.dict_model_variable_to_subsector, self.dict_model_variable_to_category_restriction = self.get_variables_by_subsector()
         self.all_model_variables, self.dict_variables_to_model_variables, self.dict_model_variables_to_variables = self.get_variable_fields_by_variable()
 
-        # run checks and raise errors if invalid data, are entered
-        self.check_land_use_tables()
+        # run checks and raise errors if invalid data are entered
+        self.check_lndu_attribute_tables()
         self.check_wali_gnrl_crosswalk()
         self.check_wali_trww_crosswalk()
+        self.check_waso_attribute_tables()
 
 
         # get configuration
@@ -300,13 +301,14 @@ class ModelAttributes:
     #   FUNCTIONS FOR ATTRIBUTE TABLES, DIMENSIONS, SECTORS    #
     ############################################################
 
-    # ensure dimensions of analysis are properly specified
+    ##  function to ensure dimensions of analysis are properly specified
     def check_dimensions_of_analysis(self):
         if not set(self.sort_ordered_dimensions_of_analysis).issubset(set(self.all_dims)):
             missing_vals = sf.print_setdiff(set(self.sort_ordered_dimensions_of_analysis), set(self.all_dims))
             raise ValueError(f"Missing specification of required dimensions of analysis: no attribute tables for dimensions {missing_vals} found in directory '{self.attribute_directory}'.")
 
-    # get subsectors that have a primary cateogry; these sectors can leverage the functions below effectively
+
+    ##  get subsectors that have a primary cateogry; these sectors can leverage the functions below effectively
     def get_all_subsectors_with_primary_category(self):
         l_with = list(self.dict_attributes["abbreviation_subsector"].field_maps["subsector_to_primary_category_py"].keys())
         l_with.sort()
@@ -315,7 +317,8 @@ class ModelAttributes:
 
         return l_with, l_without
 
-    # function to simplify retrieval of attribute tables within functions
+
+    ##  function to simplify retrieval of attribute tables within functions
     def get_attribute_table(self, subsector: str, table_type = "pycategory_primary"):
         key_dict = self.get_subsector_attribute(subsector, "pycategory_primary")
 
@@ -326,7 +329,8 @@ class ModelAttributes:
         else:
             raise ValueError(f"Invalid table_type '{table_type}': valid options are 'pycategory_primary', 'key_varreqs_all', 'key_varreqs_partial'.")
 
-    # get the baseline scenario associated with a scenario dimension
+
+    ##  get the baseline scenario associated with a scenario dimension
     def get_baseline_scenario_id(self, dim: str):
 
         """
@@ -353,7 +357,29 @@ class ModelAttributes:
 
             return tab_red[0]
 
-    # function for dimensional attributes
+
+    ##  function to get all dimensions of analysis in a data frame - can be used on two data frames for merges
+    def get_df_dimensions_of_analysis(self, df_in: pd.DataFrame, df_in_shared: pd.DataFrame = None) -> list:
+        if type(df_in_shared) == pd.DataFrame:
+            cols = [x for x in self.sort_ordered_dimensions_of_analysis if (x in df_in.columns) and (x in df_in_shared.columns)]
+        else:
+            cols = [x for x in self.sort_ordered_dimensions_of_analysis if x in df_in.columns]
+        return cols
+
+    ##  function to return categories from an attribute table that match some characteristics (defined in dict_subset)
+    def get_categories_from_attribute_characteristic(self,
+        subsector: str,
+        dict_subset: dict,
+        attribute_type: str = "pycategory_primary"
+    ) -> list:
+        #
+        pycat = self.get_subsector_attribute(subsector, attribute_type)
+        attr = self.dict_attributes[pycat] if (attribute_type == "pycategory_primary") else self.dict_varreqs[pycat]
+        #
+        return list(sf.subset_df(attr.table, dict_subset)[pycat])
+
+
+    ##  function for dimensional attributes
     def get_dimensional_attribute(self, dimension, return_type):
         if dimension not in self.all_dims:
             valid_dims = sf.format_print_list(self.all_dims)
@@ -371,7 +397,8 @@ class ModelAttributes:
             warnings.warn(f"Invalid dimensional attribute '{return_type}'. Valid return type values are:{valid_rts}")
             return None
 
-    # get different dimensions
+
+    ##  function to get different dimensions
     def get_sector_dims(self):
         # sector info
         all_sectors = list(self.dict_attributes["abbreviation_sector"].table["sector"])
@@ -386,13 +413,15 @@ class ModelAttributes:
 
         return (all_sectors, all_sectors_abvs, all_subsectors, all_subsector_abvs)
 
-    # retrieve time periods
+
+    ##  function to retrieve time periods
     def get_time_periods(self):
         pydim_time_period = self.get_dimensional_attribute("time_period", "pydim")
         time_periods = self.dict_attributes[pydim_time_period].key_values
         return time_periods, len(time_periods)
 
-    # function for grabbing an attribute column from an attribute table ordered the same as key values
+
+    ##  function for grabbing an attribute column from an attribute table ordered the same as key values
     def get_ordered_category_attribute(self,
         subsector: str,
         attribute: str,
@@ -417,7 +446,7 @@ class ModelAttributes:
         return [dict_map[x] for x in attr_cur.key_values]
 
 
-    # return a list of variables from one subsector that are ordered according to a primary category (which the variables are mapped to) from another subsector
+    ##  fuction to return a list of variables from one subsector that are ordered according to a primary category (which the variables are mapped to) from another subsector
     def get_ordered_vars_by_nonprimary_category(self,
         subsector_var: str,
         subsector_targ: str,
@@ -445,7 +474,7 @@ class ModelAttributes:
             raise ValueError(f"Invalid return_type '{return_type}' in order_vars_by_category: valid types are 'inds', 'vars'.")
 
 
-    # function for retrieving different attributes associated with a sector
+    ##  function for retrieving different attributes associated with a sector
     def get_sector_attribute(self, sector, return_type):
 
         # check sectors
@@ -470,7 +499,7 @@ class ModelAttributes:
             return attr_sec.field_maps[map_retrieve][key]
 
 
-    # function for retrieving different attributes associated with a subsector
+    ##  function for retrieving different attributes associated with a subsector
     def get_subsector_attribute(self, subsector, return_type):
         dict_out = {
             "pycategory_primary": self.dict_attributes["abbreviation_subsector"].field_maps["subsector_to_primary_category_py"][subsector],
@@ -497,7 +526,7 @@ class ModelAttributes:
             return None
 
 
-    # reorganize a bit to create variable fields associated with each variable
+    ##  function to reorganize a bit to create variable fields associated with each variable
     def get_variable_fields_by_variable(self):
         dict_vars_to_fields = {}
         dict_fields_to_vars = {}
@@ -514,7 +543,7 @@ class ModelAttributes:
         return modvars_all, dict_fields_to_vars, dict_vars_to_fields
 
 
-    # merge an array for a variable with partial categories to all categories
+    ##  function to merge an array for a variable with partial categories to all categories
     def merge_array_var_partial_cat_to_array_all_cats(self, array_vals: np.ndarray, modvar: str, missing_vals: float = 0.0):
         # check variable first
         if modvar not in self.all_model_variables:
@@ -539,7 +568,7 @@ class ModelAttributes:
             return array_default
 
 
-    # retrieve and format attribute tables for use
+    ##  function to retrieve and format attribute tables for use
     def load_attribute_tables(self, dir_att):
         # get available types
         all_types = [x for x in os.listdir(dir_att) if (self.attribute_file_extension in x) and ((self.substr_categories in x) or (self.substr_varreqs_allcats in x) or (self.substr_varreqs_partialcats in x) or (self.substr_analytical_parameters in x))]
@@ -603,7 +632,7 @@ class ModelAttributes:
     #    QUICK RETRIEVAL OF FUNDAMENTAL TRANSFORMATIONS (GWP, MASS, ETC)    #
     #########################################################################
 
-    # get energy unit_mass_to_mass_equivalent_
+    ##  function to get energy equivalent scalar
     def get_energy_equivalent(self, energy: str, energy_to_match: str = None):
 
         """
@@ -629,7 +658,8 @@ class ModelAttributes:
         else:
             raise KeyError(f"Invalid energy '{energy}': defined energy units are {valid_vals}.")
 
-    # get gwp
+
+    ##  function to get gwp multiplier associated with a gas
     def get_gwp(self, gas: str, gwp: int = None):
         """
             for a given gas, get the scalar to convert to CO2e using the specified global warming potential *gwp*
@@ -653,7 +683,8 @@ class ModelAttributes:
             valid_gasses = sf.format_print_list(self.dict_attributes["emission_gas"].key_values)
             raise KeyError(f"Invalid gas '{gas}': defined gasses are {valid_gasses}.")
 
-    # get mass
+
+    ##  function to get the mass equivalent scalar
     def get_mass_equivalent(self, mass: str, mass_to_match: str = None):
         """
             for a given mass unit *mass*, get the scalar to convert to units *mass_to_match*
@@ -678,7 +709,8 @@ class ModelAttributes:
             valid_vals = sf.format_print_list(self.dict_attributes["unit_mass"].key_values)
             raise KeyError(f"Invalid mass '{mass}': defined masses are {valid_vals}.")
 
-    # get volume equivalent
+
+    ##  function to get a volume equivalent scalar
     def get_volume_equivalent(self, volume: str, volume_to_match: str = None):
         """
             for a given volume unit *volume*, get the scalar to convert to units *volume_to_match*
@@ -743,8 +775,8 @@ class ModelAttributes:
     #    SECTOR-SPECIFIC AND CROSS SECTORIAL CHECKS    #
     ####################################################
 
-    ##  LAND USE
-    def check_land_use_tables(self):
+    ##  function to check that the land use attribute tables are specified
+    def check_lndu_attribute_tables(self):
 
         # specify some generic variables
         catstr_forest = self.dict_attributes["abbreviation_subsector"].field_maps["subsector_to_primary_category_py"]["Forest"]
@@ -769,7 +801,7 @@ class ModelAttributes:
             raise KeyError(f"Undefined forest categories specified in land use attribute file '{attribute_landuse.fp_table}': did not find forest categories {extra_vals}.")
 
 
-    ##  liquid waste/population crosswalk
+    ##  function to check the liquid waste/population crosswalk in liquid waste
     def check_wali_gnrl_crosswalk(self):
         # wastewater treatment info
         pycat_gnrl = self.get_subsector_attribute("General", "pycategory_primary")
@@ -812,14 +844,23 @@ class ModelAttributes:
             raise ValueError(f"Invalid wastewater treatment types {invalid_vals} specified in the liquid waste variable requirement by category table at '{attr_wali_vr.fp_table}'.\n\nValid wastewater treatment pathways are: {valid_vals}")
 
 
-    # available for use by all sectors
+    ##  function to check if the solid waste attribute table is properly defined
+    def check_waso_attribute_tables(self):
+        # check that only one category is assocaited with sludge
+        attr_waso = self.get_attribute_table("Solid Waste")
+        cats_sludge = self.get_categories_from_attribute_characteristic("Solid Waste", {"sewage_sludge_category": 1})
+        if len(cats_sludge) > 1:
+            raise ValueError(f"Error in Solid Waste attribute table at {attr_waso.fp_table}: multiple sludge categories defined in the 'sewage_sludge_category' field. There should be no more than 1 sewage sludge category.")
+
+
+    ##  function to check the projection input dataframe and (1) return time periods available, (2) a dicitonary of scenario dimenions, and (3) an interpolated data frame if there are missing values.
     def check_projection_input_df(self,
         df_project: pd.DataFrame,
         # options for formatting the input data frame to correct for errors
         interpolate_missing_q: bool = True,
         strip_dims: bool = True,
         drop_invalid_time_periods: bool = True
-    ):
+    ) -> tuple:
         # check for required fields
         sf.check_fields(df_project, [self.dim_time_period])
 
@@ -1177,6 +1218,69 @@ class ModelAttributes:
         return vars_req, vars_out
 
 
+    ##  function to retrive multiple variables that, across categories, must sum to some value. Gives a correction threshold to allow for small errors
+    def get_multivariables_with_bounded_sum_by_category(self,
+        df_in: pd.DataFrame,
+        modvars: list,
+        sum_restriction: float,
+        correction_threshold: float = 0.000001
+    ) -> dict:
+
+        """
+            use get_multivariables_with_bounded_sum_by_category() to retrieve a array or data frame of input variables. If return_type == "array_units_corrected", then the model_attributes will re-scale emissions factors to reflect the desired output emissions mass (as defined in the configuration)
+
+            - df_in: data frame containing input variables
+
+            - modvars: variables to sum over and restrict
+
+            - sum_restriction: maximium sum that array may equal
+
+            - correction_threshold: tolerance for correcting categories that
+
+        """
+        # retrieve arrays
+        arr = 0
+        init_q = True
+        dict_arrs = {}
+        for modvar in modvars:
+            if modvar not in self.dict_model_variables_to_variables.keys():
+                raise ValueError(f"Invalid variable specified in get_standard_variables: variable '{modvar}' not found.")
+            else:
+                # some basic info
+                subsector_cur = self.get_variable_subsector(modvar)
+                cats = self.get_variable_categories(modvar)
+
+                if init_q:
+                    subsector = subsector_cur
+                    init_q = False
+                elif subsector_cur != subsector:
+                    raise ValueError(f"Error in get_multivariables_with_bounded_sum_by_category: variables must be from the same subsector.")
+                # get current variable, merge to all categories, update dictionary, and check totals
+                arr_cur = self.get_standard_variables(df_in, modvar, True, "array_base")
+                if cats:
+                    arr_cur = self.merge_array_var_partial_cat_to_array_all_cats(arr_cur, modvar)
+
+                dict_arrs.update({modvar: arr_cur})
+                arr += arr_cur
+
+        # correction sums if within correction threshold
+        w = np.where(arr > sum_restriction + correction_threshold)[0]
+        if len(w) > 0:
+            raise ValueError(f"Invalid summations found: some categories exceed the sum threshold.")
+
+        w = np.where((arr <= sum_restriction + correction_threshold) & (arr > sum_restriction))[0]
+        if len(w) > 0:
+            if np.max(sums - sum_restriction) <= correction_threshold:
+                w = np.where((sums <= sum_restriction + correction_threshold) & (sums > sum_restriction))
+                inds = w[0]*len(arr[0]) + w[1]
+                for modvar in modvars:
+                    arr_cur = dict_arrs[modvar]
+                    np.put(arr_cur, inds, arr_cur[w[0], w[1]].flatten()/arr_cur[w[0], w[1]].flatten())
+                    dict_arrs.update({modvar: arr})
+
+        return dict_arrs
+
+
     ##  function to return an optional variable if another (integrated) variable is not passed
     def get_optional_or_integrated_standard_variable(self,
         df_in: pd.DataFrame,
@@ -1194,9 +1298,11 @@ class ModelAttributes:
         if set(fields_check).issubset(set(df_in.columns)):
             out = self.get_standard_variables(df_in, var_integrated, override_vector_for_single_mv_q, return_type, var_bounds, force_boundary_restriction)
             return var_integrated, out
-        else:
+        elif type(var_optional) != type(None):
             out = self.get_standard_variables(df_in, var_optional, override_vector_for_single_mv_q, return_type, var_bounds, force_boundary_restriction)
             return var_optional, out
+        else:
+            return None
 
 
     ##  function to build a dictionary of categories applicable to a give variable; split by unidim/outer
@@ -1307,8 +1413,11 @@ class ModelAttributes:
             - force_boundary_restriction: default is True. Set to True to enforce the boundaries on the variable. If False, a variable that is out of bounds will raise an error.
 
         """
-        flds = self.dict_model_variables_to_variables[modvar]
-        flds = flds[0] if ((len(flds) == 1) and not override_vector_for_single_mv_q) else flds
+        if modvar not in self.dict_model_variables_to_variables.keys():
+            raise ValueError(f"Invalid variable specified in get_standard_variables: variable '{modvar}' not found.")
+        else:
+            flds = self.dict_model_variables_to_variables[modvar]
+            flds = flds[0] if ((len(flds) == 1) and not override_vector_for_single_mv_q) else flds
 
         valid_rts = ["data_frame", "array_base", "array_units_corrected"]
         if return_type not in valid_rts:

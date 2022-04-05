@@ -8,6 +8,53 @@ import sector_models as sm
 import argparse
 
 
+# use to merge data frames together into a single output
+def merge_output_df_list(
+    dfs_output_data: list,
+    model_attributes,
+    merge_type: str = "concatenate"
+) -> pd.DataFrame:
+
+    # check type
+    valid_merge_types = ["concatenate", "merge"]
+    if merge_type not in valid_merge_types:
+        str_valid_types = sf.format_print_list(valid_merge_types)
+        raise ValueError(f"Invalid merge_type '{merge_type}': valid types are {str_valid_types}.")
+
+    # start building the output dataframe and retrieve dimensions of analysis for merging/ordering
+    df_out = dfs_output_data[0]
+    dims_to_order = model_attributes.sort_ordered_dimensions_of_analysis
+    dims_in_out = set([x for x in dims_to_order if x in df_out.columns])
+
+    if (len(dfs_output_data) == 0):
+        return None
+    if len(dfs_output_data) == 1:
+        return dfs_output_data[0]
+    elif len(dfs_output_data) > 1:
+        # loop to merge where applicable
+        for i in range(1, len(dfs_output_data)):
+            if merge_type == "concatenate":
+                # check available dims; if there are ones that aren't already contained, keep them. Otherwise, drop
+                fields_dat = [x for x in dfs_output_data[i].columns if (x not in dims_to_order)]
+                fields_new_dims = [x for x in dfs_output_data[i].columns if (x in dims_to_order) and (x not in dims_in_out)]
+                dims_in_out = dims_in_out | set(fields_new_dims)
+                dfs_output_data[i] = dfs_output_data[i][fields_new_dims + fields_dat]
+            elif merge_type == "merge":
+                df_out = pd.merge(df_out, dfs_output_data[i])
+
+        # clean up - assume merged may need to be re-sorted on rows
+        if merge_type == "concatenate":
+            fields_dim = [x for x in dims_to_order if x in dims_in_out]
+            df_out = pd.concat(dfs_output_data, axis = 1).reset_index(drop = True)
+        elif merge_type == "merge":
+            fields_dim = [x for x in dims_to_order if x in df_out.columns]
+            df_out = pd.concat(df_out, axis = 1).sort_values(by = fields_dim).reset_index(drop = True)
+
+        fields_dat = [x for x in df_out.columns if x not in dims_in_out]
+        fields_dat.sort()
+        #
+        return df_out[fields_dim + fields_dat]
+
 
 def parse_arguments() -> dict:
 
@@ -59,13 +106,29 @@ def main(args: dict) -> None:
     # notify of output path
     print(f"\n\n*** STARTING MODELS ***\n\nOutput file will be written to {fp_out}.\n")
 
+    init_merge_q = True
+    df_output_data = []
+
     # set up models
     if "AFOLU" in models_run:
-        print("\nRunning AFOLU...")
+        print("\n\tRunning AFOLU")
         model_afolu = sm.AFOLU(sa.model_attributes)
-        df_output_data = model_afolu.project(df_input_data)
+        df_output_data += [model_afolu.project(df_input_data)]
+        init_merge_q = False
 
-    ## other models
+    if "CircularEconomy" in models_run:
+        print("\n\tRunning CircularEconomy")
+        model_circecon = sm.CircularEconomy(sa.model_attributes)
+        df_output_data += [model_circecon.project(df_input_data)]
+
+    #########################
+    #   other models here   #
+    #########################
+
+    # build output data frame
+    df_output_data = merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")
+
+
     print("\n*** MODEL RUNS COMPLETE ***\n")
 
     # write output

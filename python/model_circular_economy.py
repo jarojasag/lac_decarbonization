@@ -45,14 +45,14 @@ class CircularEconomy:
         # domestic solid waste model variables
         self.modvar_waso_annual_vkmt_per_collection_vehicle = "Average VKMT Per Waste Collection Vehicle"
         self.modvar_waso_annual_waste_collected_per_collection_vehicle = "Average Annual Waste Transported Per Waste Collection Vehicle"
-        self.modvar_waso_composition_isw = "Composition Fraction Industrial Solid Waste"
+        self.modvar_waso_composition_isw = "Initial Composition Fraction Industrial Solid Waste"
         self.modvar_waso_ef_ch4_biogas = ":math:\\text{CH}_4 Anaerobic Biogas Emission Factor"
         self.modvar_waso_ef_ch4_compost = ":math:\\text{CH}_4 Composting Emission Factor"
         self.modvar_waso_ef_ch4_incineration_isw = ":math:\\text{CH}_4 ISW Incineration Emission Factor"
         self.modvar_waso_ef_ch4_incineration_msw = ":math:\\text{CH}_4 MSW Incineration Emission Factor"
         self.modvar_waso_ef_n2o_compost = ":math:\\text{N}_2\\text{O} Composting Emission Factor"
         self.modvar_waso_ef_n2o_incineration = ":math:\\text{N}_2\\text{O} Incineration Emission Factor"
-        self.modvar_waso_elast_msw = "Elasticity of Municipal Solid Waste Produced to GDP/Capita"
+        self.modvar_waso_elast_msw = "Elasticity of Municipal Solid Waste Produced to GDP per Capita"
         self.modvar_waso_emissions_ch4_biogas = ":math:\\text{CH}_4 Emissions from Anearobic Biogas"
         self.modvar_waso_emissions_ch4_compost = ":math:\\text{CH}_4 Emissions from Composting"
         self.modvar_waso_emissions_ch4_incineration = ":math:\\text{CH}_4 Emissions from Incineration"
@@ -60,6 +60,8 @@ class CircularEconomy:
         self.modvar_waso_emissions_n2o_compost = ":math:\\text{N}_2\\text{O} Emissions from Composting"
         self.modvar_waso_emissions_n2o_incineration = ":math:\\text{N}_2\\text{O} Emissions from Incineration"
         self.modvar_waso_frac_ch4_flared_composting = "Fraction of Methane Flared at Composting Facilities"
+        self.modvar_waso_frac_biogas = "Fraction of Waste Treated Anaerobically"
+        self.modvar_waso_frac_compost = "Fraction of Waste Composted"
         self.modvar_waso_frac_landfill_gas_ch4_to_energy = "Fraction of Landfill Gas Recovered for Energy"
         self.modvar_waso_frac_nonrecycled_incinerated = "Fraction of Non-Recycled Solid Waste Incinerated"
         self.modvar_waso_frac_nonrecycled_landfilled = "Fraction of Non-Recycled Solid Waste Landfilled"
@@ -67,7 +69,7 @@ class CircularEconomy:
         self.modvar_waso_frac_recovered_for_energy_incineration = "Fraction of Incineration Recovered for Energy"
         self.modvar_waso_frac_recycled = "Fraction of Waste Recycled"
         self.modvar_waso_init_composition_msw = "Initial Composition Fraction Municipal Solid Waste"
-        self.modvar_waso_init_isw_generated_pgdp = "Initial Per GDP Industrial Solid Waste Generated"
+        self.modvar_waso_init_isw_generated_pgdp = "Per GDP Industrial Solid Waste Generated"
         self.modvar_waso_init_msw_generated_pc = "Initial Per Capita Municipal Solid Waste Generated"
         self.modvar_waso_mcf_landfills_average = "Average Methane Correction Factor at Landfills"
         self.modvar_waso_physparam_k = "K"
@@ -76,9 +78,11 @@ class CircularEconomy:
         self.modvar_waso_rf_biogas = "Biogas Recovery Factor"
         self.modvar_waso_rf_landfill_gas_recovered = "Fraction of Landfill Gas Captured at Landfills"
         self.modvar_waso_rf_landfill_gas_to_ch4 = ":math:\\text{CH}_4 Recovery Factor Landfill Gas"
+        self.modvar_waso_waste_per_capita_scalar = "Waste Per Capita Scale Factor"
         self.modvar_waso_waste_total_biogas = "Total Waste Anaerobic Biogas"
         self.modvar_waso_waste_total_compost = "Total Waste Composted"
         self.modvar_waso_waste_total_incinerated = "Total Waste Incinerated"
+        self.modvar_waso_waste_total_produced = "Total Solid Waste Produced"
         self.modvar_waso_waste_total_landfilled = "Total Waste Landfilled"
         self.modvar_waso_waste_total_open_dumped = "Total Waste Open Dumped"
         self.modvar_waso_waste_total_recycled = "Total Waste Recycled"
@@ -194,8 +198,7 @@ class CircularEconomy:
                 raise ValueError(f"Error in project_protein_consumption: Livestock growth rates not found in data frame. To use the '{self.modvar_wali_optional_elasticity_protein_to_gdppc}' variable, specify a vector of gdp growth rates.")
             # in this case, array_project_protein_driver_a == array_project_protein_driver_a
             vec_wali_elast_protein = array_project_protein_driver_a.flatten()
-            vec_protein_growth = np.concatenate([np.ones(1), np.cumprod(1 + vec_rates_gdp_per_capita*vec_wali_elast_protein[0:-1])])
-
+            vec_protein_growth = sf.project_growth_scalar_from_elasticity(vec_rates_gdp_per_capita, vec_wali_elast_protein, False, "standard")
         # total protein
         vec_wali_protein_kg = vec_wali_protein_per_capita*vec_pop*vec_protein_growth*vec_wali_protein_scalar
 
@@ -278,7 +281,7 @@ class CircularEconomy:
         array_wali_cod_pergdp = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_wali_cod_per_gdp, True, return_type = "array_units_corrected")
         # get elasticity of wastewater
         vec_wali_logelastic = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_wali_logelast_ww_to_gdppc, False, return_type = "array_base")
-        vec_wali_scale_percapita_dem = np.cumprod(np.concatenate([np.ones(1), 1 + vec_rates_gdp_per_capita])**vec_wali_logelastic)
+        vec_wali_scale_percapita_dem = sf.project_growth_scalar_from_elasticity(vec_rates_gdp_per_capita, vec_wali_logelastic, False, "log")
         # volume per capita (m3)
         array_wali_vol_domww_percap = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_wali_init_pcap_wwgen, True, return_type = "array_base")
         array_wali_vol_domww_percap = (array_wali_vol_domww_percap.transpose() * vec_wali_bod_correction).transpose()
@@ -312,7 +315,7 @@ class CircularEconomy:
         # domestiic
         for cdw in cats_dom_ww:
             # get population category
-            cat_gnrl = ds.clean_schema(sa.model_attributes.dict_attributes[pycat_wali].field_maps[f"{pycat_wali}_to_{pycat_gnrl}"][cdw])
+            cat_gnrl = ds.clean_schema(self.model_attributes.dict_attributes[pycat_wali].field_maps[f"{pycat_wali}_to_{pycat_gnrl}"][cdw])
             ind_gnrl = attr_gnrl.get_key_value_index(cat_gnrl)
             # the associated vector of wastewater produced + bod produced
             vec_bod = array_wali_bod_total[:, ind_gnrl]
@@ -320,7 +323,7 @@ class CircularEconomy:
             # get the treatment pathway
             vars_treatment_path = []
             for var in self.vars_wali_to_trww:
-                vars_treatment_path += sa.model_attributes.build_varlist("Liquid Waste", var, [cdw])
+                vars_treatment_path += self.model_attributes.build_varlist("Liquid Waste", var, [cdw])
             array_pathways = sf.check_row_sums(np.array(df_ce_trajectories[vars_treatment_path]), msg_pass = f" 'df_ce_trajectories[vars_treatment_path]' for wali category '{cdw}'")
             # add to output arrays
             array_trww_total_bod_by_pathway += (array_pathways.transpose()*vec_bod)
@@ -335,7 +338,7 @@ class CircularEconomy:
             # get the treatment pathway
             vars_treatment_path = []
             for var in self.vars_wali_to_trww:
-                vars_treatment_path += sa.model_attributes.build_varlist("Liquid Waste", var, [cdw])
+                vars_treatment_path += self.model_attributes.build_varlist("Liquid Waste", var, [cdw])
             array_pathways = sf.check_row_sums(np.array(df_ce_trajectories[vars_treatment_path]), msg_pass = f" 'df_ce_trajectories[vars_treatment_path]' for wali category '{cdw}'")
             # add to output arrays
             array_trww_total_cod_by_pathway += (array_pathways.transpose()*vec_cod)
@@ -370,9 +373,9 @@ class CircularEconomy:
         array_trww_frac_tow_removed = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_trww_frac_tow_removed, True, return_type = "array_base")
         # get some specific factors and merge them to all categories (aerobic + septic, for sludge removal)
         array_trww_krem = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_trww_krem, True, return_type = "array_base")
-        array_trww_krem = self.model_attributes.merge_array_var_partial_cat_to_array_all_cats(array_trww_krem, circ_econ.modvar_trww_krem)
+        array_trww_krem = self.model_attributes.merge_array_var_partial_cat_to_array_all_cats(array_trww_krem, self.modvar_trww_krem)
         array_trww_septic_compliance = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_trww_septic_sludge_compliance, True, return_type = "array_base")
-        array_trww_septic_compliance = self.model_attributes.merge_array_var_partial_cat_to_array_all_cats(array_trww_septic_compliance, circ_econ.modvar_trww_septic_sludge_compliance)
+        array_trww_septic_compliance = self.model_attributes.merge_array_var_partial_cat_to_array_all_cats(array_trww_septic_compliance, self.modvar_trww_septic_sludge_compliance)
         # get treatment pathways that produce sludge
         array_mask_sludge = np.sign(array_trww_krem) + np.sign(array_trww_septic_compliance)
         # next, once krem has been used, replace 0s with 1s and used to divide to estimate the total mass of sludge (which is passed to the solid waste model)
@@ -436,7 +439,7 @@ class CircularEconomy:
         # retrieve the emission factors, which are g/g (unitless)
         array_trww_ef_n2o_ww = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_trww_ef_n2o_wastewater_treatment, False, return_type = "array_base")
         # nitrogen emissions in kg (first component) converted to emissions mass--assumes both industry and domestic have same units, kg
-        factor_trww_mass_protein_to_emission_mass = self.model_attributes.get_scalar(circ_econ.modvar_wali_protein_per_capita, "mass")
+        factor_trww_mass_protein_to_emission_mass = self.model_attributes.get_scalar(self.modvar_wali_protein_per_capita, "mass")
         array_trww_emissions_n2o_treatment = array_trww_total_nitrogen*array_trww_ef_n2o_ww*self.factor_n2on_to_n2o*factor_trww_mass_protein_to_emission_mass
         array_trww_emissions_n2o_effluent = array_trww_total_nitrogen_effluent.transpose()*array_trww_ef_n2o_ww[:, attr_trww.get_key_value_index("untreated_no_sewerage")]*self.factor_n2on_to_n2o*factor_trww_mass_protein_to_emission_mass
         array_trww_emissions_n2o_effluent = array_trww_emissions_n2o_effluent.transpose()
@@ -453,6 +456,45 @@ class CircularEconomy:
 
         return df_out
 
+    ##  TEMP ORDERING, MOVE TO LAST AFTER FINISHING SOLID WASTE
+    ##  primary method for integrated liquid/solid waste
+    def project(self, df_ce_trajectories: pd.DataFrame) -> pd.DataFrame:
+
+        """
+            - CircularEconomy.project takes a data frame (ordered by time series) and returns a data frame of the same order
+            - designed to be parallelized or called from command line via __main__ in run_afolu.py
+            - df_ce_trajectories should have all input fields required (see CircularEconomy.required_variables for a list of variables to be defined)
+            - the df_ce_trajectories.project method will run on valid time periods from 1 .. k, where k <= n (n is the number of time periods). By default, it drops invalid time periods. If there are missing time_periods between the first and maximum, data are interpolated.
+        """
+
+
+        ##  CHECKS
+
+        # make sure socioeconomic variables are added and
+        df_ce_trajectories, df_se_internal_shared_variables = self.model_socioeconomic.project(df_ce_trajectories)
+        # check that all required fields are contained—assume that it is ordered by time period
+        self.check_df_fields(df_ce_trajectories)
+        dict_dims, df_ce_trajectories, n_projection_time_periods, projection_time_periods = self.model_attributes.check_projection_input_df(df_ce_trajectories, True, True, True)
+
+
+        # initialize by running waste
+        df_out = [self.project_waste_liquid(df_ce_trajectories, df_se_internal_shared_variables, dict_dims, n_projection_time_periods, projection_time_periods)]
+        # then, build input data frame for solid waste, which includes sludge totals that are reported from liquid waste
+        df_waso_sludge = self.model_attributes.get_optional_or_integrated_standard_variable(df_out[0], self.modvar_trww_sludge_produced, None, True, "data_frame")
+
+        df_in = pd.concat([df_ce_trajectories, df_waso_sludge[1]], axis = 1) if df_waso_sludge else df_ce_trajectories
+
+        df_out += [
+            self.project_waste_solid(df_in, df_se_internal_shared_variables, dict_dims, n_projection_time_periods, projection_time_periods)
+        ]
+
+        df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
+
+        #self.model_attributes.add_subsector_emissions_aggregates(df_out, self.required_base_subsectors, False)
+        # TEMP UNTIL SOLID WASTE IS COMPLETE
+        self.model_attributes.add_subsector_emissions_aggregates(df_out, ["Wastewater Treatment"], False)
+
+        return df_out
 
     ##  project emissions and outputs from solid waste (excluding recylcing energy and process emissions, which are handled in IPPU)
     def project_waste_solid(self,
@@ -522,52 +564,105 @@ class CircularEconomy:
         #    SOLID WASTE     #
         ######################
 
-        # estimate total waste generated by stream (dom + ind)
-        # add sludge (from liquid waste) if specified in input dataframe
+        ##  estimate total waste generated by stream (dom + ind) -- keep everything in tonnes
 
-        # get pathways for all waste
+        # municipal components
+        factor_waso_init_pc_waste = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_init_msw_generated_pc, False, return_type = "array_base")[0]
+        vec_waso_init_msw_composition = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_init_composition_msw, True, return_type = "array_base")[0]
+        array_waso_elasticity_waste_prod = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_elast_msw, False, return_type = "array_base")
+        array_waso_growth_msw_by_cat = sf.project_growth_scalar_from_elasticity(vec_rates_gdp_per_capita, array_waso_elasticity_waste_prod, False, "standard")
+        array_waso_scale_msw = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_waste_per_capita_scalar, False, return_type = "array_base")
+        # estimate total waste in each category
+        array_waso_msw_total_by_category = np.outer(factor_waso_init_pc_waste*vec_pop, vec_waso_init_msw_composition)
+        array_waso_msw_total_by_category *= array_waso_growth_msw_by_cat*array_waso_scale_msw
+        # then, check for sludge in input dataframe
+        array_waso_sludge = self.model_attributes.get_optional_or_integrated_standard_variable(df_ce_trajectories, self.modvar_trww_sludge_produced, None, True, "array_base")
+        if array_waso_sludge:
+            # convert to total sludge, then get the correct cateogry and add (should be a unique sludge category)
+            array_waso_sludge = np.sum(array_waso_sludge[1], axis = 1)
+            cat_sludge = self.model_attributes.get_categories_from_attribute_characteristic("Solid Waste", {"sewage_sludge_category": 1})
+            # if a category is defined, add to the solid waste table
+            if len(cat_sludge) > 0:
+                cat_sludge = cat_sludge[0]
+                ind = attr_waso.get_key_value_index(cat_sludge)
+                # multiply by factor to ensure that sludge units are in the same as msw
+                array_waso_sludge *= self.model_attributes.get_mass_equivalent(
+                    self.model_attributes.get_variable_characteristic(self.modvar_trww_sludge_produced, "$UNIT-MASS$"),
+                    self.model_attributes.get_variable_characteristic(self.modvar_waso_init_msw_generated_pc, "$UNIT-MASS$")
+                )
+                array_waso_msw_total_by_category[:, ind] += array_waso_sludge
+
+        # industrial - include multiplication by factor to write industrial waste in same units as msw
+        vec_waso_init_pgdp_waste = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_init_isw_generated_pgdp, False, return_type = "array_base")
+        vec_waso_init_pgdp_waste *= self.model_attributes.get_mass_equivalent(
+            self.model_attributes.get_variable_characteristic(self.modvar_waso_init_isw_generated_pgdp, "$UNIT-MASS$"),
+            self.model_attributes.get_variable_characteristic(self.modvar_waso_init_msw_generated_pc, "$UNIT-MASS$")
+        )
+        vec_waso_isw_composition = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_composition_isw, True, return_type = "array_base")[0]
+        array_waso_isw_total_by_category = np.outer(vec_waso_init_pgdp_waste*vec_gdp, vec_waso_isw_composition)
+        # initialize total waste array, which will be reduced through recylcing and composting before being divided up between incineration, landfilling, and open dumping
+        array_waso_total_by_category = array_waso_isw_total_by_category + array_waso_msw_total_by_category
+        df_waso_total_produced_by_category = self.model_attributes.array_to_df(array_waso_total_by_category, self.modvar_waso_waste_total_produced, False)
+        df_out += [df_waso_total_produced_by_category]
+
+
+        ##  Recylcing and Compostic/Anaerobic Treatment for Biogas - assume categories for recycling and composition are mutually exclusive, allowing us to subtract successive values from array_waso_total_by_category
 
         # estimate total waste recycled
+        array_waso_waste_recycled = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_frac_recycled, False, return_type = "array_base", var_bounds = (0, 1))
+        array_waso_waste_recycled = self.model_attributes.merge_array_var_partial_cat_to_array_all_cats(array_waso_waste_recycled, self.modvar_waso_frac_recycled)
+        array_waso_waste_recycled *= array_waso_total_by_category
+        array_waso_total_by_category -= array_waso_waste_recycled
+        # initialize arrays for compost and biogas, but ensure their totals do not exceed 1
+        dict_waso_comp_biogas_check = self.model_attributes.get_multivariables_with_bounded_sum_by_category(
+            df_ce_trajectories,
+            [self.modvar_waso_frac_compost, self.modvar_waso_frac_biogas],
+            1
+        )
+        array_waso_waste_compost = dict_waso_comp_biogas_check[self.modvar_waso_frac_compost]
+        array_waso_waste_biogas = dict_waso_comp_biogas_check[self.modvar_waso_frac_biogas]
+        # estimate total waste to compost
+        array_waso_waste_compost = self.model_attributes.merge_array_var_partial_cat_to_array_all_cats(array_waso_waste_compost, self.modvar_waso_frac_compost)
+        array_waso_waste_compost *= array_waso_total_by_category
+        # estimate total waste to anaerobic treatment
+        array_waso_waste_biogas = self.model_attributes.merge_array_var_partial_cat_to_array_all_cats(array_waso_waste_biogas, self.modvar_waso_frac_biogas)
+        array_waso_waste_biogas *= array_waso_total_by_category
+        array_waso_total_by_category -= (array_waso_waste_biogas + array_waso_waste_compost)
+        # estimate ch4 emissions from composting/biogas
+        array_waso_ef_ch4_composting = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_ef_ch4_compost, False, return_type = "array_base")
 
-        # estimate emissions+totals from non-collection
+
+
+        self.model_attributes.get_multivariables_with_bounded_sum_by_category(
+            df_ce_trajectories,
+            [self.modvar_waso_frac_nonrecycled_incinerated, self.modvar_waso_frac_nonrecycled_landfilled, self.modvar_waso_frac_nonrecycled_opendump],
+            1
+        )
+
+        # get gas collection total
+
+        ##  estimate emissions+totals from non-collection
+
 
         # estimate emissions+totals from incineration
         # get total associated with energy
 
-        # estimate emissions+totals from composting/biogas
-        # get gas collection total
+
 
         # estimate emissions+totals from landfilling
         #
 
+        # add waste totals to df out
+        df_waso_waste_biogas = self.model_attributes.array_to_df(array_waso_waste_biogas, self.modvar_waso_waste_total_biogas, False, True)
+        df_waso_waste_compost = self.model_attributes.array_to_df(array_waso_waste_compost, self.modvar_waso_waste_total_compost, False, True)
+        df_waso_waste_recycled = self.model_attributes.array_to_df(array_waso_waste_recycled, self.modvar_waso_waste_total_recycled, False, True)
 
+        df_out += [
+            df_waso_waste_biogas,
+            df_waso_waste_compost,
+            df_waso_waste_recycled
+        ]
 
-    ##  primary method for integrated liquid/solid waste
-    def project(self, df_ce_trajectories: pd.DataFrame) -> pd.DataFrame:
-
-        """
-            - CircularEconomy.project takes a data frame (ordered by time series) and returns a data frame of the same order
-            - designed to be parallelized or called from command line via __main__ in run_afolu.py
-            - df_ce_trajectories should have all input fields required (see CircularEconomy.required_variables for a list of variables to be defined)
-            - the df_ce_trajectories.project method will run on valid time periods from 1 .. k, where k <= n (n is the number of time periods). By default, it drops invalid time periods. If there are missing time_periods between the first and maximum, data are interpolated.
-        """
-
-
-        ##  CHECKS
-
-        # make sure socioeconomic variables are added and
-        df_ce_trajectories, df_se_internal_shared_variables = self.model_socioeconomic.project(df_ce_trajectories)
-        # check that all required fields are contained—assume that it is ordered by time period
-        self.check_df_fields(df_ce_trajectories)
-        dict_dims, df_ce_trajectories, n_projection_time_periods, projection_time_periods = self.model_attributes.check_projection_input_df(df_ce_trajectories, True, True, True)
-
-
-        # initialize by running waste
-        df_out1 = [self.project_waste_liquid(df_ce_trajectories, df_se_internal_shared_variables, dict_dims, n_projection_time_periods, projection_time_periods)]
-
-        df_out1 += [df_ce_trajectories]
-        df_in = pd.merge(df_out1[0], df_ce_trajectories).reset_index(drop = True)
-
-        df_out = self.project_waste_solid(df_in, df_se_internal_shared_variables, dict_dims, n_projection_time_periods, projection_time_periods)
+        df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
 
         return df_out
