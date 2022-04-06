@@ -91,7 +91,7 @@ class Configuration:
         self.params_string = ["energy_units", "emissions_mass", "historical_solid_waste_method", "volume_units"]
         self.params_float = ["days_per_year"]
         self.params_float_fracs = ["discount_rate"]
-        self.params_int = ["global_warming_potential"]
+        self.params_int = ["global_warming_potential", "historical_back_proj_n_periods"]
 
         self.dict_config = self.get_config_information(attr_energy, attr_gas, attr_mass, attr_volume, attr_required_parameters)
 
@@ -170,6 +170,12 @@ class Configuration:
         for k in keys_check:
             dict_conf.update({k: self.check_config_defaults(k, dict_conf[k], dict_checks)})
 
+
+        ###   check some parameters
+        # positive integer restriction
+        dict_conf["historical_back_proj_n_periods"] = max(dict_conf["historical_back_proj_n_periods"], 1)
+
+        # set some attributes
         self.valid_energy = valid_energy
         self.valid_gwp = valid_gwp
         self.valid_historical_solid_waste_method = valid_historical_solid_waste_method
@@ -307,6 +313,13 @@ class ModelAttributes:
         if not set(self.sort_ordered_dimensions_of_analysis).issubset(set(self.all_dims)):
             missing_vals = sf.print_setdiff(set(self.sort_ordered_dimensions_of_analysis), set(self.all_dims))
             raise ValueError(f"Missing specification of required dimensions of analysis: no attribute tables for dimensions {missing_vals} found in directory '{self.attribute_directory}'.")
+
+
+    ##  simple inline function to dimensions in a data frame (if they are converted to floats)
+    def clean_dimension_fields(self, df_in: pd.DataFrame):
+        fields_clean = [x for x in self.sort_ordered_dimensions_of_analysis if x in df_in.columns]
+        for fld in fields_clean:
+            df_in[fld] = np.array(df_in[fld]).astype(int)
 
 
     ##  get subsectors that have a primary cateogry; these sectors can leverage the functions below effectively

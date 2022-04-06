@@ -57,31 +57,39 @@ class CircularEconomy:
         self.modvar_waso_emissions_ch4_compost = ":math:\\text{CH}_4 Emissions from Composting"
         self.modvar_waso_emissions_ch4_incineration = ":math:\\text{CH}_4 Emissions from Incineration"
         self.modvar_waso_emissions_ch4_landfill = ":math:\\text{CH}_4 Emissions from Landfills"
+        self.modvar_waso_emissions_ch4_open_dump = ":math:\\text{CH}_4 Emissions from Open Dumping"
+        self.modvar_waso_emissions_co2_incineration = ":math:\\text{CO}_2 Emissions from Incineration"
         self.modvar_waso_emissions_n2o_compost = ":math:\\text{N}_2\\text{O} Emissions from Composting"
         self.modvar_waso_emissions_n2o_incineration = ":math:\\text{N}_2\\text{O} Emissions from Incineration"
         self.modvar_waso_frac_ch4_flared_composting = "Fraction of Methane Flared at Composting Facilities"
         self.modvar_waso_frac_biogas = "Fraction of Waste Treated Anaerobically"
         self.modvar_waso_frac_compost = "Fraction of Waste Composted"
         self.modvar_waso_frac_landfill_gas_ch4_to_energy = "Fraction of Landfill Gas Recovered for Energy"
-        self.modvar_waso_frac_nonrecycled_incinerated = "Fraction of Non-Recycled Solid Waste Incinerated"
-        self.modvar_waso_frac_nonrecycled_landfilled = "Fraction of Non-Recycled Solid Waste Landfilled"
+        self.modvar_waso_frac_nonrecycled_incineration = "Fraction of Non-Recycled Solid Waste Incinerated"
+        self.modvar_waso_frac_nonrecycled_landfill = "Fraction of Non-Recycled Solid Waste Landfilled"
         self.modvar_waso_frac_nonrecycled_opendump = "Fraction of Non-Recycled Solid Waste Open Dumps"
-        self.modvar_waso_frac_recovered_for_energy_incineration = "Fraction of Incineration Recovered for Energy"
+        self.modvar_waso_frac_recovered_for_energy_incineration_isw = "Fraction of ISW Incineration Recovered for Energy"
+        self.modvar_waso_frac_recovered_for_energy_incineration_msw = "Fraction of MSW Incineration Recovered for Energy"
         self.modvar_waso_frac_recycled = "Fraction of Waste Recycled"
+        self.modvar_waso_historical_bp_grp = "Historical Back Projection Growth Rate in Solid Waste Generation"
         self.modvar_waso_init_composition_msw = "Initial Composition Fraction Municipal Solid Waste"
         self.modvar_waso_init_isw_generated_pgdp = "Per GDP Industrial Solid Waste Generated"
         self.modvar_waso_init_msw_generated_pc = "Initial Per Capita Municipal Solid Waste Generated"
         self.modvar_waso_mcf_landfills_average = "Average Methane Correction Factor at Landfills"
+        self.modvar_waso_mcf_open_dumping_average = "Average Methane Correction Factor for Open Dumping"
+        self.modvar_waso_oxf_landfills = "Average Oxidization Factor at Landfills"
         self.modvar_waso_physparam_k = "K"
         self.modvar_waso_recovered_biogas = "Biogas Recovered from Anaerobic Facilities"
         self.modvar_waso_recovered_ch4_landfill_gas = ":math:\\text{CH}_4 Recovered from Landfill Gas"
         self.modvar_waso_rf_biogas = "Biogas Recovery Factor"
-        self.modvar_waso_rf_landfill_gas_recovered = "Fraction of Landfill Gas Captured at Landfills"
+        self.modvar_waso_rf_landfill_gas_recovered = "Fraction of Landfill Gas Recovered at Landfills"
         self.modvar_waso_rf_landfill_gas_to_ch4 = ":math:\\text{CH}_4 Recovery Factor Landfill Gas"
         self.modvar_waso_waste_per_capita_scalar = "Waste Per Capita Scale Factor"
         self.modvar_waso_waste_total_biogas = "Total Waste Anaerobic Biogas"
         self.modvar_waso_waste_total_compost = "Total Waste Composted"
-        self.modvar_waso_waste_total_incinerated = "Total Waste Incinerated"
+        self.modvar_waso_waste_total_for_energy_isw = "Total ISW Recovered for Energy"
+        self.modvar_waso_waste_total_for_energy_msw = "Total MSW Recovered for Energy"
+        self.modvar_waso_waste_total_incineration = "Total Waste Incinerated"
         self.modvar_waso_waste_total_produced = "Total Solid Waste Produced"
         self.modvar_waso_waste_total_landfilled = "Total Waste Landfilled"
         self.modvar_waso_waste_total_open_dumped = "Total Waste Open Dumped"
@@ -113,11 +121,17 @@ class CircularEconomy:
         self.time_periods, self.n_time_periods = self.model_attributes.get_time_periods()
         self.vars_wali_to_trww = self.model_attributes.get_ordered_vars_by_nonprimary_category("Liquid Waste", "Wastewater Treatment", "key_varreqs_all")
 
-        # TEMP:SET TO DERIVE FROM ATTRIBUTE TABLES---
+        # TEMP:SET TO DERIVE FROM ATTRIBUTE TABLES AND/OR CONFIGURATION FILE---
         self.landfill_gas_frac_methane = 0.5
+        # SET TO READ FROM CONFIGURATION FILE
+        self.back_projection_number_of_time_steps = 10
+        self.back_projection_number_periods_for_average_growth = 10
+
         # fraction of protein composed of nitrogen
         self.factor_f_npr = 0.16
         self.factor_n2on_to_n2o = float(11/7)
+        self.factor_c_to_co2 = float(11/3)
+        self.factor_molecular_weight_ch4 = float(4/3)
 
         # add socioeconomic
         self.model_socioeconomic = Socioeconomic(self.model_attributes)
@@ -164,8 +178,130 @@ class CircularEconomy:
     ###                               ###
     #####################################
 
+    ##  first order decay model
+    def fod(self,
+        array_waso_waste: np.ndarray,
+        vec_ddocm_factors: np.ndarray,
+        array_k: np.ndarray,
+        vec_mcf: np.ndarray,
+        vec_oxf: np.ndarray = 0.0,
+        vec_frac_captured: np.ndarray = 0.0
+    ):
+        """
+            array_waso_waste: array of solid waste mass by category
 
-    ## project protein consumption
+            vec_ddocm_factors: vector (by category, or column-wise) of DDOCm factors (DOC*DOCf) by waste category
+
+            array_k: array (same shape as array_waso_waste) or vector (by category, or column-wise) of methane generation rates k. If a vector, k will be assumed to be constant for all time periods.g
+
+            vec_mcf: vector (by period, or row-wise) or scalar of methane correction values by time period (len should be same as array_waso_waste)
+
+            vec_oxf: vector (by period, or row-wise) or scalar of oxidisation factors. Should not exceed 0.1. Default is 0.
+        """
+
+        # check shapes
+        if len(array_waso_waste.shape) == 1:
+            array_waso_waste = np.array([array_waso_waste]).transpose()
+        elif len(array_waso_waste.shape) != 2:
+            raise ValueError(f"Error in FOD: array_waso_waste should be a two dimensional array (rows are time periods, columns are categories)")
+        if len(array_k.shape) == 1:
+            if len(array_k) != array_waso_waste.shape[1]:
+                raise ValueError(f"Error in FOD: array_k does not have the same number of categories as array_waso_waste.")
+        elif len(array_k.shape) == 2:
+            if array_k.shape != array_waso_waste.shape:
+                raise ValueError(f"Error in FOD: incompatible array specification of array_k (shape '{array_k.shape}'). It should have shape '{array_waso_waste.shape}'")
+        elif len(vec_ddocm_factors) != array_waso_waste.shape[1]:
+                raise ValueError(f"Error in FOD: vec_ddocm_factors does not have the same number of categories as array_waso_waste.")
+        elif len(vec_mcf) != array_waso_waste.shape[0]:
+                raise ValueError(f"Error in FOD: vec_mcf does not have the same time periods as array_waso_waste.")
+        elif (type(vec_oxf) == np.ndarray) & (len(vec_oxf) != array_waso_waste.shape[0]):
+            raise ValueError(f"Error in FOD: vec_oxf does not have the same time periods as array_waso_waste.")
+        elif (type(vec_frac_captured) == np.ndarray) & (len(vec_frac_captured) != array_waso_waste.shape[0]):
+            raise ValueError(f"Error in FOD: vec_frac_captured does not have the same time periods as array_waso_waste.")
+
+        # start building output array
+        if len(array_k.shape) == 1:
+            array_k = np.repeat([array_k], len(array_waso_waste), axis = 0)
+
+        # initialize arrays for FOD model
+        m, n = array_waso_waste.shape
+        array_ddocm_accumulated = np.zeros(array_waso_waste.shape)
+        array_ddocm_decomposed = np.zeros(array_waso_waste.shape)
+        np.put(array_ddocm_accumulated, np.arange(0, len(array_ddocm_accumulated[0])), array_waso_waste[0])
+
+        # loop to update arrays
+        for i in range(1, len(array_waso_waste)):
+            # use k from the previous time step if k changes (e.g., due to climate change); it represents that decay factor for waste deposited during that year
+            vec_k = np.exp(-array_k[i - 1])
+            vec_ddocm_accumulated_cur = array_waso_waste[i] + array_ddocm_accumulated[i - 1]*vec_k
+            vec_ddocm_decomposed_cur = array_ddocm_accumulated[i - 1]*(1 - vec_k)
+            # update arrays with accumulated and decomposed waste
+            inds = i*n + np.arange(0, n)
+            np.put(array_ddocm_accumulated, inds, vec_ddocm_accumulated_cur)
+            np.put(array_ddocm_decomposed, inds, vec_ddocm_decomposed_cur)
+
+        # adjust for recovery + oxidisation
+        array_ch4_total = array_ddocm_decomposed*self.factor_molecular_weight_ch4*self.landfill_gas_frac_methane
+        array_ch4_captured = (array_ch4_total.transpose()*vec_frac_captured).transpose()
+        array_ch4_total -= array_ch4_captured
+        array_ch4_total = (array_ch4_total.transpose()*(1 - vec_oxf)).transpose()
+        vec_ch4_recovered = np.sum(array_ch4_captured, axis = 1)
+
+        return array_ch4_total, vec_ch4_recovered
+
+
+    ##  function to retrieve historical solid waste data. Valid methods are "back_project" (default) and historical (under construction, but designed to read from a file)
+    def get_historical_solid_waste(self,
+            array: np.ndarray = None,
+            method: str = None,
+            n_periods: int = 10,
+            bp_gr: float = None
+        ) -> np.ndarray:
+
+            """
+                use get_waste_historical to obtain the historical data for solid waste disposal.
+
+                array: optional. If method == "back_project", this array is used to back project waste. Can be set to None if using historical
+
+                method: "back_project" or "historical". Default is set in the configuration file.
+
+                n_periods: number of periods to use in the back_project method. Reset if using historical.
+
+                n_gr_periods: number of periods in back_project method used to estimate growth rate.
+
+            """
+            # retrieve methods
+            if type(method) == type(None):
+                method = self.model_attributes.configuration.get("historical_solid_waste_method")
+            # check specification
+            if method not in self.model_attributes.configuration.valid_historical_solid_waste_method:
+                valid_vals = sf.format_print_list(self.model_attributes.configuration.valid_historical_solid_waste_method)
+                raise ValueError(f"Invalid specification of historical waste retrieval method '{method}': Method not found. Valid values are {valid_vals}.")
+
+            # get
+            if method == "back_project":
+
+                if type(array) != np.ndarray:
+                    raise ValueError("Error: specify an array to use for back projection.")
+                if type(bp_gr) == type(None):
+                    raise ValueError("Error: specify a back projection growth rate.")
+                if type(n_periods) != int:
+                    raise ValueError("Error: specify a number of periods to project solid waste backwards.")
+
+                array_bp = sf.back_project_array(array, n_periods, bp_gr)
+                inds_hist = np.arange(0, n_periods)
+                inds_model = np.arange(n_periods, n_periods + len(array))
+                return inds_hist, inds_model, np.concatenate([array_bp, array])
+
+            elif method == "historical":
+                """
+                    ADD HISTORICAL APPROACH HERE
+                """
+                raise ValueError("Historical approach to get_waste_historical currecntly undefined. Use 'back_project' until completed.")
+
+
+
+    ##  project protein consumption
     def project_protein_consumption(self, df_ce_trajectories: pd.DataFrame, vec_pop: np.ndarray, vec_rates_gdp_per_capita: np.ndarray = None) -> np.array:
         """
             Projects protein consumption (in kg) based on livestock growth, or, if not integrated, a specified elasticity
@@ -315,7 +451,7 @@ class CircularEconomy:
         # domestiic
         for cdw in cats_dom_ww:
             # get population category
-            cat_gnrl = ds.clean_schema(self.model_attributes.dict_attributes[pycat_wali].field_maps[f"{pycat_wali}_to_{pycat_gnrl}"][cdw])
+            cat_gnrl = ds.clean_schema(sa.model_attributes.dict_attributes[pycat_wali].field_maps[f"{pycat_wali}_to_{pycat_gnrl}"][cdw])
             ind_gnrl = attr_gnrl.get_key_value_index(cat_gnrl)
             # the associated vector of wastewater produced + bod produced
             vec_bod = array_wali_bod_total[:, ind_gnrl]
@@ -323,7 +459,7 @@ class CircularEconomy:
             # get the treatment pathway
             vars_treatment_path = []
             for var in self.vars_wali_to_trww:
-                vars_treatment_path += self.model_attributes.build_varlist("Liquid Waste", var, [cdw])
+                vars_treatment_path += sa.model_attributes.build_varlist("Liquid Waste", var, [cdw])
             array_pathways = sf.check_row_sums(np.array(df_ce_trajectories[vars_treatment_path]), msg_pass = f" 'df_ce_trajectories[vars_treatment_path]' for wali category '{cdw}'")
             # add to output arrays
             array_trww_total_bod_by_pathway += (array_pathways.transpose()*vec_bod)
@@ -338,7 +474,7 @@ class CircularEconomy:
             # get the treatment pathway
             vars_treatment_path = []
             for var in self.vars_wali_to_trww:
-                vars_treatment_path += self.model_attributes.build_varlist("Liquid Waste", var, [cdw])
+                vars_treatment_path += sa.model_attributes.build_varlist("Liquid Waste", var, [cdw])
             array_pathways = sf.check_row_sums(np.array(df_ce_trajectories[vars_treatment_path]), msg_pass = f" 'df_ce_trajectories[vars_treatment_path]' for wali category '{cdw}'")
             # add to output arrays
             array_trww_total_cod_by_pathway += (array_pathways.transpose()*vec_cod)
@@ -456,45 +592,6 @@ class CircularEconomy:
 
         return df_out
 
-    ##  TEMP ORDERING, MOVE TO LAST AFTER FINISHING SOLID WASTE
-    ##  primary method for integrated liquid/solid waste
-    def project(self, df_ce_trajectories: pd.DataFrame) -> pd.DataFrame:
-
-        """
-            - CircularEconomy.project takes a data frame (ordered by time series) and returns a data frame of the same order
-            - designed to be parallelized or called from command line via __main__ in run_afolu.py
-            - df_ce_trajectories should have all input fields required (see CircularEconomy.required_variables for a list of variables to be defined)
-            - the df_ce_trajectories.project method will run on valid time periods from 1 .. k, where k <= n (n is the number of time periods). By default, it drops invalid time periods. If there are missing time_periods between the first and maximum, data are interpolated.
-        """
-
-
-        ##  CHECKS
-
-        # make sure socioeconomic variables are added and
-        df_ce_trajectories, df_se_internal_shared_variables = self.model_socioeconomic.project(df_ce_trajectories)
-        # check that all required fields are contained—assume that it is ordered by time period
-        self.check_df_fields(df_ce_trajectories)
-        dict_dims, df_ce_trajectories, n_projection_time_periods, projection_time_periods = self.model_attributes.check_projection_input_df(df_ce_trajectories, True, True, True)
-
-
-        # initialize by running waste
-        df_out = [self.project_waste_liquid(df_ce_trajectories, df_se_internal_shared_variables, dict_dims, n_projection_time_periods, projection_time_periods)]
-        # then, build input data frame for solid waste, which includes sludge totals that are reported from liquid waste
-        df_waso_sludge = self.model_attributes.get_optional_or_integrated_standard_variable(df_out[0], self.modvar_trww_sludge_produced, None, True, "data_frame")
-
-        df_in = pd.concat([df_ce_trajectories, df_waso_sludge[1]], axis = 1) if df_waso_sludge else df_ce_trajectories
-
-        df_out += [
-            self.project_waste_solid(df_in, df_se_internal_shared_variables, dict_dims, n_projection_time_periods, projection_time_periods)
-        ]
-
-        df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
-
-        #self.model_attributes.add_subsector_emissions_aggregates(df_out, self.required_base_subsectors, False)
-        # TEMP UNTIL SOLID WASTE IS COMPLETE
-        self.model_attributes.add_subsector_emissions_aggregates(df_out, ["Wastewater Treatment"], False)
-
-        return df_out
 
     ##  project emissions and outputs from solid waste (excluding recylcing energy and process emissions, which are handled in IPPU)
     def project_waste_solid(self,
@@ -566,6 +663,9 @@ class CircularEconomy:
 
         ##  estimate total waste generated by stream (dom + ind) -- keep everything in tonnes
 
+        # general factor - solid waste units to configuration emission mass (commonly used to convert mass)
+        factor_waso_mass_to_emission_mass = self.model_attributes.get_mass_equivalent(self.model_attributes.get_variable_characteristic(self.modvar_waso_init_msw_generated_pc, "$UNIT-MASS$"))
+
         # municipal components
         factor_waso_init_pc_waste = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_init_msw_generated_pc, False, return_type = "array_base")[0]
         vec_waso_init_msw_composition = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_init_composition_msw, True, return_type = "array_base")[0]
@@ -602,67 +702,236 @@ class CircularEconomy:
         array_waso_isw_total_by_category = np.outer(vec_waso_init_pgdp_waste*vec_gdp, vec_waso_isw_composition)
         # initialize total waste array, which will be reduced through recylcing and composting before being divided up between incineration, landfilling, and open dumping
         array_waso_total_by_category = array_waso_isw_total_by_category + array_waso_msw_total_by_category
-        df_waso_total_produced_by_category = self.model_attributes.array_to_df(array_waso_total_by_category, self.modvar_waso_waste_total_produced, False)
-        df_out += [df_waso_total_produced_by_category]
+        array_waso_frac_isw_total_by_cat = array_waso_isw_total_by_category/array_waso_total_by_category
+        array_waso_frac_msw_total_by_cat = array_waso_msw_total_by_category/array_waso_total_by_category
+        # add to output data frame
+        df_out += [
+            self.model_attributes.array_to_df(array_waso_total_by_category, self.modvar_waso_waste_total_produced, False)
+        ]
 
 
-        ##  Recylcing and Compostic/Anaerobic Treatment for Biogas - assume categories for recycling and composition are mutually exclusive, allowing us to subtract successive values from array_waso_total_by_category
+        ############################################################
+        #    RECYCLED AND COMPOSTED/ANAEROBICALLY TREATED WASTE    #
+        ############################################################
+
+        ##  NOTE: assume categories for recycling and composition are mutually exclusive, allowing us to subtract successive values from array_waso_total_by_category
 
         # estimate total waste recycled
         array_waso_waste_recycled = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_frac_recycled, False, return_type = "array_base", var_bounds = (0, 1))
         array_waso_waste_recycled = self.model_attributes.merge_array_var_partial_cat_to_array_all_cats(array_waso_waste_recycled, self.modvar_waso_frac_recycled)
         array_waso_waste_recycled *= array_waso_total_by_category
         array_waso_total_by_category -= array_waso_waste_recycled
-        # initialize arrays for compost and biogas, but ensure their totals do not exceed 1
-        dict_waso_comp_biogas_check = self.model_attributes.get_multivariables_with_bounded_sum_by_category(
+        # initialize arrays for compost and biogas, but ensure their totals do not exceed 1. Get totals
+        dict_waso_comp_biogas_check = sa.model_attributes.get_multivariables_with_bounded_sum_by_category(
             df_ce_trajectories,
             [self.modvar_waso_frac_compost, self.modvar_waso_frac_biogas],
-            1
+            1,
+            msg_append = "See the calculation of dict_waso_comp_biogas_check."
         )
-        array_waso_waste_compost = dict_waso_comp_biogas_check[self.modvar_waso_frac_compost]
-        array_waso_waste_biogas = dict_waso_comp_biogas_check[self.modvar_waso_frac_biogas]
-        # estimate total waste to compost
-        array_waso_waste_compost = self.model_attributes.merge_array_var_partial_cat_to_array_all_cats(array_waso_waste_compost, self.modvar_waso_frac_compost)
-        array_waso_waste_compost *= array_waso_total_by_category
-        # estimate total waste to anaerobic treatment
-        array_waso_waste_biogas = self.model_attributes.merge_array_var_partial_cat_to_array_all_cats(array_waso_waste_biogas, self.modvar_waso_frac_biogas)
-        array_waso_waste_biogas *= array_waso_total_by_category
+        array_waso_waste_biogas = dict_waso_comp_biogas_check[self.modvar_waso_frac_biogas]*array_waso_total_by_category
+        array_waso_waste_compost = dict_waso_comp_biogas_check[self.modvar_waso_frac_compost]*array_waso_total_by_category
         array_waso_total_by_category -= (array_waso_waste_biogas + array_waso_waste_compost)
-        # estimate ch4 emissions from composting/biogas
-        array_waso_ef_ch4_composting = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_ef_ch4_compost, False, return_type = "array_base")
-
-
-
-        self.model_attributes.get_multivariables_with_bounded_sum_by_category(
-            df_ce_trajectories,
-            [self.modvar_waso_frac_nonrecycled_incinerated, self.modvar_waso_frac_nonrecycled_landfilled, self.modvar_waso_frac_nonrecycled_opendump],
-            1
+        # gete emission factors from composting/biogas - unitless
+        array_waso_ef_ch4_biogas = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_ef_ch4_biogas, False, return_type = "array_units_corrected_gas")
+        array_waso_ef_ch4_compost = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_ef_ch4_compost, False, return_type = "array_units_corrected_gas")
+        array_waso_ef_n2o_compost = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_ef_n2o_compost, False, return_type = "array_units_corrected_gas")
+        # other adjustments
+        vec_waso_ch4_flared_compost = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_frac_ch4_flared_composting, False, return_type = "array_base", var_bounds = (0, 1))
+        vec_waso_biogas_recovery_factor = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_rf_biogas, False, return_type = "array_base", var_bounds = (0, 1))
+        # apply emission mass factor emissions to get output emissions - start with biogas, which has recovery
+        array_waso_emissions_ch4_biogas = self.model_attributes.reduce_all_cats_array_to_partial_cat_array(array_waso_waste_biogas, self.modvar_waso_ef_ch4_biogas)
+        array_waso_emissions_ch4_biogas *= array_waso_ef_ch4_biogas*factor_waso_mass_to_emission_mass
+        vec_biogas_recovered = np.sum(array_waso_emissions_ch4_biogas, axis = 1)*vec_waso_biogas_recovery_factor
+        # adjust emissions from biogas down to account for recovery; then, rescale recovery to output units
+        array_waso_emissions_ch4_biogas = (array_waso_emissions_ch4_biogas.transpose()*(1 - vec_waso_biogas_recovery_factor)).transpose()
+        vec_biogas_recovered *= self.model_attributes.get_mass_equivalent(
+            self.model_attributes.configuration.get("emissions_mass").lower(),
+            self.model_attributes.get_variable_characteristic(self.modvar_waso_recovered_biogas, "$UNIT-MASS$")
         )
-
-        # get gas collection total
-
-        ##  estimate emissions+totals from non-collection
-
-
-        # estimate emissions+totals from incineration
-        # get total associated with energy
-
-
-
-        # estimate emissions+totals from landfilling
-        #
-
-        # add waste totals to df out
-        df_waso_waste_biogas = self.model_attributes.array_to_df(array_waso_waste_biogas, self.modvar_waso_waste_total_biogas, False, True)
-        df_waso_waste_compost = self.model_attributes.array_to_df(array_waso_waste_compost, self.modvar_waso_waste_total_compost, False, True)
-        df_waso_waste_recycled = self.model_attributes.array_to_df(array_waso_waste_recycled, self.modvar_waso_waste_total_recycled, False, True)
-
+        # compost emissions
+        array_waso_emissions_ch4_compost = self.model_attributes.reduce_all_cats_array_to_partial_cat_array(array_waso_waste_compost, self.modvar_waso_ef_ch4_compost)
+        array_waso_emissions_ch4_compost *= ((array_waso_ef_ch4_compost*factor_waso_mass_to_emission_mass).transpose()*(1 - vec_waso_ch4_flared_compost)).transpose()
+        array_waso_emissions_n2o_compost = self.model_attributes.reduce_all_cats_array_to_partial_cat_array(array_waso_waste_compost, self.modvar_waso_ef_n2o_compost)
+        array_waso_emissions_n2o_compost *= array_waso_ef_n2o_compost*factor_waso_mass_to_emission_mass
+        # get output dataframes
         df_out += [
-            df_waso_waste_biogas,
-            df_waso_waste_compost,
-            df_waso_waste_recycled
+            self.model_attributes.array_to_df(array_waso_emissions_ch4_biogas, self.modvar_waso_emissions_ch4_biogas, False),
+            self.model_attributes.array_to_df(array_waso_emissions_ch4_compost, self.modvar_waso_emissions_ch4_compost, False),
+            self.model_attributes.array_to_df(array_waso_emissions_n2o_compost, self.modvar_waso_emissions_n2o_compost, False),
+            self.model_attributes.array_to_df(vec_biogas_recovered, self.modvar_waso_recovered_biogas, False)
+        ]
+
+
+        ############################
+        #    NON-RECYCLED WASTE    #
+        ############################
+
+        # get some attributes that are shared across pathways
+        vec_waso_cat_attr_dry_matter_content_as_fraction_wet_weight = self.model_attributes.get_ordered_category_attribute("Solid Waste", "dry_matter_content_as_fraction_wet_weight", return_type = np.ndarray)
+        vec_waso_cat_attr_doc_content_as_fraction_wet_waste = self.model_attributes.get_ordered_category_attribute("Solid Waste", "doc_content_as_fraction_wet_waste", return_type = np.ndarray)
+        vec_waso_cat_attr_doc_content_as_fraction_dry_waste = self.model_attributes.get_ordered_category_attribute("Solid Waste", "doc_content_as_fraction_dry_waste", return_type = np.ndarray)
+        vec_waso_cat_attr_docf_degradable = self.model_attributes.get_ordered_category_attribute("Solid Waste", "docf_degradable", return_type = np.ndarray)
+        vec_waso_cat_attr_total_carbon_content_as_fraction_dry_weight = self.model_attributes.get_ordered_category_attribute("Solid Waste", "total_carbon_content_as_fraction_dry_weight", return_type = np.ndarray)
+        vec_waso_cat_attr_fossil_carbon_fraction_as_fraction_total_carbon = self.model_attributes.get_ordered_category_attribute("Solid Waste", "fossil_carbon_fraction_as_fraction_total_carbon", return_type = np.ndarray)
+        # check that the sum of these variables across categories equals one and force equality
+        dict_waso_check_non_recycle_pathways = sa.model_attributes.get_multivariables_with_bounded_sum_by_category(
+            df_ce_trajectories,
+            [self.modvar_waso_frac_nonrecycled_incineration, self.modvar_waso_frac_nonrecycled_landfill, self.modvar_waso_frac_nonrecycled_opendump],
+            1,
+            msg_append = "See the calculation of dict_waso_check_non_recycle_pathways.",
+            force_sum_equality = True
+        )
+        array_waso_waste_incineration = (dict_waso_check_non_recycle_pathways[self.modvar_waso_frac_nonrecycled_incineration].flatten()*array_waso_total_by_category.transpose()).transpose()
+        array_waso_waste_landfill = (dict_waso_check_non_recycle_pathways[self.modvar_waso_frac_nonrecycled_landfill].flatten()*array_waso_total_by_category.transpose()).transpose()
+        array_waso_waste_open_dump = (dict_waso_check_non_recycle_pathways[self.modvar_waso_frac_nonrecycled_opendump].flatten()*array_waso_total_by_category.transpose()).transpose()
+
+
+        ##  INCINERATION
+
+        # start by adjusting the total to account for waste that is used in energy for incineration. This will be sent to the energy model as a fuel.
+        vec_waso_frac_isw_incinerated_for_energy = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_frac_recovered_for_energy_incineration_isw, False, return_type = "array_base", var_bounds = (0, 1))
+        vec_waso_frac_msw_incinerated_for_energy = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_frac_recovered_for_energy_incineration_msw, False, return_type = "array_base", var_bounds = (0, 1))
+        array_waso_waste_incineration_isw_for_energy_by_cat = ((array_waso_waste_incineration*array_waso_frac_isw_total_by_cat).transpose()*vec_waso_frac_isw_incinerated_for_energy).transpose()
+        array_waso_waste_incineration_msw_for_energy_by_cat = ((array_waso_waste_incineration*array_waso_frac_msw_total_by_cat).transpose()*vec_waso_frac_msw_incinerated_for_energy).transpose()
+        vec_waso_waste_incineration_isw_for_energy = np.sum(array_waso_waste_incineration_isw_for_energy_by_cat, axis = 1)
+        vec_waso_waste_incineration_msw_for_energy = np.sum(array_waso_waste_incineration_msw_for_energy_by_cat, axis = 1)
+        # update running waste total for incineration by removing waste for energy
+        array_waso_waste_incineration -= array_waso_waste_incineration_isw_for_energy_by_cat + array_waso_waste_incineration_msw_for_energy_by_cat
+        vec_waso_isw_total = np.sum(array_waso_waste_incineration*array_waso_frac_isw_total_by_cat, axis = 1)
+        vec_waso_msw_total = np.sum(array_waso_waste_incineration*array_waso_frac_msw_total_by_cat, axis = 1)
+        # after adjusting for waste sent to the energy model, calculate emissions from incineration - start with co2 and n2o, which depend on type of waste
+        vec_waso_ef_incineration_co2 = vec_waso_cat_attr_dry_matter_content_as_fraction_wet_weight*vec_waso_cat_attr_total_carbon_content_as_fraction_dry_weight*vec_waso_cat_attr_fossil_carbon_fraction_as_fraction_total_carbon*self.factor_c_to_co2
+        array_waso_emissions_co2_incineration = np.sum(array_waso_waste_incineration*vec_waso_ef_incineration_co2*factor_waso_mass_to_emission_mass, axis = 1)
+        array_waso_emissions_n2o_incineration = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_ef_n2o_incineration, False, return_type = "array_base")
+        array_waso_emissions_n2o_incineration *= array_waso_waste_incineration*factor_waso_mass_to_emission_mass
+        array_waso_emissions_n2o_incineration = np.sum(array_waso_emissions_n2o_incineration, axis = 1)
+        # add ch4, which is largely process dependent
+        vec_waso_ef_ch4_incineration_isw = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_ef_ch4_incineration_isw, False, return_type = "array_units_corrected_gas")
+        vec_waso_ef_ch4_incineration_msw = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_ef_ch4_incineration_msw, False, return_type = "array_units_corrected_gas")
+        vec_waso_emissions_ch4_incineration_isw = vec_waso_ef_ch4_incineration_isw*vec_waso_isw_total*factor_waso_mass_to_emission_mass
+        vec_waso_emissions_ch4_incineration_msw = vec_waso_ef_ch4_incineration_msw*vec_waso_msw_total*factor_waso_mass_to_emission_mass
+        vec_waso_emissions_ch4_incineration = vec_waso_emissions_ch4_incineration_isw + vec_waso_emissions_ch4_incineration_msw
+        # add data frames
+        df_out += [
+            self.model_attributes.array_to_df(vec_waso_emissions_ch4_incineration, self.modvar_waso_emissions_ch4_incineration, False),
+            self.model_attributes.array_to_df(array_waso_emissions_co2_incineration, self.modvar_waso_emissions_co2_incineration, False),
+            self.model_attributes.array_to_df(array_waso_emissions_n2o_incineration, self.modvar_waso_emissions_n2o_incineration, False)
+        ]
+
+
+
+        ##  SOLID WASTE DISPOSAL (LANDFILLS AND OPEN DUMPING)
+
+        # "back project" waste from previous years to estimate deposits, which contribute to emissions (in absence of historical)
+        n_periods_bp = self.model_attributes.configuration.get("historical_back_proj_n_periods")
+        factor_waso_historical_bp_gr = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_historical_bp_grp, False, return_type = "array_base")[0]
+        rowind_waso_hist_periods_landfill, rowind_waso_model_periods_landfill, array_waso_waste_landfill = self.get_historical_solid_waste(array_waso_waste_landfill, None, n_periods_bp, factor_waso_historical_bp_gr)
+        rowind_waso_hist_periods_open_dump, rowind_waso_model_periods_open_dump, array_waso_waste_open_dump = self.get_historical_solid_waste(array_waso_waste_open_dump, None, n_periods_bp, factor_waso_historical_bp_gr)
+        # get some landfill characteristics and expand for back projection
+        vec_waso_mfc_landfill = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_mcf_landfills_average, False, return_type = "array_base")
+        vec_waso_mfc_landfill = sf.prepend_first_element(vec_waso_mfc_landfill, n_periods_bp)
+        vec_waso_mfc_open_dump = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_mcf_open_dumping_average, False, return_type = "array_base")
+        vec_waso_mfc_open_dump = sf.prepend_first_element(vec_waso_mfc_open_dump, n_periods_bp)
+        vec_waso_oxf_landfill = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_oxf_landfills, False, return_type = "array_base")
+        vec_waso_oxf_landfill = sf.prepend_first_element(vec_waso_oxf_landfill, n_periods_bp)
+        vec_waso_avg_frac_landfill_gas_capture = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_rf_landfill_gas_recovered, False, return_type = "array_base", var_bounds = (0, 1))
+        vec_waso_avg_frac_landfill_gas_capture = sf.prepend_first_element(vec_waso_avg_frac_landfill_gas_capture, n_periods_bp)
+        # get waste characteristics, including k and ddocm
+        array_waso_k = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_physparam_k, False, return_type = "array_base")
+        array_waso_k = sf.prepend_first_element(array_waso_k, n_periods_bp)
+        vec_waso_ddocm = vec_waso_cat_attr_doc_content_as_fraction_wet_waste*vec_waso_cat_attr_docf_degradable
+
+        ##  Landfills
+
+        # use the first-order decay model for landfills
+        array_waso_emissions_ch4_landfill, vec_waso_landfill_gas_recovered = self.fod(
+            array_waso_waste_landfill,
+            vec_waso_ddocm,
+            array_waso_k,
+            vec_waso_mfc_landfill,
+            vec_waso_oxf_landfill,
+            vec_waso_avg_frac_landfill_gas_capture
+        )
+        # convert units
+        array_waso_emissions_ch4_landfill *= factor_waso_mass_to_emission_mass
+        vec_waso_landfill_gas_recovered *= self.model_attributes.get_mass_equivalent(
+            self.model_attributes.get_variable_characteristic(self.modvar_waso_init_msw_generated_pc, "$UNIT-MASS$"),
+            self.model_attributes.get_variable_characteristic(self.modvar_waso_recovered_ch4_landfill_gas, "$UNIT-MASS$")
+
+        )
+        # eliminate back-projected or historical waste
+        array_waso_waste_landfill = array_waso_waste_landfill[rowind_waso_model_periods_landfill]
+        array_waso_emissions_ch4_landfill = array_waso_emissions_ch4_landfill[rowind_waso_model_periods_landfill]
+        vec_waso_landfill_gas_recovered = vec_waso_landfill_gas_recovered[rowind_waso_model_periods_landfill]
+        # recovery can include caputre or flaring: multiply by some fraction that is captured for energy
+        vec_waso_landfill_gas_recovered *= self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_frac_landfill_gas_ch4_to_energy, False, return_type = "array_base", var_bounds = (0, 1))
+        print(self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_frac_landfill_gas_ch4_to_energy, False, return_type = "array_base", var_bounds = (0, 1)))
+        ##  Open Dumping
+
+        # use the first-order decay model for open dumping
+        array_waso_emissions_ch4_open_dump, vec_waso_open_dump_gas_recovered = self.fod(
+            array_waso_waste_open_dump,
+            vec_waso_ddocm,
+            array_waso_k,
+            vec_waso_mfc_open_dump,
+            0.0,
+            0.9
+        )
+        # eliminate back-projected or historical waste and convert units
+        array_waso_waste_open_dump = array_waso_waste_open_dump[rowind_waso_model_periods_open_dump]
+        array_waso_emissions_ch4_open_dump *= factor_waso_mass_to_emission_mass
+        array_waso_emissions_ch4_open_dump = array_waso_emissions_ch4_open_dump[rowind_waso_model_periods_open_dump]
+        # get data frames
+        df_out += [
+            self.model_attributes.array_to_df(array_waso_emissions_ch4_landfill, self.modvar_waso_emissions_ch4_landfill, False),
+            self.model_attributes.array_to_df(vec_waso_landfill_gas_recovered, self.modvar_waso_recovered_ch4_landfill_gas, False),
+            self.model_attributes.array_to_df(array_waso_emissions_ch4_open_dump, self.modvar_waso_emissions_ch4_open_dump, False)
+        ]
+
+        # add waste totals by pathway to df out
+        df_out += [
+            self.model_attributes.array_to_df(array_waso_waste_biogas, self.modvar_waso_waste_total_biogas, False, True),
+            self.model_attributes.array_to_df(array_waso_waste_compost, self.modvar_waso_waste_total_compost, False, True),
+            self.model_attributes.array_to_df(array_waso_waste_incineration, self.modvar_waso_waste_total_incineration, False),
+            self.model_attributes.array_to_df(vec_waso_waste_incineration_isw_for_energy, self.modvar_waso_waste_total_for_energy_isw, False),
+            self.model_attributes.array_to_df(vec_waso_waste_incineration_msw_for_energy, self.modvar_waso_waste_total_for_energy_msw, False),
+            self.model_attributes.array_to_df(array_waso_waste_landfill, self.modvar_waso_waste_total_landfilled, False),
+            self.model_attributes.array_to_df(array_waso_waste_open_dump, self.modvar_waso_waste_total_open_dumped, False),
+            self.model_attributes.array_to_df(array_waso_waste_recycled, self.modvar_waso_waste_total_recycled, False, True)
         ]
 
         df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
+
+        return df_out
+
+
+    ##  primary method for integrated liquid/solid waste
+    def project(self, df_ce_trajectories: pd.DataFrame) -> pd.DataFrame:
+
+        """
+            - CircularEconomy.project takes a data frame (ordered by time series) and returns a data frame of the same order
+            - designed to be parallelized or called from command line via __main__ in run_afolu.py
+            - df_ce_trajectories should have all input fields required (see CircularEconomy.required_variables for a list of variables to be defined)
+            - the df_ce_trajectories.project method will run on valid time periods from 1 .. k, where k <= n (n is the number of time periods). By default, it drops invalid time periods. If there are missing time_periods between the first and maximum, data are interpolated.
+        """
+
+        ##  CHECKS
+
+        # make sure socioeconomic variables are added and
+        df_ce_trajectories, df_se_internal_shared_variables = self.model_socioeconomic.project(df_ce_trajectories)
+        # check that all required fields are contained—assume that it is ordered by time period
+        self.check_df_fields(df_ce_trajectories)
+        dict_dims, df_ce_trajectories, n_projection_time_periods, projection_time_periods = self.model_attributes.check_projection_input_df(df_ce_trajectories, True, True, True)
+
+        # initialize by running waste, then build input data frame for solid waste, which includes sludge totals that are reported from liquid waste
+        df_out = [self.project_waste_liquid(df_ce_trajectories, df_se_internal_shared_variables, dict_dims, n_projection_time_periods, projection_time_periods)]
+        df_waso_sludge = self.model_attributes.get_optional_or_integrated_standard_variable(df_out[0], self.modvar_trww_sludge_produced, None, True, "data_frame")
+        df_in = pd.concat([df_ce_trajectories, df_waso_sludge[1]], axis = 1) if df_waso_sludge else df_ce_trajectories
+        # project solid waste
+        df_out += [self.project_waste_solid(df_in, df_se_internal_shared_variables, dict_dims, n_projection_time_periods, projection_time_periods)]
+
+        # concatenate and add subsector emission totals
+        df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
+        self.model_attributes.add_subsector_emissions_aggregates(df_out, self.required_base_subsectors, False)
 
         return df_out

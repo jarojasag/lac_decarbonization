@@ -37,6 +37,7 @@ self.modvar_waso_emissions_ch4_biogas = ":math:\\text{CH}_4 Emissions from Anear
 self.modvar_waso_emissions_ch4_compost = ":math:\\text{CH}_4 Emissions from Composting"
 self.modvar_waso_emissions_ch4_incineration = ":math:\\text{CH}_4 Emissions from Incineration"
 self.modvar_waso_emissions_ch4_landfill = ":math:\\text{CH}_4 Emissions from Landfills"
+self.modvar_waso_emissions_ch4_open_dump = ":math:\\text{CH}_4 Emissions from Open Dumping"
 self.modvar_waso_emissions_co2_incineration = ":math:\\text{CO}_2 Emissions from Incineration"
 self.modvar_waso_emissions_n2o_compost = ":math:\\text{N}_2\\text{O} Emissions from Composting"
 self.modvar_waso_emissions_n2o_incineration = ":math:\\text{N}_2\\text{O} Emissions from Incineration"

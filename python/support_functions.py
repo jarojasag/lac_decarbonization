@@ -4,13 +4,32 @@ import pandas as pd
 
 
 ##  function to "projct" backwards waste that was deposited (used only in the absence of historical data)
-def back_project_array(array_in: np.ndarray, n_periods: int = 10, n_periods_for_gr: int = 10) -> np.ndarray:
+def back_project_array(
+    array_in: np.ndarray,
+    n_periods: int = 10,
+    bp_gr: float = 0.03,
+    use_mean_forward: bool = False,
+    n_periods_for_gr: int = 10
+) -> np.ndarray:
+    """
+        array_in: array to use for back projection
 
-    # get a mean growth rate
-    n_periods_for_gr = max(min(n_periods_for_gr, len(array_in) - 1), 1)
-    growth_scalars = array_in[1:(n_periods_for_gr + 1)]/array_in[0:(n_periods_for_gr)]
-    vec_mu = np.mean(growth_scalars, axis = 0)
+        n_periods: number of periods to back project
 
+        bp_gr: float specifying the average growth rate for row entries during the back projection periods
+
+        use_mean_forward: default is False. If True, use the average empirical growth rate in array_in for the first 'n_periods_for_gr' periods
+
+        n_periods_for_gr: if use_mean_forward == True, number of periods to look forward (rows 1:n_periods_for_gr)
+    """
+
+    if use_mean_forward:
+        # get a mean growth rate
+        n_periods_for_gr = max(min(n_periods_for_gr, len(array_in) - 1), 1)
+        growth_scalars = array_in[1:(n_periods_for_gr + 1)]/array_in[0:(n_periods_for_gr)]
+        vec_mu = np.mean(growth_scalars, axis = 0)
+    else:
+        vec_mu = (1 + bp_gr)*np.ones(len(array_in[0]))
     # set up an array of exponents
     array_exponent = -np.outer(n_periods - np.arange(n_periods), np.ones(len(vec_mu)))
 
@@ -222,6 +241,13 @@ def project_growth_scalar_from_elasticity(
 
     return vec_growth_scalar
 
+
+##  repeat the first row and prepend
+def prepend_first_element(array: np.ndarray, n_rows: int) -> np.ndarray:
+    out = np.concatenate([
+        np.repeat(array[0:1], n_rows, axis = 0), array
+    ])
+    return out
 
 ##  replace values in a two-dimensional array
 def repl_array_val_twodim(array, val_repl, val_new):
