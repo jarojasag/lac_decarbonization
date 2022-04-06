@@ -88,13 +88,12 @@ class Configuration:
         self.fp_config = fp_config
         self.attr_required_parameters = attr_required_parameters
         # set required parametrs by type
-        self.params_string = ["energy_units", "emissions_mass", "volume_units"]
+        self.params_string = ["energy_units", "emissions_mass", "historical_solid_waste_method", "volume_units"]
         self.params_float = ["days_per_year"]
         self.params_float_fracs = ["discount_rate"]
         self.params_int = ["global_warming_potential"]
 
         self.dict_config = self.get_config_information(attr_energy, attr_gas, attr_mass, attr_volume, attr_required_parameters)
-
 
 
     # some restrictions on the config values
@@ -115,7 +114,7 @@ class Configuration:
         if param in dict_valid_values.keys():
             if val not in dict_valid_values[param]:
                 valid_vals = sf.format_print_list(dict_valid_values[param])
-                raise ValueError(f"Invalid specification of parameter '{param}': valid values are {valid_vals}")
+                raise ValueError(f"Invalid specification of configuration parameter '{param}': valid values are {valid_vals}")
 
         return val
 
@@ -125,7 +124,6 @@ class Configuration:
             return self.dict_config[key]
         else:
             raise KeyError(f"Configuration parameter '{key}' not found.")
-
 
     # function for retrieving a configuration file and population missing values with defaults
     def get_config_information(self,
@@ -157,6 +155,7 @@ class Configuration:
         # check valid configuration values and update where appropriate
         valid_energy = self.get_valid_values_from_attribute_column(attr_energy, "energy_equivalent_", str, "unit_energy_to_energy")
         valid_gwp = self.get_valid_values_from_attribute_column(attr_gas, "global_warming_potential_", int)
+        valid_historical_solid_waste_method = ["back_project", "historical"]
         valid_mass = self.get_valid_values_from_attribute_column(attr_mass, "mass_equivalent_", str, "unit_mass_to_mass")
         valid_volume = self.get_valid_values_from_attribute_column(attr_volume, "volume_equivalent_", str)
 
@@ -164,6 +163,7 @@ class Configuration:
             "energy_units": valid_energy,
             "emissions_mass": valid_mass,
             "global_warming_potential": valid_gwp,
+            "historical_solid_waste_method": valid_historical_solid_waste_method,
             "volume_units": valid_volume
         }
         keys_check = list(dict_conf.keys())
@@ -172,6 +172,7 @@ class Configuration:
 
         self.valid_energy = valid_energy
         self.valid_gwp = valid_gwp
+        self.valid_historical_solid_waste_method = valid_historical_solid_waste_method
         self.valid_mass = valid_mass
         self.valid_volume = valid_volume
 

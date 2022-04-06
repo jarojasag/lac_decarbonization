@@ -3,6 +3,20 @@ import numpy as np
 import pandas as pd
 
 
+##  function to "projct" backwards waste that was deposited (used only in the absence of historical data)
+def back_project_array(array_in: np.ndarray, n_periods: int = 10, n_periods_for_gr: int = 10) -> np.ndarray:
+
+    # get a mean growth rate
+    n_periods_for_gr = max(min(n_periods_for_gr, len(array_in) - 1), 1)
+    growth_scalars = array_in[1:(n_periods_for_gr + 1)]/array_in[0:(n_periods_for_gr)]
+    vec_mu = np.mean(growth_scalars, axis = 0)
+
+    # set up an array of exponents
+    array_exponent = -np.outer(n_periods - np.arange(n_periods), np.ones(len(vec_mu)))
+
+    return (vec_mu**array_exponent)*array_in[0]
+
+
 ##  build a dictionary from a dataframe
 def build_dict(df_in, dims = None):
 
@@ -31,6 +45,7 @@ def build_dict(df_in, dims = None):
 
     return dict_out
 
+
 # check that the data frame contains required information
 def check_fields(df, fields):
     s_fields_df = set(df.columns)
@@ -40,6 +55,7 @@ def check_fields(df, fields):
     else:
         fields_missing = format_print_list(s_fields_check - s_fields_df)
         raise ValueError(f"Required fields {fields_missing} not found in the data frame.")
+
 
 # check that a dictionary contains the required keys
 def check_keys(dict_in, keys):
@@ -51,6 +67,7 @@ def check_keys(dict_in, keys):
         fields_missing = format_print_list(s_keys_check - s_keys_dict)
         raise KeyError(f"Required keys {fields_missing} not found in the dictionary.")
 
+
 ##  check path and create a directory if needed
 def check_path(fp, create_q = False):
     if os.path.exists(fp):
@@ -60,6 +77,7 @@ def check_path(fp, create_q = False):
         return fp
     else:
         raise ValueError(f"Path '{fp}' not found. It will not be created.")
+
 
 ##  check row sums to ensure they add to 1
 def check_row_sums(
@@ -75,7 +93,8 @@ def check_row_sums(
     else:
         return (array.transpose()/sums).transpose()
 
-# print a set difference; sorts to ensure easy reading for user
+
+##  print a set difference; sorts to ensure easy reading for user
 def check_set_values(subset: set, superset: set, str_append: str) -> str:
     if not set(subset).issubset(set(superset)):
         invalid_vals = list(set(subset) - set(superset))
@@ -83,7 +102,8 @@ def check_set_values(subset: set, superset: set, str_append: str) -> str:
         invalid_vals = format_print_list(invalid_vals)
         raise ValueError(f"Invalid values {invalid_vals} found{str_append}.")
 
-#
+
+##  clean names of an input table to eliminate spaces/unwanted characters
 def clean_field_names(nms, dict_repl: dict = {"  ": " ", " ": "_", "$": "", "\\": "", "\$": "", "`": "", "-": "_", ".": "_", "\ufeff": "", ":math:text": "", "{": "", "}": ""}):
     # check return type
     return_df_q =  False
@@ -110,13 +130,15 @@ def clean_field_names(nms, dict_repl: dict = {"  ": " ", " ": "_", "$": "", "\\"
 
     return nms
 
-# export a dictionary of data frames to an excel
+
+##  export a dictionary of data frames to an excel
 def dict_to_excel(fp_out: str, dict_out: dict) -> None:
     with pd.ExcelWriter(fp_out) as excel_writer:
         for k in dict_out.keys():
             dict_out[k].to_excel(excel_writer, sheet_name = str(k), index = False, encoding = "UTF-8")
 
-#
+
+##  function to help fill in fields that are in another dataframe the same number of rows
 def df_get_missing_fields_from_source_df(df_target, df_source, side = "right", column_vector = None):
 
     if df_target.shape[0] != df_source.shape[0]:
@@ -139,19 +161,21 @@ def df_get_missing_fields_from_source_df(df_target, df_source, side = "right", c
         df_out = df_out[flds_1 + flds_2]
 
     return df_out
-    
 
-# simple but often used function
+
+##  simple but often used function
 def format_print_list(list_in, delim = ","):
     return ((f"{delim} ").join(["'%s'" for x in range(len(list_in))]))%tuple(list_in)
 
-# print a set difference; sorts to ensure easy reading for user
+
+##  print a set difference; sorts to ensure easy reading for user
 def print_setdiff(superset: set, subset: set) -> str:
     missing_vals = list(superset - subset)
     missing_vals.sort()
     return format_print_list(missing_vals)
 
-# project a vector of growth scalars from a vector of growth rates and elasticities
+
+##  project a vector of growth scalars from a vector of growth rates and elasticities
 def project_growth_scalar_from_elasticity(
     vec_rates: np.ndarray,
     vec_elasticity: np.ndarray,
@@ -199,7 +223,7 @@ def project_growth_scalar_from_elasticity(
     return vec_growth_scalar
 
 
-# replace values in a two-dimensional array
+##  replace values in a two-dimensional array
 def repl_array_val_twodim(array, val_repl, val_new):
     # only for two dimensional arrays
     w = np.where(array == val_repl)
@@ -207,18 +231,21 @@ def repl_array_val_twodim(array, val_repl, val_new):
     np.put(array, inds, val_new)
     return None
 
-# set a vector to element-wise stay within bounds
+
+##  set a vector to element-wise stay within bounds
 def scalar_bounds(scalar, bounds: tuple):
     bounds = np.array(bounds).astype(float)
     return min([max([scalar, min(bounds)]), max(bounds)])
 
-# multiple string replacements using a dictionary
+
+##  multiple string replacements using a dictionary
 def str_replace(str_in: str, dict_replace: dict) -> str:
     for k in dict_replace.keys():
         str_in = str_in.replace(k, dict_replace[k])
     return str_in
 
-# subset a data frame using a dictionary
+
+##  subset a data frame using a dictionary
 def subset_df(df, dict_in):
     for k in dict_in.keys():
         if k in df.columns:
@@ -229,7 +256,8 @@ def subset_df(df, dict_in):
             df = df[df[k].isin(val)]
     return df
 
-# set a vector to element-wise stay within bounds
+
+##  set a vector to element-wise stay within bounds
 def vec_bounds(vec, bounds: tuple):
     def f(x):
         return scalar_bounds(x, bounds)
