@@ -115,6 +115,9 @@ class CircularEconomy:
         self.modvar_lvst_net_imports = "Change to Net Imports of Livestock"
         self.modvar_lvst_pop = "Livestock Head Count"
 
+        # optional integration variables
+        self.integration_variables = self.set_integrated_variables()
+
 
         ##  MISCELLANEOUS VARIABLES
 
@@ -150,7 +153,6 @@ class CircularEconomy:
             set_missing = sf.format_print_list(set_missing)
             raise KeyError(f"Circular Economy projection cannot proceed: The fields {set_missing} are missing.")
 
-
     def get_required_subsectors(self):
         subsectors = list(sf.subset_df(self.model_attributes.dict_attributes["abbreviation_subsector"].table, {"sector": ["Circular Economy"]})["subsector"])
         subsectors_base = subsectors.copy()
@@ -170,6 +172,13 @@ class CircularEconomy:
         return required_vars + self.get_required_dimensions(), output_vars
 
 
+    def set_integrated_variables(self):
+        list_vars_required_for_integration = [
+            self.modvar_lvst_pop,
+			self.modvar_lvst_net_imports
+		]
+
+        return list_vars_required_for_integration
 
 
     #####################################
@@ -451,7 +460,7 @@ class CircularEconomy:
         # domestiic
         for cdw in cats_dom_ww:
             # get population category
-            cat_gnrl = ds.clean_schema(sa.model_attributes.dict_attributes[pycat_wali].field_maps[f"{pycat_wali}_to_{pycat_gnrl}"][cdw])
+            cat_gnrl = ds.clean_schema(self.model_attributes.dict_attributes[pycat_wali].field_maps[f"{pycat_wali}_to_{pycat_gnrl}"][cdw])
             ind_gnrl = attr_gnrl.get_key_value_index(cat_gnrl)
             # the associated vector of wastewater produced + bod produced
             vec_bod = array_wali_bod_total[:, ind_gnrl]
@@ -459,7 +468,7 @@ class CircularEconomy:
             # get the treatment pathway
             vars_treatment_path = []
             for var in self.vars_wali_to_trww:
-                vars_treatment_path += sa.model_attributes.build_varlist("Liquid Waste", var, [cdw])
+                vars_treatment_path += self.model_attributes.build_varlist("Liquid Waste", var, [cdw])
             array_pathways = sf.check_row_sums(np.array(df_ce_trajectories[vars_treatment_path]), msg_pass = f" 'df_ce_trajectories[vars_treatment_path]' for wali category '{cdw}'")
             # add to output arrays
             array_trww_total_bod_by_pathway += (array_pathways.transpose()*vec_bod)
@@ -474,7 +483,7 @@ class CircularEconomy:
             # get the treatment pathway
             vars_treatment_path = []
             for var in self.vars_wali_to_trww:
-                vars_treatment_path += sa.model_attributes.build_varlist("Liquid Waste", var, [cdw])
+                vars_treatment_path += self.model_attributes.build_varlist("Liquid Waste", var, [cdw])
             array_pathways = sf.check_row_sums(np.array(df_ce_trajectories[vars_treatment_path]), msg_pass = f" 'df_ce_trajectories[vars_treatment_path]' for wali category '{cdw}'")
             # add to output arrays
             array_trww_total_cod_by_pathway += (array_pathways.transpose()*vec_cod)
@@ -722,7 +731,7 @@ class CircularEconomy:
         array_waso_waste_recycled *= array_waso_total_by_category
         array_waso_total_by_category -= array_waso_waste_recycled
         # initialize arrays for compost and biogas, but ensure their totals do not exceed 1. Get totals
-        dict_waso_comp_biogas_check = sa.model_attributes.get_multivariables_with_bounded_sum_by_category(
+        dict_waso_comp_biogas_check = self.model_attributes.get_multivariables_with_bounded_sum_by_category(
             df_ce_trajectories,
             [self.modvar_waso_frac_compost, self.modvar_waso_frac_biogas],
             1,
@@ -774,7 +783,7 @@ class CircularEconomy:
         vec_waso_cat_attr_total_carbon_content_as_fraction_dry_weight = self.model_attributes.get_ordered_category_attribute("Solid Waste", "total_carbon_content_as_fraction_dry_weight", return_type = np.ndarray)
         vec_waso_cat_attr_fossil_carbon_fraction_as_fraction_total_carbon = self.model_attributes.get_ordered_category_attribute("Solid Waste", "fossil_carbon_fraction_as_fraction_total_carbon", return_type = np.ndarray)
         # check that the sum of these variables across categories equals one and force equality
-        dict_waso_check_non_recycle_pathways = sa.model_attributes.get_multivariables_with_bounded_sum_by_category(
+        dict_waso_check_non_recycle_pathways = self.model_attributes.get_multivariables_with_bounded_sum_by_category(
             df_ce_trajectories,
             [self.modvar_waso_frac_nonrecycled_incineration, self.modvar_waso_frac_nonrecycled_landfill, self.modvar_waso_frac_nonrecycled_opendump],
             1,
@@ -865,7 +874,7 @@ class CircularEconomy:
         vec_waso_landfill_gas_recovered = vec_waso_landfill_gas_recovered[rowind_waso_model_periods_landfill]
         # recovery can include caputre or flaring: multiply by some fraction that is captured for energy
         vec_waso_landfill_gas_recovered *= self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_frac_landfill_gas_ch4_to_energy, False, return_type = "array_base", var_bounds = (0, 1))
-        print(self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_frac_landfill_gas_ch4_to_energy, False, return_type = "array_base", var_bounds = (0, 1)))
+
         ##  Open Dumping
 
         # use the first-order decay model for open dumping
@@ -931,7 +940,7 @@ class CircularEconomy:
         df_out += [self.project_waste_solid(df_in, df_se_internal_shared_variables, dict_dims, n_projection_time_periods, projection_time_periods)]
 
         # concatenate and add subsector emission totals
-        df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
+        df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")
         self.model_attributes.add_subsector_emissions_aggregates(df_out, self.required_base_subsectors, False)
 
         return df_out

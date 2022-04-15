@@ -187,6 +187,55 @@ def format_print_list(list_in, delim = ","):
     return ((f"{delim} ").join(["'%s'" for x in range(len(list_in))]))%tuple(list_in)
 
 
+
+##  use to merge data frames together into a single output when they share ordered dimensions of analysis (from ModelAttribute class)
+def merge_output_df_list(
+    dfs_output_data: list,
+    model_attributes,
+    merge_type: str = "concatenate"
+) -> pd.DataFrame:
+
+    # check type
+    valid_merge_types = ["concatenate", "merge"]
+    if merge_type not in valid_merge_types:
+        str_valid_types = format_print_list(valid_merge_types)
+        raise ValueError(f"Invalid merge_type '{merge_type}': valid types are {str_valid_types}.")
+
+    # start building the output dataframe and retrieve dimensions of analysis for merging/ordering
+    df_out = dfs_output_data[0]
+    dims_to_order = model_attributes.sort_ordered_dimensions_of_analysis
+    dims_in_out = set([x for x in dims_to_order if x in df_out.columns])
+
+    if (len(dfs_output_data) == 0):
+        return None
+    if len(dfs_output_data) == 1:
+        return dfs_output_data[0]
+    elif len(dfs_output_data) > 1:
+        # loop to merge where applicable
+        for i in range(1, len(dfs_output_data)):
+            if merge_type == "concatenate":
+                # check available dims; if there are ones that aren't already contained, keep them. Otherwise, drop
+                fields_dat = [x for x in dfs_output_data[i].columns if (x not in dims_to_order)]
+                fields_new_dims = [x for x in dfs_output_data[i].columns if (x in dims_to_order) and (x not in dims_in_out)]
+                dims_in_out = dims_in_out | set(fields_new_dims)
+                dfs_output_data[i] = dfs_output_data[i][fields_new_dims + fields_dat]
+            elif merge_type == "merge":
+                df_out = pd.merge(df_out, dfs_output_data[i])
+
+        # clean up - assume merged may need to be re-sorted on rows
+        if merge_type == "concatenate":
+            fields_dim = [x for x in dims_to_order if x in dims_in_out]
+            df_out = pd.concat(dfs_output_data, axis = 1).reset_index(drop = True)
+        elif merge_type == "merge":
+            fields_dim = [x for x in dims_to_order if x in df_out.columns]
+            df_out = pd.concat(df_out, axis = 1).sort_values(by = fields_dim).reset_index(drop = True)
+
+        fields_dat = [x for x in df_out.columns if x not in dims_in_out]
+        fields_dat.sort()
+        #
+        return df_out[fields_dim + fields_dat]
+
+
 ##  print a set difference; sorts to ensure easy reading for user
 def print_setdiff(superset: set, subset: set) -> str:
     missing_vals = list(superset - subset)
@@ -219,7 +268,7 @@ def project_growth_scalar_from_elasticity(
         raise ValueError(f"Invalid vector lengths of vec_rates ('{len(vec_rates)}') and vec_elasticity ('{len(vec_elasticity)}'). Length of vec_elasticity should be equal to the length vec_rates + 1.")
     valid_types = ["standard", "log"]
     if elasticity_type not in valid_types:
-        v_types = sf.format_print_list(valid_types)
+        v_types = format_print_list(valid_types)
         raise ValueError(f"Invalid elasticity_type {elasticity_type}: valid options are {v_types}.")
     # check factors
     if rates_are_factors:

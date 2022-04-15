@@ -4,43 +4,6 @@ Circular Economy
 
 The **Circular Economy** sector represents liquid and solid waste from municipal and domestic sources.
 
-TEMPORARY:
-mcf - methane correction factor
-
-ef for recycled materials (this is a production emission factor)
-
-for domestic solid waste:
-kg_dbo5_per_capita_per_anho
-kg_n2_per_kg_proteina
-kg_n2o_per_kg_n
-kg_por_persona_proteina_per_anho
-max_ch4_per_dbo
-max_ch4_per_dco
-mcf_ch4_dbo5
-
-- waste generated per capita
-- fraction of waste by solid waste category
-
-- DOC (degradable organic carbon)
-- k (check)
-
-by applicable type (subcategories):
-- fraction of waste recycled
-- fraction of waste composted
-
-for REMAINING WASTE:
-- fraction of TOTAL waste landfilled
-- fraction of TOTAL waste burned
-- fraction of TOTAL waste uncaptured
-
--------
-
-for each liquid waste type:
-- fraction that is not sewered
-- fraction that is sewered and not treated
-- fraction that is sewered + treated
-
-
 
 Liquid Waste
 ============
@@ -75,6 +38,7 @@ Liquid waste includes some variables that apply only to a subset of categories. 
    :header-rows: 1
 
 ----
+
 
 Wastewater Treatment
 ====================

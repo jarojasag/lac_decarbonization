@@ -7,3 +7,4 @@ import time
 from model_socioeconomic import Socioeconomic
 from model_afolu import AFOLU
 from model_circular_economy import CircularEconomy
+from model_ippu import IPPU

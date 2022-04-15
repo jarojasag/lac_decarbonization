@@ -270,7 +270,7 @@ class AFOLU:
         elast: np.ndarray, # elasticity of demand per capita to growth in gdp/capita (e.g., arr_lvst_elas_demand)
         dem_pc_scalar_exog = None, # exogenous demand per capita scalar representing other changes in the exogenous per-capita demand (can be used to represent population changes)
         return_type: type = float # return type of array
-    ):
+    ) -> np.ndarray:
 
         # get the demand scalar to apply to per-capita demands
         dem_scale_proj_pc = (gdp_per_capita_rates.transpose()*elast[0:-1].transpose()).transpose()
@@ -442,7 +442,7 @@ class AFOLU:
 
 
     ##  project land use
-    def project_land_use(self, vec_initial_area: np.ndarray, arrs_transitions: np.ndarray, arrs_efs: np.ndarray, n_tp: int = None):
+    def project_land_use(self, vec_initial_area: np.ndarray, arrs_transitions: np.ndarray, arrs_efs: np.ndarray, n_tp: int = None) -> tuple:
 
         t0 = time.time()
 

@@ -8,33 +8,66 @@ import sector_models as sm
 import argparse
 
 
+# use to merge data frames together into a single output
+def merge_output_df_list(
+    dfs_output_data: list,
+    model_attributes,
+    merge_type: str = "concatenate"
+) -> pd.DataFrame:
+
+    # check type
+    valid_merge_types = ["concatenate", "merge"]
+    if merge_type not in valid_merge_types:
+        str_valid_types = sf.format_print_list(valid_merge_types)
+        raise ValueError(f"Invalid merge_type '{merge_type}': valid types are {str_valid_types}.")
+
+    # start building the output dataframe and retrieve dimensions of analysis for merging/ordering
+    df_out = dfs_output_data[0]
+    dims_to_order = model_attributes.sort_ordered_dimensions_of_analysis
+    dims_in_out = set([x for x in dims_to_order if x in df_out.columns])
+
+    if (len(dfs_output_data) == 0):
+        return None
+    if len(dfs_output_data) == 1:
+        return dfs_output_data[0]
+    elif len(dfs_output_data) > 1:
+        # loop to merge where applicable
+        for i in range(1, len(dfs_output_data)):
+            if merge_type == "concatenate":
+                # check available dims; if there are ones that aren't already contained, keep them. Otherwise, drop
+                fields_dat = [x for x in dfs_output_data[i].columns if (x not in dims_to_order)]
+                fields_new_dims = [x for x in dfs_output_data[i].columns if (x in dims_to_order) and (x not in dims_in_out)]
+                dims_in_out = dims_in_out | set(fields_new_dims)
+                dfs_output_data[i] = dfs_output_data[i][fields_new_dims + fields_dat]
+            elif merge_type == "merge":
+                df_out = pd.merge(df_out, dfs_output_data[i])
+
+        # clean up - assume merged may need to be re-sorted on rows
+        if merge_type == "concatenate":
+            fields_dim = [x for x in dims_to_order if x in dims_in_out]
+            df_out = pd.concat(dfs_output_data, axis = 1).reset_index(drop = True)
+        elif merge_type == "merge":
+            fields_dim = [x for x in dims_to_order if x in df_out.columns]
+            df_out = pd.concat(df_out, axis = 1).sort_values(by = fields_dim).reset_index(drop = True)
+
+        fields_dat = [x for x in df_out.columns if x not in dims_in_out]
+        fields_dat.sort()
+        #
+        return df_out[fields_dim + fields_dat]
 
 
 def parse_arguments() -> dict:
 
     parser = argparse.ArgumentParser(description = "Run SISEPUEDE models from the command line.")
-    parser.add_argument(
-        "--input",
-        type = str,
-        help = f"Path to an input CSV, long by {sa.model_attributes.dim_time_period}, that contains required input variables."
-    )
-    parser.add_argument(
-        "--output",
-        type = str,
-        help = "Path to output csv file",
-        default = sa.fp_csv_default_single_run_out
-    )
+    parser.add_argument("--input", type = str,
+                        help = f"Path to an input CSV, long by {sa.model_attributes.dim_time_period}, that contains required input variables.")
+    parser.add_argument("--output", type = str,
+                        help="Path to output csv file", default = sa.fp_csv_default_single_run_out)
     parser.add_argument(
         "--models",
         type = str,
-        help = "Models to run using the input file. Possible values include 'AFOLU', 'CircularEconomy', 'Energy', 'IPPU'",
-        default = "AFOLU"
-    )
-    parser.add_argument(
-        "--integrated",
-        type = bool,
-        help = "Run models as integrated sectors. Output from upstream models will be passed as inputs to downstream models.",
-        default = False
+        help = "Models to run using the input file. Possible values include 'AFOLU', 'CIRCECON', 'ENERGY', 'INDUSTRY'",
+        default = "AFOLU",
     )
     parsed_args = parser.parse_args()
 
@@ -91,9 +124,7 @@ def main(args: dict) -> None:
 
     # run IPPU and collect output
     if "IPPU" in models_run:
-        print("\n\tRunning IPPU")
-        model_ippu = sm.IPPU(sa.model_attributes)
-        df_output_data += [model_ippu.project(df_input_data)]
+        print("\n\t*** NOTE: IPPU INCOMPLETE. IT WILL NOT BE RUN")
         #print("\n\tRunning IPPU")
         #model_ippu = sm.IPPU(sa.model_attributes)
         #df_output_data += [model_ippu.project(df_input_data)]
@@ -106,7 +137,7 @@ def main(args: dict) -> None:
         #df_output_data += [model_energy.project(df_input_data)]
 
     # build output data frame
-    df_output_data = sf.merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")
+    df_output_data = merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")
 
 
     print("\n*** MODEL RUNS COMPLETE ***\n")

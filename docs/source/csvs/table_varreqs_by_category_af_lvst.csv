@@ -7,5 +7,5 @@ Input,Initial Livestock Head Count,Initial population of animal; note that only 
 Output,:math:`\text{CH}_4` Emissions from Livestock Enteric Fermentation,Methane emissions from enteric fermentation,``emission_co2e_$EMISSION-GAS$_lvst_entferm_$CAT-LIVESTOCK$`` (``$EMISSION-GAS$ = ch4``),,,,,1,1,1
 Output,:math:`\text{CH}_4` Emissions from Livestock Manure,Methane emissions from manure,``emission_co2e_$EMISSION-GAS$_lvst_mm_$CAT-LIVESTOCK$`` (``$EMISSION-GAS$ = ch4``),,,,,1,1,1
 Output,:math:`\text{N}_2\text{O}` Emissions from Livestock Manure,Nitrus oxide emissions from manure,``emission_co2e_$EMISSION-GAS$_lvst_mm_$CAT-LIVESTOCK$`` (``$EMISSION-GAS$ = n2o``),,,,,1,1,1
-Output,Change to Net Imports of Livestock,Difference between livestock demanded and those that can be produced locally. ,``net_imports_lvst_$CAT-LIVESTOCK$``,,,,,1,1,1
+Output,Change to Net Imports of Livestock,Difference between livestock demanded and those that can be produced locally. ,``net_imports_change_lvst_$CAT-LIVESTOCK$``,,,,,1,1,1
 Output,Livestock Head Count,"Estimated as a function of land use, carrying capacity, and the **Carrying Capacity Scalar**. ",``lvst_pop_$CAT-LIVESTOCK$``,,,,,1,1,1

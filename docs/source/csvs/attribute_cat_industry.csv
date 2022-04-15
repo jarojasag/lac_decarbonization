@@ -1,12 +1,6 @@
-﻿Category Name,``$CAT-INDUSTRY$``,Definition,Value Added Category,Data Source,Hyperlink,Notes
-Lime and Carbonites,``lime_and_carbonite``,"Includes
- * Lime production
-* Other Process Uses of Carbonites, including
-  * Non-Metallurgical Magnesia Production
-  * Other uses of Soda Ash
-  * Others",``mining``,,,
-Cement,``cement``,Cement production,``cement``,,,
-Chemical Industry,``chemicals``,"Includes production of
+﻿Category Name,``$CAT-INDUSTRY$``,Definition,Value Added Category,Target Recycling ``$CAT-INDUSTRY$`` to Adjust,Data Source,Hyperlink,Notes
+Cement,``cement``,Cement production,``cement``,none,,,
+Chemical,``chemicals``,"Includes production of
 
 * Adipic acid production
 * Ammonia production
@@ -34,7 +28,23 @@ Chemical Industry,``chemicals``,"Includes production of
 
 * Soda Ash production
 * Titanium Dioxide
-* Others",``manufacturing``,,,
+* Others",``manufacturing``,none,,,
+Construction and Demolition,``construction_and_demolition``,Primarily generates wastewater and waste. Driven by growth in population and gdp.,none,none,,,
+Electronics,``electronics``,"Includes emissions (especially F-GHGs) from processes and product use involved with the production of
+
+* Displays
+* Integrated Circuits and Semiconductors
+* Microelectromechanical systems
+* Photovoltaics
+* Others
+",``manufacturing``,none,,,
+Glass,``glass``,Virgin production of glass and ceramics. Affected by recycling.,none,none,,,
+Lime and Carbonites,``lime_and_carbonite``,"Includes
+ * Lime production
+* Other Process Uses of Carbonites, including
+  * Non-Metallurgical Magnesia Production
+  * Other uses of Soda Ash
+  * Others",``mining``,none,,,
 Metals,``metals``,"Virgin production of metals. Includes emissions from
 
 * Aluminium production
@@ -46,29 +56,20 @@ Metals,``metals``,"Virgin production of metals. Includes emissions from
 * Rare Earths production
 * Steel production
 * Zinc production
-* Other Metals production",none,,,
-Non-Energy Product,``non_energy_products``,"Includes the use of the substances in industrial processes that cause emissions, including
+* Other Metals production",none,none,,,
+Non-Energy Products,``non_energy_products``,"Includes the use of the substances in industrial processes that cause emissions, including
 
 * Lubricants
 * Paraffin Waxmean
 * Solvents
-* Others",``industrial``,,,
-Electronics,``electronics``,"Includes emissions (especially F-GHGs) from processes and product use involved with the production of
+* Others",``industrial``,none,,,
+Other,``other_industries``,"This category includes emissions from industrial processes and product use in other industrial categories not covered above, including
 
-* Displays
-* Integrated Circuits and Semiconductors
-* Microelectromechanical systems
-* Photovoltaics
-* Others
-",``manufacturing``,,,
-Ozone-Depleting Substitutes,``ods_products``,"Includes the use of products common in industrial processes, such as HFCs, PFCs, SF6, and other ODS products that are intended to replace ozone-depleting CFCs. These products include
+* Food and Beverages Industry
+* Pulp and Paper Industry
+* Other
 
-* Aerosols
-* Fire Protection
-* Foam Blowing Agents
-* Refrigeration and Air Conditioning (both Stationary and Mobile)
-* Solvents
-* Other Applications",``industrial``,,,
+Produces extensive wastewater and COD.",``industrial``,none,,,
 Other Product and Manufacture Use,``other_product_manufacturing``,"This category is used to account for emissions from other industrial production processes and product uses, including
 
 * Electrical Equipment
@@ -86,20 +87,23 @@ Other Product and Manufacture Use,``other_product_manufacturing``,"This category
   * Accelerators
   * Waterproofing of Electronic Circuits
   * Other
-* Other",``industrial``,,,
-Other,``other_industries``,"This category includes emissions from industrial processes and product use in other industrial categories not covered above, including
+* Other",``industrial``,none,,,
+Ozone-Depleting Substitutes,``ods_products``,"Includes the use of products common in industrial processes, such as HFCs, PFCs, SF6, and other ODS products that are intended to replace ozone-depleting CFCs. These products include
 
-* Food and Beverages Industry
-* Pulp and Paper Industry
-* Other",``industrial``,,,
-Glass,``glass``,Virgin production of glass and ceramics. Affected by recycling.,none,,,
-Paper,``paper``,Virgin production of paper. Affected by recycling.,none,,,
-Plastic,``plastic``,Virgin production of plastic. Affected by recycling.,none,,,
-Rubber and Leather,``rubber_and_leather``,Virgin production of rubber and leather. Affected by recycling.,none,,,
-Textiles,``textiles``,Virgin production of textiles. Affected by recycling.,none,,,
-Recycled Glass,``recycled_glass``,Recycling of glass and ceramics. Affects virgin production.,none,,,
-Recycled Paper,``recycled_paper``,Recycling of paper. Affects virgin production.,none,,,
-Recycled Plastic,``recycled_plastic``,Recycling of plastic. Affects virgin production.,none,,,
-Recycled Rubber and Leather,``recycled_rubber_and_leather``,Recycling of rubber and leather. Affects virgin production.,none,,,
-Recycled Textiles,``recycled_textiles``,Recycling of textiles. Affects virgin production.,none,,,
-Recycled Metals,``recycled_metals``,Recycling of metals. Affects virgin production.,none,,,
+* Aerosols
+* Fire Protection
+* Foam Blowing Agents
+* Refrigeration and Air Conditioning (both Stationary and Mobile)
+* Solvents
+* Other Applications",``industrial``,none,,,
+Paper,``paper``,Virgin production of paper. Affected by recycling.,none,none,,,
+Plastic,``plastic``,Virgin production of plastic. Affected by recycling.,none,none,,,
+Recycled Glass,``recycled_glass``,Recycling of glass and ceramics. Affects virgin production.,none,``glass``,,,
+Recycled Metals,``recycled_metals``,Recycling of metals. Affects virgin production.,none,``metals``,,,
+Recycled Paper,``recycled_paper``,Recycling of paper. Affects virgin production.,none,``paper``,,,
+Recycled Plastic,``recycled_plastic``,Recycling of plastic. Affects virgin production.,none,``plastic``,,,
+Recycled Rubber and Leather,``recycled_rubber_and_leather``,Recycling of rubber and leather. Affects virgin production.,none,``rubber_and_leather``,,,
+Recycled Textiles,``recycled_textiles``,Recycling of textiles. Affects virgin production.,none,``textiles``,,,
+Recyled Wood,``recycled_wood``,Wood that is recycled. ,none,none,,,
+Rubber and Leather,``rubber_and_leather``,Virgin production of rubber and leather. Affected by recycling.,none,none,,,
+Textiles,``textiles``,Virgin production of textiles. Affected by recycling.,none,none,,,

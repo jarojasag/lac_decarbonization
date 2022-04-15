@@ -463,7 +463,8 @@ class ModelAttributes:
         # get the dictionary and order
         tab = attr_cur.table[attr_cur.table[attribute] != "none"] if skip_none_q else attr_cur.table
         dict_map = sf.build_dict(tab[[attr_cur.key, attribute]])
-        out = [dict_map[x] for x in attr_cur.key_values]
+        kv = [x for x in attr_cur.key_values if x in list(tab[attr_cur.key])]
+        out = [dict_map[x] for x in kv]
         out = np.array(out) if return_type == np.ndarray else out
 
         return out
@@ -567,30 +568,60 @@ class ModelAttributes:
 
 
     ##  function to merge an array for a variable with partial categories to all categories
-    def merge_array_var_partial_cat_to_array_all_cats(self, array_vals: np.ndarray, modvar: str, missing_vals: float = 0.0) -> np.ndarray:
+    def merge_array_var_partial_cat_to_array_all_cats(self,
+        array_vals: np.ndarray,
+        modvar: str,
+        missing_vals: float = 0.0,
+        output_cats: list = None,
+        output_subsec: str = None
+    ) -> np.ndarray:
         """
             Reformat a partial category array (with partical categories along columns) to place columns appropriately for a full category array. Useful for simplifying matrix operations between variables.
 
             - array_vals: input array of data with column categories
 
-            - modvar: the variable associated with the *input* array. This is used to identify which categories are represented in the array's columns.
+            - modvar: the variable associated with the *input* array. This is used to identify which categories are represented in the array's columns. If None, then output_cats and output_subsec must be specified.
 
             - missing_vals: values to set for categories not in array_vals. Default is 0.0.
+
+            - output_cats: vector of categories associated with the output variable. Only used if modvar == None. The combination of output_cats + output_subsec provide a manual override to the modvar option.
+
+            - output_subsec: output subsector. Default is None. Only used if modvar == None. The combination of output_cats + output_subsec provide a manual override to the modvar option.
         """
 
-        # check variable first
-        if modvar not in self.all_model_variables:
-            raise ValueError(f"Invalid model variable '{modvar}' found in get_variable_characteristic.")
+        # check inputs
+        if (type(modvar) == type(None)) and (type(None) in [type(output_cats), type(output_subsec)]):
+            raise ValueError(f"Error in input specification. If modvar == None, then output_cats and output_subsec cannot be None.")
+        if not type(missing_vals) in [int, float, np.float64, np.int64]:
+            raise ValueError(f"Error in input specification of missing_vals: missing_vals should be a floating point number of integer.")
 
-        subsector = self.get_variable_subsector(modvar)
-        attr_subsec = self.get_attribute_table(subsector)
-        cat_restriction_type = self.dict_model_variable_to_category_restriction[modvar]
+        # get subsector/categories information
+        if type(modvar) != type(None):
+            # check variable first
+            if modvar not in self.all_model_variables:
+                raise ValueError(f"Invalid model variable '{modvar}' found in get_variable_characteristic.")
 
+            subsector = self.get_variable_subsector(modvar)
+            attr_subsec = self.get_attribute_table(subsector)
+            cat_restriction_type = self.dict_model_variable_to_category_restriction[modvar]
+        else:
+            subsector = output_subsec
+            attr_subsec = self.get_attribute_table(subsector)
+            cat_restriction_type = None
+            # check that all categories are defined
+            if not set(output_cats).issubset(set(attr_subsec.key_values)):
+                invalid_values = sf.format_print_list(list(set(output_cats) - set(attr_subsec.key_values)))
+                raise ValueError(f"Error in merge_array_var_partial_cat_to_array_all_cats: Invalid categories {invalid_values} specified for subsector {subsector} in output_cats.")
+            # check that all categories are unique
+            if len(set(output_cats)) != len(output_cats):
+                raise ValueError(f"Error in merge_array_var_partial_cat_to_array_all_cats: Categories specified in output_cats are not unique. Check that categories are unique.")
+
+        # return the array if all categories are specified
         if cat_restriction_type == "all":
             return array_vals
         else:
             array_default = np.ones((len(array_vals), attr_subsec.n_key_values))*missing_vals
-            cats = self.get_variable_categories(modvar)
+            cats = self.get_variable_categories(modvar) if (type(modvar) != type(None)) else output_cats
             inds_cats = [attr_subsec.get_key_value_index(x) for x in cats]
             inds = np.repeat([inds_cats], len(array_default), axis = 0)
             np.put_along_axis(array_default, inds, array_vals, axis = 1)
@@ -1464,7 +1495,9 @@ class ModelAttributes:
         override_vector_for_single_mv_q: bool = False,
         return_type: str = "data_frame",
         var_bounds = None,
-        force_boundary_restriction: bool = True
+        force_boundary_restriction: bool = True,
+        expand_to_all_cats: bool = False,
+        all_cats_missing_val: float = 0.0
     ):
 
         """
@@ -1482,7 +1515,11 @@ class ModelAttributes:
 
             - force_boundary_restriction: default is True. Set to True to enforce the boundaries on the variable. If False, a variable that is out of bounds will raise an error.
 
+            - expand_to_all_cats: default is False. If True, return the variable in the shape of all categories.
+
+            - all_cats_missing_val: default is 0. If expand_to_all_cats == True, categories not associated with modvar with be filled with this value.
         """
+
         if modvar not in self.dict_model_variables_to_variables.keys():
             raise ValueError(f"Invalid variable specified in get_standard_variables: variable '{modvar}' not found.")
         else:
@@ -1495,13 +1532,11 @@ class ModelAttributes:
             raise ValueError(f"Invalid return_type in get_standard_variables: valid types are {vrts}.")
 
         # initialize output, apply various common transformations based on type
-        out = df_in[flds]
-        if return_type != "data_frame":
-            out = np.array(out)
-            if return_type == "array_units_corrected":
-                out *= self.get_scalar(modvar, "total")
-            elif return_type == "array_units_corrected_gas":
-                out *= self.get_scalar(modvar, "gas")
+        out = np.array(df_in[flds])
+        if return_type == "array_units_corrected":
+            out *= self.get_scalar(modvar, "total")
+        elif return_type == "array_units_corrected_gas":
+            out *= self.get_scalar(modvar, "gas")
 
         if type(var_bounds) in [tuple, list, np.ndarray]:
             # get numeric values and check
@@ -1531,7 +1566,20 @@ class ModelAttributes:
 
             if force_boundary_restriction:
                 out = sf.vec_bounds(out, var_bounds)
-            out = pd.DataFrame(out, flds) if (return_type == "data_frame") else out
+
+
+        # merge output to all categories?
+        if expand_to_all_cats:
+            out = np.array([out]).transpose() if (len(out.shape) == 1) else out
+            out = self.merge_array_var_partial_cat_to_array_all_cats(np.array(out), modvar, missing_vals = all_cats_missing_val)
+            if return_type == "data_frame":
+                sec = self.get_variable_subsector(modvar)
+                flds = self.get_attribute_table(sec).key_values
+
+        # convert back to data frame if necessary
+        if (return_type == "data_frame"):
+            flds = [flds] if (not type(flds) in [list, np.ndarray]) else flds
+            out = pd.DataFrame(out, columns = flds)
 
         return out
 
@@ -1695,10 +1743,23 @@ class ModelAttributes:
             raise ValueError(f"Invalid return_type '{return_type}'. Please specify 'fields' or 'category_values'.")
 
     ##  useful function for calculating simple driver*emission factor emissions
-    def get_simple_input_to_output_emission_arrays(self, df_ef: pd.DataFrame, df_driver: pd.DataFrame, dict_vars: dict, variable_driver: str):
+    def get_simple_input_to_output_emission_arrays(
+        self,
+        df_ef: pd.DataFrame,
+        df_driver: pd.DataFrame,
+        dict_vars: dict,
+        variable_driver: str
+    ) -> list:
         """
-            NOTE: this only works w/in subsector
+            NOTE: this only works w/in subsector. Returns a list of dataframes.
+
+            df_ef: data frame that contains the emission factor variables
+
+            df_driver: data frame containing the variables driving emissions
+
+
         """
+        # check if
         df_out = []
         subsector_driver = self.dict_model_variable_to_subsector[variable_driver]
         for var in dict_vars.keys():
@@ -1710,6 +1771,7 @@ class ModelAttributes:
                 arr_ef = np.array(self.get_standard_variables(df_ef, var, True, "array_units_corrected"))
                 # get the emissions driver array (driver must h)
                 arr_driver = np.array(df_driver[self.build_target_varlist_from_source_varcats(var, variable_driver)])
+
                 df_out.append(self.array_to_df(arr_driver*arr_ef, dict_vars[var]))
         return df_out
 
