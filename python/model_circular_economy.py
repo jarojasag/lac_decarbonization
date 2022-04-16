@@ -171,7 +171,6 @@ class CircularEconomy:
         required_vars, output_vars = self.model_attributes.get_input_output_fields(subsectors)
         return required_vars + self.get_required_dimensions(), output_vars
 
-
     def set_integrated_variables(self):
         list_vars_required_for_integration = [
             self.modvar_lvst_pop,

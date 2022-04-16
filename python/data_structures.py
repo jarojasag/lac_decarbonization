@@ -1008,6 +1008,22 @@ class ModelAttributes:
         return dict_dims, df_project, n_projection_time_periods, projection_time_periods
 
 
+    ##  function transfer variables from one data frame (source) to another (target)
+    def transfer_df_variables(self,
+        df_target: pd.DataFrame,
+        df_source: pd.DataFrame,
+        variables_transfer: list,
+        join_type: str = "concatenate"
+    ) -> pd.DataFrame:
+
+        vars_extract = [df_target]
+        for var_int in variables_transfer:
+            df_ext = self.get_optional_or_integrated_standard_variable(df_source, var_int, None)
+            if type(df_ext) != type(None):
+                vars_extract.append(df_ext[1])
+
+        return sf.merge_output_df_list(vars_extract, self, join_type)
+
 
 
     #########################################################

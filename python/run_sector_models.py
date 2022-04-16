@@ -32,9 +32,8 @@ def parse_arguments() -> dict:
     )
     parser.add_argument(
         "--integrated",
-        type = bool,
-        help = "Run models as integrated sectors. Output from upstream models will be passed as inputs to downstream models.",
-        default = False
+        help = "Include this flag to run included models as integrated sectors. Output from upstream models will be passed as inputs to downstream models.",
+        action = "store_true"
     )
     parsed_args = parser.parse_args()
 
@@ -74,36 +73,50 @@ def main(args: dict) -> None:
     print(f"\n\n*** STARTING MODELS ***\n\nOutput file will be written to {fp_out}.\n")
 
     init_merge_q = True
+    run_integrated_q = bool(args.get("integrated"))
     df_output_data = []
 
     # run AFOLU and collect output
     if "AFOLU" in models_run:
         print("\n\tRunning AFOLU")
+        # get the model, run it using the input data, then update the output data (for integration)
         model_afolu = sm.AFOLU(sa.model_attributes)
-        df_output_data += [model_afolu.project(df_input_data)]
-        init_merge_q = False
+        df_output_data.append(model_afolu.project(df_input_data))
 
     # run CircularEconomy and collect output
     if "CircularEconomy" in models_run:
         print("\n\tRunning CircularEconomy")
         model_circecon = sm.CircularEconomy(sa.model_attributes)
-        df_output_data += [model_circecon.project(df_input_data)]
+        # integrate AFOLU output?
+        if run_integrated_q and set(["AFOLU"]).issubset(set(models_run)):
+            df_input_data = sa.model_attributes.transfer_df_variables(
+                df_input_data,
+                df_output_data[0],
+                model_circecon.integration_variables
+            )
+        df_output_data.append(model_circecon.project(df_input_data))
+        df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")] if run_integrated_q else df_output_data
+
 
     # run IPPU and collect output
     if "IPPU" in models_run:
         print("\n\tRunning IPPU")
         model_ippu = sm.IPPU(sa.model_attributes)
-        df_output_data += [model_ippu.project(df_input_data)]
-        #print("\n\tRunning IPPU")
-        #model_ippu = sm.IPPU(sa.model_attributes)
-        #df_output_data += [model_ippu.project(df_input_data)]
+        # integrate Circular Economy output?
+        if run_integrated_q and set(["CircularEconomy"]).issubset(set(models_run)):
+            df_input_data = sa.model_attributes.transfer_df_variables(
+                df_input_data,
+                df_output_data[0],
+                model_ippu.integration_variables
+            )
+        df_output_data.append(model_ippu.project(df_input_data))
+        df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")] if run_integrated_q else df_output_data
+
 
     # run Energy and collect output
     if "Energy" in models_run:
         print("\n\t*** NOTE: Energy INCOMPLETE. IT WILL NOT BE RUN")
-        #print("\n\tRunning Energy")
-        #model_energy = sm.Energy(sa.model_attributes)
-        #df_output_data += [model_energy.project(df_input_data)]
+
 
     # build output data frame
     df_output_data = sf.merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")

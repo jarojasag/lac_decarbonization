@@ -50,13 +50,18 @@ class IPPU:
         self.modvar_ippu_wwf_vol = "Wastewater Production Factor"
         self.modvar_ippu_qty_total_production = "Industrial Production"
 
+        # variables from other sectors
+        self.modvar_waso_waste_total_recycled = "Total Waste Recycled"
+
+        # add other model classes
+        self.model_socioeconomic = Socioeconomic(self.model_attributes)
+
+        # optional integration variables (uses calls to other model classes)
+        self.integration_variables = self.set_integrated_variables()
 
         ##  MISCELLANEOUS VARIABLES
         self.time_periods, self.n_time_periods = self.model_attributes.get_time_periods()
 
-        # add other model classes
-        self.model_circecon = CircularEconomy(self.model_attributes)
-        self.model_socioeconomic = Socioeconomic(self.model_attributes)
 
 
     ##  FUNCTIONS FOR MODEL ATTRIBUTE DIMENSIONS
@@ -68,7 +73,6 @@ class IPPU:
             set_missing = list(set(check_fields) - set(df_ippu_trajectories.columns))
             set_missing = sf.format_print_list(set_missing)
             raise KeyError(f"IPPU projection cannot proceed: The fields {set_missing} are missing.")
-
 
     def get_required_subsectors(self):
         subsectors = list(sf.subset_df(self.model_attributes.dict_attributes["abbreviation_subsector"].table, {"sector": ["IPPU"]})["subsector"])
@@ -86,6 +90,12 @@ class IPPU:
         required_vars, output_vars = self.model_attributes.get_input_output_fields(self.required_subsectors)
         return required_vars + self.get_required_dimensions(), output_vars
 
+    def set_integrated_variables(self):
+        list_vars_required_for_integration = [
+            self.modvar_waso_waste_total_recycled
+        ]
+
+        return list_vars_required_for_integration
 
 
     ######################################
@@ -168,10 +178,10 @@ class IPPU:
 
         ##  PERFORM THE RECYCLING ADJUSTMENT (if recycling data are provided from the waste model)
 
-        array_ippu_recycled = self.model_attributes.get_optional_or_integrated_standard_variable(df_ippu_trajectories, self.model_circecon.modvar_waso_waste_total_recycled, None, True, "array_base")
+        array_ippu_recycled = self.model_attributes.get_optional_or_integrated_standard_variable(df_ippu_trajectories, self.modvar_waso_waste_total_recycled, None, True, "array_base")
         if type(array_ippu_recycled) != type(None):
             # if recycling totals are passed from the waste model, convert to ippu categories
-            cats_waso_recycle = sa.model_attributes.get_variable_categories(self.model_circecon.modvar_waso_waste_total_recycled)
+            cats_waso_recycle = sa.model_attributes.get_variable_categories(self.modvar_waso_waste_total_recycled)
             dict_repl = attr_waso.field_maps[f"{pycat_waso}_to_{pycat_ippu}"]
             cats_ippu_recycle = [ds.clean_schema(dict_repl[x]) for x in cats_waso_recycle]
             array_ippu_recycled_waste = self.model_attributes.merge_array_var_partial_cat_to_array_all_cats(
@@ -182,7 +192,7 @@ class IPPU:
             )
             # units correction to ensure consistency from waso -> ippu
             factor_ippu_waso_recycle_to_ippu_recycle = self.model_attributes.get_mass_equivalent(
-                self.model_attributes.get_variable_characteristic(self.model_circecon.modvar_waso_waste_total_recycled, "$UNIT-MASS$"),
+                self.model_attributes.get_variable_characteristic(self.modvar_waso_waste_total_recycled, "$UNIT-MASS$"),
                 self.model_attributes.get_variable_characteristic(self.modvar_ippu_prod_qty_init, "$UNIT-MASS$")
             )
             array_ippu_recycled_waste *= factor_ippu_waso_recycle_to_ippu_recycle

@@ -73,6 +73,8 @@ class AFOLU:
         self.modvar_lvst_pop = "Livestock Head Count"
         self.modvar_lvst_pop_init = "Initial Livestock Head Count"
 
+        # variable required for integration
+        self.integration_variables = self.set_integrated_variables()
 
         ##  MISCELLANEOUS VARIABLES
 
@@ -113,6 +115,9 @@ class AFOLU:
         required_vars, output_vars = self.model_attributes.get_input_output_fields(self.required_subsectors)
         return required_vars + self.get_required_dimensions(), output_vars
 
+    def set_integrated_variables(self):
+        list_vars_required_for_integration = []
+        return list_vars_required_for_integration
 
 
     ######################################
