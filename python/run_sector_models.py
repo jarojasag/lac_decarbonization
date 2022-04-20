@@ -50,6 +50,7 @@ def parse_arguments() -> dict:
     return parsed_args_as_dict
 
 
+
 def main(args: dict) -> None:
 
     print("\n***\n***\n*** Welcome to SISEPUEDE! Hola Edmundo y equipo ITEM—esta mensaje va a cambiar en el futuro, but have fun seeing this message *every time*.\n***\n***\n")
@@ -82,6 +83,7 @@ def main(args: dict) -> None:
         # get the model, run it using the input data, then update the output data (for integration)
         model_afolu = sm.AFOLU(sa.model_attributes)
         df_output_data.append(model_afolu.project(df_input_data))
+
 
     # run CircularEconomy and collect output
     if "CircularEconomy" in models_run:
