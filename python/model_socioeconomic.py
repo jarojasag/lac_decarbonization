@@ -59,11 +59,16 @@ class Socioeconomic:
     def project(self, df_se_trajectories: pd.DataFrame) -> tuple:
 
         """
-            Socioconomic.project method returns a tuple.
+            the project() method returns a tuple:
 
-            - the first element of the return tuple is a modified version of df_se_trajectories data frame that includes socioeconomic projections. This should be passed to other models.
+            (1) the first element of the return tuple is a modified version of df_se_trajectories data frame that includes socioeconomic projections. This should be passed to other models.
 
-            - the second element of the return tuple is a data frame with n_time_periods - 1 rows that represents growth rates in the socioeconomic sector. row i represents the growth rate from time i to time i + 1
+            (2) the second element of the return tuple is a data frame with n_time_periods - 1 rows that represents growth rates in the socioeconomic sector. Row i represents the growth rate from time i to time i + 1.
+
+            Function Arguments
+            ------------------
+            df_se_trajectories: pd.DataFrame with input variable trajectories for the Socioeconomic model.
+
         """
         # add population and interpolate if necessary
         self.model_attributes.manage_pop_to_df(df_se_trajectories, "add")

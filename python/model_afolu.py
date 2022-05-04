@@ -100,7 +100,7 @@ class AFOLU:
 
 
     def get_required_subsectors(self):
-        subsectors = list(sf.subset_df(self.model_attributes.dict_attributes["abbreviation_subsector"].table, {"sector": ["AFOLU"]})["subsector"])
+        subsectors = self.model_attributes.get_sector_subsectors("AFOLU")
         subsectors_base = subsectors.copy()
         subsectors += ["Economy", "General"]
         return subsectors, subsectors_base
@@ -533,10 +533,18 @@ class AFOLU:
     def project(self, df_afolu_trajectories: pd.DataFrame) -> pd.DataFrame:
 
         """
-            - AFOLU.project takes a data frame (ordered by time series) and returns a data frame of the same order
-            - designed to be parallelized or called from command line via __main__ in run_afolu.py
+            The project() method takes a data frame of input variables (ordered by time series) and returns a data frame of output variables (model projections for agriculture and livestock, forestry, and land use) the same order.
+
+            Function Arguments
+            ------------------
+            df_afolu_trajectories: pd.DataFrame with all required input fields as columns. The model will not run if any required variables are missing, but errors will detail which fields are missing.
+
+
+            Notes
+            -----
+            - The .project() method is designed to be parallelized or called from command line via __main__ in run_sector_models.py.
             - df_afolu_trajectories should have all input fields required (see AFOLU.required_variables for a list of variables to be defined)
-            - the AFOLU.project method will run on valid time periods from 1 .. k, where k <= n (n is the number of time periods). By default, it drops invalid time periods. If there are missing time_periods between the first and maximum, data are interpolated.
+            - the df_afolu_trajectories.project method will run on valid time periods from 1 .. k, where k <= n (n is the number of time periods). By default, it drops invalid time periods. If there are missing time_periods between the first and maximum, data are interpolated.
         """
 
         ##  CHECKS

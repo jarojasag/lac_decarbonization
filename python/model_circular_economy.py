@@ -154,7 +154,7 @@ class CircularEconomy:
             raise KeyError(f"Circular Economy projection cannot proceed: The fields {set_missing} are missing.")
 
     def get_required_subsectors(self):
-        subsectors = list(sf.subset_df(self.model_attributes.dict_attributes["abbreviation_subsector"].table, {"sector": ["Circular Economy"]})["subsector"])
+        subsectors = self.model_attributes.get_sector_subsectors("Circular Economy")
         subsectors_base = subsectors.copy()
         subsectors += ["Economy", "General"]
         return subsectors, subsectors_base
@@ -196,15 +196,19 @@ class CircularEconomy:
         vec_frac_captured: np.ndarray = 0.0
     ):
         """
-            array_waso_waste: array of solid waste mass by category
+            fod() executes the First-Order Decay model for waste decomposition
 
-            vec_ddocm_factors: vector (by category, or column-wise) of DDOCm factors (DOC*DOCf) by waste category
+            Function Arguments
+            ------------------
+            array_waso_waste: np.ndarray of solid waste mass by category (2 dim)
 
-            array_k: array (same shape as array_waso_waste) or vector (by category, or column-wise) of methane generation rates k. If a vector, k will be assumed to be constant for all time periods.g
+            vec_ddocm_factors: np.ndarray vector (by category/column-wise) of DDOCm factors (DOC*DOCf) by waste category
 
-            vec_mcf: vector (by period, or row-wise) or scalar of methane correction values by time period (len should be same as array_waso_waste)
+            array_k: np.array (same shape as array_waso_waste) or vector (by category, or column-wise) of methane generation rates k. If a vector, k will be assumed to be constant for all time periods.g
 
-            vec_oxf: vector (by period, or row-wise) or scalar of oxidisation factors. Should not exceed 0.1. Default is 0.
+            vec_mcf: np.ndarray vector (by period, or row-wise) or scalar of methane correction values by time period (len should be same as array_waso_waste)
+
+            vec_oxf: np.ndarray vector (by period, or row-wise) or scalar of oxidisation factors. Should not exceed 0.1. Default is 0.
         """
 
         # check shapes
@@ -267,15 +271,17 @@ class CircularEconomy:
         ) -> np.ndarray:
 
             """
-                use get_waste_historical to obtain the historical data for solid waste disposal.
+                get_waste_historical() is used to to obtain the historical data for solid waste disposal based on a method (either "back_project" or "historical". Historical is currently undefined.)
 
-                array: optional. If method == "back_project", this array is used to back project waste. Can be set to None if using historical
+                Function Arguments
+                ------------------
+                array: np.ndarray, optional. If method == "back_project", this array is used to back project waste. Can be set to None if using historical
 
-                method: "back_project" or "historical". Default is set in the configuration file.
+                method: str, "back_project" or "historical". Default is set in the configuration file.
 
-                n_periods: number of periods to use in the back_project method. Reset if using historical.
+                n_periods: int, number of periods to use in the back_project method. Reset if using historical.
 
-                n_gr_periods: number of periods in back_project method used to estimate growth rate.
+                n_gr_periods: int number of periods in back_project method used to estimate growth rate.
 
             """
             # retrieve methods
@@ -312,7 +318,7 @@ class CircularEconomy:
     ##  project protein consumption
     def project_protein_consumption(self, df_ce_trajectories: pd.DataFrame, vec_pop: np.ndarray, vec_rates_gdp_per_capita: np.ndarray = None) -> np.array:
         """
-            Projects protein consumption (in kg) based on livestock growth, or, if not integrated, a specified elasticity
+            project_protein_consumption() projects protein consumption (in kg) based on livestock growth, or, if not integrated, a specified elasticity
         """
         # get scalar that represents the impact of a reduction of protein in the vegetarian diet
         vec_wali_frac_protein_in_diet_with_rm = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_wali_frac_protein_with_red_meat, True, return_type = "array_base")
@@ -359,20 +365,26 @@ class CircularEconomy:
     ) -> pd.DataFrame:
 
         """
-            - CircularEconomy.project_waste_liquid takes a data frame (ordered by time series) and returns a data frame of the same order
+            project_waste_liquid() takes a data frame (ordered by time series) and returns a data frame of the same order
+
+            Function Arguments
+            ------------------
+            df_ce_trajectories: pd.DataFrame of input variable trajectories
+
+            df_se_internal_shared_variables: Default = None. Data frame of socioeconomic projections that are used internally. If none, the socioeconomic model will be called to project based on the input data frame.
+
+            dict_dims: dictionary of scenario dimensions (if applicable). Default = None. If none, ModelAttribute.check_projection_input_df() will be run to obtain it.
+
+            n_projection_time_periods: number of time periods in the projection. Default = None. If none, ModelAttribute.check_projection_input_df() will be run to obtain it.
+
+            projection_time_periods: list of time periods in the projection. Default = None. If none, ModelAttribute.check_projection_input_df() will be run to obtain it.
+
+
+            Notes
+            -----
             - designed to be parallelized or called from command line via __main__ in run_afolu.py
             - df_ce_trajectories should have all input fields required (see CircularEconomy.required_variables for a list of variables to be defined) for the Liquid Waste and Wastewater Treatment sectors
             - the df_ce_trajectories.project_waste_liquid method will run on valid time periods from 1 .. k, where k <= n (n is the number of time periods). By default, it drops invalid time periods. If there are missing time_periods between the first and maximum, data are interpolated.
-
-            - df_ce_trajectories: data frame of input trajectories
-
-            - df_se_internal_shared_variables: Default = None. Data frame of socioeconomic projections that are used internally. If none, the socioeconomic model will be called to project based on the input data frame.
-
-            - dict_dims: dictionary of scenario dimensions (if applicable). Default = None. If none, ModelAttribute.check_projection_input_df() will be run to obtain it.
-
-            - n_projection_time_periods: number of time periods in the projection. Default = None. If none, ModelAttribute.check_projection_input_df() will be run to obtain it.
-
-            - projection_time_periods: list of time periods in the projection. Default = None. If none, ModelAttribute.check_projection_input_df() will be run to obtain it.
         """
 
         ##  CHECKS
@@ -611,20 +623,26 @@ class CircularEconomy:
     ) -> pd.DataFrame:
 
         """
-            - CircularEconomy.project_waste_solid takes a data frame (ordered by time series) and returns a data frame of the same order
+            project_waste_solid() takes a data frame (ordered by time series) and returns a data frame of the same order
+
+            Function Arguments
+            ------------------
+            df_ce_trajectories: pd.DataFrame of input variable trajectories.
+
+            df_se_internal_shared_variables: Default = None. Data frame of socioeconomic projections that are used internally. If none, the socioeconomic model will be called to project based on the input data frame.
+
+            dict_dims: dictionary of scenario dimensions (if applicable). Default = None. If none, ModelAttribute.check_projection_input_df() will be run to obtain it.
+
+            n_projection_time_periods: int giving number of time periods in the projection. Default = None. If none, ModelAttribute.check_projection_input_df() will be run to obtain it.
+
+            projection_time_periods: list of time periods in the projection. Default = None. If none, ModelAttribute.check_projection_input_df() will be run to obtain it.
+
+
+            Notes
+            -----
             - designed to be parallelized or called from command line via __main__ in run_afolu.py
             - df_ce_trajectories should have all input fields required (see CircularEconomy.required_variables for a list of variables to be defined) for the Solid Waste sector
             - the df_ce_trajectories.project_waste_liquid method will run on valid time periods from 1 .. k, where k <= n (n is the number of time periods). By default, it drops invalid time periods. If there are missing time_periods between the first and maximum, data are interpolated.
-
-            - df_ce_trajectories: data frame of input trajectories
-
-            - df_se_internal_shared_variables: Default = None. Data frame of socioeconomic projections that are used internally. If none, the socioeconomic model will be called to project based on the input data frame.
-
-            - dict_dims: dictionary of scenario dimensions (if applicable). Default = None. If none, ModelAttribute.check_projection_input_df() will be run to obtain it.
-
-            - n_projection_time_periods: number of time periods in the projection. Default = None. If none, ModelAttribute.check_projection_input_df() will be run to obtain it.
-
-            - projection_time_periods: list of time periods in the projection. Default = None. If none, ModelAttribute.check_projection_input_df() will be run to obtain it.
         """
 
         ##  CHECKS
@@ -917,9 +935,16 @@ class CircularEconomy:
     def project(self, df_ce_trajectories: pd.DataFrame) -> pd.DataFrame:
 
         """
-            - CircularEconomy.project takes a data frame (ordered by time series) and returns a data frame of the same order
-            - designed to be parallelized or called from command line via __main__ in run_afolu.py
-            - df_ce_trajectories should have all input fields required (see CircularEconomy.required_variables for a list of variables to be defined)
+            The project() method takes a data frame of input variables (ordered by time series) and returns a data frame of output variables (model projections for liquid and solid waste) the same order.
+
+            Function Arguments
+            ------------------
+            df_ce_trajectories: pd.DataFrame with all required input fields as columns. The model will not run if any required variables are missing, but errors will detail which fields are missing.
+
+            Notes
+            -----
+            - The .project() method is designed to be parallelized or called from command line via __main__ in run_sector_models.py.
+            - df_ce_trajectories should have all input fields required (see the CircularEconomy.required_variables property for a list of variables to be defined)
             - the df_ce_trajectories.project method will run on valid time periods from 1 .. k, where k <= n (n is the number of time periods). By default, it drops invalid time periods. If there are missing time_periods between the first and maximum, data are interpolated.
         """
 

@@ -284,11 +284,16 @@ class ModelAttributes:
         self.dict_model_variables_by_subsector, self.dict_model_variable_to_subsector, self.dict_model_variable_to_category_restriction = self.get_variables_by_subsector()
         self.all_model_variables, self.dict_variables_to_model_variables, self.dict_model_variables_to_variables = self.get_variable_fields_by_variable()
 
-        # run checks and raise errors if invalid data are entered
+        # miscellaneous parameters that need to be checked before running
+        self.field_enfu_electricity_demand_category = "electricity_demand_category"
+
+        # run checks and raise errors if invalid data are found in the attribute tables
+        self.check_enfu_attribute_table()
+        self.check_inen_enfu_crosswalk()
         self.check_lndu_attribute_tables()
         self.check_wali_gnrl_crosswalk()
         self.check_wali_trww_crosswalk()
-        self.check_waso_attribute_tables()
+        self.check_waso_attribute_table()
 
 
         # get configuration
@@ -313,6 +318,22 @@ class ModelAttributes:
         if not set(self.sort_ordered_dimensions_of_analysis).issubset(set(self.all_dims)):
             missing_vals = sf.print_setdiff(set(self.sort_ordered_dimensions_of_analysis), set(self.all_dims))
             raise ValueError(f"Missing specification of required dimensions of analysis: no attribute tables for dimensions {missing_vals} found in directory '{self.attribute_directory}'.")
+
+
+    ##  function to ensure a sector is properly specified
+    def check_sector(self, sector: str):
+        # check sectors
+        if sector not in self.all_sectors:
+            valid_sectors = sf.format_print_list(self.all_sectors)
+            raise ValueError(f"Invalid sector specification '{sector}': valid sectors are {valid_sectors}")
+
+
+    ##  function to ensure a sector is properly specified
+    def check_subsector(self, subsector: str):
+        # check sectors
+        if subsector not in self.all_subsectors:
+            valid_subsectors = sf.format_print_list(self.all_subsectors)
+            raise ValueError(f"Invalid subsector specification '{subsector}': valid sectors are {valid_subsectors}")
 
 
     ##  simple inline function to dimensions in a data frame (if they are converted to floats)
@@ -499,12 +520,11 @@ class ModelAttributes:
 
 
     ##  function for retrieving different attributes associated with a sector
-    def get_sector_attribute(self, sector, return_type):
+    def get_sector_attribute(self, sector: str, return_type: str):
 
-        # check sectors
-        if sector not in self.all_sectors:
-            valid_sectors = sf.format_print_list(self.all_sectors)
-            raise ValueError(f"Invalid sector specification in get_sector_attribute: valid sectors are {valid_sectors}")
+        # check sector specification
+        self.check_sector(sector)
+
         # initialize some key vars
         match_str_to = "sector_to_" if (return_type == "abbreviation_sector") else "abbreviation_sector_to_"
         attr_sec = self.dict_attributes["abbreviation_sector"]
@@ -521,6 +541,21 @@ class ModelAttributes:
             key = sector if (return_type == "abbreviation_sector") else attr_sec.field_maps["sector_to_abbreviation_sector"][sector]
             sf.check_keys(attr_sec.field_maps[map_retrieve], [key])
             return attr_sec.field_maps[map_retrieve][key]
+
+
+    ##  function to return a list of subsectors by sector
+    def get_sector_subsectors(self, sector: str):
+
+        self.check_sector(sector)
+
+        subsectors = list(
+            sf.subset_df(
+                self.dict_attributes["abbreviation_subsector"].table,
+                {"sector": [sector]}
+            )["subsector"]
+        )
+
+        return subsectors
 
 
     ##  function for retrieving different attributes associated with a subsector
@@ -775,9 +810,12 @@ class ModelAttributes:
     def get_mass_equivalent(self, mass: str, mass_to_match: str = None):
         """
             for a given mass unit *mass*, get the scalar to convert to units *mass_to_match*
-            - mass: a unit of mass defined in the unit_mass attribute table
 
-            - mass_to_match: Default is None. A unit of mass to match. The scalar a that is returned is multiplied by mass, i.e., mass*a = mass_to_match. If None (default), return the configuration default.
+            Function Arguments
+            ------------------
+            mass: a unit of mass defined in the unit_mass attribute table
+
+            mass_to_match: Default is None. A unit of mass to match. The scalar a that is returned is multiplied by mass, i.e., mass*a = mass_to_match. If None (default), return the configuration default.
         """
 
         if mass_to_match == None:
@@ -862,6 +900,113 @@ class ModelAttributes:
     #    SECTOR-SPECIFIC AND CROSS SECTORIAL CHECKS    #
     ####################################################
 
+    ##  function to check attribute crosswalks (e.g., one attribute table specifies another category as an element; this function verifies that they are valid)
+    def check_subsector_attribute_table_crosswalk(self,
+        dict_subsector_primary: dict,
+        subsector_target: str,
+        type_primary: str = "categories",
+        type_target: str = "categories",
+        injection_q: bool = True
+    ):
+        """
+            Checks the validity of categories specified as an attribute (subsector_target) of a primary subsctor category (subsector_primary)
+
+            Function Arguments
+            ------------------
+            dict_subsector_primary: dictionary of form {subsector_primary: field_attribute_target}. The key gives the primary subsector, and 'field_attribute_target' is the field in the attribute table associated with the categories to check.
+                NOTE: dict_subsector_primary can also be specified only as a string (subsector_primary) -- if dict_subsector_primary is a string, then field_attribute_target is assumed to be the primary python category of subsector_target (e.g., $CAT-TARGET$)
+
+            subsector_target: target subsector to check values against
+
+            type_primary: default = "categories". Represents the type of attribute table for the primary table; valid values are 'categories', 'varreqs_all', and 'varreqs_partial'
+
+            type_target: default = "categories". Type of the target table. Valid values are the same as those for type_primary.
+
+            injection_q: default = True. If injection_q, then target categories should be associated with a unique primary category (exclding those are specified as 'none').
+        """
+
+        ##  RUN CHECKS ON INPUT SPECIFICATIONS
+
+        # check type specifications
+        dict_valid_types_to_attribute_keys = {
+            "categories": "pycategory_primary",
+            "varreqs_all": "key_varreqs_all",
+            "varreqs_partial": "key_varreqs_partial"
+        }
+        valid_types = list(dict_valid_types_to_attribute_keys.keys())
+        str_valid_types = sf.format_print_list(valid_types)
+        if type_primary not in valid_types:
+            raise ValueError(f"Invalid type_primary '{type_primary}' specified. Valid values are '{str_valid_types}'.")
+        if type_target not in valid_types:
+            raise ValueError(f"Invalid type_target '{type_target}' specified. Valid values are '{str_valid_types}'.")
+
+        # get the primary subsector + field, then run checks
+        if type(dict_subsector_primary) == dict:
+            if len(dict_subsector_primary) != 1:
+                raise KeyError(f"Error in dictionary dict_subsector_primary: only one key (subsector_primary) should be specified.")
+            subsector_primary = list(dict_subsector_primary.keys())[0]
+        elif type(dict_subsector_primary) == str:
+            subsector_primary = dict_subsector_primary
+        else:
+            t_str = str(type(dict_subsector_primary))
+            raise ValueError(f"Invalid type '{t_str}' of dict_subsector_primary: 'dict' and 'str' are acceptable values.")
+        # check that the subsectors are valid
+        self.check_subsector(subsector_primary)
+        self.check_subsector(subsector_target)
+
+        # check primary table type and fetch attribute
+        dict_tables_primary = self.dict_attributes if (type_primary == "categories") else self.dict_varreqs
+        key_primary = self.get_subsector_attribute(subsector_primary, dict_valid_types_to_attribute_keys[type_primary])
+        if not key_primary:
+            raise ValueError(f"Invalid type_primary '{type_primary}' specified for primary subsector '{subsector_primary}': type not found.")
+        attr_prim = dict_tables_primary[key_primary]
+
+        # check target table type and fetch attribute
+        dict_tables_primary = self.dict_attributes if (type_target == "categories") else self.dict_varreqs
+        key_target = self.get_subsector_attribute(subsector_target, dict_valid_types_to_attribute_keys[type_target])
+        if not key_primary:
+            raise ValueError(f"Invalid type_primary '{type_target}' specified for primary subsector '{subsector_target}': type not found.")
+        attr_targ = dict_tables_primary[key_target]
+
+        # check that the field is properly specified in the primary table
+        field_subsector_primary = str(dict_subsector_primary[subsector_primary]) if (type(dict_subsector_primary) == dict) else key_target
+        if field_subsector_primary not in attr_prim.table.columns:
+            raise ValueError(f"Error in check_subsector_attribute_table_crosswalk: field '{field_subsector_primary}' not found in the '{subsector_primary}' attribute table. Check the file at '{attr_prim.fp_table}'.")
+
+
+        ##  CHECK ATTRIBUTE TABLE CROSSWALKS
+
+        # get categories specified in the
+        primary_cats_defined = [clean_schema(x) for x in list(attr_prim.table[field_subsector_primary]) if (x != "none")]
+
+        # ensure that all population categories properly specified
+        if not set(primary_cats_defined).issubset(set(attr_targ.key_values)):
+            valid_vals = sf.format_print_list(set(attr_targ.key_values))
+            invalid_vals = sf.format_print_list(list(set(primary_cats_defined) - set(attr_targ.key_values)))
+            raise ValueError(f"Invalid categories {invalid_vals} specified in field '{field_subsector_primary}' of the {subsector_primary} attribute table at '{attr_prim.fp_table}'.\n\nValid categories from {subsector_target} are: {valid_vals}")
+
+        if injection_q:
+            # check that domestic wastewater categories are mapped 1:1 to a population category
+            if len(set(primary_cats_defined)) != len(primary_cats_defined):
+                duplicate_vals = sf.format_print_list(set([x for x in primary_cats_defined if primary_cats_defined.count(x) > 1]))
+                raise ValueError(f"Error in {subsector_primary} attribute table at '{attr_prim.fp_table}': duplicate specifications of target categories {duplicate_vals}. There map of {subsector_primary} categories to {subsector_target} categories should be an injection map.")
+
+
+    ##  function to check the energy fuels table to ensure that an electricity category is specified
+    def check_enfu_attribute_table(self):
+        # some shared values
+        subsec = "Energy Fuels"
+        attr = self.get_attribute_table(subsec)
+
+        if not (set(attr.table[self.field_enfu_electricity_demand_category].astype(int)) == set([1 , 0]) and (sum(attr.table[self.field_enfu_electricity_demand_category]) == 1)):
+            raise ValueError(f"Error in subsector {subsec}: there must be a unique electricity category specified in fuels. Check the field '{self.field_enfu_electricity_demand_category}' in the table at '{attr.fp_table}'.")
+
+
+    ##  function to check the liquid waste/population crosswalk in liquid waste
+    def check_inen_enfu_crosswalk(self):
+        return self.check_subsector_attribute_table_crosswalk("Industrial Energy", "Energy Fuels", type_primary = "varreqs_partial")
+
+
     ##  function to check that the land use attribute tables are specified
     def check_lndu_attribute_tables(self):
 
@@ -890,49 +1035,16 @@ class ModelAttributes:
 
     ##  function to check the liquid waste/population crosswalk in liquid waste
     def check_wali_gnrl_crosswalk(self):
-        # wastewater treatment info
-        pycat_gnrl = self.get_subsector_attribute("General", "pycategory_primary")
-        pycat_wali = self.get_subsector_attribute("Liquid Waste", "pycategory_primary")
-        attr_gnrl = self.dict_attributes[pycat_gnrl]
-        attr_wali = self.dict_attributes[pycat_wali]
-
-        # get categories specified in the
-        wali_gnrl_defined = [clean_schema(x) for x in list(attr_wali.table[pycat_gnrl]) if (x != "none")]
-
-        # ensure that all population categories properly specified
-        if not set(wali_gnrl_defined).issubset(set(attr_gnrl.key_values)):
-            valid_vals = sf.format_print_list(set(attr_gnrl.key_values))
-            invalid_vals = sf.format_print_list(list(set(wali_gnrl_defined) - set(attr_gnrl.key_values)))
-            raise ValueError(f"Invalid population categories {invalid_vals} specified in the liquid waste attribute table at '{attr_wali.fp_table}'.\n\nValid population categories are: {valid_vals}")
-
-        # check that domestic wastewater categories are mapped 1:1 to a population category
-        if len(set(wali_gnrl_defined)) != len(wali_gnrl_defined):
-            duplicate_vals = sf.format_print_list(set([x for x in wali_gnrl_defined if wali_gnrl_defined.count(x) > 1]))
-            raise ValueError(f"Error in liquid waste attribute table at '{attr_wali.fp_table}': duplicate specifications of population categories {duplicate_vals}. There should be a 1:1 mapping of domestic waste to population categories.")
+        self.check_subsector_attribute_table_crosswalk("Liquid Waste", "General", injection_q = True)
 
 
     ##  liquid waste/wastewater crosswalk
     def check_wali_trww_crosswalk(self):
-        # wastewater treatment info
-        pycat_trww = self.get_subsector_attribute("Wastewater Treatment", "pycategory_primary")
-        pycat_wali = self.get_subsector_attribute("Liquid Waste", "pycategory_primary")
-        attr_trww = self.dict_attributes[pycat_trww]
-        attr_wali = self.dict_attributes[pycat_wali]
-
-        # liquid waste info
-        attr_wali_vr = self.dict_varreqs[self.get_subsector_attribute("Liquid Waste", "key_varreqs_all")]
-        wali_tr_defined = set([clean_schema(x) for x in list(attr_wali_vr.table[pycat_trww])])
-
-        # ensure that all wastewater treatment specifications are properly specified
-        if not wali_tr_defined.issubset(set(attr_trww.key_values)):
-            valid_vals = sf.format_print_list(set(attr_trww.key_values))
-            invalid_vals = sf.format_print_list(list(wali_tr_defined - set(attr_trww.key_values)))
-
-            raise ValueError(f"Invalid wastewater treatment types {invalid_vals} specified in the liquid waste variable requirement by category table at '{attr_wali_vr.fp_table}'.\n\nValid wastewater treatment pathways are: {valid_vals}")
+        self.check_subsector_attribute_table_crosswalk("Liquid Waste", "Wastewater Treatment", type_primary = "varreqs_all")
 
 
     ##  function to check if the solid waste attribute table is properly defined
-    def check_waso_attribute_tables(self):
+    def check_waso_attribute_table(self):
         # check that only one category is assocaited with sludge
         attr_waso = self.get_attribute_table("Solid Waste")
         cats_sludge = self.get_categories_from_attribute_characteristic("Solid Waste", {"sewage_sludge_category": 1})
@@ -1231,26 +1343,28 @@ class ModelAttributes:
     def build_varlist(
         self,
         subsector: str,
-        variable_subsec = None,
-        restrict_to_category_values = None,
-        dict_force_override_vrp_vvs_cats = None,
-        variable_type = None
+        variable_subsec: str = None,
+        restrict_to_category_values: list = None,
+        dict_force_override_vrp_vvs_cats: dict = None,
+        variable_type: str = None
     ) -> list:
         """
 
         Build a list of fields (complete variable schema from a data frame) based on the subsector and variable name.
 
-            subsector: the subsector to build the variable list for.
+        Function Arguments
+        ------------------
+        subsector: str, the subsector to build the variable list for.
 
-            variable_subsec: default is None. If None, then builds varlist of all variables required for this variable.
+        variable_subsec: default is None. If None, then builds varlist of all variables required for this variable.
 
-            restrict_to_category_values: default is None. If None, applies to all categories specified in attribute tables. Otherwise, will restrict to specified categories.
+        restrict_to_category_values: default is None. If None, applies to all categories specified in attribute tables. Otherwise, will restrict to specified categories.
 
-            dict_force_override_vrp_vvs_cats: dict_force_override_vrp_vvs_cats can be set do a dictionary of the form
-                {MODEL_VAR_NAME: [catval_a, catval_b, catval_c, ... ]}
-                where catval_i are not all unique; this is useful for making a variable that maps unique categories to a subset of non-unique categories that represent proxies (e.g., buffalo -> cattle_dairy, )
+        dict_force_override_vrp_vvs_cats: dict_force_override_vrp_vvs_cats can be set do a dictionary of the form
+            {MODEL_VAR_NAME: [catval_a, catval_b, catval_c, ... ]}
+            where catval_i are not all unique; this is useful for making a variable that maps unique categories to a subset of non-unique categories that represent proxies (e.g., buffalo -> cattle_dairy, )
 
-            variable_type: input or output. If None, defaults to input.
+        variable_type: input or output. If None, defaults to input.
 
         """
         # get some subsector info
@@ -1334,7 +1448,7 @@ class ModelAttributes:
     ) -> dict:
 
         """
-            use get_multivariables_with_bounded_sum_by_category() to retrieve a array or data frame of input variables. If return_type == "array_units_corrected", then the model_attributes will re-scale emissions factors to reflect the desired output emissions mass (as defined in the configuration)
+            use get_multivariables_with_bounded_sum_by_category() to retrieve a array or data frame of input variables. If return_type == "array_units_corrected", then the ModelAttributes will re-scale emissions factors to reflect the desired output emissions mass (as defined in the configuration)
 
             - df_in: data frame containing input variables
 
@@ -1377,7 +1491,7 @@ class ModelAttributes:
         if force_sum_equality:
             for modvar in modvars:
                 arr_cur = dict_arrs[modvar]
-                arr_cur = arr_cur/arr
+                arr_cur = np.nan_to_num(arr_cur/arr, 0.0)
                 dict_arrs.update({modvar: arr_cur})
         else:
             # correction sums if within correction threshold
@@ -1517,7 +1631,7 @@ class ModelAttributes:
     ):
 
         """
-            use get_standard_variables() to retrieve an array or data frame of input variables. If return_type == "array_units_corrected", then the model_attributes will re-scale emissions factors to reflect the desired output emissions mass (as defined in the configuration).
+            use get_standard_variables() to retrieve an array or data frame of input variables. If return_type == "array_units_corrected", then the ModelAttributes will re-scale emissions factors to reflect the desired output emissions mass (as defined in the configuration).
 
             - df_in: data frame containing input variables
 

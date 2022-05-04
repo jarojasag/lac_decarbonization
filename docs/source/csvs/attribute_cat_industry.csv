@@ -38,7 +38,7 @@ Electronics,``electronics``,"Includes emissions (especially F-GHGs) from process
 * Photovoltaics
 * Others
 ",``manufacturing``,none,,,
-Glass,``glass``,Virgin production of glass and ceramics. Affected by recycling.,none,none,,,
+Glass,``glass``,Virgin production of glass and ceramics. Affected by recycling.,none,none,,,Some figures for energy intensity of glass production is available form the `U.S. Department of Energy <https://www.energy.gov/sites/prod/files/2017/12/f46/Glass_bandwidth_study_2017.pdf>`_ (see Table 3.2)
 Lime and Carbonites,``lime_and_carbonite``,"Includes
  * Lime production
 * Other Process Uses of Carbonites, including

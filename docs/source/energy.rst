@@ -114,10 +114,26 @@ Categories
 Industrial Energy
 =================
 
+Industrial energy includes emission from **DESCRIPTION**
+
 Variables by Category
 ---------------------
 
 For each industrial category ``$CAT-INDUSTRY$``, the following variables are required.
+
+.. csv-table:: For different OESC categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
+   :file: ./csvs/table_varreqs_by_category_en_inen.csv
+   :header-rows: 1
+
+
+Variables by Partial Category
+-----------------------------
+
+
+.. csv-table:: For different Industrial categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
+   :file: ./csvs/table_varreqs_by_partial_category_en_inen.csv
+   :header-rows: 1
+
 
 Categories
 ----------
@@ -127,6 +143,9 @@ Industrial categories are described in `Industial Processes and Product Use (IPP
 
 Transportation
 ==============
+
+.. note::
+   Emissions from mobile combustion of fuels is highly dependent on the technologies (e.g., types of cars) that use the fuels. Therefore, emission factors for mobile combustion of fuels are contained in the Transportation subsector instead of the Energy Fuels subsector.
 
 Variables by Category
 ---------------------

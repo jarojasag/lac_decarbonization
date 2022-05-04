@@ -75,7 +75,7 @@ class IPPU:
             raise KeyError(f"IPPU projection cannot proceed: The fields {set_missing} are missing.")
 
     def get_required_subsectors(self):
-        subsectors = list(sf.subset_df(self.model_attributes.dict_attributes["abbreviation_subsector"].table, {"sector": ["IPPU"]})["subsector"])
+        subsectors = self.model_attributes.get_sector_subsectors("IPPU")
         subsectors_base = subsectors.copy()
         subsectors += ["Economy", "General"]
         return subsectors, subsectors_base
@@ -112,13 +112,22 @@ class IPPU:
         projection_time_periods: list = None
     ) -> np.ndarray:
         """
-            project_industrial_production can be called from other sectors to simplify calculation of industrial production. If any of dict_dims, n_projection_time_periods, or projection_time_periods are unspecified (expected if ran outside of IPPU.project()), self.model_attributes.check_projection_input_df wil be run
+            project_industrial_production() can be called from other sectors to simplify calculation of industrial production.
+
+            Function Arguments
+            ------------------
+            df_ippu_trajectories: pd.DataFrame of input variable trajectories.
 
             dict_dims: dict of dimensions (returned from check_projection_input_df). Default is None.
 
-            n_projection_time_periods: integer giving number of time periods (returned from check_projection_input_df). Default is None.
+            n_projection_time_periods: int giving number of time periods (returned from check_projection_input_df). Default is None.
 
             projection_time_periods: list of time periods (returned from check_projection_input_df). Default is None.
+
+
+            Notes
+            -----
+            - If any of dict_dims, n_projection_time_periods, or projection_time_periods are unspecified (expected if ran outside of IPPU.project()), self.model_attributes.check_projection_input_df wil be run
         """
         # allows production to be run outside of the project method
         if type(None) in set([type(x) for x in [dict_dims, n_projection_time_periods, projection_time_periods]]):
@@ -135,6 +144,21 @@ class IPPU:
 
     # project method for IPPU
     def project(self, df_ippu_trajectories: pd.DataFrame) -> pd.DataFrame:
+
+        """
+            project() takes a data frame of input variables (ordered by time series) and returns a data frame of output variables (model projections for industrial processes and product use--excludes industrial energy (see Energy class)) the same order.
+
+            Function Arguments
+            ------------------
+            df_ippu_trajectories: pd.DataFrame with all required input variable trajectories.
+
+
+            Notes
+            -----
+            - The .project() method is designed to be parallelized or called from command line via __main__ in run_sector_models.py.
+            - df_ippu_trajectories should have all input fields required (see IPPU.required_variables for a list of variables to be defined).  The model will not run if any required variables are missing, but errors will detail which fields are missing.
+            - the df_ippu_trajectories.project method will run on valid time periods from 1 .. k, where k <= n (n is the number of time periods). By default, it drops invalid time periods. If there are missing time_periods between the first and maximum, data are interpolated.
+        """
 
         # make sure socioeconomic variables are added and
         df_ippu_trajectories, df_se_internal_shared_variables = self.model_socioeconomic.project(df_ippu_trajectories)
@@ -181,7 +205,7 @@ class IPPU:
         array_ippu_recycled = self.model_attributes.get_optional_or_integrated_standard_variable(df_ippu_trajectories, self.modvar_waso_waste_total_recycled, None, True, "array_base")
         if type(array_ippu_recycled) != type(None):
             # if recycling totals are passed from the waste model, convert to ippu categories
-            cats_waso_recycle = sa.model_attributes.get_variable_categories(self.modvar_waso_waste_total_recycled)
+            cats_waso_recycle = self.model_attributes.get_variable_categories(self.modvar_waso_waste_total_recycled)
             dict_repl = attr_waso.field_maps[f"{pycat_waso}_to_{pycat_ippu}"]
             cats_ippu_recycle = [ds.clean_schema(dict_repl[x]) for x in cats_waso_recycle]
             array_ippu_recycled_waste = self.model_attributes.merge_array_var_partial_cat_to_array_all_cats(
@@ -198,7 +222,7 @@ class IPPU:
             array_ippu_recycled_waste *= factor_ippu_waso_recycle_to_ippu_recycle
             array_ippu_production += array_ippu_recycled_waste
             # next, check for industrial categories whose production is affected by recycling, then adjust downwards
-            vec_ippu_cats_to_adjust_from_recycling = [ds.clean_schema(x) for x in sa.model_attributes.get_ordered_category_attribute("IPPU", "target_recycling_cat_industry_to_adjust")]
+            vec_ippu_cats_to_adjust_from_recycling = [ds.clean_schema(x) for x in self.model_attributes.get_ordered_category_attribute("IPPU", "target_recycling_cat_industry_to_adjust")]
             w = [i for i in range(len(vec_ippu_cats_to_adjust_from_recycling)) if (vec_ippu_cats_to_adjust_from_recycling[i] != "none") and (vec_ippu_cats_to_adjust_from_recycling[i] in attr_ippu.key_values)]
             if len(w) > 0:
                 array_ippu_recycled_waste_adj = array_ippu_recycled_waste[:, w].copy()

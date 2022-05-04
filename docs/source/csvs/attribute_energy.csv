@@ -1,6 +1,7 @@
-﻿Energy,``$UNIT-ENERGY$`` ,Name ,Energy Equivalent kJ,Energy Equivalent MJ,Energy Equivalent GJ,Energy Equivalent TJ,Energy Equivalent PJ
-kJ,``kj``,Kilojoule,1,0.001,1.00E-06,0.000000001,1.00E-12
-MJ,``mj``,Megajoule,1000,1,0.001,1.00E-06,0.000000001
-GJ,``gj``,Gigajoule,1000000,1000,1,0.001,1.00E-06
-TJ,``tj``,Terajoule,1000000000,1000000,1000,1,0.001
-PJ,``pj``,Petajoule,1.00E+12,1000000000,1000000,1000,1
+﻿Energy,``$UNIT-ENERGY$`` ,Name ,Energy Equivalent kJ,Energy Equivalent BTU,Energy Equivalent MJ,Energy Equivalent GJ,Energy Equivalent TJ,Energy Equivalent PJ
+kJ,``kj``,Kilojoule,1,0.947813394,0.001,1.00E-06,0.000000001,1.00E-12
+BTU,``btu``,British Thermal Unit,1.05506,1,0.00105506,1.05506E-06,1.05506E-09,1.05506E-12
+MJ,``mj``,Megajoule,1000,947.8133945,1,0.001,1.00E-06,0.000000001
+GJ,``gj``,Gigajoule,1000000,947813.3945,1000,1,0.001,1.00E-06
+TJ,``tj``,Terajoule,1000000000,947813394.5,1000000,1000,1,0.001
+PJ,``pj``,Petajoule,1.00E+12,9.47813E+11,1000000000,1000000,1000,1
