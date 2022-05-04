@@ -186,81 +186,6 @@ class NonElectricEnergy:
     ########################################
 
     ##  industrial energy model
-
-    ##  PLACEHOLDER: project_industrial_energy
-
-    ##  transportation
-    def project_transportation():
-
-        return 0
-
-
-    ##  other energy: stationary emissions and carbon capture and sequestration
-    def project_oesc():
-
-        return 0
-
-
-    ##  primary method
-    def project(self, df_neenergy_trajectories):
-
-        """
-            The Energy.project() method takes a data frame of input variables (ordered by time series) and returns a data frame of output variables (model projections for energy--including industrial energy, transportation, stationary emissions, carbon capture and sequestration, and electricity) the same order.
-
-            Function Arguments
-            ------------------
-            df_neenergy_trajectories: pd.DataFrame with all required input fields as columns. The model will not run if any required variables are missing, but errors will detail which fields are missing.
-
-            Notes
-            -----
-            - The .project() method is designed to be parallelized or called from command line via __main__ in run_sector_models.py.
-            - df_neenergy_trajectories should have all input fields required (see IPPU.required_variables for a list of variables to be defined)
-            - the df_neenergy_trajectories.project method will run on valid time periods from 1 .. k, where k <= n (n is the number of time periods). By default, it drops invalid time periods. If there are missing time_periods between the first and maximum, data are interpolated.
-        """
-
-        ##  CHECKS
-
-        # make sure socioeconomic variables are added and
-        df_neenergy_trajectories, df_se_internal_shared_variables = self.model_socioeconomic.project(df_neenergy_trajectories)
-        # check that all required fields are contained—assume that it is ordered by time period
-        self.check_df_fields(df_neenergy_trajectories)
-        dict_dims, df_neenergy_trajectories, n_projection_time_periods, projection_time_periods = self.model_attributes.check_projection_input_df(df_neenergy_trajectories, True, True, True)
-
-
-        ##  CATEGORY AND ATTRIBUTE INITIALIZATION
-        pycat_fuel = self.model_attributes.get_subsector_attribute("Energy Fuels", "pycategory_primary")
-        pycat_gnrl = self.model_attributes.get_subsector_attribute("General", "pycategory_primary")
-        pycat_inen = self.model_attributes.get_subsector_attribute("Industrial Energy", "pycategory_primary")
-        pycat_ippu = self.model_attributes.get_subsector_attribute("IPPU", "pycategory_primary")
-        pycat_oesc = self.model_attributes.get_subsector_attribute("Other Energy: Stationary Emissions and Carbon Capture and Sequestration", "pycategory_primary")
-        pycat_trns = self.model_attributes.get_subsector_attribute("Transportation", "pycategory_primary")
-        # attribute tables
-        attr_fuel = self.model_attributes.dict_attributes[pycat_fuel]
-        attr_gnrl = self.model_attributes.dict_attributes[pycat_gnrl]
-        attr_inen = self.model_attributes.dict_attributes[pycat_inen]
-        attr_ippu = self.model_attributes.dict_attributes[pycat_ippu]
-        attr_oesc = self.model_attributes.dict_attributes[pycat_oesc]
-        attr_trns = self.model_attributes.dict_attributes[pycat_trns]
-
-
-        ##  ECON/GNRL VECTOR AND ARRAY INITIALIZATION
-
-        # get some vectors from the se model
-        vec_gdp = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.model_socioeconomic.modvar_econ_gdp, False, return_type = "array_base")
-        vec_pop = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.model_socioeconomic.modvar_gnrl_pop_total, False, return_type = "array_base")
-        array_pop = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.model_socioeconomic.modvar_gnrl_subpop, False, return_type = "array_base")
-        vec_gdp_per_capita = np.array(df_se_internal_shared_variables["vec_gdp_per_capita"])
-        vec_rates_gdp = np.array(df_se_internal_shared_variables["vec_rates_gdp"].dropna())
-        vec_rates_gdp_per_capita = np.array(df_se_internal_shared_variables["vec_rates_gdp_per_capita"].dropna())
-
-        #df_out = []
-
-        df_out = self.project_industrial_energy(df_neenergy_trajectories, vec_gdp, dict_dims, n_projection_time_periods, projection_time_periods)
-
-        return df_out
-
-
-
     def project_industrial_energy(
         self,
         df_neenergy_trajectories: pd.DataFrame,
@@ -419,5 +344,75 @@ class NonElectricEnergy:
         # concatenate and add subsector emission totals
         df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")
         self.model_attributes.add_subsector_emissions_aggregates(df_out, ["Industrial Energy"], False)
+
+        return df_out
+
+
+    ##  transportation
+    def project_transportation():
+
+        return 0
+
+
+    ##  other energy: stationary emissions and carbon capture and sequestration
+    def project_oesc():
+
+        return 0
+
+
+    ##  primary method
+    def project(self, df_neenergy_trajectories):
+
+        """
+            The Energy.project() method takes a data frame of input variables (ordered by time series) and returns a data frame of output variables (model projections for energy--including industrial energy, transportation, stationary emissions, carbon capture and sequestration, and electricity) the same order.
+
+            Function Arguments
+            ------------------
+            df_neenergy_trajectories: pd.DataFrame with all required input fields as columns. The model will not run if any required variables are missing, but errors will detail which fields are missing.
+
+            Notes
+            -----
+            - The .project() method is designed to be parallelized or called from command line via __main__ in run_sector_models.py.
+            - df_neenergy_trajectories should have all input fields required (see IPPU.required_variables for a list of variables to be defined)
+            - the df_neenergy_trajectories.project method will run on valid time periods from 1 .. k, where k <= n (n is the number of time periods). By default, it drops invalid time periods. If there are missing time_periods between the first and maximum, data are interpolated.
+        """
+
+        ##  CHECKS
+
+        # make sure socioeconomic variables are added and
+        df_neenergy_trajectories, df_se_internal_shared_variables = self.model_socioeconomic.project(df_neenergy_trajectories)
+        # check that all required fields are contained—assume that it is ordered by time period
+        self.check_df_fields(df_neenergy_trajectories)
+        dict_dims, df_neenergy_trajectories, n_projection_time_periods, projection_time_periods = self.model_attributes.check_projection_input_df(df_neenergy_trajectories, True, True, True)
+
+
+        ##  CATEGORY AND ATTRIBUTE INITIALIZATION
+        pycat_fuel = self.model_attributes.get_subsector_attribute("Energy Fuels", "pycategory_primary")
+        pycat_gnrl = self.model_attributes.get_subsector_attribute("General", "pycategory_primary")
+        pycat_inen = self.model_attributes.get_subsector_attribute("Industrial Energy", "pycategory_primary")
+        pycat_ippu = self.model_attributes.get_subsector_attribute("IPPU", "pycategory_primary")
+        pycat_oesc = self.model_attributes.get_subsector_attribute("Other Energy: Stationary Emissions and Carbon Capture and Sequestration", "pycategory_primary")
+        pycat_trns = self.model_attributes.get_subsector_attribute("Transportation", "pycategory_primary")
+        # attribute tables
+        attr_fuel = self.model_attributes.dict_attributes[pycat_fuel]
+        attr_gnrl = self.model_attributes.dict_attributes[pycat_gnrl]
+        attr_inen = self.model_attributes.dict_attributes[pycat_inen]
+        attr_ippu = self.model_attributes.dict_attributes[pycat_ippu]
+        attr_oesc = self.model_attributes.dict_attributes[pycat_oesc]
+        attr_trns = self.model_attributes.dict_attributes[pycat_trns]
+
+
+        ##  ECON/GNRL VECTOR AND ARRAY INITIALIZATION
+
+        # get some vectors from the se model
+        vec_gdp = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.model_socioeconomic.modvar_econ_gdp, False, return_type = "array_base")
+        vec_pop = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.model_socioeconomic.modvar_gnrl_pop_total, False, return_type = "array_base")
+        array_pop = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.model_socioeconomic.modvar_gnrl_subpop, False, return_type = "array_base")
+        vec_gdp_per_capita = np.array(df_se_internal_shared_variables["vec_gdp_per_capita"])
+        vec_rates_gdp = np.array(df_se_internal_shared_variables["vec_rates_gdp"].dropna())
+        vec_rates_gdp_per_capita = np.array(df_se_internal_shared_variables["vec_rates_gdp_per_capita"].dropna())
+
+        #
+        df_out = self.project_industrial_energy(df_neenergy_trajectories, vec_gdp, dict_dims, n_projection_time_periods, projection_time_periods)
 
         return df_out
