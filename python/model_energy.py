@@ -145,11 +145,11 @@ class NonElectricEnergy:
         # fuel variables dictionary for transportation
         self.dict_trns_fuel_categories_to_fuel_variables, self.dict_trns_fuel_categories_to_unassigned_fuel_variables = self.get_dict_trns_fuel_categories_to_fuel_variables()
         # some derivate lists of variables
-        self.modvars_trns_list_fuel_fraction = sa.model_attributes.get_vars_by_assigned_class_from_akaf(
+        self.modvars_trns_list_fuel_fraction = self.model_attributes.get_vars_by_assigned_class_from_akaf(
             model_energy.dict_trns_fuel_categories_to_fuel_variables,
             "fuel_fraction"
         )
-        self.modvars_trns_list_fuel_efficiency = sa.model_attributes.get_vars_by_assigned_class_from_akaf(
+        self.modvars_trns_list_fuel_efficiency = self.model_attributes.get_vars_by_assigned_class_from_akaf(
             model_energy.dict_trns_fuel_categories_to_fuel_variables,
             "fuel_efficiency"
         )
@@ -350,7 +350,7 @@ class NonElectricEnergy:
         ############################
 
         # first, retrieve energy fractions and ensure they sum to 1
-        dict_arrs_inen_frac_energy = sa.model_attributes.get_multivariables_with_bounded_sum_by_category(
+        dict_arrs_inen_frac_energy = self.model_attributes.get_multivariables_with_bounded_sum_by_category(
             df_cs_integrated,
             model_energy.modvar_inen_list_fuel_fractions,
             1,
@@ -382,19 +382,19 @@ class NonElectricEnergy:
         ##  GET EMISSION FACTORS
 
         # methane - scale to ensure energy units are the same
-        arr_inen_ef_by_fuel_ch4 = sa.model_attributes.get_standard_variables(df_cs_integrated, self.modvar_enfu_ef_combustion_stationary_ch4, return_type = "array_units_corrected")
+        arr_inen_ef_by_fuel_ch4 = self.model_attributes.get_standard_variables(df_cs_integrated, self.modvar_enfu_ef_combustion_stationary_ch4, return_type = "array_units_corrected")
         arr_inen_ef_by_fuel_ch4 *= self.model_attributes.get_energy_equivalent(
             self.model_attributes.get_variable_characteristic(self.modvar_enfu_ef_combustion_stationary_ch4, "$UNIT-ENERGY$"),
             self.model_attributes.get_variable_characteristic(self.modvar_inen_en_prod_intensity_factor, "$UNIT-ENERGY$")
         )
         # carbon dioxide - scale to ensure energy units are the same
-        arr_inen_ef_by_fuel_co2 = sa.model_attributes.get_standard_variables(df_cs_integrated, self.modvar_enfu_ef_combustion_co2, return_type = "array_units_corrected")
+        arr_inen_ef_by_fuel_co2 = self.model_attributes.get_standard_variables(df_cs_integrated, self.modvar_enfu_ef_combustion_co2, return_type = "array_units_corrected")
         arr_inen_ef_by_fuel_co2 *= self.model_attributes.get_energy_equivalent(
             self.model_attributes.get_variable_characteristic(self.modvar_enfu_ef_combustion_co2, "$UNIT-ENERGY$"),
             self.model_attributes.get_variable_characteristic(self.modvar_inen_en_prod_intensity_factor, "$UNIT-ENERGY$")
         )
         # nitrous oxide - scale to ensure energy units are the same
-        arr_inen_ef_by_fuel_n2o = sa.model_attributes.get_standard_variables(df_cs_integrated, self.modvar_enfu_ef_combustion_stationary_n2o, return_type = "array_units_corrected")
+        arr_inen_ef_by_fuel_n2o = self.model_attributes.get_standard_variables(df_cs_integrated, self.modvar_enfu_ef_combustion_stationary_n2o, return_type = "array_units_corrected")
         arr_inen_ef_by_fuel_n2o *= self.model_attributes.get_energy_equivalent(
             self.model_attributes.get_variable_characteristic(self.modvar_enfu_ef_combustion_stationary_n2o, "$UNIT-ENERGY$"),
             self.model_attributes.get_variable_characteristic(self.modvar_inen_en_prod_intensity_factor, "$UNIT-ENERGY$")
@@ -539,12 +539,12 @@ class NonElectricEnergy:
         ##  START WITH DEMANDS
 
         # start with demands and map categories in attribute to associated variable
-        dict_trns_vars_to_trde_cats = sa.model_attributes.get_ordered_category_attribute("Transportation", "cat_transportation_demand", "key_varreqs_partial", True, dict, True)
+        dict_trns_vars_to_trde_cats = self.model_attributes.get_ordered_category_attribute("Transportation", "cat_transportation_demand", "key_varreqs_partial", True, dict, True)
         dict_trns_vars_to_trde_cats = sf.reverse_dict(dict_trns_vars_to_trde_cats)
         array_trns_total_vehicle_demand = 0.0
         # get occupancy and freight occupancies
-        array_trns_avg_load_freight = sa.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_trns_average_vehicle_load_freight, return_type = "array_base", expand_to_all_cats = True)
-        array_trns_occ_rate_passenger = sa.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_trns_average_passenger_occupancy, return_type = "array_base", expand_to_all_cats = True)
+        array_trns_avg_load_freight = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_trns_average_vehicle_load_freight, return_type = "array_base", expand_to_all_cats = True)
+        array_trns_occ_rate_passenger = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_trns_average_passenger_occupancy, return_type = "array_base", expand_to_all_cats = True)
         # convert average load to same units as demand
         array_trns_avg_load_freight *= self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_trns_average_vehicle_load_freight,
@@ -563,9 +563,9 @@ class NonElectricEnergy:
             # get key index, model variable, and the current demand
             index_key = self.model_attributes.get_attribute_table("Transportation Demand").get_key_value_index(category)
             modvar = self.model_attributes.get_variable_from_category("Transportation Demand", category, "partial")
-            vec_trde_dem_cur = sa.model_attributes.get_standard_variables(df_neenergy_trajectories, modvar, return_type = "array_base", expand_to_all_cats = True)[:, index_key]
+            vec_trde_dem_cur = self.model_attributes.get_standard_variables(df_neenergy_trajectories, modvar, return_type = "array_base", expand_to_all_cats = True)[:, index_key]
             # retrieve the demand mix, convert to total activity-demand by category, then divide by freight/occ_rate
-            array_trde_dem_cur_by_cat = sa.model_attributes.get_standard_variables(
+            array_trde_dem_cur_by_cat = self.model_attributes.get_standard_variables(
                 df_neenergy_trajectories,
                 dict_trns_vars_to_trde_cats[category],
                 return_type = "array_base",
@@ -597,7 +597,7 @@ class NonElectricEnergy:
         ##  LOOP OVER FUELS
 
         # first, retrieve fuel-mix fractions and ensure they sum to 1
-        dict_arrs_trns_frac_fuel = sa.model_attributes.get_multivariables_with_bounded_sum_by_category(
+        dict_arrs_trns_frac_fuel = self.model_attributes.get_multivariables_with_bounded_sum_by_category(
             df_neenergy_trajectories,
             model_energy.modvars_trns_list_fuel_fraction,
             1,
@@ -605,8 +605,8 @@ class NonElectricEnergy:
             msg_append = "Energy fractions by category do not sum to 1. See definition of dict_arrs_trns_frac_fuel."
         )
         # get carbon dioxide combustion factors (corrected to output units)
-        arr_trns_ef_by_fuel_co2 = sa.model_attributes.get_standard_variables(df_cs_integrated, self.modvar_enfu_ef_combustion_co2, return_type = "array_units_corrected", expand_to_all_cats = True)
-        arr_trns_energy_density_fuel = sa.model_attributes.get_standard_variables(df_cs_integrated, self.modvar_enfu_volumetric_energy_density, return_type = "array_units_corrected", expand_to_all_cats = True)
+        arr_trns_ef_by_fuel_co2 = self.model_attributes.get_standard_variables(df_cs_integrated, self.modvar_enfu_ef_combustion_co2, return_type = "array_units_corrected", expand_to_all_cats = True)
+        arr_trns_energy_density_fuel = self.model_attributes.get_standard_variables(df_cs_integrated, self.modvar_enfu_volumetric_energy_density, return_type = "array_units_corrected", expand_to_all_cats = True)
 
         # initialize electrical demand to pass and output emission arrays
         arr_trns_demand_electricity = 0.0
@@ -806,10 +806,10 @@ class NonElectricEnergy:
         ############################
 
         # get the demand scalar
-        array_trde_demscalar = sa.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_trde_demand_scalar, return_type = "array_base", expand_to_all_cats = True, var_bounds = (0, np.inf))
+        array_trde_demscalar = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_trde_demand_scalar, return_type = "array_base", expand_to_all_cats = True, var_bounds = (0, np.inf))
         # start with freight/megaton km demands
-        array_trde_dem_init_freight = sa.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_trde_demand_initial_mtkm, return_type = "array_base", expand_to_all_cats = True)
-        array_trde_elast_freight_demand_to_gdp = sa.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_trde_elasticity_mtkm_to_gdp, return_type = "array_base", expand_to_all_cats = True)
+        array_trde_dem_init_freight = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_trde_demand_initial_mtkm, return_type = "array_base", expand_to_all_cats = True)
+        array_trde_elast_freight_demand_to_gdp = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_trde_elasticity_mtkm_to_gdp, return_type = "array_base", expand_to_all_cats = True)
         array_trde_growth_freight_dem_by_cat = sf.project_growth_scalar_from_elasticity(vec_rates_gdp, array_trde_elast_freight_demand_to_gdp, False, "standard")
         # multiply and add to the output
         array_trde_freight_dem_by_cat = array_trde_dem_init_freight[0]*array_trde_growth_freight_dem_by_cat
@@ -819,8 +819,8 @@ class NonElectricEnergy:
         )
 
         # deal with person-km
-        array_trde_dem_init_passenger = sa.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_trde_demand_initial_pkm_per_capita, return_type = "array_base", expand_to_all_cats = True)
-        array_trde_elast_passenger_demand_to_gdppc = sa.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_trde_elasticity_pkm_to_gdp, return_type = "array_base", expand_to_all_cats = True)
+        array_trde_dem_init_passenger = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_trde_demand_initial_pkm_per_capita, return_type = "array_base", expand_to_all_cats = True)
+        array_trde_elast_passenger_demand_to_gdppc = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_trde_elasticity_pkm_to_gdp, return_type = "array_base", expand_to_all_cats = True)
         array_trde_growth_passenger_dem_by_cat = sf.project_growth_scalar_from_elasticity(vec_rates_gdp_per_capita, array_trde_elast_passenger_demand_to_gdppc, False, "standard")
         # project the growth in per capita, multiply by population, then add it to the output
         array_trde_passenger_dem_by_cat = array_trde_dem_init_passenger[0]*array_trde_growth_passenger_dem_by_cat
