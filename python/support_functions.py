@@ -66,14 +66,14 @@ def build_dict(df_in, dims = None):
 
 
 # check that the data frame contains required information
-def check_fields(df, fields):
+def check_fields(df, fields, msg_prepend: str = "Required fields: "):
     s_fields_df = set(df.columns)
     s_fields_check = set(fields)
     if s_fields_check.issubset(s_fields_df):
         return True
     else:
         fields_missing = format_print_list(s_fields_check - s_fields_df)
-        raise ValueError(f"Required fields {fields_missing} not found in the data frame.")
+        raise KeyError(f"{msg_prepend}{fields_missing} not found in the data frame.")
 
 
 # check that a dictionary contains the required keys
@@ -305,6 +305,19 @@ def repl_array_val_twodim(array, val_repl, val_new):
     inds = w[0]*len(array[0]) + w[1]
     np.put(array, inds, val_new)
     return None
+
+
+##  quick function to reverse dictionaries
+def reverse_dict(dict_in: dict) -> dict:
+    # check keys
+    s_vals = set(dict_in.values())
+    s_keys = set(dict_in.keys())
+    if len(s_vals) != len(s_keys):
+        raise KeyError(f"Invalid dicionary in reverse_dict: the dictionary is not injective.")
+
+    return dict(zip(dict_in.values(), dict_in.keys()))
+
+
 
 
 ##  set a vector to element-wise stay within bounds

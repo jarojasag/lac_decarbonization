@@ -2,6 +2,7 @@
 General Data
 ============
 
+**MODELNAME** includes key elements to support conversion between different variables and support different reporting quantities (e.g., emissions in MT or GT). The following section enumerates conversion factors and units for some of the key elements of **MODELNAME**, including gasses and defined units of energy, length, mass, and volume (used in emission accounting).
 
 Gasses
 ------
@@ -11,12 +12,40 @@ Emissions are calculated in a unit of mass (default MT) for each relevant gas in
    :file: ./csvs/attribute_gas.csv
    :header-rows: 1
 
+
+Units - ENERGY
+------------
+The standard reporting output for energy (e.g., energy demand) can be set in the configuration file (see the in the `Analytical Parameters <../analytical_parameters.html>`_ section for more information about configuration parameters). The default unit of energy for reporting is PJ (Petajoule).
+
+   .. csv-table:: Energy units defined in the model and relationships between them.
+      :file: ./csvs/attribute_energy.csv
+      :header-rows: 1
+
+
+Units - Length
+------------
+The standard reporting output for any output lengths can be set in the configuration file (see the in the `Analytical Parameters <../analytical_parameters.html>`_ section for more information about configuration parameters). The default unit of length for reporting length-relevant information (e.g., transportation demand) is km (kilometers).
+
+   .. csv-table:: Length units defined in the model and relationships between them.
+      :file: ./csvs/attribute_length.csv
+      :header-rows: 1
+
+
 Units - Mass
 ------------
 The emissions accounting mass can be set in the configuration file (see the in the `Analytical Parameters <../analytical_parameters.html>`_ section for more information about configuration parameters). The default unit of mass for reporting emissions is MT (megatons).
 
-   .. csv-table:: Mass units used in the model and relationships between them.
+   .. csv-table:: Mass units defined in the model and relationships between them.
       :file: ./csvs/attribute_mass.csv
+      :header-rows: 1
+
+
+Units - Volume
+------------
+The standard output volume for output volume units can be set in the configuration file (see the in the `Analytical Parameters <../analytical_parameters.html>`_ section for more information about configuration parameters). The default unit of volume for reporting volumes (such as wastewater) is :math:`m^3` (cubic meters).
+
+   .. csv-table:: Volume units defined in the model and relationships between them.
+      :file: ./csvs/attribute_volume.csv
       :header-rows: 1
 
 
@@ -33,6 +62,7 @@ Each of the four key emissions sectors and the socioeconomic sector are divided 
 .. csv-table:: Subsectors modeled in LAC-IDPM
    :file: ./csvs/attribute_subsector.csv
    :header-rows: 1
+
 
 Regions (Countries)
 -------------------

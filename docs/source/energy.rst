@@ -144,8 +144,43 @@ Industrial categories are described in `Industial Processes and Product Use (IPP
 Transportation
 ==============
 
+Known Issues
+------------
+
+**Discuss how variables that are set in Transportation have to be added to the NonElectricEnergy class as well**
+
+
+Variables by Category
+---------------------
+
 .. note::
-   Emissions from mobile combustion of fuels is highly dependent on the technologies (e.g., types of cars) that use the fuels. Therefore, emission factors for mobile combustion of fuels are contained in the Transportation subsector instead of the Energy Fuels subsector.
+   :math:`\text{CH}_4` and :math:`\text{N}_4\text{O}` emissions from mobile combustion of fuels are highly dependent on the technologies (e.g., types of cars) that use the fuels. Therefore, emission factors for mobile combustion of fuels are contained in the Transportation subsector instead of the Energy Fuels subsector. See Section Volume 2, Chapter 3, Section 3.2.1.2 of the `2006 IPCC Guidelines for National Greenhouse Gas Inventories <https://www.ipcc-nggip.iges.or.jp/public/2006gl/pdf/2_Volume2/V2_3_Ch3_Mobile_Combustion.pdf>`_ for more information.
+
+For each industrial category ``$CAT-TRANSPORTATION$``, the following variables are required.
+
+.. csv-table:: For different OESC categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
+   :file: ./csvs/table_varreqs_by_category_en_trns.csv
+   :header-rows: 1
+
+
+Variables by Partial Category
+-----------------------------
+
+
+.. csv-table:: For different Transportation categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
+   :file: ./csvs/table_varreqs_by_partial_category_en_trns.csv
+   :header-rows: 1
+
+
+Categories
+----------
+
+
+
+Transportation Demand
+=====================
+
+Transportation demand is broken into its own subsector given some of the complexities that drive transportation demand. The **MODELNAME** transportation demand subsector allows for more complex interactions--e.g., interactions with industrial production, growth in tourism, waste collection, and imports and exports--to be integrated, though these are not dealt with explicitly at this time.
 
 Variables by Category
 ---------------------

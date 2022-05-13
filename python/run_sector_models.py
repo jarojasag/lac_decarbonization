@@ -27,7 +27,7 @@ def parse_arguments() -> dict:
     parser.add_argument(
         "--models",
         type = str,
-        help = "Models to run using the input file. Possible values include 'AFOLU', 'CircularEconomy', 'Energy', 'IPPU'",
+        help = "Models to run using the input file. Possible values include 'AFOLU', 'CircularEconomy', 'Electricity', 'IPPU', and 'NonElectricEnergy''",
         default = "AFOLU"
     )
     parser.add_argument(
@@ -115,9 +115,26 @@ def main(args: dict) -> None:
         df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")] if run_integrated_q else df_output_data
 
 
-    # run Energy and collect output
-    if "Energy" in models_run:
-        print("\n\t*** NOTE: Energy INCOMPLETE. IT WILL NOT BE RUN")
+    # run Non-Electric Energy and collect output
+    if "NonElectricEnergy" in models_run:
+        print("\n\tRunning NonElectricEnergy")
+        model_energy = sm.Energy(sa.model_attributes)
+        # integrate Circular Economy output?
+        if run_integrated_q and set(["IPPU"]).issubset(set(models_run)):
+            df_input_data = sa.model_attributes.transfer_df_variables(
+                df_input_data,
+                df_output_data[0],
+                model_energy.integration_variables
+            )
+        else:
+            print("LOG ERROR HERE: CANNOT RUN WITHOUT IPPU")
+        df_output_data.append(model_energy.project(df_input_data))
+        df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")] if run_integrated_q else df_output_data
+
+
+    # run Electricity and collect output
+    if "Electricity" in models_run:
+        print("\n\tWARNING: Electricity undefined")
 
 
     # build output data frame

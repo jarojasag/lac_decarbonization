@@ -12,6 +12,7 @@ Energy,Energy Technology,``entc``,``$CAT-TECHNOLOGY$``,"Technology associated wi
 Energy,Industrial Energy,``inen``,``$CAT-INDUSTRY$``,Activity (demand and emission) associated with the energy generation and use in industry,Python
 Energy,Other Energy: Stationary Emissions and Carbon Capture and Sequestration,``oesc``,``$CAT-OESC$``,"Stationary emissions from residential, commercial, and municipal activities; agricultural fuel combustion; and carbon capture and sequestration. ",Python
 Energy,Transportation,``trns``,``$CAT-TRANSPORTATION$``,Activity (demand and emission) associated with the generation of electricity ....,Python
+Energy,Transportation Demand,``trde``,``$CAT-TRANSPORTATION-DEMAND$``,"Different drivers of demand for transportation, integrating cross-sector demand effects.",Pyhon
 IPPU,IPPU,``ippu``,``$CAT-INDUSTRY$``,Activity (demand and emission) associated with industrial processes and product use,Python
 Socioeconomic,Economy,``econ``,``$CAT-ECONOMY$``,Economic activity driving emissions.,Python
 Socioeconomic,General,``gnrl``,``$CAT-GENERAL$``,"Other non-economic drivers of emissios, including demographics.",Python
