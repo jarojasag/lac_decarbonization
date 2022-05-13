@@ -57,7 +57,8 @@ def main(args: dict) -> None:
 
     fp_in = args.get("input")
     fp_out = args.get("output")
-    models_run = args.get("models")
+    models_run = args.get("models").split(",")
+
 
     # load data
     if not fp_in:
@@ -114,13 +115,13 @@ def main(args: dict) -> None:
         df_output_data.append(model_ippu.project(df_input_data))
         df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")] if run_integrated_q else df_output_data
 
-
     # run Non-Electric Energy and collect output
     if "NonElectricEnergy" in models_run:
         print("\n\tRunning NonElectricEnergy")
-        model_energy = sm.Energy(sa.model_attributes)
-        # integrate Circular Economy output?
+        model_energy = sm.NonElectricEnergy(sa.model_attributes)
+        # integrate IPPU output?
         if run_integrated_q and set(["IPPU"]).issubset(set(models_run)):
+            print("TRUTH!")
             df_input_data = sa.model_attributes.transfer_df_variables(
                 df_input_data,
                 df_output_data[0],
