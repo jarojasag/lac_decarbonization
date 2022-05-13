@@ -146,11 +146,11 @@ class NonElectricEnergy:
         self.dict_trns_fuel_categories_to_fuel_variables, self.dict_trns_fuel_categories_to_unassigned_fuel_variables = self.get_dict_trns_fuel_categories_to_fuel_variables()
         # some derivate lists of variables
         self.modvars_trns_list_fuel_fraction = self.model_attributes.get_vars_by_assigned_class_from_akaf(
-            model_energy.dict_trns_fuel_categories_to_fuel_variables,
+            self.dict_trns_fuel_categories_to_fuel_variables,
             "fuel_fraction"
         )
         self.modvars_trns_list_fuel_efficiency = self.model_attributes.get_vars_by_assigned_class_from_akaf(
-            model_energy.dict_trns_fuel_categories_to_fuel_variables,
+            self.dict_trns_fuel_categories_to_fuel_variables,
             "fuel_efficiency"
         )
 
@@ -351,8 +351,8 @@ class NonElectricEnergy:
 
         # first, retrieve energy fractions and ensure they sum to 1
         dict_arrs_inen_frac_energy = self.model_attributes.get_multivariables_with_bounded_sum_by_category(
-            df_cs_integrated,
-            model_energy.modvar_inen_list_fuel_fractions,
+            df_neenergy_trajectories,
+            self.modvar_inen_list_fuel_fractions,
             1,
             force_sum_equality = True,
             msg_append = "Energy fractions by category do not sum to 1. See definition of dict_arrs_inen_frac_energy."
@@ -382,19 +382,19 @@ class NonElectricEnergy:
         ##  GET EMISSION FACTORS
 
         # methane - scale to ensure energy units are the same
-        arr_inen_ef_by_fuel_ch4 = self.model_attributes.get_standard_variables(df_cs_integrated, self.modvar_enfu_ef_combustion_stationary_ch4, return_type = "array_units_corrected")
+        arr_inen_ef_by_fuel_ch4 = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_enfu_ef_combustion_stationary_ch4, return_type = "array_units_corrected")
         arr_inen_ef_by_fuel_ch4 *= self.model_attributes.get_energy_equivalent(
             self.model_attributes.get_variable_characteristic(self.modvar_enfu_ef_combustion_stationary_ch4, "$UNIT-ENERGY$"),
             self.model_attributes.get_variable_characteristic(self.modvar_inen_en_prod_intensity_factor, "$UNIT-ENERGY$")
         )
         # carbon dioxide - scale to ensure energy units are the same
-        arr_inen_ef_by_fuel_co2 = self.model_attributes.get_standard_variables(df_cs_integrated, self.modvar_enfu_ef_combustion_co2, return_type = "array_units_corrected")
+        arr_inen_ef_by_fuel_co2 = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_enfu_ef_combustion_co2, return_type = "array_units_corrected")
         arr_inen_ef_by_fuel_co2 *= self.model_attributes.get_energy_equivalent(
             self.model_attributes.get_variable_characteristic(self.modvar_enfu_ef_combustion_co2, "$UNIT-ENERGY$"),
             self.model_attributes.get_variable_characteristic(self.modvar_inen_en_prod_intensity_factor, "$UNIT-ENERGY$")
         )
         # nitrous oxide - scale to ensure energy units are the same
-        arr_inen_ef_by_fuel_n2o = self.model_attributes.get_standard_variables(df_cs_integrated, self.modvar_enfu_ef_combustion_stationary_n2o, return_type = "array_units_corrected")
+        arr_inen_ef_by_fuel_n2o = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_enfu_ef_combustion_stationary_n2o, return_type = "array_units_corrected")
         arr_inen_ef_by_fuel_n2o *= self.model_attributes.get_energy_equivalent(
             self.model_attributes.get_variable_characteristic(self.modvar_enfu_ef_combustion_stationary_n2o, "$UNIT-ENERGY$"),
             self.model_attributes.get_variable_characteristic(self.modvar_inen_en_prod_intensity_factor, "$UNIT-ENERGY$")
@@ -599,14 +599,14 @@ class NonElectricEnergy:
         # first, retrieve fuel-mix fractions and ensure they sum to 1
         dict_arrs_trns_frac_fuel = self.model_attributes.get_multivariables_with_bounded_sum_by_category(
             df_neenergy_trajectories,
-            model_energy.modvars_trns_list_fuel_fraction,
+            self.modvars_trns_list_fuel_fraction,
             1,
             force_sum_equality = False,
             msg_append = "Energy fractions by category do not sum to 1. See definition of dict_arrs_trns_frac_fuel."
         )
         # get carbon dioxide combustion factors (corrected to output units)
-        arr_trns_ef_by_fuel_co2 = self.model_attributes.get_standard_variables(df_cs_integrated, self.modvar_enfu_ef_combustion_co2, return_type = "array_units_corrected", expand_to_all_cats = True)
-        arr_trns_energy_density_fuel = self.model_attributes.get_standard_variables(df_cs_integrated, self.modvar_enfu_volumetric_energy_density, return_type = "array_units_corrected", expand_to_all_cats = True)
+        arr_trns_ef_by_fuel_co2 = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_enfu_ef_combustion_co2, return_type = "array_units_corrected", expand_to_all_cats = True)
+        arr_trns_energy_density_fuel = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_enfu_volumetric_energy_density, return_type = "array_units_corrected", expand_to_all_cats = True)
 
         # initialize electrical demand to pass and output emission arrays
         arr_trns_demand_electricity = 0.0
@@ -643,9 +643,9 @@ class NonElectricEnergy:
             vec_trns_volumetric_enerdensity_by_fuel = arr_trns_energy_density_fuel[:, ind_enfu_cur]
             # get arrays
             arr_trns_fuel_fraction_cur = dict_arrs_trns_frac_fuel.get(modvar_trns_fuel_fraction_cur)
-            arr_trns_ef_ch4_cur = self.model_attributes.get_standard_variables(df_cs_integrated, modvar_trns_ef_ch4_cur, return_type = "array_units_corrected", expand_to_all_cats = True) if (modvar_trns_ef_ch4_cur is not None) else 0
-            arr_trns_ef_n2o_cur = self.model_attributes.get_standard_variables(df_cs_integrated, modvar_trns_ef_n2o_cur, return_type = "array_units_corrected", expand_to_all_cats = True) if (modvar_trns_ef_n2o_cur is not None) else 0
-            arr_trns_fuel_efficiency_cur = self.model_attributes.get_standard_variables(df_cs_integrated, modvar_trns_fuel_efficiency_cur, return_type = "array_base", expand_to_all_cats = True)
+            arr_trns_ef_ch4_cur = self.model_attributes.get_standard_variables(df_neenergy_trajectories, modvar_trns_ef_ch4_cur, return_type = "array_units_corrected", expand_to_all_cats = True) if (modvar_trns_ef_ch4_cur is not None) else 0
+            arr_trns_ef_n2o_cur = self.model_attributes.get_standard_variables(df_neenergy_trajectories, modvar_trns_ef_n2o_cur, return_type = "array_units_corrected", expand_to_all_cats = True) if (modvar_trns_ef_n2o_cur is not None) else 0
+            arr_trns_fuel_efficiency_cur = self.model_attributes.get_standard_variables(df_neenergy_trajectories, modvar_trns_fuel_efficiency_cur, return_type = "array_base", expand_to_all_cats = True)
 
             # current demand associate with the fuel (in terms of modvar_trde_demand_pkm)
             arr_trns_vehdem_cur_fuel = array_trns_total_vehicle_demand*arr_trns_fuel_fraction_cur
@@ -709,9 +709,8 @@ class NonElectricEnergy:
                     self.modvar_trde_demand_pkm,
                     "length"
                 )
-                print(scalar_electric_eff_to_distance_equiv)
                 # get demand for fuel in terms of modvar_trns_fuel_efficiency_cur, then get scalars to conert to emission factor fuel volume units
-                arr_trns_elect_efficiency_cur = self.model_attributes.get_standard_variables(df_cs_integrated, self.modvar_trns_electrical_efficiency, return_type = "array_base", expand_to_all_cats = True)
+                arr_trns_elect_efficiency_cur = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_trns_electrical_efficiency, return_type = "array_base", expand_to_all_cats = True)
                 arr_trns_elect_efficiency_cur *= scalar_electric_eff_to_distance_equiv
                 arr_trns_energydem_elec = arr_trns_vehdem_cur_fuel/arr_trns_elect_efficiency_cur
                 # write in terms of output units
@@ -721,7 +720,6 @@ class NonElectricEnergy:
             # add total fuel volumetric fuel demand
             if modvar_trns_fuel_efficiency_cur is not None:
                 vec_fuel_demand *= self.model_attributes.get_scalar(modvar_trns_fuel_efficiency_cur, "volume")
-                print(modvar_trns_total_volumetric_fuel_dem_cur)
                 df_out.append(
                     self.model_attributes.array_to_df(vec_fuel_demand, modvar_trns_total_volumetric_fuel_dem_cur, False, False),
                 )
