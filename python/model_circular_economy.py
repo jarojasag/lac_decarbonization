@@ -728,8 +728,8 @@ class CircularEconomy:
         array_waso_isw_total_by_category = np.outer(vec_waso_init_pgdp_waste*vec_gdp, vec_waso_isw_composition)
         # initialize total waste array, which will be reduced through recylcing and composting before being divided up between incineration, landfilling, and open dumping
         array_waso_total_by_category = array_waso_isw_total_by_category + array_waso_msw_total_by_category
-        array_waso_frac_isw_total_by_cat = array_waso_isw_total_by_category/array_waso_total_by_category
-        array_waso_frac_msw_total_by_cat = array_waso_msw_total_by_category/array_waso_total_by_category
+        array_waso_frac_isw_total_by_cat = np.nan_to_num(array_waso_isw_total_by_category/array_waso_total_by_category, 0.0)
+        array_waso_frac_msw_total_by_cat = np.nan_to_num(array_waso_msw_total_by_category/array_waso_total_by_category, 0.0)
         # add to output data frame
         df_out += [
             self.model_attributes.array_to_df(array_waso_total_by_category, self.modvar_waso_waste_total_produced, False)

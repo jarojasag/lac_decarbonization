@@ -368,6 +368,12 @@ class ModelAttributes:
             df_in[fld] = np.array(df_in[fld]).astype(int)
 
 
+    ##  commonly used--restrict variable values
+    def check_restricted_value_argument(self, arg, valid_values: list, func_arg: str = "", func_name: str = ""):
+        if arg not in valid_values:
+            vrts = sf.format_print_list(valid_values)
+            raise ValueError(f"Invalid {func_arg} in {func_name}: valid values are {vrts}.")
+
     ##  get subsectors that have a primary cateogry; these sectors can leverage the functions below effectively
     def get_all_subsectors_with_primary_category(self):
         l_with = list(self.dict_attributes["abbreviation_subsector"].field_maps["subsector_to_primary_category_py"].keys())
@@ -1897,7 +1903,8 @@ class ModelAttributes:
         var_bounds = None,
         force_boundary_restriction: bool = True,
         expand_to_all_cats: bool = False,
-        all_cats_missing_val: float = 0.0
+        all_cats_missing_val: float = 0.0,
+        return_num_type: type = np.float64
     ):
 
         """
@@ -1929,13 +1936,20 @@ class ModelAttributes:
             flds = self.dict_model_variables_to_variables[modvar]
             flds = flds[0] if ((len(flds) == 1) and not override_vector_for_single_mv_q) else flds
 
-        valid_rts = ["data_frame", "array_base", "array_units_corrected", "array_units_corrected_gas"]
-        if return_type not in valid_rts:
-            vrts = sf.format_print_list(valid_rts)
-            raise ValueError(f"Invalid return_type in get_standard_variables: valid types are {vrts}.")
+        # check some types
+        self.check_restricted_value_argument(
+            return_type,
+            ["data_frame", "array_base", "array_units_corrected", "array_units_corrected_gas"],
+            "return_type", "get_standard_variables"
+        )
+        self.check_restricted_value_argument(
+            return_num_type,
+            [float, int, np.float64, np.int64],
+            "return_num_type", "get_standard_variables"
+        )
 
         # initialize output, apply various common transformations based on type
-        out = np.array(df_in[flds])
+        out = np.array(df_in[flds]).astype(return_num_type)
         if return_type == "array_units_corrected":
             out *= self.get_scalar(modvar, "total")
         elif return_type == "array_units_corrected_gas":
