@@ -103,6 +103,8 @@ class CircularEconomy:
         self.modvar_trww_frac_tow_removed = "Fraction of Total Organic Waste Removed"
         self.modvar_trww_krem = ":math:\\text{K}_{REM} Sludge Factor"
         self.modvar_trww_mcf = "Methane Correction Factor"
+        self.modvar_trww_recovered_biogas = "Biogas Recovered from Wastewater Treatment Plants"
+        self.modvar_trww_rf_biogas_recovered = "Biogas Recovery Factor at Wastewater Treatment Plants"
         self.modvar_trww_septic_sludge_compliance = "Septic Sludge Compliance Fraction"
         self.modvar_trww_sludge_produced = "Mass of Sludge Produced"
         self.modvar_trww_total_bod_treated = "Total BOD Treated"
@@ -110,6 +112,7 @@ class CircularEconomy:
         self.modvar_trww_total_tow_bod_in_effluent = "Total BOD Organic Waste in Effluent"
         self.modvar_trww_total_tow_cod_in_effluent = "Total COD Organic Waste in Effluent"
         self.modvar_trww_vol_ww_treated = "Volume of Wastewater Treated"
+
 
         # other sectors' variables, used in integration
         self.modvar_lvst_net_imports = "Change to Net Imports of Livestock"
@@ -541,27 +544,27 @@ class CircularEconomy:
         array_trww_tow_bod_not_removed = array_trww_total_bod_by_pathway - array_trww_tow_bod_removed_sludge
         array_trww_tow_cod_removed_sludge = (array_trww_frac_tow_removed + array_trww_septic_compliance*0.5)*array_trww_total_cod_by_pathway*array_mask_sludge
         array_trww_tow_cod_not_removed = array_trww_total_cod_by_pathway - array_trww_tow_cod_removed_sludge
-        # apply methane correction factor to estimate methane emissions (these are in co2e
+        # apply methane correction factor to estimate methane emissions (these emissions are in co2e)
         array_trww_emissions_ch4_bod = ((array_trww_tow_bod_not_removed*array_trww_mcf).transpose()*vec_wali_bod_max_bo).transpose()
         array_trww_emissions_ch4_cod = ((array_trww_tow_cod_not_removed*array_trww_mcf).transpose()*vec_wali_cod_max_bo).transpose()
         array_trww_bod_equivalent_removed_sludge = array_trww_tow_bod_removed_sludge + (array_trww_tow_cod_removed_sludge.transpose()*(vec_wali_cod_max_bo/vec_wali_bod_max_bo)).transpose()
         array_trww_emissions_ch4_treatment = array_trww_emissions_ch4_bod + array_trww_emissions_ch4_cod
+        # get fraction of ch4 captures
+        array_trww_frac_ch4_recovered = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_trww_rf_biogas_recovered, True, return_type = "array_base", var_bounds = (0, 1), expand_to_all_cats = True)
+        array_trww_ch4_recovered = array_trww_frac_ch4_recovered*array_trww_emissions_ch4_treatment
+        array_trww_emissions_ch4_treatment += -array_trww_ch4_recovered
+        array_trww_ch4_recovered *= 1/self.model_attributes.get_scalar(self.modvar_trww_recovered_biogas, "mass")
         # get sludge mass and mass of tow in effluent (convert to tonnes)
         array_trww_mass_removed_sludge = (array_trww_bod_equivalent_removed_sludge/array_trww_krem)*factor_trww_emissions_mass_to_tow_mass
         array_trww_tow_bod_effluent = array_trww_tow_bod_not_removed*(1 - array_trww_mcf)*factor_trww_emissions_mass_to_tow_mass
         array_trww_tow_cod_effluent = array_trww_tow_cod_not_removed*(1 - array_trww_mcf)*factor_trww_emissions_mass_to_tow_mass
-        # data frames for output
-        df_trww_emissions_ch4_treatment = self.model_attributes.array_to_df(array_trww_emissions_ch4_treatment, self.modvar_trww_emissions_ch4_treatment)
-        df_trww_mass_removed_sludge = self.model_attributes.array_to_df(array_trww_mass_removed_sludge, self.modvar_trww_sludge_produced, reduce_from_all_cats_to_specified_cats = True)
-        df_trww_tow_bod_effluent = self.model_attributes.array_to_df(array_trww_tow_bod_effluent, self.modvar_trww_total_tow_bod_in_effluent)
-        df_trww_tow_cod_effluent = self.model_attributes.array_to_df(array_trww_tow_cod_effluent, self.modvar_trww_total_tow_cod_in_effluent)
-
         # add to output
         df_out += [
-            df_trww_emissions_ch4_treatment,
-            df_trww_mass_removed_sludge,
-            df_trww_tow_bod_effluent,
-            df_trww_tow_cod_effluent
+            self.model_attributes.array_to_df(array_trww_emissions_ch4_treatment, self.modvar_trww_emissions_ch4_treatment),
+            self.model_attributes.array_to_df(array_trww_mass_removed_sludge, self.modvar_trww_sludge_produced, reduce_from_all_cats_to_specified_cats = True),
+            self.model_attributes.array_to_df(array_trww_tow_bod_effluent, self.modvar_trww_total_tow_bod_in_effluent),
+            self.model_attributes.array_to_df(array_trww_tow_cod_effluent, self.modvar_trww_total_tow_cod_in_effluent),
+            self.model_attributes.array_to_df(array_trww_ch4_recovered.sum(axis = 1), self.modvar_trww_recovered_biogas)
         ]
 
 
