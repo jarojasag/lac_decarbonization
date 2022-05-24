@@ -1,7 +1,7 @@
-﻿Mass,``$UNIT-MASS$`` ,Name ,Mass Equivalent Tonne,Mass Equivalent KT,Mass Equivalent MT,Mass Equivalent GT
-Kg,``kg``,Kilograms,0.001,0.000001,0.000000001,1.00E-12
-Tonne,``tonne``,Metric Tonne,1,0.001,0.000001,1.00E-09
-Gg,``gg``,Gigagrams,1,1,0.001,0.000001
-KT,``kt``,Kilotonne,1000,1,0.001,0.000001
-MT,``mt``,Megatonne,1000000,1000,1,0.001
-GT,``gt``,Gigatonne,1000000000,1000000,1000,1
+﻿Mass,``$UNIT-MASS$`` ,Name ,Mass Equivalent Kg,Mass Equivalent Tonne,Mass Equivalent KT,Mass Equivalent MT,Mass Equivalent GT
+Kg,``kg``,Kilograms,1,0.001,0.000001,0.000000001,1.00E-12
+Tonne,``tonne``,Metric Tonne,1000,1,0.001,0.000001,1.00E-09
+Gg,``gg``,Gigagrams,1000,1,1,0.001,0.000001
+KT,``kt``,Kilotonne,1000000,1000,1,0.001,0.000001
+MT,``mt``,Megatonne,1000000000,1000000,1000,1,0.001
+GT,``gt``,Gigatonne,1E+12,1000000000,1000000,1000,1

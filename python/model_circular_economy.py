@@ -21,7 +21,6 @@ class CircularEconomy:
         self.modvar_wali_bod_correction = "BOD Correction Factor for TOW"
         self.modvar_wali_bod_per_capita = "BOD per Capita"
         self.modvar_wali_cod_per_gdp = "COD per GDP"
-        self.modvar_wali_frac_nitrogen_removed_in_treatment = "Nitrogen Treatment Removal Fraction"
         self.modvar_wali_frac_protein_with_red_meat = "Fraction of Protein in Diet with Red Meat"
         self.modvar_wali_frac_protein_without_red_meat = "Fraction of Protein in Diet without Red Meat"
         self.modvar_wali_init_pcap_wwgen = "Initial Per Capita Annual Domestic Wastewater Generated"
@@ -33,6 +32,8 @@ class CircularEconomy:
         self.modvar_wali_optional_elasticity_protein_to_gdppc = "(Optional) Elasticity of Protein in Diet to GDP per Capita"
         self.modvar_wali_param_fnoncon = "Factor for Nitrogen in Non-Consumed Protein Disposed in Sewer System"
         self.modvar_wali_param_nhh = "Scalar to Account for Nitrogen in Household Products"
+        self.modvar_wali_param_p_per_bod = "Phosphorous Per BOD Factor"
+        self.modvar_wali_param_p_per_cod = "Phosphorous Per COD Factor"
         self.modvar_wali_protein_per_capita = "Average Protein Consumption Per Capita"
         self.modvar_wali_treatpath_aerobic = "Treatment Fraction Aerobic"
         self.modvar_wali_treatpath_anaerobic = "Treatment Fraction Anaerobic"
@@ -100,17 +101,23 @@ class CircularEconomy:
         self.modvar_trww_emissions_ch4_treatment = ":math:\\text{CH}_4 Emissions from Wastewater Treatment"
         self.modvar_trww_emissions_n2o_treatment = ":math:\\text{N}_2\\text{O} Emissions from Wastewater Treatment"
         self.modvar_trww_emissions_n2o_effluent = ":math:\\text{N}_2\\text{O} Emissions from Wastewater Effluent"
-        self.modvar_trww_frac_tow_removed = "Fraction of Total Organic Waste Removed"
+        self.modvar_trww_frac_n_removed = "Fraction of Nitrogen Removed in Treatment"
+        self.modvar_trww_frac_p_removed = "Fraction of Phosphorous Removed in Treatment"
+        self.modvar_trww_frac_tow_removed = "Fraction of Total Organic Waste Removed in Treatment"
         self.modvar_trww_krem = ":math:\\text{K}_{REM} Sludge Factor"
         self.modvar_trww_mcf = "Methane Correction Factor"
         self.modvar_trww_recovered_biogas = "Biogas Recovered from Wastewater Treatment Plants"
         self.modvar_trww_rf_biogas_recovered = "Biogas Recovery Factor at Wastewater Treatment Plants"
         self.modvar_trww_septic_sludge_compliance = "Septic Sludge Compliance Fraction"
         self.modvar_trww_sludge_produced = "Mass of Sludge Produced"
-        self.modvar_trww_total_bod_treated = "Total BOD Treated"
-        self.modvar_trww_total_cod_treated = "Total COD Treated"
-        self.modvar_trww_total_tow_bod_in_effluent = "Total BOD Organic Waste in Effluent"
-        self.modvar_trww_total_tow_cod_in_effluent = "Total COD Organic Waste in Effluent"
+        self.modvar_trww_total_bod_in_effluent = "Total BOD Organic Waste in Effluent"
+        self.modvar_trww_total_bod_treated = "Total BOD Removed in Treatment"
+        self.modvar_trww_total_cod_in_effluent = "Total COD Organic Waste in Effluent"
+        self.modvar_trww_total_cod_treated = "Total COD Removed in Treatment"
+        self.modvar_trww_total_n_in_effluent = "Total Nitrogen in Effluent"
+        self.modvar_trww_total_n_treated = "Total Nitrogen Removed in Treatment"
+        self.modvar_trww_total_p_in_effluent = "Total Phosphorous in Effluent"
+        self.modvar_trww_total_p_treated = "Total Phosphorous Removed in Treatment"
         self.modvar_trww_vol_ww_treated = "Volume of Wastewater Treated"
 
 
@@ -562,8 +569,8 @@ class CircularEconomy:
         df_out += [
             self.model_attributes.array_to_df(array_trww_emissions_ch4_treatment, self.modvar_trww_emissions_ch4_treatment),
             self.model_attributes.array_to_df(array_trww_mass_removed_sludge, self.modvar_trww_sludge_produced, reduce_from_all_cats_to_specified_cats = True),
-            self.model_attributes.array_to_df(array_trww_tow_bod_effluent, self.modvar_trww_total_tow_bod_in_effluent),
-            self.model_attributes.array_to_df(array_trww_tow_cod_effluent, self.modvar_trww_total_tow_cod_in_effluent),
+            self.model_attributes.array_to_df(array_trww_tow_bod_effluent, self.modvar_trww_total_bod_in_effluent),
+            self.model_attributes.array_to_df(array_trww_tow_cod_effluent, self.modvar_trww_total_cod_in_effluent),
             self.model_attributes.array_to_df(array_trww_ch4_recovered.sum(axis = 1), self.modvar_trww_recovered_biogas)
         ]
 
@@ -581,34 +588,59 @@ class CircularEconomy:
         vec_wali_fnoncon = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_wali_param_fnoncon, False, return_type = "array_base")
         vec_wali_nhh = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_wali_param_nhh, False, return_type = "array_base")
 
-        # get total domestic nitrogen
+        # get total domestic nitrogen in same units as protein
         vec_wali_total_nitrogen_dom = vec_wali_protein*vec_wali_findcom*vec_wali_fnoncon*vec_wali_nhh*self.factor_f_npr
+        vec_wali_phosphorous_density_dom = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_wali_param_p_per_bod, False, return_type = "array_base")
         # use BOD array to allocate domestic wastewater nitrogen (assume it's uniformly distributed)
         array_trww_total_nitrogen_dom = (array_trww_total_bod_by_pathway.transpose()/np.sum(array_trww_total_bod_by_pathway, axis = 1))
         array_trww_total_nitrogen_dom = (array_trww_total_nitrogen_dom*vec_wali_total_nitrogen_dom).transpose()
-        # get total industrial nitrogen
+        array_trww_total_phosphorous_dom = (array_trww_total_bod_by_pathway.transpose()*vec_wali_phosphorous_density_dom).transpose()
+
+        # get total industrial nitrogen and phosphorous + a cod -> bod scalar
         vec_wali_nitrogen_density_ind = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_wali_nitrogen_density_ww_ind, False, return_type = "array_base")
-        # use COD array to allocate industrial wastewater nitrogen (assume it's uniformly distributed)
+        vec_wali_phosphorous_density_ind = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_wali_param_p_per_cod, False, return_type = "array_base")
+        scalar_wali_cod_mass_to_bod_mass = self.model_attributes.get_variable_unit_conversion_factor(self.modvar_wali_nitrogen_density_ww_ind, self.modvar_wali_protein_per_capita, "mass")
+        # use COD array to allocate industrial wastewater nitrogen and phosphorous (assume it's uniformly distributed)
         array_trww_total_nitrogen_ind = (array_trww_total_cod_by_pathway.transpose()/np.sum(array_trww_total_cod_by_pathway, axis = 1))
+        array_trww_total_phosphorous_ind = (array_trww_total_nitrogen_ind*vec_wali_phosphorous_density_ind).transpose()*array_trww_total_ww_cod_by_pathway
         array_trww_total_nitrogen_ind = (array_trww_total_nitrogen_ind*vec_wali_nitrogen_density_ind).transpose()*array_trww_total_ww_cod_by_pathway
-        # get total nitrogen in each treatment pathway and find total removed by treatment
-        array_trww_total_nitrogen = array_trww_total_nitrogen_dom + array_trww_total_nitrogen_ind
-        array_trww_frac_n_removed = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_wali_frac_nitrogen_removed_in_treatment, False, return_type = "array_base", var_bounds = (0, 1))
-        array_trww_total_nitrogen_effluent = array_trww_total_nitrogen*(1 - array_trww_frac_n_removed)
+
+        # get total nitrogen/phosphorous in each treatment pathway and find total removed by treatment. These are in terms of BOD mass now
+        array_trww_total_nitrogen = array_trww_total_nitrogen_dom + array_trww_total_nitrogen_ind*scalar_wali_cod_mass_to_bod_mass
+        array_trww_total_phosphorous = array_trww_total_phosphorous_dom + array_trww_total_phosphorous_ind*scalar_wali_cod_mass_to_bod_mass
+        array_trww_frac_n_removed = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_trww_frac_n_removed, False, return_type = "array_base", var_bounds = (0, 1))
+        array_trww_frac_p_removed = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_trww_frac_p_removed, False, return_type = "array_base", var_bounds = (0, 1))
+        array_trww_total_n_effluent = array_trww_total_nitrogen*(1 - array_trww_frac_n_removed)
+        array_trww_total_p_effluent = array_trww_total_phosphorous*(1 - array_trww_frac_p_removed)
+
         # retrieve the emission factors, which are g/g (unitless)
         array_trww_ef_n2o_ww = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_trww_ef_n2o_wastewater_treatment, False, return_type = "array_base")
         # nitrogen emissions in kg (first component) converted to emissions mass--assumes both industry and domestic have same units, kg
         factor_trww_mass_protein_to_emission_mass = self.model_attributes.get_scalar(self.modvar_wali_protein_per_capita, "mass")
         array_trww_emissions_n2o_treatment = array_trww_total_nitrogen*array_trww_ef_n2o_ww*self.factor_n2on_to_n2o*factor_trww_mass_protein_to_emission_mass
-        array_trww_emissions_n2o_effluent = array_trww_total_nitrogen_effluent.transpose()*array_trww_ef_n2o_ww[:, attr_trww.get_key_value_index("untreated_no_sewerage")]*self.factor_n2on_to_n2o*factor_trww_mass_protein_to_emission_mass
+        array_trww_emissions_n2o_effluent = array_trww_total_n_effluent.transpose()*array_trww_ef_n2o_ww[:, attr_trww.get_key_value_index("untreated_no_sewerage")]*self.factor_n2on_to_n2o*factor_trww_mass_protein_to_emission_mass
         array_trww_emissions_n2o_effluent = array_trww_emissions_n2o_effluent.transpose()
-        # set to data frame and add to the output
-        df_trww_emissions_n2o_treatment = self.model_attributes.array_to_df(array_trww_emissions_n2o_treatment, self.modvar_trww_emissions_n2o_treatment, True)
-        df_trww_emissions_n2o_effluent = self.model_attributes.array_to_df(array_trww_emissions_n2o_effluent, self.modvar_trww_emissions_n2o_effluent, True)
 
+        # calculate pollutants (N & P) -- get scalars for output units
+        scalar_trww_bod_mass_to_n_removed = self.model_attributes.get_variable_unit_conversion_factor(self.modvar_wali_protein_per_capita, self.modvar_trww_total_n_treated, "mass")
+        scalar_trww_bod_mass_to_p_removed = self.model_attributes.get_variable_unit_conversion_factor(self.modvar_wali_protein_per_capita, self.modvar_trww_total_p_treated, "mass")
+        scalar_trww_bod_mass_to_n_effluent = self.model_attributes.get_variable_unit_conversion_factor(self.modvar_wali_protein_per_capita, self.modvar_trww_total_n_in_effluent, "mass")
+        scalar_trww_bod_mass_to_p_effluent = self.model_attributes.get_variable_unit_conversion_factor(self.modvar_wali_protein_per_capita, self.modvar_trww_total_p_in_effluent, "mass")
+        # set output vectors
+        vec_trww_total_n_effluent = np.sum(array_trww_total_n_effluent*scalar_trww_bod_mass_to_n_effluent, axis = 1)
+        vec_trww_total_n_treated = np.sum((array_trww_total_nitrogen - array_trww_total_n_effluent)*scalar_trww_bod_mass_to_n_removed, axis = 1)
+        vec_trww_total_p_effluent = np.sum(array_trww_total_p_effluent*scalar_trww_bod_mass_to_p_effluent, axis = 1)
+        vec_trww_total_p_treated = np.sum((array_trww_total_phosphorous - array_trww_total_p_effluent)*scalar_trww_bod_mass_to_p_removed, axis = 1)
+
+
+        # set to data frame and add to the output
         df_out += [
-            df_trww_emissions_n2o_effluent,
-            df_trww_emissions_n2o_treatment
+            self.model_attributes.array_to_df(array_trww_emissions_n2o_treatment, self.modvar_trww_emissions_n2o_treatment, True),
+            self.model_attributes.array_to_df(array_trww_emissions_n2o_effluent, self.modvar_trww_emissions_n2o_effluent, True),
+            self.model_attributes.array_to_df(vec_trww_total_n_effluent, self.modvar_trww_total_n_in_effluent, False),
+            self.model_attributes.array_to_df(vec_trww_total_n_treated, self.modvar_trww_total_n_treated, False),
+            self.model_attributes.array_to_df(vec_trww_total_p_effluent, self.modvar_trww_total_p_in_effluent, False),
+            self.model_attributes.array_to_df(vec_trww_total_p_treated, self.modvar_trww_total_p_treated, False)
         ]
 
         df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
