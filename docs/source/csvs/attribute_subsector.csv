@@ -3,14 +3,15 @@ AFOLU,Agriculture,``agrc``,``$CAT-AGRICULTURE$``,Agricultural activity ....,Pyth
 AFOLU,Forest,``frst``,``$CAT-FOREST$``,Forest activity ....,Python
 AFOLU,Land Use,``lndu``,``$CAT-LANDUSE$``,Land use activity ....,Python
 AFOLU,Livestock,``lvst``,``$CAT-LIVESTOCK$``,Livestock activity ....,Python
-Circular Economy,Liquid Waste,``wali``,``$CAT-WASTE-LIQUID$``,Activity (demand and emission) associated with emissions from domestic and industrial solid waste disposal and treatment ,Python
+Circular Economy,Liquid Waste,``wali``,``$CAT-WASTE-LIQUID$``,Activity (primarily demands and pathways) driving the generation of liquid waste.,Python
 Circular Economy,Solid Waste,``waso``,``$CAT-WASTE-SOLID$``,Activity (demand and emission) associated with emissions from domestic and industrial solid waste disposal and treatment ,Python
 Circular Economy,Wastewater Treatment,``trww``,``$CAT-WASTEWATER-TREATMENT$``,Wastewater treatment options and characteristics,Python
+Energy,Carbon Capture and Sequestration,``ccsq``,``$CAT-CCSQ$``,Carbon capture and sequestration,Python
 Energy,Energy Fuels,``enfu``,``$CAT-FUEL$``,Fuel used in electricity generation.,Julia/Python
 Energy,Energy Storage,``enst``,``$CAT-STORAGE$``,Storage technologies used in n energy system. ,Julia/Python
 Energy,Energy Technology,``entc``,``$CAT-TECHNOLOGY$``,"Technology associated with the generation of electricity--in particular, power plants.",Julia/Python
 Energy,Industrial Energy,``inen``,``$CAT-INDUSTRY$``,Activity (demand and emission) associated with the energy generation and use in industry,Python
-Energy,Other Energy: Stationary Emissions and Carbon Capture and Sequestration,``oesc``,``$CAT-OESC$``,"Stationary emissions from residential, commercial, and municipal activities; agricultural fuel combustion; and carbon capture and sequestration. ",Python
+Energy,Stationary Combustion and Other Energy,``scoe``,``$CAT-SCOE$``,"Emissions from stationary combustion due to residential, commercial and municipal activities, and agricultural fuel combustion.",Python
 Energy,Transportation,``trns``,``$CAT-TRANSPORTATION$``,Activity (demand and emission) associated with the generation of electricity ....,Python
 Energy,Transportation Demand,``trde``,``$CAT-TRANSPORTATION-DEMAND$``,"Different drivers of demand for transportation, integrating cross-sector demand effects.",Pyhon
 IPPU,IPPU,``ippu``,``$CAT-INDUSTRY$``,Activity (demand and emission) associated with industrial processes and product use,Python

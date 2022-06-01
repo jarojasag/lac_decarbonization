@@ -182,6 +182,16 @@ def df_get_missing_fields_from_source_df(df_target, df_source, side = "right", c
     return df_out
 
 
+##  allows for multiplication of np.arrays that might be of the same shape or row-wise similar
+def do_array_mult(arr_stable:np.ndarray, arr_variable:np.ndarray) -> np.ndarray:
+    if (arr_variable.shape == arr_stable.shape) or (arr_variable.shape == (arr_stable.shape[1], )):
+        return arr_variable*arr_stable
+    elif arr_variable.shape == (arr_stable.shape[0], ):
+        return (arr_stable.transpose()*arr_variable).transpose()
+    else:
+        raise ValueError(f"Error in do_array_mult: Incompatable shape {arr_variable.shape} in arr_variable. The stable array has shape {arr_stable.shape}.")
+
+
 ##  simple but often used function
 def format_print_list(list_in, delim = ","):
     return ((f"{delim} ").join(["'%s'" for x in range(len(list_in))]))%tuple(list_in)

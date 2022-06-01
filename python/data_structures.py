@@ -1,5 +1,6 @@
-import os, os.path
+import itertools
 import numpy as np
+import os, os.path
 import pandas as pd
 import support_functions as sf
 import warnings
@@ -398,10 +399,10 @@ class ModelAttributes:
 
         if table_type == "pycategory_primary":
             key_dict = self.get_subsector_attribute(subsector, table_type)
-            return self.dict_attributes[key_dict]
+            return self.dict_attributes.get(key_dict)
         elif table_type in ["key_varreqs_all", "key_varreqs_partial"]:
             key_dict = self.get_subsector_attribute(subsector, table_type)
-            return self.dict_varreqs[key_dict]
+            return self.dict_varreqs.get(key_dict)
         else:
             raise ValueError(f"Invalid table_type '{table_type}': valid options are 'pycategory_primary', 'key_varreqs_all', 'key_varreqs_partial'.")
 
@@ -631,6 +632,48 @@ class ModelAttributes:
             return None
 
 
+    ##  retrieve a dictionary that maps variables to each other based on shared categories within a subsector
+    def get_var_dicts_by_shared_category(self,
+        subsector:str,
+        category_pivot:str,
+        fields_to_filter_on:list
+    ) -> dict:
+
+        dict_out = {}
+
+        # get available dictionaries
+        for table_type in ["key_varreqs_all", "key_varreqs_partial"]:
+            # check attribute table
+            attr_table = self.get_attribute_table(subsector, table_type)
+            if attr_table is not None:
+                # get columns available in the data
+                cols = list(set(attr_table.table.columns & set(fields_to_filter_on)))
+                if len(cols) > 0 & (category_pivot in attr_table.table.columns):
+                    for field in cols:
+                        df_tmp = attr_table.table[attr_table.table[field] == 1][[category_pivot, "variable"]].copy()
+                        df_tmp[category_pivot] = df_tmp[category_pivot].apply(clean_schema)
+                        dict_out.update({field: sf.build_dict(df_tmp[[category_pivot, "variable"]])})
+
+        # next, loop over available combinations to build cross dictionaries
+        dict_mapping = {}
+        keys_to_pair = list(dict_out.keys())
+        for pair in list(itertools.combinations(keys_to_pair, 2)):
+            # get keys from dict and set keys for dict_mapping
+            key_1 = pair[0]
+            key_2 = pair[1]
+            key_new = f"{key_1}_to_{key_2}"
+            key_new_rev = f"{key_2}_to_{key_1}"
+
+            # categories available in both dictionaries are used to update the dict_mapping
+            shared_cats = list(set(dict_out[key_1]) & set(dict_out[key_2]))
+            dict_mapping.update({
+                key_new: dict([(dict_out[key_1][x], dict_out[key_2][x]) for x in shared_cats]),
+                key_new_rev: dict([(dict_out[key_2][x], dict_out[key_1][x]) for x in shared_cats])
+            })
+
+        return dict_mapping
+
+
     ##  function to reorganize a bit to create variable fields associated with each variable
     def get_variable_fields_by_variable(self):
         dict_vars_to_fields = {}
@@ -816,7 +859,7 @@ class ModelAttributes:
         # get the valid values
         valid_vals = sf.format_print_list(self.dict_attributes["unit_energy"].key_values)
 
-        if energy_to_match == None:
+        if energy_to_match is None:
             energy_to_match = str(self.configuration.get("energy_units")).lower()
         key_dict = f"unit_energy_to_energy_equivalent_{energy_to_match}"
 
@@ -843,7 +886,7 @@ class ModelAttributes:
         if gas is None:
             return None
 
-        if gwp == None:
+        if gwp is None:
             gwp = int(self.configuration.get("global_warming_potential"))
         key_dict = f"emission_gas_to_global_warming_potential_{gwp}"
 
@@ -874,7 +917,7 @@ class ModelAttributes:
         if length is None:
             return None
 
-        if length_to_match == None:
+        if length_to_match is None:
             length_to_match = str(self.configuration.get("length_units")).lower()
         key_dict = f"unit_length_to_length_equivalent_{length_to_match}"
 
@@ -907,7 +950,7 @@ class ModelAttributes:
         if mass is None:
             return None
 
-        if mass_to_match == None:
+        if mass_to_match is None:
             mass_to_match = str(self.configuration.get("emissions_mass")).lower()
         key_dict = f"unit_mass_to_mass_equivalent_{mass_to_match}"
 
@@ -936,7 +979,7 @@ class ModelAttributes:
         if volume is None:
             return None
 
-        if volume_to_match == None:
+        if volume_to_match is None:
             volume_to_match = str(self.configuration.get("volume_units")).lower()
         key_dict = f"unit_volume_to_volume_equivalent_{volume_to_match}"
 
@@ -1619,25 +1662,27 @@ class ModelAttributes:
 
 
     ##  function for getting input/output fields for a list of subsectors
-    def get_input_output_fields(self, subsectors_required: list, build_df_q = False):
+    def get_input_output_fields(self, subsectors_inuired: list, build_df_q = False):
         # initialize output lists
         vars_out = []
-        vars_req = []
+        vars_in = []
         subsectors_out = []
+        subsectors_in = []
 
-        for subsector in subsectors_required:
-            vars_subsector_req = self.build_varlist(subsector, variable_type = "input")
+        for subsector in subsectors_inuired:
+            vars_subsector_in = self.build_varlist(subsector, variable_type = "input")
             vars_subsector_out = self.build_varlist(subsector, variable_type = "output")
-            vars_req += vars_subsector_req
+            vars_in += vars_subsector_in
             vars_out += vars_subsector_out
             if build_df_q:
-                subsectors_out += [subsector for x in vars_subsector]
+                subsectors_out += [subsector for x in vars_subsector_out]
+                subsectors_in += [subsector for x in vars_subsector_in]
 
         if build_df_q:
-            vars_req = pd.DataFrame({"subsector": subsectors_out, "variable": vars_req}).sort_values(by = ["subsector", "variable"]).reset_index(drop = True)
+            vars_in = pd.DataFrame({"subsector": subsectors_in, "variable": vars_in}).sort_values(by = ["subsector", "variable"]).reset_index(drop = True)
             vars_out = pd.DataFrame({"subsector": subsectors_out, "variable": vars_out}).sort_values(by = ["subsector", "variable"]).reset_index(drop = True)
 
-        return vars_req, vars_out
+        return vars_in, vars_out
 
 
     ##  function to retrive multiple variables that, across categories, must sum to some value. Gives a correction threshold to allow for small errors
@@ -2192,9 +2237,16 @@ class ModelAttributes:
                 df_out.append(self.array_to_df(arr_driver*arr_ef, dict_vars[var]))
         return df_out
 
-    ##  function to add GDP based on value added
-    def manage_internal_variable_to_df(self, df_in:pd.DataFrame, subsector: str, internal_variable: str, component_variable: str, attribute_sum_specification_field: str, action: str = "add"):
-        # get the gdp field
+    ##  function to add a variable based on components
+    def manage_internal_variable_to_df(self,
+        df_in:pd.DataFrame,
+        subsector: str,
+        internal_variable: str,
+        component_variable: str,
+        attribute_sum_specification_field: str,
+        action: str = "add"
+    ):
+        # get the field to add
         field_check = self.build_varlist(subsector, variable_subsec = internal_variable)[0]
         valid_actions = ["add", "remove", "check"]
         if action not in valid_actions:

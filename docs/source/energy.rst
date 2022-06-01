@@ -75,26 +75,34 @@ The following variables are required for each category ``$CAT-TECHNOLOGY$``. Not
 
 
 
-Other Energy: Stationary Emissions and Carbon Capture and Sequestration (CCS)
-=============================================================================
+Stationary Combustion and Other Energy (SCOE)
+=============================================
+
+
+.. note:: | Energy efficiency factor relative for delivery of heat energy using coal versus delivery using electricity. Represents technological efficiency for the system of heat energy delivery.
+          |
+          | For example, a value of 0.8 would indicate that 80% of the input energy results in output energy (e.g., 1.25 TJ becomes 1 TJ) by final delivery, while a value of 1 would indicate perfect efficiency (1 TJ in  :math:`\implies` 1 TJ out)
+          |
+          | At time :math:`t = 0`, the efficiencies are used to calculate an end-user demand for energy, which elasticities are applied to to estimate an output demand. In subsequent time steps, as the mix of energy use changes, input energy demands are calculated using the efficiency factors of different mixes of fuels.
+
 
 Variables by Partial Category
 -----------------------------
 
-OESC (**O**\ther **E**\nergy: **S**\tationary emissions and **C**\arbon capture and sequestration) captures energy emissions and sequestration not captured elsewhere in energy, including stationary emissions in buildings (split out by differing drivers) and carbon capture and sequestration technology. OESC requires the following variables.
+SCOE (**S**\tationary **C**\tombustion and **O**\tther **E**\tnergy) captures stationary emissions in buildings (split out by differing drivers) and other emissions not captured elsewhere. SCOE requires the following variables.
 
-.. csv-table:: For different OESC categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
-   :file: ./csvs/table_varreqs_by_partial_category_en_oesc.csv
+.. csv-table:: For different SCOE categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
+   :file: ./csvs/table_varreqs_by_partial_category_en_scoe.csv
    :header-rows: 1
 
 
 Categories
 ----------
 
-OESC is divided into the following categories, which
+SCOE is divided into the following categories, which
 
-.. csv-table:: Other categories (``$CAT-OESC$`` attribute table)
-   :file: ./csvs/attribute_cat_oesc.csv
+.. csv-table:: Other categories (``$CAT-SCOE$`` attribute table)
+   :file: ./csvs/attribute_cat_scoe.csv
    :header-rows: 1
 
 ----
@@ -121,7 +129,7 @@ Variables by Category
 
 For each industrial category ``$CAT-INDUSTRY$``, the following variables are required.
 
-.. csv-table:: For different OESC categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
+.. csv-table:: For different SCOE categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
    :file: ./csvs/table_varreqs_by_category_en_inen.csv
    :header-rows: 1
 
@@ -158,7 +166,7 @@ Variables by Category
 
 For each industrial category ``$CAT-TRANSPORTATION$``, the following variables are required.
 
-.. csv-table:: For different OESC categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
+.. csv-table:: For different SCOE categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
    :file: ./csvs/table_varreqs_by_category_en_trns.csv
    :header-rows: 1
 
