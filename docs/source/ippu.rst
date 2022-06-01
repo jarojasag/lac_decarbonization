@@ -12,6 +12,18 @@ Variables by Category
 
 Industrial processes and product use is used exclusively to account for emissions from the industrial sector **excluding** industrial energy. Examples of emissions in IPPU include HFCs emitted from refrigeration, etc.
 
+.. csv-table:: For each industrial category ``$CAT-INDUSTRY$``, the following variables are required.
+   :file: ./csvs/table_varreqs_by_category_ip_ippu.csv
+   :header-rows: 1
+
+
+Variables by Partial Category
+-----------------------------
+
+.. csv-table:: For different industrial categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
+   :file: ./csvs/table_varreqs_by_partial_category_ip_ippu.csv
+   :header-rows: 1
+
 
 Categories
 ----------

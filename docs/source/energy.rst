@@ -166,7 +166,7 @@ Variables by Category
 
 For each industrial category ``$CAT-TRANSPORTATION$``, the following variables are required.
 
-.. csv-table:: For different SCOE categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
+.. csv-table:: For different Transportation categories, trajectories of the following variables are needed.
    :file: ./csvs/table_varreqs_by_category_en_trns.csv
    :header-rows: 1
 
