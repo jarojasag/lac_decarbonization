@@ -1146,7 +1146,7 @@ class ModelAttributes:
 
     ##  function to check the liquid waste/population crosswalk in liquid waste
     def check_inen_enfu_crosswalk(self):
-        return self.check_subsector_attribute_table_crosswalk("Industrial Energy", "Energy Fuels", type_primary = "varreqs_partial")
+        return self.check_subsector_attribute_table_crosswalk("Industrial Energy", "Energy Fuels", type_primary = "varreqs_partial", injection_q = False)
 
 
     ##  function to check that the land use attribute tables are specified

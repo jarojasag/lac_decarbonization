@@ -6,15 +6,22 @@ Input,CCSQ Efficiency Factor for Heat Energy from Natural Gas,"Energy efficiency
 Input,CCSQ Energy Demand Per Mass of :math:`\text{CO}_2` Captured,,"``energy_intensity_ccsq_$CAT-CCSQ$_$UNIT-ENERGY$_per_$UNIT-MASS$_$EMISSION-GAS$`` (``$EMISSION-GAS$ = co2``, ``$UNIT-ENERGY$ = gj``, ``$UNIT-MASS$ = tonne``)",," | See the `World Resources Institute <https://www.wri.org/insights/direct-air-capture-resource-considerations-and-costs-carbon-removal>_` for information on direct air capture.
  | 
  | See etc.",,,,1,1,1,none,0,0,0
-Input,CCSQ Fraction Energy Electricity,Fraction of total energy demand required to operate ``$CAT-CCSQ$`` in electric energy.,``frac_ccsq_energydem_$CAT-CCSQ$_electricity``,,,,,,0,1,1,none,0,0,0
-Input,CCSQ Fraction Energy Heat,Fraction of total energy demand required to operate ``$CAT-CCSQ$`` in heat energy.,``frac_ccsq_energydem_$CAT-CCSQ$_heat``,,,,,,0,1,1,none,0,0,0
-Input,CCSQ Fraction Heat Energy Demand Geothermal,Fraction of Heat Energy demand provided by geothermal energy,``frac_ccsq_heat_energy_$CAT-CCSQ$_geothermal``,,,,,,0,1,1,``fuel_geothermal``,0,0,1
-Input,CCSQ Fraction Heat Energy Demand Hydrogen,Fraction of Heat Energy demand provided by hydrogen,``frac_ccsq_heat_energy_$CAT-CCSQ$_hydrogen``,,,,,,0,1,1,``fuel_hydrogen``,0,0,1
-Input,CCSQ Fraction Heat Energy Demand Natural Gas,Fraction of Heat Energy demand provided by natural gas,``frac_ccsq_heat_energy_$CAT-CCSQ$_natural_gas``,,,,,,0,1,1,``fuel_natural_gas``,0,0,1
+Input,CCSQ Fraction Energy Electricity,Fraction of total energy demand required to operate ``$CAT-CCSQ$`` that is electric energy.,``frac_ccsq_energydem_$CAT-CCSQ$_electricity``,,,,,,0,1,1,none,0,0,0
+Input,CCSQ Fraction Energy Heat,Fraction of total energy demand required to operate ``$CAT-CCSQ$`` that is heat energy (from fuels).,``frac_ccsq_energydem_$CAT-CCSQ$_heat``,,,,,,0,1,1,none,0,0,0
+Input,CCSQ Fraction Heat Energy Demand Geothermal," | Fraction of total **point-of-use** heat energy demand required to operate ``$CAT-CCSQ$`` from geothermal fuels.
+ | 
+ | This fraction will differ from the fraction of total consumption. ",``frac_ccsq_heat_energy_$CAT-CCSQ$_geothermal``,,,,,,0,1,1,``fuel_geothermal``,0,0,1
+Input,CCSQ Fraction Heat Energy Demand Hydrogen," | Fraction of total **point-of-use** heat energy demand required to operate ``$CAT-CCSQ$`` from hydrogen fuels.
+ | 
+ | This fraction will differ from the fraction of total consumption. ",``frac_ccsq_heat_energy_$CAT-CCSQ$_hydrogen``,,,,,,0,1,1,``fuel_hydrogen``,0,0,1
+Input,CCSQ Fraction Heat Energy Demand Natural Gas," | Fraction of total **point-of-use** heat energy demand required to operate ``$CAT-CCSQ$`` from natural.
+ | 
+ | This fraction will differ from the fraction of total consumption. ",``frac_ccsq_heat_energy_$CAT-CCSQ$_natural_gas``,,,,,,0,1,1,``fuel_natural_gas``,0,0,1
 Output,:math:`\text{CH}_4` Emissions from CCSQ,Emissions of :math:`\text{CH}_4` from fuel use for heat energy in carbon capture and sequestration.,``emission_co2e_$EMISSION-GAS$_ccsq_$CAT-CCSQ$`` (``$EMISSION-GAS$ = ch4``),,,,,,1,1,1,none,0,0,0
 Output,:math:`\text{CO}_2` Emissions from CCSQ,**Net** emissions :math:`\text{CO}_2` of from carbon capture and sequestration. Calculated as :math:`C_{emitted} - C_{sequestered}`. A negative number represents a net removal of :math:`\text{CO}_2` from the atmosphere.,``emission_co2e_$EMISSION-GAS$_ccsq_$CAT-CCSQ$`` (``$EMISSION-GAS$ = co2``),,,,,,1,1,1,none,0,0,0
 Output,:math:`\text{N}_2\text{O}` Emissions from CCSQ,Emissions of :math:`\text{N}_2\text{O}` from fuel use for heat energy in carbon capture and sequestration.,``emission_co2e_$EMISSION-GAS$_ccsq_$CAT-CCSQ$`` (``$EMISSION-GAS$ = n2o``),,,,,,1,1,1,none,0,0,0
-Output,CCSQ Energy Demand Electricity,,``energy_demand_ccsq_electricity``,,,,,,1,1,1,``fuel_electricity``,0,0,0
-Output,CCSQ Energy Demand Geothermal,,``energy_demand_ccsq_geothermal``,,,,,,1,1,1,``fuel_geothermal``,1,0,0
-Output,CCSQ Energy Demand Hydrogen,,``energy_demand_ccsq_hydrogen``,,,,,,1,1,1,``fuel_hydrogen``,1,0,0
-Output,CCSQ Energy Demand Natural Gas,,``energy_demand_ccsq_natural_gas``,,,,,,1,1,1,``fuel_natural_gas``,1,0,0
+Output,CCSQ Energy Consumption Electricity,,``energy_consumption_ccsq_electricity``,,,,,,1,1,1,``fuel_electricity``,0,0,0
+Output,CCSQ Energy Consumption Geothermal,,``energy_consumption_ccsq_geothermal``,,,,,,1,1,1,``fuel_geothermal``,1,0,0
+Output,CCSQ Energy Consumption Hydrogen,,``energy_consumption_ccsq_hydrogen``,,,,,,1,1,1,``fuel_hydrogen``,1,0,0
+Output,CCSQ Energy Consumption Natural Gas,,``energy_consumption_ccsq_natural_gas``,,,,,,1,1,1,``fuel_natural_gas``,1,0,0
+Output,Total Non-Electrical Heat Energy Demand from CCSQ,Demand for non-electric energy at end use--does not include inflation to demands due to systemic inefficiencies.,``energy_demand_ccsq_non_electric_total``,,,,,,,,,,,,

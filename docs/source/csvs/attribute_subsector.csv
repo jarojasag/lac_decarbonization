@@ -1,8 +1,10 @@
 ﻿Sector,Subsector,``$ABBREVIATION-SUBSECTOR$``,Primary Category,Description,Model Language
 AFOLU,Agriculture,``agrc``,``$CAT-AGRICULTURE$``,Agricultural activity ....,Python
-AFOLU,Forest,``frst``,``$CAT-FOREST$``,Forest activity ....,Python
-AFOLU,Land Use,``lndu``,``$CAT-LANDUSE$``,Land use activity ....,Python
-AFOLU,Livestock,``lvst``,``$CAT-LIVESTOCK$``,Livestock activity ....,Python
+AFOLU,Forest,``frst``,``$CAT-FOREST$``,"Forest activity, including sequestration and",Python
+AFOLU,Land Use,``lndu``,``$CAT-LANDUSE$``,"Land use activity, including deforestation and transition between land use categories.",Python
+AFOLU,Livestock Manure Management,``lsmm``,``$CAT-MANURE-MANAGEMENT$``,Pathways for treatment and use of manure. Includes sonnections to the soil management subsector in the form of soil fertilizer. ,Python
+AFOLU,Livestock,``lvst``,``$CAT-LIVESTOCK$``,Livestock activity and emissions. ,Python
+AFOLU,Soil Management,``soil``,``$CAT-SOIL-MANAGEMENT$``,Soil carbon and fertilizer application. Treated separately from cropland to capture different soil management regimes.,Python
 Circular Economy,Liquid Waste,``wali``,``$CAT-WASTE-LIQUID$``,Activity (primarily demands and pathways) driving the generation of liquid waste.,Python
 Circular Economy,Solid Waste,``waso``,``$CAT-WASTE-SOLID$``,Activity (demand and emission) associated with emissions from domestic and industrial solid waste disposal and treatment ,Python
 Circular Economy,Wastewater Treatment,``trww``,``$CAT-WASTEWATER-TREATMENT$``,Wastewater treatment options and characteristics,Python
@@ -16,4 +18,4 @@ Energy,Transportation,``trns``,``$CAT-TRANSPORTATION$``,Activity (demand and emi
 Energy,Transportation Demand,``trde``,``$CAT-TRANSPORTATION-DEMAND$``,"Different drivers of demand for transportation, integrating cross-sector demand effects.",Pyhon
 IPPU,IPPU,``ippu``,``$CAT-INDUSTRY$``,Activity (demand and emission) associated with industrial processes and product use,Python
 Socioeconomic,Economy,``econ``,``$CAT-ECONOMY$``,Economic activity driving emissions.,Python
-Socioeconomic,General,``gnrl``,``$CAT-GENERAL$``,"Other non-economic drivers of emissios, including demographics.",Python
+Socioeconomic,General,``gnrl``,``$CAT-GENERAL$``,"Other non-economic drivers of emissions, including demographics.",Python

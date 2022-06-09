@@ -24,6 +24,9 @@ Agriculture requires the following variables.
    :header-rows: 1
 .. :widths: 20, 30, 30, 10, 10
 
+.. note::  | To reduce the number of potential variables, types are associated with some key physical characteristics that are used to estimate :math:`\text{N}_2\text{O}` emissions, including :math:`\text{N}_{AG(T)}`, :math:`\text{N}_{BG(T)}`, :math:`\text{R}_{AG(T)}`, :math:`\text{RS}_{T}`, and :math:`DRY`, which are derived from Table 11.1 in Volume 4, Chapter 11 of the `IPCC Guidelines for National Greenhouse Gas Inventories <https://www.ipcc-nggip.iges.or.jp/public/2019rf/pdf/4_Volume4/19R_V4_Ch11_Soils_N2O_CO2.pdf>`_.
+ |
+ | These variables are used in Equations 11.6 and 11.7 (Volume 4) of the IPCC NGHGI to estimate :math:`\text{N}_2\text{O}`
 
 Categories
 ----------
@@ -145,4 +148,27 @@ Livestock should be divided into the following categories, given by ``$CAT-LIVES
 
 .. csv-table:: Livestock categories (``$CAT-LIVESTOCK$`` attribute table)
    :file: ./csvs/attribute_cat_livestock.csv
+   :header-rows: 1
+
+
+
+Livestock Manure Management
+===========================
+
+EXPLANATION HERE
+
+Variables by Category
+---------------------
+
+.. csv-table:: For each livestock category, trajectories of the following variables are needed.
+   :file: ./csvs/table_varreqs_by_category_af_lsmm.csv
+   :header-rows: 1
+
+Categories
+----------
+
+Manure management is divided into the following categories, given by ``$CAT-MANURE-MANAGEMENT$``.
+
+.. csv-table:: Livestock categories (``$CAT-MANURE-MANAGEMENT$`` attribute table)
+   :file: ./csvs/attribute_cat_manure_management.csv
    :header-rows: 1

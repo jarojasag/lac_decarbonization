@@ -1,17 +1,22 @@
-===================================
-MODELNAMEHERE Documentation
-===================================
+=======================
+SISEPUEDE Documentation
+=======================
 
-**MODELNAMEHERE** (Some Acronym Depends) is an
-integrated Python/Julia model used to facilitate exploratory analyses of decarbonization
-transformations too sectors at the country level. It
+SISEPUEDE (**SI**\tmulating **SE**\tctoral **P**\tathways and **U**\tncertainty **E**\txploration for **DE**\tcarbonization) is an integrated Python/Julia modeling system used to facilitate exploratory analyses of decarbonization transformations too sectors at the country level. It includes several key components:
+
+- A data pipeline management system
+
+- Uncertainty specification and trajectory sampling mechanism
+
+- Sectoral models of emissions
+
 
 Check out the :doc:`General Data <../general_data.htm>` section to get started.
 
 About the Model
 ===============
 
-**MODELNAMEHERE** is a compartmentalized, sector-based model of emissions based primarily on two key publications from the IPCC:
+SISEPUEDE is a compartmentalized, sector-based model of emissions based primarily on two key publications from the IPCC:
 
 #. `2006 IPCC Guidelines for National Greenhouse Gas Inventories <https://www.ipcc-nggip.iges.or.jp/public/2006gl/index.html>`_ and
 
@@ -20,6 +25,7 @@ About the Model
 These two documents are often abbreviated as **V##, C## IPCC GNGHGI** in attribute tables. In this notation, **V##** gives the volume number, while **C##** gives the chapter number. For example, V5, C6 refers to Volume 5, Chapter 6 (*Wastewaster Treatment and Discharge*).
 
 **EXPAND**
+
 
 Metavariables and Constructing Input Parameters
 -----------------------------------------------

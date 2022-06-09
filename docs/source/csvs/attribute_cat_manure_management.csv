@@ -1,0 +1,12 @@
+﻿Category Name,``$CAT-MANURE-MANAGEMENT$``,Definition
+Uncovered Anaerobic Lagoon,``anaerobic_lagoon``,
+Liquid Slurry and Pit Storage,``storage_pit``," | Definition from V4, C10, Table 10.18 IPCC GNGHGI 2019R: ""Manure is stored as excreted or with some minimal addition of water or bedding material in tanks or ponds outside the animal housing. Manure is removed and spread on fields once or more in a calendar year. Manure is agitated before removal from the tank/ponds to ensure that most of the VS are removed from the tank.""
+ | 
+ | "
+Deep Bedding,``deep_bedding``,"Default uses average of 1-12 Months. Transformations can include shortening deep bedding. See V4, C10, Table 10.17 IPCC GNGHGI 2019R"
+Solid Storage,``storage_solid``," | Definition from V4, C10, Table 10.18 IPCC GNGHGI 2019R: ""The storage of manure, typically for a period of several months, in unconfined piles or stacks. Manure is able to be stacked due to the presence of a sufficient amount of bedding material or loss of moisture by evaporation.
+Solid stores can be covered or compacted. In some cases, bulking agent or additives are added .""
+ | 
+ | Transformations can improve methane correction factors for VS in this pathway by including covering/compacting or adding bulking agents or additives that reduce GHG generation."
+Dry Lot,``dry_lot``," | Definition from V4, C10, Table 10.18 IPCC GNGHGI 2019R: ""A paved or unpaved open confinement area without any significant vegetative cover. Dry lots do not require the addition of bedding to control moisture. Manure may be removed periodically and spread on fields."""
+Daily Spread,``daily_spread``," | Definition from V4, C10, Table 10.18 IPCC GNGHGI 2019R: ""Manure is routinely removed from a confinement facility and is applied to cropland or pasture within 24 hours of excretion."""

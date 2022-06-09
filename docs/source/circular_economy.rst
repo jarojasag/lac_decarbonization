@@ -45,6 +45,8 @@ Wastewater Treatment
 
 Wastewater can be treated using a variety of pathways. Note that aerobic and septic pathways produce sludge, which can disposed of in a variety of ways; the **MODELNAMEHERE** model does not currently integrate sludge removal and disposal from aerobic and septic treatment pathways.
 
+.. note:: IPCC accounting (V5, C6) calls for emissions from secondary sludge extracted from aerobic WWTPs to be divided between decentralized treatment (uncollected) and centralized treatment, where centralized aerobic treatment includes sludge treatment on-site, accounting for emissions of sludge due to treatment--e.g., from anaerobic decomposition--in the Wastewater Treatment sector. Instead, **SISEPUEDE** accounts for all emissions from sludge treatment in the Solid Waste sector.
+
 Variables by Category
 ---------------------
 

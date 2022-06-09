@@ -15,12 +15,23 @@ class AFOLU:
 
     def __init__(self, attributes: ds.ModelAttributes):
 
+        # some subector reference variables
+        self.subsec_name_agrc = "Agriculture"
+        self.subsec_name_econ = "Economy"
+        self.subsec_name_frst = "Forest"
+        self.subsec_name_gnrl = "General"
+        self.subsec_name_lndu = "Land Use"
+        self.subsec_name_lvst = "Livestock"
+        self.subsec_name_soil = "Soil Management"
+
+        # initialzie dynamic variables
         self.model_attributes = attributes
         self.required_dimensions = self.get_required_dimensions()
         self.required_subsectors, self.required_base_subsectors = self.get_required_subsectors()
         self.required_variables, self.output_variables = self.get_afolu_input_output_fields()
 
-        ##  set some model fields to connect to the attribute tables
+
+        ##  SET MODEL FIELDS
 
         # agricultural model variables
         self.modvar_agrc_area_prop_calc = "Cropland Area Proportion"
@@ -29,7 +40,8 @@ class AFOLU:
         self.modvar_agrc_ef_ch4 = ":math:\\text{CH}_4 Crop Anaerobic Decomposition Emission Factor"
         self.modvar_agrc_ef_co2 = ":math:\\text{CO}_2 Crop Soil Carbon Emission Factor"
         self.modvar_agrc_ef_co2_yield = ":math:\\text{CO}_2 Crop Biomass Emission Factor"
-        self.modvar_agrc_ef_n2o = ":math:\\text{N}_2\\text{O} Crop Biomass Burning Emission Factor"
+        self.modvar_agrc_ef_n2o_burning = ":math:\\text{N}_2\\text{O} Crop Biomass Burning Emission Factor"
+        self.modvar_agrc_ef_n2o_fertilizer = ":math:\\text{N}_2\\text{O} Crop Fertilizer and Lime Emission Factor"
         self.modvar_agrc_elas_crop_demand_income = "Crop Demand Income Elasticity"
         self.modvar_agrc_emissions_ch4_crops = ":math:\\text{CH}_4 Emissions from Crop Activity"
         self.modvar_agrc_emissions_co2_crops = ":math:\\text{CO}_2 Emissions from Crop Activity"
@@ -38,6 +50,7 @@ class AFOLU:
         self.modvar_agrc_net_imports = "Change to Net Imports of Crops"
         self.modvar_agrc_yf = "Crop Yield Factor"
         self.modvar_agrc_yield = "Crop Yield"
+
         # forest model variables
         self.modvar_frst_elas_wood_demand = "Elasticity of Wood Products Demand to Value Added"
         self.modvar_frst_ef_fires = "Forest Fire Emission Factor"
@@ -45,6 +58,7 @@ class AFOLU:
         self.modvar_frst_emissions_sequestration = ":math:\\text{CO}_2 Emissions from Forest Sequestration"
         self.modvar_frst_emissions_methane = ":math:\\text{CH}_4 Emissions from Forests"
         self.modvar_frst_sq_co2 = "Forest Sequestration Emission Factor"
+
         # land use model variables
         self.modvar_lndu_area_by_cat = "Land Use Area"
         self.modvar_lndu_ef_co2_conv = ":math:\\text{CO}_2 Land Use Conversion Emission Factor"
@@ -59,6 +73,7 @@ class AFOLU:
         self.modvar_lndu_prob_transition = "Unadjusted Land Use Transition Probability"
         self.modvar_lndu_reallocation_factor = "Land Use Yield Reallocation Factor"
         self.modvar_lndu_vdes = "Vegetarian Diet Exchange Scalar"
+
         # livestock model variables
         self.modvar_lvst_carrying_capacity_scalar = "Carrying Capacity Scalar"
         self.modvar_lvst_dry_matter_consumption = "Daily Dry Matter Consumption"
@@ -102,7 +117,7 @@ class AFOLU:
     def get_required_subsectors(self):
         subsectors = self.model_attributes.get_sector_subsectors("AFOLU")
         subsectors_base = subsectors.copy()
-        subsectors += ["Economy", "General"]
+        subsectors += [self.subsec_name_econ, "General"]
         return subsectors, subsectors_base
 
     def get_required_dimensions(self):
@@ -229,7 +244,7 @@ class AFOLU:
     ##  check the shape of transition/emission factor matrices sent to project_land_use
     def check_markov_shapes(self, arrs: np.ndarray, function_var_name:str):
             # get land use info
-            pycat_lndu = self.model_attributes.get_subsector_attribute("Land Use", "pycategory_primary")
+            pycat_lndu = self.model_attributes.get_subsector_attribute(self.subsec_name_lndu, "pycategory_primary")
             attr_lndu = self.model_attributes.dict_attributes[pycat_lndu]
 
             if len(arrs.shape) < 3:
@@ -254,7 +269,7 @@ class AFOLU:
         fields_efc = self.model_attributes.dict_model_variables_to_variables[self.modvar_lndu_ef_co2_conv]
         sf.check_fields(df_ordered_trajectories, fields_pij + fields_efc)
 
-        pycat_landuse = self.model_attributes.get_subsector_attribute("Land Use", "pycategory_primary")
+        pycat_landuse = self.model_attributes.get_subsector_attribute(self.subsec_name_lndu, "pycategory_primary")
 
         n_categories = len(self.model_attributes.dict_attributes[pycat_landuse].key_values)
 
@@ -325,11 +340,11 @@ class AFOLU:
         self.check_markov_shapes(arrs_efs, "arrs_efs")
 
         # get attributes
-        pycat_agrc = self.model_attributes.get_subsector_attribute("Agriculture", "pycategory_primary")
+        pycat_agrc = self.model_attributes.get_subsector_attribute(self.subsec_name_agrc, "pycategory_primary")
         attr_agrc = self.model_attributes.dict_attributes[pycat_agrc]
-        pycat_lndu = self.model_attributes.get_subsector_attribute("Land Use", "pycategory_primary")
+        pycat_lndu = self.model_attributes.get_subsector_attribute(self.subsec_name_lndu, "pycategory_primary")
         attr_lndu = self.model_attributes.dict_attributes[pycat_lndu]
-        pycat_lvst = self.model_attributes.get_subsector_attribute("Livestock", "pycategory_primary")
+        pycat_lvst = self.model_attributes.get_subsector_attribute(self.subsec_name_lvst, "pycategory_primary")
         attr_lvst = self.model_attributes.dict_attributes[pycat_lvst]
         # set some commonly called attributes and indices in arrays
         m = attr_lndu.n_key_values
@@ -459,7 +474,7 @@ class AFOLU:
         self.check_markov_shapes(arrs_efs, "arrs_efs")
 
         # get land use info
-        pycat_lndu = self.model_attributes.get_subsector_attribute("Land Use", "pycategory_primary")
+        pycat_lndu = self.model_attributes.get_subsector_attribute(self.subsec_name_lndu, "pycategory_primary")
         attr_lndu = self.model_attributes.dict_attributes[pycat_lndu]
 
         # intilize the land use and conversion emissions array
@@ -557,10 +572,10 @@ class AFOLU:
 
 
         ##  CATEGORY INITIALIZATION
-        pycat_agrc = self.model_attributes.get_subsector_attribute("Agriculture", "pycategory_primary")
-        pycat_frst = self.model_attributes.get_subsector_attribute("Forest", "pycategory_primary")
-        pycat_lndu = self.model_attributes.get_subsector_attribute("Land Use", "pycategory_primary")
-        pycat_lvst = self.model_attributes.get_subsector_attribute("Livestock", "pycategory_primary")
+        pycat_agrc = self.model_attributes.get_subsector_attribute(self.subsec_name_agrc, "pycategory_primary")
+        pycat_frst = self.model_attributes.get_subsector_attribute(self.subsec_name_frst, "pycategory_primary")
+        pycat_lndu = self.model_attributes.get_subsector_attribute(self.subsec_name_lndu, "pycategory_primary")
+        pycat_lvst = self.model_attributes.get_subsector_attribute(self.subsec_name_lvst, "pycategory_primary")
         # attribute tables
         attr_agrc = self.model_attributes.dict_attributes[pycat_agrc]
         attr_frst = self.model_attributes.dict_attributes[pycat_frst]
@@ -608,7 +623,7 @@ class AFOLU:
 
         # variables requried to estimate demand
         vec_modvar_lvst_pop_init = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_pop_init, True, "array_base")[0]
-        fields_lvst_elas = self.model_attributes.switch_variable_category("Livestock", self.modvar_lvst_elas_lvst_demand, "demand_elasticity_category")
+        fields_lvst_elas = self.model_attributes.switch_variable_category(self.subsec_name_lvst, self.modvar_lvst_elas_lvst_demand, "demand_elasticity_category")
         arr_lvst_elas_demand = np.array(df_afolu_trajectories[fields_lvst_elas])
         # get the "vegetarian" factor and use to estimate livestock pop
         vec_lvst_demscale = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.model_socioeconomic.modvar_gnrl_frac_eating_red_meat, False, "array_base", var_bounds = (0, np.inf))
@@ -639,7 +654,7 @@ class AFOLU:
         vec_agrc_diet_exchange_scalar = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_vdes, False, "array_base", var_bounds = (0, np.inf))
         vec_agrc_demscale = vec_lvst_demscale + vec_agrc_diet_exchange_scalar - vec_lvst_demscale*vec_agrc_diet_exchange_scalar
         # get categories that need to be scaled
-        vec_agrc_scale_demands_for_veg = np.array(self.model_attributes.get_ordered_category_attribute("Agriculture", "apply_vegetarian_exchange_scalar"))
+        vec_agrc_scale_demands_for_veg = np.array(self.model_attributes.get_ordered_category_attribute(self.subsec_name_agrc, "apply_vegetarian_exchange_scalar"))
         arr_agrc_demscale = np.outer(vec_agrc_demscale, vec_agrc_scale_demands_for_veg)
         arr_agrc_demscale = arr_agrc_demscale + np.outer(np.ones(len(vec_agrc_demscale)), 1 - vec_agrc_scale_demands_for_veg)
         arr_agrc_nonfeeddem_yield = self.project_per_capita_demand(vec_agrc_yield_init_nonlvstfeed, vec_pop, vec_rates_gdp_per_capita, arr_agrc_elas_crop_demand, arr_agrc_demscale, float)
@@ -707,7 +722,7 @@ class AFOLU:
 
         # get ordered fields from land use
         fields_lndu_forest_ordered = [self.model_attributes.matchstring_landuse_to_forests + x for x in self.model_attributes.dict_attributes[pycat_frst].key_values]
-        arr_area_frst = np.array(df_land_use[self.model_attributes.build_varlist("Land Use", variable_subsec = self.modvar_lndu_area_by_cat, restrict_to_category_values = fields_lndu_forest_ordered)])
+        arr_area_frst = np.array(df_land_use[self.model_attributes.build_varlist(self.subsec_name_lndu, variable_subsec = self.modvar_lndu_area_by_cat, restrict_to_category_values = fields_lndu_forest_ordered)])
         # get different variables
         arr_frst_ef_sequestration = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_sq_co2, True, "array_units_corrected")
         arr_frst_ef_methane = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_ef_ch4, True, "array_units_corrected")
@@ -727,21 +742,21 @@ class AFOLU:
         #####################
 
         # get area of cropland
-        field_crop_array = self.model_attributes.build_varlist("Land Use", variable_subsec = self.modvar_lndu_area_by_cat, restrict_to_category_values = [self.cat_lndu_crop])[0]
+        field_crop_array = self.model_attributes.build_varlist(self.subsec_name_lndu, variable_subsec = self.modvar_lndu_area_by_cat, restrict_to_category_values = [self.cat_lndu_crop])[0]
         vec_cropland_area = np.array(df_land_use[field_crop_array])
         # fraction of cropland represented by each crop
         arr_agrc_frac_cropland_area = self.check_cropland_fractions(df_agrc_frac_cropland, "calculated")
         arr_agrc_crop_area = (arr_agrc_frac_cropland_area.transpose()*vec_cropland_area.transpose()).transpose()
         # unit-corrected emission factors
-        arr_agrc_ef_ch4 = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_ch4, True, "array_units_corrected")
+        arr_agrc_ef_ch4 = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_ch4, True, "array_units_corrected", expand_to_all_cats = True)
         arr_agrc_ef_co2 = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_co2, True, "array_units_corrected")
         arr_agrc_ef_co2_yield = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_co2_yield, True, "array_units_corrected")
-        arr_agrc_ef_n2o = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_n2o, True, "array_units_corrected")
+        arr_agrc_ef_n2o = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_n2o_burning, True, "array_units_corrected")
 
         # add to output dataframe
         df_out += [
             self.model_attributes.array_to_df(arr_agrc_crop_area, self.modvar_agrc_area_crop),
-            self.model_attributes.array_to_df(arr_agrc_ef_ch4*arr_agrc_crop_area, self.modvar_agrc_emissions_ch4_crops),
+            self.model_attributes.array_to_df(arr_agrc_ef_ch4*arr_agrc_crop_area, self.modvar_agrc_emissions_ch4_crops, reduce_from_all_cats_to_specified_cats = True),
             self.model_attributes.array_to_df(arr_agrc_ef_co2*arr_agrc_crop_area + arr_agrc_yield*arr_agrc_ef_co2_yield, self.modvar_agrc_emissions_co2_crops),
             self.model_attributes.array_to_df(arr_agrc_ef_n2o*arr_agrc_crop_area, self.modvar_agrc_emissions_n2o_crops)
         ]
@@ -753,7 +768,7 @@ class AFOLU:
         ###################
 
         # get area of grassland/pastures
-        field_lvst_graze_array = self.model_attributes.build_varlist("Land Use", variable_subsec = self.modvar_lndu_area_by_cat, restrict_to_category_values = [self.cat_lndu_grazing])[0]
+        field_lvst_graze_array = self.model_attributes.build_varlist(self.subsec_name_lndu, variable_subsec = self.modvar_lndu_area_by_cat, restrict_to_category_values = [self.cat_lndu_grazing])[0]
         vec_lvst_graze_area = np.array(df_land_use[field_lvst_graze_array])
         # estimate the total number of livestock that are raised, then get emission factor
         arr_lvst_emissions_ch4_ef = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_ef_ch4_ef, True, "array_units_corrected")
@@ -767,6 +782,19 @@ class AFOLU:
             self.model_attributes.array_to_df(arr_lvst_emissions_n2o_mm*arr_lvst_pop, self.modvar_lvst_emissions_n2o_mm),
             self.model_attributes.array_to_df(arr_lvst_pop, self.modvar_lvst_pop)
         ]
+
+
+        #####################################
+        #    LIVESTOCK MANURE MANAGEMENT    #
+        #####################################
+
+
+
+        #########################
+        #    SOIL MANAGEMENT    #
+        #########################
+        
+
 
 
         df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
