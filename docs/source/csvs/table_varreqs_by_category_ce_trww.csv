@@ -9,7 +9,7 @@ Input,Fraction of Phosphorous Removed in Treatment,,``frac_trww_p_removed_$CAT-W
 Input,Fraction of Total Organic Waste Removed in Treatment,,``frac_trww_tow_removed_$CAT-WASTEWATER-TREATMENT$``,," | See V5, C6, Equation 6.3D (2019R) for total oranics in domestic wastewater effluent
  | 
  | See Table 6.6B for removal fractions by treatment type",,,0,0.8,1.2
-Input,Methane Correction Factor,,``mcf_trww_$CAT-WASTEWATER-TREATMENT$``,,See Table 6.3 in IPCC Guidelines for NGHG Inventories,,,0,0.8,1.2
+Input,Wastewater Treatment Methane Correction Factor,,``mcf_trww_$CAT-WASTEWATER-TREATMENT$``,,See Table 6.3 in IPCC Guidelines for NGHG Inventories,,,0,0.8,1.2
 Output,:math:`\text{CH}_4` Emissions from Wastewater Treatment,Methane emissions from wastewater treatment,``emission_co2e_$EMISSION-GAS$_trww_$CAT-WASTEWATER-TREATMENT$_treatment`` (``$EMISSION-GAS$ = ch4``),,,,,1,1,1
 Output,:math:`\text{N}_2\text{O}` Emissions from Wastewater Effluent,Nitrus oxide emissions from protein content in wastewater.,``emission_co2e_$EMISSION-GAS$_trww_$CAT-WASTEWATER-TREATMENT$_effluent`` (``$EMISSION-GAS$ = n2o``),,,,,1,1,1
 Output,:math:`\text{N}_2\text{O}` Emissions from Wastewater Treatment,Nitrus oxide emissions from treatment processes.,``emission_co2e_$EMISSION-GAS$_trww_$CAT-WASTEWATER-TREATMENT$_treatment`` (``$EMISSION-GAS$ = n2o``),,,,,1,1,1

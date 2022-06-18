@@ -293,8 +293,9 @@ class ModelAttributes:
 
         # temporary - but read from table at some point
         self.varchar_str_emission_gas = "$EMISSION-GAS$"
-        self.varchar_str_unit_length = "$UNIT-LENGTH$"
+        self.varchar_str_unit_area = "$UNIT-AREA$"
         self.varchar_str_unit_energy = "$UNIT-ENERGY$"
+        self.varchar_str_unit_length = "$UNIT-LENGTH$"
         self.varchar_str_unit_mass = "$UNIT-MASS$"
         self.varchar_str_unit_volume = "$UNIT-VOLUME$"
 
@@ -355,11 +356,16 @@ class ModelAttributes:
 
 
     ##  function to ensure a sector is properly specified
-    def check_subsector(self, subsector: str):
+    def check_subsector(self, subsector: str, throw_error_q = True):
         # check sectors
         if subsector not in self.all_subsectors:
             valid_subsectors = sf.format_print_list(self.all_subsectors)
-            raise ValueError(f"Invalid subsector specification '{subsector}': valid sectors are {valid_subsectors}")
+            if throw_error_q:
+                raise ValueError(f"Invalid subsector specification '{subsector}': valid sectors are {valid_subsectors}")
+            else:
+                return False
+        else:
+            return (None if throw_error_q else subsector)
 
 
     ##  simple inline function to dimensions in a data frame (if they are converted to floats)
@@ -843,6 +849,38 @@ class ModelAttributes:
     #    QUICK RETRIEVAL OF FUNDAMENTAL TRANSFORMATIONS (GWP, MASS, ETC)    #
     #########################################################################
 
+    ##  get the area equivalent scalar
+    def get_area_equivalent(self, area: str, area_to_match: str = None):
+        """
+            for a given area unit *area*, get the scalar to convert to units *area_to_match*
+
+            Function Arguments
+            ------------------
+            area: a unit of area defined in the unit_area attribute table
+
+            area_to_match: Default is None. A unit of area to match. The scalar a that is returned is multiplied by area, i.e., area*a = area_to_match. If None (default), return the configuration default.
+        """
+        # none checks
+        if area is None:
+            return None
+
+        if area_to_match is None:
+            area_to_match = str(self.configuration.get("area_units")).lower()
+        key_dict = f"unit_area_to_area_equivalent_{area_to_match}"
+
+        # check that the target area unit is defined
+        if not key_dict in self.dict_attributes["unit_area"].field_maps.keys():
+            valid_areas_to_match = sf.format_print_list(self.configuration.valid_area).lower()
+            raise KeyError(f"Invalid area to match '{area_to_match}': defined area units to match are {valid_areas_to_match}.")
+
+        # check area and return if valid
+        if area in self.dict_attributes["unit_area"].field_maps[key_dict].keys():
+            return self.dict_attributes["unit_area"].field_maps[key_dict][area]
+        else:
+            valid_vals = sf.format_print_list(self.dict_attributes["unit_area"].key_values)
+            raise KeyError(f"Invalid area '{area}': defined areas are {valid_vals}.")
+
+
     ##  function to get energy equivalent scalar
     def get_energy_equivalent(self, energy: str, energy_to_match: str = None):
 
@@ -905,7 +943,7 @@ class ModelAttributes:
     ##  function to get the length equivalent scalar
     def get_length_equivalent(self, length: str, length_to_match: str = None):
         """
-            for a given lanegh unit *length*, get the scalar to convert to units *length_to_match*
+            for a given length unit *length*, get the scalar to convert to units *length_to_match*
 
             Function Arguments
             ------------------
@@ -997,12 +1035,16 @@ class ModelAttributes:
     # get scalar
     def get_scalar(self, modvar: str, return_type: str = "total"):
 
-        valid_rts = ["total", "gas", "length", "mass", "energy", "volume"]
+        valid_rts = ["total", "area", "gas", "length", "mass", "energy", "volume"]
         if return_type not in valid_rts:
             tps = sf.format_print_list(valid_rts)
             raise ValueError(f"Invalid return type '{return_type}' in get_scalar: valid types are {tps}.")
 
         # get scalars
+        #
+        area = self.get_variable_characteristic(modvar, self.varchar_str_unit_area)
+        scalar_area = 1 if not area else self.get_area_equivalent(energy.lower())
+        #
         energy = self.get_variable_characteristic(modvar, self.varchar_str_unit_energy)
         scalar_energy = 1 if not energy else self.get_energy_equivalent(energy.lower())
         #
@@ -1019,7 +1061,9 @@ class ModelAttributes:
         scalar_volume = 1 if not volume else self.get_volume_equivalent(volume.lower())
 
 
-        if return_type == "energy":
+        if return_type == "area":
+            out = scalar_area
+        elif return_type == "energy":
             out = scalar_energy
         elif return_type == "gas":
             out = scalar_gas
@@ -1301,14 +1345,68 @@ class ModelAttributes:
     #    VARIABLE REQUIREMENT AND MANIPULATION FUNCTIONS    #
     #########################################################
 
+    ##  add additional fields to the emission total
+    def add_specified_total_fields_to_emission_total(self,
+        df_in: pd.DataFrame,
+        varlist: list
+    ):
+        """
+            Add a total of emission fields that are specified. Inline function (does not return).
+
+            Function Arguments
+            ------------------
+            df_in: Data frame with emission outputs to be aggregated
+
+            varlist: variables to include in the sum
+        """
+        #initialize dictionary
+        dict_totals = {}
+        dict_fields = {}
+        # loop over variables to
+        for var in varlist:
+            subsec = self.get_variable_subsector(var, throw_error_q = False)
+            if subsec is not None:
+                array_cur = self.get_standard_variables(df_in, var, False, return_type = "array_base", expand_to_all_cats = True)
+                if subsec not in dict_totals.keys():
+                    field_total = self.get_subsector_emission_total_field(subsec)
+                    if (field_total in df_in.columns):
+                        dict_totals.update({subsec: 0.0})
+                        dict_fields.update({subsec: field_total})
+                dict_totals[subsec] += array_cur
+            else:
+                warning(f"In add_specified_total_fields_to_emission_total, subsector '{subsec}' not found. Skipping...")
+
+        # next, update dataframe
+        for subsec in dict_totals.keys():
+            array_totals = np.sum(dict_totals[subsec], axis = 1)
+            field_total = dict_fields[subsec]
+            cur_emissions = np.array(df_in[field_total]) if (field_total in df_in.columns) else 0
+            df_in[field_total] = cur_emissions + array_totals
+
+
+
     ##  add subsector emissions aggregates to an output dataframe
-    def add_subsector_emissions_aggregates(self, df_in: pd.DataFrame, list_subsectors: list, stop_on_missing_fields_q: bool = False):
+    def add_subsector_emissions_aggregates(self,
+        df_in: pd.DataFrame,
+        list_subsectors: list,
+        stop_on_missing_fields_q: bool = False
+    ):
+        """
+            Add a total of all emission fields (across those output variables specified with $EMISSION-GAS$). Inline function (does not return).
+
+            Function Arguments
+            ------------------
+            df_in: Data frame with emission outputs to be aggregated
+
+            list_subsectors: subsectors to apply totals to
+
+            stop_on_missing_fields_q: default = False. If True, will stop if any component emission variables are missing.
+        """
         # loop over base subsectors
         for subsector in list_subsectors:#self.required_base_subsectors:
             vars_subsec = self.dict_model_variables_by_subsector[subsector]
             # add subsector abbreviation
-            fld_nam = self.get_subsector_attribute(subsector, "abv_subsector")
-            fld_nam = f"emission_co2e_subsector_total_{fld_nam}"
+            fld_nam = self.get_subsector_emission_total_field(subsector)
 
             flds_add = []
             for var in vars_subsec:
@@ -1321,7 +1419,7 @@ class ModelAttributes:
             # check for missing fields; notify
             missing_fields = [x for x in flds_add if x not in df_in.columns]
             if len(missing_fields) > 0:
-                str_mf = print_setdiff(set(df_in.columns), set(flds_add))
+                str_mf = sf.print_setdiff(set(df_in.columns), set(flds_add))
                 str_mf = f"Missing fields {str_mf}.%s"
                 if stop_on_missing_fields_q:
                     raise ValueError(str_mf%(" Subsector emission totals will not be added."))
@@ -1330,6 +1428,8 @@ class ModelAttributes:
 
             keep_fields = [x for x in flds_add if x in df_in.columns]
             df_in[fld_nam] = df_in[keep_fields].sum(axis = 1)
+
+        return fld_nam
 
 
     ##  function for converting an array to a variable out dataframe (used in sector models)
@@ -1340,15 +1440,17 @@ class ModelAttributes:
         reduce_from_all_cats_to_specified_cats = False
     ) -> pd.DataFrame:
         """
-            use array_to_df to convert an input np.ndarray into a data frame that has the proper variable labels (ordered by category for the appropriate subsector)
+            Convert an input np.ndarray into a data frame that has the proper variable labels (ordered by category for the appropriate subsector)
 
-            - arr_in: np.ndarray to convert to data frame. If entered as a vector, it will be converted to a (n x 1) array, where n = len(arr_in)
+            Function Arguments
+            ------------------
+            arr_in: np.ndarray to convert to data frame. If entered as a vector, it will be converted to a (n x 1) array, where n = len(arr_in)
 
-            - modvar: the name of the model variable to use to name the dataframe
+            modvar: the name of the model variable to use to name the dataframe
 
-            - include_scalars: default = False. If True, will rescale to reflect emissions mass correction.
+            include_scalars: default = False. If True, will rescale to reflect emissions mass correction.
 
-            - reduce_from_all_cats_to_specified_cats: default = False. If True, the input data frame is given across all categories and needs to be reduced to the set of categories associated with the model variable (selects subset of columns).
+            reduce_from_all_cats_to_specified_cats: default = False. If True, the input data frame is given across all categories and needs to be reduced to the set of categories associated with the model variable (selects subset of columns).
 
         """
 
@@ -1661,6 +1763,14 @@ class ModelAttributes:
         return dict_in
 
 
+    ##  specify the aggregate emission field added to each subsector output dataframe
+    def get_subsector_emission_total_field(self, subsector):
+        # add subsector abbreviation
+        fld_nam = self.get_subsector_attribute(subsector, "abv_subsector")
+        fld_nam = f"emission_co2e_subsector_total_{fld_nam}"
+        return fld_nam
+
+
     ##  function for getting input/output fields for a list of subsectors
     def get_input_output_fields(self, subsectors_inuired: list, build_df_q = False):
         # initialize output lists
@@ -1880,10 +1990,13 @@ class ModelAttributes:
 
 
     ##  easy function for getting a variable subsector
-    def get_variable_subsector(self, modvar):
+    def get_variable_subsector(self, modvar: str, throw_error_q: bool = True):
         dict_check = self.dict_model_variable_to_subsector
         if modvar not in dict_check.keys():
-            raise KeyError(f"Invalid model variable '{modvar}': model variable not found.")
+            if throw_error_q:
+                raise KeyError(f"Invalid model variable '{modvar}': model variable not found.")
+            else:
+                return None
         else:
             return dict_check[modvar]
 
@@ -1910,6 +2023,7 @@ class ModelAttributes:
 
         # check specification
         dict_valid_units = {
+            "area": self.varchar_str_unit_area,
             "energy": self.varchar_str_unit_energy,
             "length": self.varchar_str_unit_length,
             "mass": self.varchar_str_unit_mass,
@@ -1927,7 +2041,9 @@ class ModelAttributes:
             self.get_variable_characteristic(var_to_match, dict_valid_units[units])
         )
         # switch based on input units
-        if units == "energy":
+        if units == "area":
+            val_return = self.get_area_equivalent(*args)
+        elif units == "energy":
             val_return = self.get_energy_equivalent(*args)
         elif units == "length":
             val_return = self.get_length_equivalent(*args)
@@ -2149,6 +2265,83 @@ class ModelAttributes:
             dict_vr_vtf_outer = {}
 
         return dict_vr_vtf, dict_vr_vtf_outer
+
+
+    ##  swap columns in an array based on categories
+    def swap_array_categories(self,
+        array_in: np.ndarray,
+        vec_ordered_cats_source: np.ndarray,
+        vec_ordered_cats_target: np.ndarray,
+        subsector: str
+    ):
+        """
+            Swap category columns in an array
+
+            Function Arguments
+            ------------------
+            array_in: array with data. Must be merged to all categories for the subsector.
+
+            vec_ordered_cats_source: array of source categories to swap with targets (source_i -> target_i). Must be well defined categories
+
+            vec_ordered_cats_target: array of target categories to swap with the source. Must be well defined categories
+
+            subsector: subsector in which the swap occurs
+
+            Notes
+            -----
+            - Source categories cannot be defined in the target categories vector, and vis-verse
+            - Categories that aren't well-defined will be dropped
+        """
+
+        subsector = self.check_subsector(subsector, throw_error_q = False)
+
+        if subsector is not None:
+            attr = self.get_attribute_table(subsector)
+            if len(set(vec_ordered_cats_source) & set(vec_ordered_cats_target)) > 0:
+                warnings.warn("Invalid swap specification in 'swap_array_categories': categories can only exist in source or target")
+                return array_in
+            else:
+
+                ##  build source/target swaps
+
+                vec_source = []
+                vec_target = []
+                # iterate to get well-defined swaps
+                for i in range(min(len(vec_ordered_cats_source), len(vec_ordered_cats_target))):
+                    cat_source = clean_schema(vec_ordered_cats_source[i])
+                    cat_target = clean_schema(vec_ordered_cats_target[i])
+                    if (cat_source in attr.key_values) and (cat_target in attr.key_values):
+                        vec_source.append(cat_source)
+                        vec_target.append(cat_target)
+
+                # some warnings - source
+                set_drops_source = set(vec_ordered_cats_source) - set(vec_source)
+                if len(set_drops_source) > 0:
+                    vals_dropped_source = sf.format_print_list(list(set_drops_source))
+                    warnings.warn(f"Source values {vals_dropped_source} dropped in swap_array_categories (either not well-defined categories or there was no associated target category).")
+
+                # some warnings - target
+                set_drops_target = set(vec_ordered_cats_target) - set(vec_target)
+                if len(set_drops_target) > 0:
+                    vals_dropped_target = sf.format_print_list(list(set_drops_target))
+                    warnings.warn(f"target values {vals_dropped_target} dropped in swap_array_categories (either not well-defined categories or there was no associated target category).")
+
+                # build dictionary
+                dict_swap = dict(zip(vec_source, vec_target))
+                dict_swap.update(sf.reverse_dict(dict_swap))
+                # set up the new categories
+                cats_new = [dict_swap.get(x, x) for x in attr.key_values]
+
+                array_new = self.merge_array_var_partial_cat_to_array_all_cats(
+                    array_in,
+                    None,
+                    output_cats = cats_new,
+                    output_subsec = subsector 
+                )
+
+                return array_new
+        else:
+            return array_in
 
 
     # returns ordered variable (by attribute key) with cateogries replaced

@@ -78,15 +78,26 @@ class AFOLU:
         self.modvar_lvst_carrying_capacity_scalar = "Carrying Capacity Scalar"
         self.modvar_lvst_dry_matter_consumption = "Daily Dry Matter Consumption"
         self.modvar_lvst_ef_ch4_ef = ":math:\\text{CH}_4 Enteric Fermentation Emission Factor"
-        self.modvar_lvst_ef_ch4_mm = ":math:\\text{CH}_4 Manure Management Emission Factor"
-        self.modvar_lvst_ef_n2o_mm = ":math:\\text{N}_2\\text{O} Manure Management Emission Factor"
         self.modvar_lvst_elas_lvst_demand = "Elasticity of Livestock Demand to GDP per Capita"
         self.modvar_lvst_emissions_ch4_ef = ":math:\\text{CH}_4 Emissions from Livestock Enteric Fermentation"
         self.modvar_lvst_emissions_ch4_mm = ":math:\\text{CH}_4 Emissions from Livestock Manure"
         self.modvar_lvst_emissions_n2o_mm = ":math:\\text{N}_2\\text{O} Emissions from Livestock Manure"
+        self.modvar_lvst_genrate_volatile_solids = "Volatile Solid Generation Rate"
+        self.modvar_lvst_max_manure_ch4_cap = "Maximum Manure :math:\\text{CH}_4 Generation Capacity"
         self.modvar_lvst_net_imports = "Change to Net Imports of Livestock"
         self.modvar_lvst_pop = "Livestock Head Count"
         self.modvar_lvst_pop_init = "Initial Livestock Head Count"
+        self.modvar_lvst_frac_mm_anaerobic_digester = "Livestock Manure Management Fraction Anaerobic Digester"
+        self.modvar_lvst_frac_mm_anaerobic_lagoon = "Livestock Manure Management Fraction Anaerobic Lagoon"
+        self.modvar_lvst_frac_mm_composting = "Livestock Manure Management Fraction Composting"
+        self.modvar_lvst_frac_mm_daily_spread = "Livestock Manure Management Fraction Daily Spread"
+        self.modvar_lvst_frac_mm_deep_bedding = "Livestock Manure Management Fraction Deep Bedding"
+        self.modvar_lvst_frac_mm_dry_lot = "Livestock Manure Management Fraction Dry Lot"
+        self.modvar_lvst_frac_mm_incineration = "Livestock Manure Management Fraction Incineration"
+        self.modvar_lvst_frac_mm_liquid_slurry = "Livestock Manure Management Fraction Liquid Slurry"
+        self.modvar_lvst_frac_mm_poultry_manure = "Livestock Manure Management Fraction Poultry Manure"
+        self.modvar_lvst_frac_mm_ppr = "Livestock Manure Management Fraction Paddock Pasture Range"
+        self.modvar_lvst_frac_mm_solid_storage = "Livestock Manure Management Fraction Solid Storage"
 
         # variable required for integration
         self.integration_variables = self.set_integrated_variables()
@@ -772,14 +783,14 @@ class AFOLU:
         vec_lvst_graze_area = np.array(df_land_use[field_lvst_graze_array])
         # estimate the total number of livestock that are raised, then get emission factor
         arr_lvst_emissions_ch4_ef = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_ef_ch4_ef, True, "array_units_corrected")
-        arr_lvst_emissions_ch4_mm = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_ef_ch4_mm, True, "array_units_corrected")
-        arr_lvst_emissions_n2o_mm = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_ef_n2o_mm, True, "array_units_corrected")
+        #arr_lvst_emissions_ch4_mm = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_ef_ch4_mm, True, "array_units_corrected")
+        #arr_lvst_emissions_n2o_mm = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_ef_n2o_mm, True, "array_units_corrected")
         arr_lvst_pop = arr_lvst_dem_pop - arr_lvst_net_import_increase
         # add to output dataframe
         df_out += [
             self.model_attributes.array_to_df(arr_lvst_emissions_ch4_ef*arr_lvst_pop, self.modvar_lvst_emissions_ch4_ef),
-            self.model_attributes.array_to_df(arr_lvst_emissions_ch4_mm*arr_lvst_pop, self.modvar_lvst_emissions_ch4_mm),
-            self.model_attributes.array_to_df(arr_lvst_emissions_n2o_mm*arr_lvst_pop, self.modvar_lvst_emissions_n2o_mm),
+            #self.model_attributes.array_to_df(arr_lvst_emissions_ch4_mm*arr_lvst_pop, self.modvar_lvst_emissions_ch4_mm),
+            #self.model_attributes.array_to_df(arr_lvst_emissions_n2o_mm*arr_lvst_pop, self.modvar_lvst_emissions_n2o_mm),
             self.model_attributes.array_to_df(arr_lvst_pop, self.modvar_lvst_pop)
         ]
 
@@ -788,12 +799,20 @@ class AFOLU:
         #    LIVESTOCK MANURE MANAGEMENT    #
         #####################################
 
+        # first, retrieve energy fractions and ensure they sum to 1
+        dict_arrs_lsmm_frac_manure = self.model_attributes.get_multivariables_with_bounded_sum_by_category(
+            df_neenergy_trajectories,
+            self.modvar_inen_list_fuel_fractions,
+            1,
+            force_sum_equality = True,
+            msg_append = "Energy fractions by category do not sum to 1. See definition of dict_arrs_inen_frac_energy."
+        )
 
 
         #########################
         #    SOIL MANAGEMENT    #
         #########################
-        
+
 
 
 

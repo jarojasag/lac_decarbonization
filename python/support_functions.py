@@ -325,7 +325,7 @@ def reverse_dict(dict_in: dict) -> dict:
     if len(s_vals) != len(s_keys):
         raise KeyError(f"Invalid dicionary in reverse_dict: the dictionary is not injective.")
 
-    return dict(zip(dict_in.values(), dict_in.keys()))
+    return dict([(dict_in[x], x) for x in list(dict_in.keys())])
 
 
 

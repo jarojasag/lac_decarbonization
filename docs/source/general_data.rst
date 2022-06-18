@@ -6,7 +6,9 @@ General Data
 
 Gasses
 ------
-Emissions are calculated in a unit of mass (default MT) for each relevant gas included. For :math:`\text{CO}_2\text{e}` conversions, the default Global Warming Potential (GWP) time horizon is 100 years. However, the GWP time horizon can be changed in the `Analytical Parameters <../analytical_parameters.html>`_ configuration file. The GWP conversion factors below are taken from `IPCC AR6 WG1 Chapter 7 - Table 7.SM.7 <https://www.ipcc.ch/report/ar6/wg1/downloads/report/IPCC_AR6_WGI_Chapter_07_Supplementary_Material.pdf>`_.
+Emissions are calculated in a unit of mass (default MT) for each relevant gas included. For :math:`\text{CO}_2\text{e}` conversions, the default Global Warming Potential (GWP) time horizon is 100 years. However, the GWP time horizon can be changed in the `Analytical Parameters <../analytical_parameters.html>`_ configuration file. Most GWP conversion factors below are taken from `IPCC AR6 WG1 Chapter 7 - Table 7.SM.7 <https://www.ipcc.ch/report/ar6/wg1/downloads/report/IPCC_AR6_WGI_Chapter_07_Supplementary_Material.pdf>`_ (referred to as IPCC AR6 below), though GWPs for a few gasses were sourced elsewhere.
+
+See `Chapter 7, Section 6.1 of the IPCC Sixth Assessment Report (AR6) <https://www.ipcc.ch/report/ar6/wg1/downloads/report/IPCC_AR6_WGI_Chapter07.pdf>`_ for more detail on global warming potential and how it is calculated.
 
 .. csv-table:: Gasses potentially included in LAC-IDPM and their CO2 equivalent
    :file: ./csvs/attribute_gas.csv

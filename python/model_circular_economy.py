@@ -107,7 +107,7 @@ class CircularEconomy:
         self.modvar_trww_frac_p_removed = "Fraction of Phosphorous Removed in Treatment"
         self.modvar_trww_frac_tow_removed = "Fraction of Total Organic Waste Removed in Treatment"
         self.modvar_trww_krem = ":math:\\text{K}_{REM} Sludge Factor"
-        self.modvar_trww_mcf = "Methane Correction Factor"
+        self.modvar_trww_mcf = "Wastewater Treatment Methane Correction Factor"
         self.modvar_trww_recovered_biogas = "Biogas Recovered from Wastewater Treatment Plants"
         self.modvar_trww_rf_biogas_recovered = "Biogas Recovery Factor at Wastewater Treatment Plants"
         self.modvar_trww_septic_sludge_compliance = "Septic Sludge Compliance Fraction"

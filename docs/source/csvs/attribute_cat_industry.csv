@@ -1,5 +1,5 @@
-﻿Category Name,``$CAT-INDUSTRY$``,Definition,Value Added Category,Target Recycling ``$CAT-INDUSTRY$`` to Adjust,Data Source,Hyperlink,Notes
-Cement,``cement``,Cement production,``cement``,none,,,
+﻿Category Name,``$CAT-INDUSTRY$``,Definition,Value Added Category,Target ``$CAT-INDUSTRY$`` to Adjust with Recycling,Data Source,Hyperlink,Notes
+Cement,``cement``,Cement production,``cement``,none,,," | Default  :math:`\text{CO}_2` cement clinker emission factor from V3, C2, EQ 2.4 2006 IPCC GNGHGI)"
 Chemical,``chemicals``,"Includes production of
 
 * Adipic acid production
@@ -17,26 +17,17 @@ Chemical,``chemicals``,"Includes production of
   * Other Fluorochemical production
 * Hydrogen production
 * Nitric Acid production
-* Petrochemical and Carbon Black production, including 
-
-  * Acrylonitrile
-  * Carbon Black
-  * Ethylene
-  * Ethylene Dichloride and Vinyl Chloride Monomer
-  * Ethylene Oxide
-  * Methanol
-
 * Soda Ash production
 * Titanium Dioxide
 * Others",``manufacturing``,none,,,
 Construction and Demolition,``construction_and_demolition``,Primarily generates wastewater and waste. Driven by growth in population and gdp.,none,none,,,
-Electronics,``electronics``,"Includes emissions (especially F-GHGs) from processes and product use involved with the production of
-
-* Displays
-* Integrated Circuits and Semiconductors
-* Microelectromechanical systems
-* Photovoltaics
-* Others
+Electronics - Displays,``electronics``," | Includes emissions (especially FCs) from processes and product use involved with the production of: 
+ * Displays
+ * Microelectromechanical Systems 
+ * Photovoltaics
+ * Semiconductors and Integrated Circuits.
+ | 
+ | See V3, C6 of IPCC GNGHGIs for more information.
 ",``manufacturing``,none,,,
 Glass,``glass``,Virgin production of glass and ceramics. Affected by recycling.,none,none,,,Some figures for energy intensity of glass production is available form the `U.S. Department of Energy <https://www.energy.gov/sites/prod/files/2017/12/f46/Glass_bandwidth_study_2017.pdf>`_ (see Table 3.2)
 Lime and Carbonites,``lime_and_carbonite``,"Includes
@@ -44,7 +35,10 @@ Lime and Carbonites,``lime_and_carbonite``,"Includes
 * Other Process Uses of Carbonites, including
   * Non-Metallurgical Magnesia Production
   * Other uses of Soda Ash
-  * Others",``mining``,none,,,
+  * Others",``mining``,none,,," | Default :math:`\text{CO}_2` lime production emission factor from V3, C2, EQ 2.8 2006 IPCC GNGHGI); range from Table 2.4.
+ | 
+ | "
+Lubricant Use,``product_use_lubricants``,Emissions from use of lubricants. Grows proportionally to GDP.,none,none,,,
 Metals,``metals``,"Virgin production of metals. Includes emissions from
 
 * Aluminium production
@@ -57,12 +51,6 @@ Metals,``metals``,"Virgin production of metals. Includes emissions from
 * Steel production
 * Zinc production
 * Other Metals production",none,none,,,
-Non-Energy Products,``non_energy_products``,"Includes the use of the substances in industrial processes that cause emissions, including
-
-* Lubricants
-* Paraffin Waxmean
-* Solvents
-* Others",``industrial``,none,,,
 Other,``other_industries``,"This category includes emissions from industrial processes and product use in other industrial categories not covered above, including
 
 * Food and Beverages Industry
@@ -88,7 +76,8 @@ Other Product and Manufacture Use,``other_product_manufacturing``,"This category
   * Waterproofing of Electronic Circuits
   * Other
 * Other",``industrial``,none,,,
-Ozone-Depleting Substitutes,``ods_products``,"Includes the use of products common in industrial processes, such as HFCs, PFCs, SF6, and other ODS products that are intended to replace ozone-depleting CFCs. These products include
+Other Product Use,``product_use_other``,Includes NMVOC emissions,none,none,,,
+Ozone-Depleting Substance Substitutes - Other,``product_use_ods_other``,"Includes the use of products common in industrial processes, such as HFCs, PFCs, SF6, and other ODS products that are intended to replace ozone-depleting CFCs. These products include
 
 * Aerosols
 * Fire Protection
@@ -96,14 +85,24 @@ Ozone-Depleting Substitutes,``ods_products``,"Includes the use of products commo
 * Refrigeration and Air Conditioning (both Stationary and Mobile)
 * Solvents
 * Other Applications",``industrial``,none,,,
+Ozone-Depleting Substance Substitutes - Refrigeration,``product_use_ods_refrigeration``,Use of refrigerants in industrial processes. Per GDP factor can be affected by an elasticity to GDP per capita.,none,none,,,
 Paper,``paper``,Virgin production of paper. Affected by recycling.,none,none,,,
-Plastic,``plastic``,Virgin production of plastic. Affected by recycling.,none,none,,,
+Paraffin Wax Use,``product_use_paraffin_wax``,Emissions from use of paraffin wav. Grows proportionally to GDP.,none,none,,,
+Plastic,``plastic``,"Virgin production of plastic. Affected by recycling. Includes production of Petrochemical and Carbon Black products, including 
+  * Acrylonitrile
+  * Carbon Black
+  * Ethylene
+  * Ethylene Dichloride and Vinyl Chloride Monomer
+  * Ethylene Oxide
+  * Methanol",none,none,,," | Default :math:`\text{CO}_2` plastic (petrochemical) production emission factor from V3, C3, section 3.9 2006 IPCC GNGHGI); default value and range taken from Tables 3.12 and 3.14 (average over all available values).
+ | 
+ | "
 Recycled Glass,``recycled_glass``,Recycling of glass and ceramics. Affects virgin production.,none,``glass``,,,
 Recycled Metals,``recycled_metals``,Recycling of metals. Affects virgin production.,none,``metals``,,,
 Recycled Paper,``recycled_paper``,Recycling of paper. Affects virgin production.,none,``paper``,,,
 Recycled Plastic,``recycled_plastic``,Recycling of plastic. Affects virgin production.,none,``plastic``,,,
 Recycled Rubber and Leather,``recycled_rubber_and_leather``,Recycling of rubber and leather. Affects virgin production.,none,``rubber_and_leather``,,,
 Recycled Textiles,``recycled_textiles``,Recycling of textiles. Affects virgin production.,none,``textiles``,,,
-Recyled Wood,``recycled_wood``,Wood that is recycled. ,none,none,,,
+Recycled Wood,``recycled_wood``,Wood that is recycled.,none,``wood``,,,
 Rubber and Leather,``rubber_and_leather``,Virgin production of rubber and leather. Affected by recycling.,none,none,,,
 Textiles,``textiles``,Virgin production of textiles. Affected by recycling.,none,none,,,
