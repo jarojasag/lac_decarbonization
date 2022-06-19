@@ -369,6 +369,7 @@ class IPPU:
             modvar_elast_ind_prod_to_gdp,
             modvar_prod_qty_init
         )
+        array_ippu_change_net_imports = np.zeros(array_ippu_production.shape)
 
         # perform adjustments to production if recycling is denoted
         if array_ippu_recycled is not None:
@@ -428,6 +429,7 @@ class IPPU:
                 )
                 array_ippu_production = sf.vec_bounds(array_ippu_production, (0, np.inf)) + array_ippu_production_base
                 array_ippu_production += array_ippu_change_net_imports
+
 
         # ensure net imports are in the proper mass units
         array_ippu_change_net_imports *= self.model_attributes.get_variable_unit_conversion_factor(
