@@ -95,7 +95,7 @@ class Socioeconomic:
         vec_gnrl_num_hh = np.round(vec_pop/vec_gnrl_occrate).astype(int)
         # add to output
         df_out = [
-            df_se_trajectories,
+            df_se_trajectories.reset_index(drop = True),
             self.model_attributes.array_to_df(vec_gnrl_occrate, self.modvar_gnrl_occ_rate, False),
             self.model_attributes.array_to_df(vec_gnrl_num_hh, self.modvar_grnl_num_hh, False)
         ]
@@ -103,7 +103,7 @@ class Socioeconomic:
 
         # get internal variables that are shared between downstream sectors
         time_periods_df = np.array(df_se_trajectories[self.model_attributes.dim_time_period])[0:-1]
-        df_se_internal_shared_variables = df_se_trajectories[[self.model_attributes.dim_time_period]].copy()
+        df_se_internal_shared_variables = df_se_trajectories[[self.model_attributes.dim_time_period]].copy().reset_index(drop = True)
         df_se_internal_shared_variables["vec_gdp_per_capita"] = vec_gdp_per_capita
         df_se_internal_shared_variables = pd.merge(
             df_se_internal_shared_variables,
