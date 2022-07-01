@@ -58,7 +58,7 @@ Input,Livestock Manure Management Fraction Solid Storage,,``frac_lvst_mm_$CAT-LI
  | `Manure Management (N2O) data on Google Drive <FAO: N2O Manure Management: buffaloes, camels, cattle dairy, cattle non dairy, chickens broilers, chickens layers,  goats, horses, llamas, mules, sheep  https://drive.google.com/file/d/1dEJ81FMVPG-_W_mkZcMiIPhggYMPzrI6/view?usp=sharing>`_"," | `FAO Manure Management (CH4) <https://www.fao.org/faostat/en/#data/GM (Manure Management /Emissions CH4)>`_
  | 
  | `FAO Manure Management (N2O) <https://www.fao.org/faostat/en/#data/GM>`_",0,1,1,``storage_solid``,1
-Input,Maximum Manure :math:`\text{CH}_4` Generation Capacity,,"``physparam_lvst_bo_$UNIT-MASS$_$EMISSION-GAS$_$UNIT-MASS$_manure`` (``$EMISSION-GAS$ = ch4``, ``$UNIT-MASS$ = kg``)",,,,,0,1,1,none,0
+Input,Maximum Manure :math:`\text{CH}_4` Generation Capacity,,"``physparam_lvst_bo_$CAT-LIVESTOCK$_$UNIT-MASS$_$EMISSION-GAS$_$UNIT-MASS$_manure`` (``$EMISSION-GAS$ = ch4``, ``$UNIT-MASS$ = kg``)",,,,,0,1,1,none,0
 Input,Volatile Solid Generation Rate,"Daily generation rate, per 1000 kg animal, of volatile solids (manure). See V4, C10, Equation 22A (IPCC GNGHGI 2019R).",``genrate_lvst_volatile_solids_$CAT-LIVESTOCK$_$UNIT-MASS$`` (``$UNIT-MASS$ = kg``),,,,,0,1,1,none,0
 Output,:math:`\text{CH}_4` Emissions from Livestock Enteric Fermentation,Methane emissions from enteric fermentation,``emission_co2e_$EMISSION-GAS$_lvst_entferm_$CAT-LIVESTOCK$`` (``$EMISSION-GAS$ = ch4``),,,,,1,1,1,none,0
 Output,Change to Net Imports of Livestock,Difference between livestock demanded and those that can be produced locally. ,``net_imports_change_lvst_$CAT-LIVESTOCK$``,,,,,1,1,1,none,0

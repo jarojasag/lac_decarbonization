@@ -80,6 +80,7 @@ class Configuration:
 
     def __init__(self,
         fp_config: str,
+        attr_area: AttributeTable,
         attr_energy: AttributeTable,
         attr_gas: AttributeTable,
         attr_length: AttributeTable,
@@ -91,6 +92,7 @@ class Configuration:
         self.attr_required_parameters = attr_required_parameters
 
         # set tables
+        self.attr_area = attr_area
         self.attr_energy = attr_energy
         self.attr_gas = attr_gas
         self.attr_length = attr_length
@@ -98,12 +100,27 @@ class Configuration:
         self.attr_volume = attr_volume
 
         # set required parametrs by type
-        self.params_string = ["energy_units", "emissions_mass", "historical_solid_waste_method", "length_units", "volume_units"]
+        self.params_string = [
+            "area_units",
+            "energy_units",
+            "emissions_mass",
+            "historical_solid_waste_method",
+            "length_units",
+            "volume_units"
+        ]
         self.params_float = ["days_per_year"]
         self.params_float_fracs = ["discount_rate"]
         self.params_int = ["global_warming_potential", "historical_back_proj_n_periods"]
 
-        self.dict_config = self.get_config_information(attr_energy, attr_gas, attr_length, attr_mass, attr_volume, attr_required_parameters)
+        self.dict_config = self.get_config_information(
+            attr_area,
+            attr_energy,
+            attr_gas,
+            attr_length,
+            attr_mass,
+            attr_volume,
+            attr_required_parameters
+        )
 
 
     # some restrictions on the config values
@@ -137,6 +154,7 @@ class Configuration:
 
     # function for retrieving a configuration file and population missing values with defaults
     def get_config_information(self,
+        attr_area: AttributeTable = None,
         attr_energy: AttributeTable = None,
         attr_gas: AttributeTable = None,
         attr_length: AttributeTable = None,
@@ -148,6 +166,7 @@ class Configuration:
     ) -> dict:
 
         # set some variables from defaults
+        attr_area = attr_area if (attr_area is not None) else self.attr_area
         attr_energy = attr_energy if (attr_energy is not None) else self.attr_energy
         attr_gas = attr_gas if (attr_gas is not None) else self.attr_gas
         attr_length = attr_length if (attr_length is not None) else self.attr_length
@@ -171,6 +190,7 @@ class Configuration:
                         dict_conf.update({param_config: val_default})
 
         # check valid configuration values and update where appropriate
+        valid_area = self.get_valid_values_from_attribute_column(attr_area, "area_equivalent_", str, "unit_area_to_area")
         valid_energy = self.get_valid_values_from_attribute_column(attr_energy, "energy_equivalent_", str, "unit_energy_to_energy")
         valid_gwp = self.get_valid_values_from_attribute_column(attr_gas, "global_warming_potential_", int)
         valid_historical_solid_waste_method = ["back_project", "historical"]
@@ -179,6 +199,7 @@ class Configuration:
         valid_volume = self.get_valid_values_from_attribute_column(attr_volume, "volume_equivalent_", str)
 
         dict_checks = {
+            "area_units": valid_area,
             "energy_units": valid_energy,
             "emissions_mass": valid_mass,
             "global_warming_potential": valid_gwp,
@@ -196,6 +217,7 @@ class Configuration:
         dict_conf["historical_back_proj_n_periods"] = max(dict_conf["historical_back_proj_n_periods"], 1)
 
         # set some attributes
+        self.valid_area = valid_area
         self.valid_energy = valid_energy
         self.valid_gwp = valid_gwp
         self.valid_historical_solid_waste_method = valid_historical_solid_waste_method
@@ -325,6 +347,7 @@ class ModelAttributes:
         # get configuration
         self.configuration = Configuration(
             fp_config,
+            self.dict_attributes["unit_area"],
             self.dict_attributes["unit_energy"],
             self.dict_attributes["emission_gas"],
             self.dict_attributes["unit_length"],
@@ -402,7 +425,6 @@ class ModelAttributes:
     ##  function to simplify retrieval of attribute tables within functions
     def get_attribute_table(self, subsector: str, table_type = "pycategory_primary"):
 
-
         if table_type == "pycategory_primary":
             key_dict = self.get_subsector_attribute(subsector, table_type)
             return self.dict_attributes.get(key_dict)
@@ -448,6 +470,7 @@ class ModelAttributes:
         else:
             cols = [x for x in self.sort_ordered_dimensions_of_analysis if x in df_in.columns]
         return cols
+
 
     ##  function to return categories from an attribute table that match some characteristics (defined in dict_subset)
     def get_categories_from_attribute_characteristic(self,
@@ -600,7 +623,6 @@ class ModelAttributes:
     def get_sector_subsectors(self, sector: str):
 
         self.check_sector(sector)
-
         subsectors = list(
             sf.subset_df(
                 self.dict_attributes["abbreviation_subsector"].table,
@@ -1043,7 +1065,7 @@ class ModelAttributes:
         # get scalars
         #
         area = self.get_variable_characteristic(modvar, self.varchar_str_unit_area)
-        scalar_area = 1 if not area else self.get_area_equivalent(energy.lower())
+        scalar_area = 1 if not area else self.get_area_equivalent(area.lower())
         #
         energy = self.get_variable_characteristic(modvar, self.varchar_str_unit_energy)
         scalar_energy = 1 if not energy else self.get_energy_equivalent(energy.lower())
@@ -2336,7 +2358,7 @@ class ModelAttributes:
                     array_in,
                     None,
                     output_cats = cats_new,
-                    output_subsec = subsector 
+                    output_subsec = subsector
                 )
 
                 return array_new

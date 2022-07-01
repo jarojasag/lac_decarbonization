@@ -21,6 +21,7 @@ class AFOLU:
         self.subsec_name_frst = "Forest"
         self.subsec_name_gnrl = "General"
         self.subsec_name_lndu = "Land Use"
+        self.subsec_name_lsmm = "Livestock Manure Management"
         self.subsec_name_lvst = "Livestock"
         self.subsec_name_soil = "Soil Management"
 
@@ -127,6 +128,7 @@ class AFOLU:
 
     def get_required_subsectors(self):
         subsectors = self.model_attributes.get_sector_subsectors("AFOLU")
+        subsectors = [x for x in subsectors if (x not in [self.subsec_name_lsmm, self.subsec_name_soil])] #TEMPORARY
         subsectors_base = subsectors.copy()
         subsectors += [self.subsec_name_econ, "General"]
         return subsectors, subsectors_base
@@ -798,16 +800,16 @@ class AFOLU:
         #####################################
         #    LIVESTOCK MANURE MANAGEMENT    #
         #####################################
-
+        """
         # first, retrieve energy fractions and ensure they sum to 1
         dict_arrs_lsmm_frac_manure = self.model_attributes.get_multivariables_with_bounded_sum_by_category(
-            df_neenergy_trajectories,
+            df_afolu_trajectories,
             self.modvar_inen_list_fuel_fractions,
             1,
             force_sum_equality = True,
             msg_append = "Energy fractions by category do not sum to 1. See definition of dict_arrs_inen_frac_energy."
         )
-
+        """
 
         #########################
         #    SOIL MANAGEMENT    #
