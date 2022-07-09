@@ -84,7 +84,7 @@ Maize,cereals,cereals,cereals
 "Maize, green",cereals,cereals,cereals
 "Mangoes, mangosteens, guavas",fruits,fruits,woody_perennial
 Manila fibre (abaca),fibers,fibers,fibers
-MatÃ©,,,
+Mate,bevs_and_spices,bevs_and_spices,woody_perennial
 "Melons, other (inc.cantaloupes)",vegetables,vegetables,annual_crops
 Melonseed,oil_bearing_annual,other_annual,annual_crops
 Millet,cereals,cereals,cereals
@@ -96,7 +96,7 @@ Oats,cereals,cereals,cereals
 Oil palm fruit,oil_bearing_perennial,other_woody_perennial,woody_perennial
 Oilseeds nes,oil_bearing_perennial,other_woody_perennial,woody_perennial
 Okra,vegetables,vegetables,annual_crops
-Olives,oil_bearing_perennial,other_woody_perennial,woody_perennial
+Olives,fruits,fruits,woody_perennial
 "Onions, dry",vegetables,vegetables,annual_crops
 "Onions, shallots, green",vegetables,vegetables,annual_crops
 Oranges,fruits,fruits,woody_perennial

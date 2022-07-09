@@ -122,11 +122,6 @@ class CircularEconomy:
         self.modvar_trww_total_p_treated = "Total Phosphorous Removed in Treatment"
         self.modvar_trww_vol_ww_treated = "Volume of Wastewater Treated"
 
-
-        # other sectors' variables, used in integration
-        self.modvar_lvst_net_imports = "Change to Net Imports of Livestock"
-        self.modvar_lvst_pop = "Livestock Head Count"
-
         # optional integration variables
         self.integration_variables = self.set_integrated_variables()
 
@@ -150,7 +145,7 @@ class CircularEconomy:
 
         # add socioeconomic
         self.model_socioeconomic = Socioeconomic(self.model_attributes)
-
+        self.model_afolu = AFOLU(self.model_attributes)
 
 
 
@@ -185,8 +180,12 @@ class CircularEconomy:
 
     def set_integrated_variables(self):
         list_vars_required_for_integration = [
-            self.modvar_lvst_pop,
-			self.modvar_lvst_net_imports
+        # DROP FIRST THREE
+        # TEMP INCLUDE
+            self.model_afolu.modvar_lvst_pop,
+			self.model_afolu.modvar_lvst_net_imports,
+            self.model_afolu.modvar_lvst_animal_weight,
+            self.model_afolu.modvar_lvst_total_animal_mass
 		]
 
         return list_vars_required_for_integration

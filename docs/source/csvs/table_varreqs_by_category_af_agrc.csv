@@ -1,7 +1,18 @@
 ﻿Variable Type,Variable,Information,Variable Schema,Dashboard,Notes,Data Link,Reference,Internal Model Variable,Default LHS Scalar Minimum at Final Time Period,Default LHS Scalar Maximum at Final Time Period,``$CAT-SOIL-MANAGEMENT$``
-Input,:math:`\text{CO}_2` Crop Biomass Emission Factor,Annual average :math:`\text{CO}_2` (carbon dioxide) emitted per metric ton of crop grown due to biomass and dead organic matter. Driven by yield.,"``ef_agrc_biomassdom_$CAT-AGRICULTURE$_$UNIT-MASS$_$EMISSION-GAS$_tonne`` (``$EMISSION-GAS$ = co2``, ``$UNIT-AREA$ = ha``, ``$UNIT-MASS$ = kg``)",,See sections 5.2.1 and 5.2.2 of the `IPCC Guidelines for National Greenhouse Gas Inventories <https://www.ipcc.ch/report/2019-refinement-to-the-2006-ipcc-guidelines-for-national-greenhouse-gas-inventories/>`_,,,0,1,1,none
 Input,:math:`\text{CO}_2` Crop Soil Carbon Emission Factor,"Annual average :math:`\text{CO}_2` (carbon dioxide) emitted per ha of crop; for the purposes of accounting and calibration. Represents emissions from soil carbon, including tillage.","``ef_agrc_soilcarbon_$CAT-AGRICULTURE$_$UNIT-MASS$_$EMISSION-GAS$_$UNIT-AREA$`` (``$EMISSION-GAS$ = co2``, ``$UNIT-AREA$ = ha``, ``$UNIT-MASS$ = kg``)",,See section 5.2.3 of the `IPCC Guidelines for National Greenhouse Gas Inventories <https://www.ipcc.ch/report/2019-refinement-to-the-2006-ipcc-guidelines-for-national-greenhouse-gas-inventories/>`_,,,0,1,1,none
 Input,:math:`\text{N}_2\text{O}` Crop Biomass Burning Emission Factor,Annual average :math:`\text{N}_2\text{O}` (nitrous oxide) emitted per ha of crop grown due to biomass burning.,"``ef_agrc_biomassburning_$CAT-AGRICULTURE$_$UNIT-MASS$_$EMISSION-GAS$_$UNIT-AREA$`` (``$EMISSION-GAS$ = n2o``, ``$UNIT-AREA$ = ha``, ``$UNIT-MASS$ = kg``)",,See section 5.2.4 of the `IPCC Guidelines for National Greenhouse Gas Inventories <https://www.ipcc.ch/report/2019-refinement-to-the-2006-ipcc-guidelines-for-national-greenhouse-gas-inventories/>`_,,,0,1,1,none
+Input,Agriculture Fraction Dry," | Used to calculate :math:`\text{N}_2\text{O}` emissions from fertilizer application. 
+ | 
+ | Agriculture Fraction Dry and Agriculture Fraction Wet must sum to 1",``frac_agrc_$CAT-AGRICULTURE$_cl2_dry``,,,,,0,1,1,``dry_climate``
+Input,Agriculture Fraction Temperate," | Used to calculate :math:`\text{N}_2\text{O}` emissions from organic soils. 
+ | 
+ | Agriculture Fraction Temperate and Agriculture Fraction Tropical must sum to 1",``frac_agrc_$CAT-AGRICULTURE$_cl1_temperate``,,,,,0,1,1,``temperate_crop_grass``
+Input,Agriculture Fraction Tropical," | Used to calculate :math:`\text{N}_2\text{O}` emissions from organic soils. 
+ | 
+ | Agriculture Fraction Temperate and Agriculture Fraction Tropical must sum to 1",``frac_agrc_$CAT-AGRICULTURE$_cl1_tropical``,,,,,0,1,1,``tropical_crop_grass``
+Input,Agriculture Fraction Wet," | Used to calculate :math:`\text{N}_2\text{O}` emissions from fertilizer application
+ | 
+ | Agriculture Fraction Dry and Agriculture Fraction Wet must sum to 1",``frac_agrc_$CAT-AGRICULTURE$_cl2_wet``,,,,,0,1,1,``wet_climate``
 Input,Crop Demand Income Elasticity,"Elasticity of demand for crop in category ``$CAT-AGRICULTURE$`` to the changes in income, whose proxy is gdp/capita",``elasticity_agrc_$CAT-AGRICULTURE$_demand_to_income``,,See the `USDSA Commodity and Food Elasticities Database <https://www.ers.usda.gov/data-products/commodity-and-food-elasticities/>`_ for baseline elasticies by country.,,,0,0.8,1.2,none
 Input,Crop Fraction Animal Feed,"Proportion of the crop yield that is used for animal feed. Used to adjust demand for crops in response to changing animal populations. Demands for non-animal feed are driven by gdp/capita. Trivial proportions (e.g., radish tops) can be ignored. ",``frac_agrc_initial_yield_feed_$CAT-AGRICULTURE$``,,"Loose proportions dervied from `Statista <https://www.statista.com/statistics/1099196/brazil-corn-animal-feed/>`_ (quantity of Maize yield used for livestock feed), `FAO <https://www.fao.org/faostat/en/#data/QCL>`_ (total yield), and `VOX <https://www.vox.com/2014/8/21/6053187/cropland-map-food-fuel-animal-feed>`_ (conceptual importance).",,,0,1,1,none
 Input,Crop Yield Factor,Yield (metric tons) per hectare of crops planted,"``yf_agrc_$CAT-AGRICULTURE$_$UNIT-MASS$_$UNIT-AREA$`` (``$UNIT-MASS$ = tonne``, ``$UNIT-AREA$ = ha``)",,,,,0,0.8,1.2,none
@@ -9,8 +20,6 @@ Input,Initial Cropland Area Proportion,"Proportion of total **crop** area (%/100
 Output,:math:`\text{CO}_2` Emissions from Crop Activity,,``emission_co2e_$EMISSION-GAS$_agrc_crop_activity_$CAT-AGRICULTURE$`` (``$EMISSION-GAS$ = co2``),,,,,1,1,1,none
 Output,:math:`\text{N}_2\text{O}` Emissions from Crop Activity,,``emission_co2e_$EMISSION-GAS$_agrc_crop_activity_$CAT-AGRICULTURE$`` (``$EMISSION-GAS$ = n2o``),,,,,1,1,1,none
 Output,Change to Net Imports of Crops,Difference between crops demanded and those that can be produced locally. Assumption is that demand is met and they will be imported.,``net_imports_agrc_$CAT-AGRICULTURE$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,,,,1,1,1,none
-Output,Crop Area,Total area of each crop,``area_agrc_crops_$CAT-AGRICULTURE$_$UNIT-AREA$`` (``$UNIT-AREA$ = ha``),,,,,1,1,1,none
+Output,Crop Area,Total area of each crop given in terms of the value specified in the configuration parameter ``area_units``.,``area_agrc_crops_$CAT-AGRICULTURE$``,,,,,1,1,1,none
 Output,Crop Yield,Total tonnage of crops yielded,``yield_agrc_$CAT-AGRICULTURE$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,,,,1,1,1,none
 Output,Cropland Area Proportion,Proportion of cropland represented by each crop,``frac_area_cropland_calculated_$CAT-AGRICULTURE$``,,,,,1,1,1,none
-Input,Managed Soil Crop Fraction,,``frac_agrc_$CAT-AGRICULTURE$_soil_managed``,,,,,0,1,1,``managed``
-Input,Organic Soil Crop Fraction,,``frac_agrc_$CAT-AGRICULTURE$_soil_organic``,,,,,0,1,1,``organic``

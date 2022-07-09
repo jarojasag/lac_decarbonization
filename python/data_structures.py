@@ -321,6 +321,28 @@ class ModelAttributes:
         self.varchar_str_unit_mass = "$UNIT-MASS$"
         self.varchar_str_unit_volume = "$UNIT-VOLUME$"
 
+        # set some subsector names
+        self.subsec_name_agrc = "Agriculture"
+        self.subsec_name_frst = "Forest"
+        self.subsec_name_lndu = "Land Use"
+        self.subsec_name_lsmm = "Livestock Manure Management"
+        self.subsec_name_lvst = "Livestock"
+        self.subsec_name_soil = "Soil Management"
+        self.subsec_name_wali = "Liquid Waste"
+        self.subsec_name_waso = "Solid Waste"
+        self.subsec_name_trww = "Wastewater Treatment"
+        self.subsec_name_ccsq = "Carbon Capture and Sequestration"
+        self.subsec_name_enfu = "Energy Fuels"
+        self.subsec_name_enst = "Energy Storage"
+        self.subsec_name_entc = "Energy Technology"
+        self.subsec_name_inen = "Industrial Energy"
+        self.subsec_name_scoe = "Stationary Combustion and Other Energy"
+        self.subsec_name_trns = "Transportation"
+        self.subsec_name_trde = "Transportation Demand"
+        self.subsec_name_ippu = "IPPU"
+        self.subsec_name_econ = "Economy"
+        self.subsec_name_gnrl = "General"
+
         # add attributes and dimensional information
         self.attribute_directory = dir_attributes
         self.all_pycategories, self.all_dims, self.all_attributes, self.configuration_requirements, self.dict_attributes, self.dict_varreqs = self.load_attribute_tables(dir_attributes)
@@ -337,6 +359,7 @@ class ModelAttributes:
         self.check_enfu_attribute_table()
         self.check_inen_enfu_crosswalk()
         self.check_lndu_attribute_tables()
+        self.check_lsmm_attribute_table()
         self.check_trde_category_variable_crosswalk()
         self.check_trns_trde_crosswalks()
         self.check_wali_gnrl_crosswalk()
@@ -355,6 +378,7 @@ class ModelAttributes:
             self.dict_attributes["unit_volume"],
             self.configuration_requirements
         )
+
 
 
 
@@ -1217,10 +1241,9 @@ class ModelAttributes:
 
     ##  function to check that the land use attribute tables are specified
     def check_lndu_attribute_tables(self):
-
         # specify some generic variables
-        catstr_forest = self.dict_attributes["abbreviation_subsector"].field_maps["subsector_to_primary_category_py"]["Forest"]
-        catstr_landuse = self.dict_attributes["abbreviation_subsector"].field_maps["subsector_to_primary_category_py"]["Land Use"]
+        catstr_forest = self.get_subsector_attribute(self.subsec_name_frst, "pycategory_primary")#self.dict_attributes["abbreviation_subsector"].field_maps["subsector_to_primary_category_py"]["Forest"]
+        catstr_landuse = self.get_subsector_attribute(self.subsec_name_lndu, "pycategory_primary")#self.dict_attributes["abbreviation_subsector"].field_maps["subsector_to_primary_category_py"]["Land Use"]
         attribute_forest = self.dict_attributes[catstr_forest]
         attribute_landuse = self.dict_attributes[catstr_landuse]
         cats_forest = attribute_forest.key_values
@@ -1240,6 +1263,39 @@ class ModelAttributes:
             extra_vals = sf.format_print_list(extra_vals)
             raise KeyError(f"Undefined forest categories specified in land use attribute file '{attribute_landuse.fp_table}': did not find forest categories {extra_vals}.")
 
+        # check specification of crop category & pasture category
+        fields_check_sum = ["crop_category", "pasture_category"]
+        for field in fields_check_sum:
+            vals = set(attribute_landuse.table[field])
+            if (not vals.issubset(set({0, 1}))) or (sum(attribute_landuse.table[field]) > 1):
+                raise ValueError(f"Invalid specification of field '{field}' in {subsec} attribute located at {attribute_landuse.fp_table}. Check to ensure that at most 1 is specified; all other entries should be 0.")
+        # check to ensure that source categories for mineralization in soil management are specified properly
+        field_mnrl = "mineralization_in_land_use_conversion_to_managed"
+        cats_crop = self.get_categories_from_attribute_characteristic(self.subsec_name_lndu, {"crop_category": 1})
+        cats_mnrl = self.get_categories_from_attribute_characteristic(self.subsec_name_lndu, {field_mnrl: 1})
+        if len(set(cats_crop) & set(cats_mnrl)) > 0:
+            raise ValueError(f"Invalid specification of field '{field_mnrl}' in {self.subsec_name_lndu} attribute located at {attribute_landuse.fp_table}. Category '{cats_crop[0]}' cannot be specified as a target category.")
+
+
+
+    ##  check the livestock manure management attribute table
+    def check_lsmm_attribute_table(self):
+        subsec = "Livestock Manure Management"
+        attr = self.get_attribute_table(subsec)
+        fields_check_sum = ["incineration_category", "pasture_category"]
+
+        # check that the integration fields are properly specified
+        for field in fields_check_sum:
+            vals = set(attr.table[field])
+            if (not vals.issubset(set({0, 1}))) or (sum(attr.table[field]) > 1):
+                raise ValueError(f"Invalid specification of field '{field}' in {subsec} attribute located at {attr.fp_table}. Check to ensure that at most 1 is specified; all other entries should be 0.")
+
+        # next, check that the fields are not assigning categories to multiple types
+        fields_check_sum = [x for x in fields_check_sum if x in attr.table]
+        vec_max = np.array(attr.table[fields_check_sum].sum(axis = 1))
+        if max(vec_max) > 1:
+            fields = sf.format_print_list(fields_check_sum)
+            raise ValueError(f"Invalid specification of fields {fields} in {subsec} attribute located at {attr.fp_table}: Non-injective mapping specified--categories can map to at most 1 of these fields.")
 
     ##  function to check the variables specified in the Transportation Demand attribute table
     def check_trde_category_variable_crosswalk(self):
@@ -2097,7 +2153,7 @@ class ModelAttributes:
 
             - modvar: variable name to retrieve
 
-            - override_vector_for_single_mv_q: default is False. Set to True to return a vector if the dimension of the variable is 1; otherwise, an array will be returned (if not a dataframe).
+            - override_vector_for_single_mv_q: default is False. Set to True to return an array if the dimension of the variable is 1; otherwise, a vector will be returned (if not a dataframe).
 
             - return_type: valid values are "data_frame", "array_base" (np.ndarray not corrected for configuration emissions), or "array_units_corrected" (emissions corrected for configuration)
 
@@ -2272,10 +2328,14 @@ class ModelAttributes:
 
             dict_vr_vtf_outer = dict_vr_vtf.copy()
 
-            vars_outer = [x for x in dict_vr_vtf.keys() if (category_outer_tuple[0] in dict_vr_vvs[x]) and (category_outer_tuple[1] in dict_vr_vvs[x])]
-            vars_unidim = [x for x in dict_vr_vtf.keys() if (x not in vars_outer)]
-            [dict_vr_vtf_outer.pop(x) for x in vars_unidim]
-            [dict_vr_vtf.pop(x) for x in vars_outer]
+            # raise a traceable error
+            try:
+                vars_outer = [x for x in dict_vr_vtf.keys() if (category_outer_tuple[0] in dict_vr_vvs[x]) and (category_outer_tuple[1] in dict_vr_vvs[x])]
+                vars_unidim = [x for x in dict_vr_vtf.keys() if (x not in vars_outer)]
+                [dict_vr_vtf_outer.pop(x) for x in vars_unidim]
+                [dict_vr_vtf.pop(x) for x in vars_outer]
+            except:
+                raise ValueError(f"Invalid attribute table designations found in subsector '{subsector}': check the field '{target_field}'.")
 
             if variable != None:
                 vars_outer = list(dict_vr_vtf_outer.keys())
@@ -2434,20 +2494,31 @@ class ModelAttributes:
 
             df_driver: data frame containing the variables driving emissions
 
+            dict_vars: map the emission factor variable to a tuple: (emission model variable, driver_unit_type, scale_factor)
 
+                - driver_unit_type: a unit dimension--e.g., length, area, volume, mass, or energy--that relates a driver to a factor. Used for unit correction and overriden by scale_factor.
+
+                - scale_factor: a factor applied to the products to ensure proper unit conversion. Overrides connection from driver_unit_type.
+
+            variable_driver:
         """
         # check if
         df_out = []
         subsector_driver = self.dict_model_variable_to_subsector[variable_driver]
         for var in dict_vars.keys():
-            subsector_var = self.dict_model_variable_to_subsector[var]
+            subsector_var, driver_unit_type, scale_factor = self.dict_model_variable_to_subsector[var]
             if subsector_driver != subsector_driver:
                 warnings.warn(f"In get_simple_input_to_output_emission_arrays, driver variable '{variable_driver}' and emission variable '{var}' are in different sectors. This instance will be skipped.")
             else:
-                # get emissions factor fields and apply scalar using get_standard_variables
+                # get emissions factor fields and apply scalar using get_standard_variables - then, scale to ensure it is in the proper terms of the driver
                 arr_ef = np.array(self.get_standard_variables(df_ef, var, True, "array_units_corrected"))
+                try:
+                    scalar_units = scale_factor if (scale_factor is not None) else self.get_variable_unit_conversion_factor(variable_driver, var, driver_unit_type)
+                except:
+                    scalar_units = scale_factor if (scale_factor is not None) else 1
+                print(scalar_units)
                 # get the emissions driver array (driver must h)
-                arr_driver = np.array(df_driver[self.build_target_varlist_from_source_varcats(var, variable_driver)])
+                arr_driver = np.array(df_driver[self.build_target_varlist_from_source_varcats(var, variable_driver)])*scalar_units
 
                 df_out.append(self.array_to_df(arr_driver*arr_ef, dict_vars[var]))
         return df_out

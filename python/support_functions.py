@@ -356,9 +356,100 @@ def subset_df(df, dict_in):
 
 
 ##  set a vector to element-wise stay within bounds
-def vec_bounds(vec, bounds: tuple):
-    def f(x):
-        return scalar_bounds(x, bounds)
-    f_z = np.vectorize(f)
+def vec_bounds(
+    vec,
+    bounds: tuple,
+    cycle_vector_bounds_q: bool = False
+):
+    """
+        Bound a vector vec within a range set within 'bounds'.
 
-    return f_z(vec).astype(float)
+        vec: list or np.ndarray of values to bound
+
+        bounds: tuple (single bound) or list vec specifying element-wise bounds (NOTE: only works if vec.shape = (len(vec), ) == (len(bounds), ))
+
+        cycle_vector_bounds_q: cycle bounds if there is a mismatch and the bounds are entered as a vector
+    """
+    # check on approch--is there a vector of bounds?
+    use_bounding_vec = False
+
+    # check if specification is a list of tuples
+    if len(np.array(bounds).shape) > 1:
+        # initialize error check
+        error_q = not all(isinstance(n, tuple) for n in bounds)
+
+        # restrict use_bounding_vec to vector vs. vector with dim (n, )
+        dim_vec = (len(vec), ) if isinstance(vec, list) else vec.shape
+        error_q = error_q or (len(dim_vec) != 1)
+
+        # check element types
+        if len(bounds) == len(vec):
+            use_bounding_vec = True
+        elif cycle_vector_bounds_q:
+            use_bounding_vec = True
+            n_b = len(bounds)
+            n_v = len(vec)
+            bounds = bounds[0:n_v] if (n_b > n_v) else sum([bounds for x in range(int(np.ceil(n_v/n_b)))], [])[0:n_v]
+        elif not error_q:
+            bounds = bounds[0]
+            use_bounding_vec = False
+        #
+        if error_q:
+            raise ValueError(f"Invalid bounds specified in vec_bounds:\n\t- Bounds should be a tuple or a vector of tuples.\n\t- If the bounding vector does not match length of the input vector, set cycle_vector_bounds_q = True to force cycling.")
+
+    if not use_bounding_vec:
+        def f(x):
+            return scalar_bounds(x, bounds)
+        f_z = np.vectorize(f)
+        vec_out = f_z(vec).astype(float)
+    else:
+        vec_out = [scalar_bounds(x[0], x[1]) for x in zip(vec, bounds)]
+        vec_out = np.array(vec_out) if isinstance(vec, np.ndarray) else vec_out
+
+    return vec_out
+
+
+# use the concept of a limiter and renormalize elements beyond a threshold
+def vector_limiter(vecs:list, var_bounds: tuple) -> list:
+    """
+        Bound a collection vectors by sum. Must specify at least a lower bound.
+
+        vecs: list of numpy arrays with the same shape
+
+        var_bounds: tuple of
+    """
+
+    types_valid = [tuple, list, np.ndarray]
+    if not any([isinstance(var_bounds, x) for x in types_valid]):
+        str_types_valid = format_print_list([str(x) for x in types_valid])
+        raise ValueError(f"Invalid variable bounds type '{var_bounds}' in vector_limiter: valid types are {str_types_valid}")
+    elif len(var_bounds) < 1:
+        raise ValueError(f"Invalid bounds specification of length 0 found in vector_limiter. Enter at least a lower bound.")
+
+    # get vector totals
+    vec_total = 0
+    for v in enumerate(vecs):
+        i, v = v
+        vecs[i] = np.array(v).astype(float)
+        vec_total += vecs[i]
+
+    # check for exceedance
+    thresh_inf = var_bounds[0] if (var_bounds[0] is not None) else -np.inf
+    thresh_sup = var_bounds[1] if (len(var_bounds) > 1) else np.inf
+    thresh_sup = thresh_sup if (thresh_sup is not None) else np.inf
+
+    # replace those beyond the infinum
+    w_inf = np.where(vec_total < thresh_inf)[0]
+    if len(w_inf) > 0:
+        for v in vecs:
+            elems_new = thresh_inf*v[w_inf]/vec_total[w_inf]
+            np.put(v, w_inf, elems_new)
+
+    # replace those beyond the supremum
+    w_sup = np.where(vec_total > thresh_sup)[0]
+    if len(w_sup) > 0:
+        for v in vecs:
+            elems_new = thresh_sup*v[w_sup]/vec_total[w_sup]
+            np.put(v, w_sup, elems_new)
+
+    return vecs

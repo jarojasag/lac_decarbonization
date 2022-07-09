@@ -39,8 +39,8 @@ class AFOLU:
         self.modvar_agrc_area_prop_init = "Initial Cropland Area Proportion"
         self.modvar_agrc_area_crop = "Crop Area"
         self.modvar_agrc_ef_ch4 = ":math:\\text{CH}_4 Crop Anaerobic Decomposition Emission Factor"
-        self.modvar_agrc_ef_co2 = ":math:\\text{CO}_2 Crop Soil Carbon Emission Factor"
-        self.modvar_agrc_ef_co2_yield = ":math:\\text{CO}_2 Crop Biomass Emission Factor"
+        self.modvar_agrc_ef_co2_biomass = ":math:\\text{CO}_2 Crop Biomass Emission Factor"
+        self.modvar_agrc_ef_co2_soil_carbon = ":math:\\text{CO}_2 Crop Soil Carbon Emission Factor"
         self.modvar_agrc_ef_n2o_burning = ":math:\\text{N}_2\\text{O} Crop Biomass Burning Emission Factor"
         self.modvar_agrc_ef_n2o_fertilizer = ":math:\\text{N}_2\\text{O} Crop Fertilizer and Lime Emission Factor"
         self.modvar_agrc_elas_crop_demand_income = "Crop Demand Income Elasticity"
@@ -62,6 +62,8 @@ class AFOLU:
 
         # land use model variables
         self.modvar_lndu_area_by_cat = "Land Use Area"
+        self.modvar_lndu_area_converted_from_type = "Area of Land Use Area Conversion Away from Type"
+        self.modvar_lndu_area_converted_to_type = "Area of Land Use Area Conversion To Type"
         self.modvar_lndu_ef_co2_conv = ":math:\\text{CO}_2 Land Use Conversion Emission Factor"
         self.modvar_lndu_emissions_conv = ":math:\\text{CO}_2 Emissions from Land Use Conversion"
         self.modvar_lndu_emissions_ch4_from_wetlands = ":math:\\text{CH}_4 Emissions from Wetlands"
@@ -69,25 +71,22 @@ class AFOLU:
         self.modvar_lndu_emissions_co2_from_pastures = ":math:\\text{CO}_2 Emissions from Pastures"
         self.modvar_lndu_initial_frac = "Initial Land Use Area Proportion"
         self.modvar_lndu_ef_ch4_boc = "Land Use BOC :math:\\text{CH}_4 Emission Factor"
-        self.modvar_lndu_ef_n2o_past = "Land Use Pasture :math:\\text{N}_2\\text{O} Emission Factor"
         self.modvar_lndu_ef_co2_soilcarb = "Land Use Soil Carbon :math:\\text{CO}_2 Emission Factor"
         self.modvar_lndu_prob_transition = "Unadjusted Land Use Transition Probability"
         self.modvar_lndu_reallocation_factor = "Land Use Yield Reallocation Factor"
         self.modvar_lndu_vdes = "Vegetarian Diet Exchange Scalar"
+        # some key categories
+        self.cat_lndu_crop = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lndu, {"crop_category": 1})[0]
+        self.cat_lndu_pstr = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lndu, {"pasture_category": 1})[0]
 
         # livestock model variables
+        self.modvar_lvst_animal_weight = "Animal Weight"
         self.modvar_lvst_carrying_capacity_scalar = "Carrying Capacity Scalar"
         self.modvar_lvst_dry_matter_consumption = "Daily Dry Matter Consumption"
         self.modvar_lvst_ef_ch4_ef = ":math:\\text{CH}_4 Enteric Fermentation Emission Factor"
         self.modvar_lvst_elas_lvst_demand = "Elasticity of Livestock Demand to GDP per Capita"
         self.modvar_lvst_emissions_ch4_ef = ":math:\\text{CH}_4 Emissions from Livestock Enteric Fermentation"
-        self.modvar_lvst_emissions_ch4_mm = ":math:\\text{CH}_4 Emissions from Livestock Manure"
-        self.modvar_lvst_emissions_n2o_mm = ":math:\\text{N}_2\\text{O} Emissions from Livestock Manure"
-        self.modvar_lvst_genrate_volatile_solids = "Volatile Solid Generation Rate"
-        self.modvar_lvst_max_manure_ch4_cap = "Maximum Manure :math:\\text{CH}_4 Generation Capacity"
-        self.modvar_lvst_net_imports = "Change to Net Imports of Livestock"
-        self.modvar_lvst_pop = "Livestock Head Count"
-        self.modvar_lvst_pop_init = "Initial Livestock Head Count"
+        self.modvar_lvst_frac_exc_n_in_dung = "Fraction Nitrogen Excretion in Dung"
         self.modvar_lvst_frac_mm_anaerobic_digester = "Livestock Manure Management Fraction Anaerobic Digester"
         self.modvar_lvst_frac_mm_anaerobic_lagoon = "Livestock Manure Management Fraction Anaerobic Lagoon"
         self.modvar_lvst_frac_mm_composting = "Livestock Manure Management Fraction Composting"
@@ -99,6 +98,62 @@ class AFOLU:
         self.modvar_lvst_frac_mm_poultry_manure = "Livestock Manure Management Fraction Poultry Manure"
         self.modvar_lvst_frac_mm_ppr = "Livestock Manure Management Fraction Paddock Pasture Range"
         self.modvar_lvst_frac_mm_solid_storage = "Livestock Manure Management Fraction Solid Storage"
+        self.modvar_lvst_genfactor_nitrogen = "Daily Nitrogen Generation Factor"
+        self.modvar_lvst_genfactor_volatile_solids = "Daily Volatile Solid Generation Factor"
+        self.modvar_lvst_b0_manure_ch4 = "Maximum Manure :math:\\text{CH}_4 Generation Capacity"
+        self.modvar_lvst_net_imports = "Change to Net Imports of Livestock"
+        self.modvar_lvst_pop = "Livestock Head Count"
+        self.modvar_lvst_pop_init = "Initial Livestock Head Count"
+        self.modvar_lvst_total_animal_mass = "Total Domestic Animal Mass"
+        self.modvar_list_lvst_mm_fractions = [
+            self.modvar_lvst_frac_mm_anaerobic_digester,
+            self.modvar_lvst_frac_mm_anaerobic_lagoon,
+            self.modvar_lvst_frac_mm_composting,
+            self.modvar_lvst_frac_mm_daily_spread,
+            self.modvar_lvst_frac_mm_deep_bedding,
+            self.modvar_lvst_frac_mm_dry_lot,
+            self.modvar_lvst_frac_mm_incineration,
+            self.modvar_lvst_frac_mm_liquid_slurry,
+            self.modvar_lvst_frac_mm_poultry_manure,
+            self.modvar_lvst_frac_mm_ppr,
+            self.modvar_lvst_frac_mm_solid_storage
+        ]
+        # some categories
+        self.cat_lsmm_incineration = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lsmm, {"incineration_category": 1})[0]
+        self.cat_lsmm_pasture = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lsmm, {"pasture_category": 1})[0]
+
+        # manure management variables
+        self.modvar_lsmm_dung_incinerated = "Dung Incinerated"
+        self.modvar_lsmm_ef_direct_n2o = ":math:\\text{N}_2\\text{O} Manure Management Emission Factor"
+        self.modvar_lsmm_emissions_ch4 = ":math:\\text{CH}_4 Emissions from Manure Management"
+        self.modvar_lsmm_emissions_n2o = ":math:\\text{N}_2\\text{O} Emissions from Manure Management"
+        self.modvar_lsmm_frac_loss_leaching = "Fraction of Nitrogen Lost to Leaching"
+        self.modvar_lsmm_frac_loss_volatilisation = "Fraction of Nitrogen Lost to Volatilisation"
+        self.modvar_lsmm_frac_n_available_used = "Fraction of Nitrogen Used in Fertilizer"
+        self.modvar_lsmm_mcf_by_pathway = "Manure Management Methane Correction Factor"
+        self.modvar_lsmm_n_from_bedding = "Nitrogen from Bedding per Animal"
+        self.modvar_lsmm_n_from_codigestates = "Nitrogen from Co-Digestates Factor"
+        self.modvar_lsmm_n_to_pastures = "Total Nitrogen to Pastures"
+        self.modvar_lsmm_n_to_fertilizer= "Nitrogen Available for Fertilizer"
+        self.modvar_lsmm_n_to_fertilizer_agg_dung = "Total Nitrogen Available for Fertilizer from Dung"
+        self.modvar_lsmm_n_to_fertilizer_agg_urea = "Total Nitrogen Available for Fertilizer from Urea"
+        self.modvar_lsmm_ratio_n2_to_n2o = "Ratio of :math:\\text{N}_2 to :math:\\text{N}_2\\text{O}"
+        self.modvar_lsmm_rf_biogas = "Biogas Recovery Factor at LSMM Anaerobic Digesters"
+        self.modvar_lsmm_rf_biogas_recovered = "LSMM Biogas Recovered from Anaerobic Digesters"
+
+        # soil management variables
+        self.modvar_soil_ef1_n_managed_soils_rice = ":math:\\text{EF}_{1FR} - \\text{N}_2\\text{O} Rice Fields"
+        self.modvar_soil_ef1_n_managed_soils_org_fert = ":math:\\text{EF}_1 - \\text{N}_2\\text{O} Organic Amendments and Fertilizer"
+        self.modvar_soil_ef1_n_managed_soils_syn_fert = ":math:\\text{EF}_1 - \\text{N}_2\\text{O} Synthetic Fertilizer"
+        self.modvar_soil_ef2_n_organic_soils = ":math:\\text{EF}_2 - \\text{N}_2\\text{O} Emissions from Drained and Managed Organic Soils"
+        self.modvar_soil_ef3_n_prp = "EF3 N Pasture Range and Paddock"
+        self.modvar_soil_ef4_n_volatilisation = "EF4 N Volatilisation and Re-Deposition Emission Factor"
+        self.modvar_soil_ef5_n_leaching = "EF5 N Leaching and Runoff Emission Factor"
+        self.modvar_soil_fertuse_nonurea = "Initial Non-Urea Synthetic Fertilizer Use"
+        self.modvar_soil_fertuse_urea = "Initial Urea Synthetic Fertilizer Use"
+        self.modvar_soil_emissions_co2_lime_urea = ":math:\\text{CO}_2 Emissions from Lime and Urea"
+        self.modvar_soil_emissions_fert = ":math:\\text{N}_2\\text{O} Emissions from Fertilizer Use"
+        self.modvar_soil_emissions_organic_soils = ":math:\\text{N}_2\\text{O} Emissions from Organic Soils"
 
         # variable required for integration
         self.integration_variables = self.set_integrated_variables()
@@ -106,6 +161,8 @@ class AFOLU:
         ##  MISCELLANEOUS VARIABLES
 
         self.time_periods, self.n_time_periods = self.model_attributes.get_time_periods()
+        self.factor_c_to_co2 = float(11/3)
+        self.factor_n2on_to_n2o = float(11/7)
 
         # TEMP:SET TO DERIVE FROM ATTRIBUTE TABLES---
         self.cat_lndu_crop = "croplands"
@@ -128,7 +185,7 @@ class AFOLU:
 
     def get_required_subsectors(self):
         subsectors = self.model_attributes.get_sector_subsectors("AFOLU")
-        subsectors = [x for x in subsectors if (x not in [self.subsec_name_lsmm, self.subsec_name_soil])] #TEMPORARY
+        subsectors = [x for x in subsectors if (x not in [self.subsec_name_soil])] #TEMPORARY
         subsectors_base = subsectors.copy()
         subsectors += [self.subsec_name_econ, "General"]
         return subsectors, subsectors_base
@@ -361,8 +418,8 @@ class AFOLU:
         attr_lvst = self.model_attributes.dict_attributes[pycat_lvst]
         # set some commonly called attributes and indices in arrays
         m = attr_lndu.n_key_values
-        ind_crop = attr_lndu.get_key_value_index("croplands")
-        ind_pstr = attr_lndu.get_key_value_index("grasslands")
+        ind_crop = attr_lndu.get_key_value_index(self.cat_lndu_crop)
+        ind_pstr = attr_lndu.get_key_value_index(self.cat_lndu_pstr)
 
         # initialize variables
         arr_lvst_dem_gr = np.cumprod(arr_lvst_dem/arr_lvst_dem[0], axis = 0)
@@ -475,7 +532,13 @@ class AFOLU:
 
 
     ##  project land use
-    def project_land_use(self, vec_initial_area: np.ndarray, arrs_transitions: np.ndarray, arrs_efs: np.ndarray, n_tp: int = None) -> tuple:
+    def project_land_use(
+        self,
+        vec_initial_area: np.ndarray,
+        arrs_transitions: np.ndarray,
+        arrs_efs: np.ndarray,
+        n_tp: int = None
+    ) -> tuple:
 
         t0 = time.time()
 
@@ -530,7 +593,6 @@ class AFOLU:
 
 
     ##  LIVESTOCK
-
 
     def reassign_pops_from_proj_to_carry(self, arr_lu_derived, arr_dem_based):
         """
@@ -588,11 +650,13 @@ class AFOLU:
         pycat_agrc = self.model_attributes.get_subsector_attribute(self.subsec_name_agrc, "pycategory_primary")
         pycat_frst = self.model_attributes.get_subsector_attribute(self.subsec_name_frst, "pycategory_primary")
         pycat_lndu = self.model_attributes.get_subsector_attribute(self.subsec_name_lndu, "pycategory_primary")
+        pycat_lsmm = self.model_attributes.get_subsector_attribute(self.subsec_name_lsmm, "pycategory_primary")
         pycat_lvst = self.model_attributes.get_subsector_attribute(self.subsec_name_lvst, "pycategory_primary")
         # attribute tables
         attr_agrc = self.model_attributes.dict_attributes[pycat_agrc]
         attr_frst = self.model_attributes.dict_attributes[pycat_frst]
         attr_lndu = self.model_attributes.dict_attributes[pycat_lndu]
+        attr_lsmm = self.model_attributes.dict_attributes[pycat_lsmm]
         attr_lvst = self.model_attributes.dict_attributes[pycat_lvst]
 
 
@@ -615,8 +679,9 @@ class AFOLU:
         #    LAND USE - UNADJUSTED VARIABLES   #
         ########################################
 
-        # area of the country
+        # area of the country + the applicable scalar used to convert outputs
         area = float(self.model_attributes.get_standard_variables(df_afolu_trajectories, self.model_socioeconomic.modvar_gnrl_area, return_type = "array_base")[0])
+        scalar_lndu_input_area_to_output_area = self.model_attributes.get_scalar(self.model_socioeconomic.modvar_gnrl_area,"area")
         # get the initial distribution of land
         vec_modvar_lndu_initial_frac = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_initial_frac, return_type = "array_base")[0]
         vec_modvar_lndu_initial_area = vec_modvar_lndu_initial_frac*area
@@ -625,8 +690,9 @@ class AFOLU:
         # factor for reallocating land in adjustment
         vec_lndu_reallocation_factor = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_reallocation_factor, False, "array_base")
         # common indices
-        cat_lndu_ind_pstr = self.model_attributes.dict_attributes["cat_landuse"].get_key_value_index("grasslands")
-        cat_lndu_ind_crop = self.model_attributes.dict_attributes["cat_landuse"].get_key_value_index("croplands")
+        cat_lndu_ind_crop = attr_lndu.get_key_value_index(self.cat_lndu_crop)
+        cat_lndu_ind_pstr = attr_lndu.get_key_value_index(self.cat_lndu_pstr)
+
 
         ###########################
         #    CALCULATE DEMANDS    #
@@ -659,6 +725,11 @@ class AFOLU:
         vec_agrc_cropland_area = area_agrc_cropland_init*vec_agrc_frac_cropland_area
         # get initial yield
         arr_agrc_yf = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_yf, True, "array_base")
+        arr_agrc_yf *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_agrc_yf,
+            self.model_socioeconomic.modvar_gnrl_area,
+            "area"
+        )
         vec_agrc_yield_init = arr_agrc_yf[0]*vec_agrc_cropland_area
         # split into yield for livestock feed (responsive to changes in livestock population) and yield for consumption and export (nonlvstfeed)
         vec_agrc_yield_init_lvstfeed = vec_agrc_yield_init*arr_agrc_frac_feed[0]
@@ -680,7 +751,7 @@ class AFOLU:
         ################################################
 
         # get land use projections (np arrays) - note, arrs_land_conv returns a list of matrices for troubleshooting
-        arr_agrc_frac_cropland, arr_agrc_net_import_increase, arr_agrc_yield, arr_lndu_emissions_conv, arr_land_use, arr_lvst_net_import_increase, self.arrs_land_conv, self.mat_trans_adj, self.yields_per_livestock = self.project_integrated_land_use(
+        arr_agrc_frac_cropland, arr_agrc_net_import_increase, arr_agrc_yield, arr_lndu_emissions_conv, arr_land_use, arr_lvst_net_import_increase, arrs_lndu_land_conv, self.mat_trans_adj, self.yields_per_livestock = self.project_integrated_land_use(
             vec_modvar_lndu_initial_area,
             self.mat_trans_unadj,
             self.mat_ef,
@@ -695,37 +766,51 @@ class AFOLU:
             vec_lvst_carry_capacity_scale,
             n_projection_time_periods
         )
-
-        # scale emissions
-        #arr_lndu_emissions_conv *= self.model_attributes.get_scalar(self.modvar_lndu_ef_co2_conv, "total")
-        df_lndu_emissions_conv = self.model_attributes.array_to_df(arr_lndu_emissions_conv, self.modvar_lndu_emissions_conv, True)
-        # assign other variables
+        self.arrs_lndu_land_conv = arrs_lndu_land_conv
+        # assign some dfs that are used below in other subsectors
         df_agrc_frac_cropland = self.model_attributes.array_to_df(arr_agrc_frac_cropland, self.modvar_agrc_area_prop_calc)
-        df_agrc_net_import_increase = self.model_attributes.array_to_df(arr_agrc_net_import_increase, self.modvar_agrc_net_imports)
-        df_agrc_yield = self.model_attributes.array_to_df(arr_agrc_yield, self.modvar_agrc_yield)
         df_land_use = self.model_attributes.array_to_df(arr_land_use, self.modvar_lndu_area_by_cat)
-        df_lvst_net_import_increase = self.model_attributes.array_to_df(arr_lvst_net_import_increase, self.modvar_lvst_net_imports)
+
+        # calculate land use conversions
+        arrs_lndu_conv_to = np.array([np.sum(x - np.diag(np.diagonal(x)), axis = 0) for x in arrs_lndu_land_conv])
+        arrs_lndu_conv_from = np.array([np.sum(x - np.diag(np.diagonal(x)), axis = 1) for x in arrs_lndu_land_conv])
 
         # add to output data frame
         df_out += [
             df_agrc_frac_cropland,
-            df_agrc_net_import_increase,
-            df_lndu_emissions_conv,
-            df_land_use,
-            df_lvst_net_import_increase
+            self.model_attributes.array_to_df(arr_agrc_net_import_increase, self.modvar_agrc_net_imports),
+            self.model_attributes.array_to_df(arr_lndu_emissions_conv, self.modvar_lndu_emissions_conv, True),
+            self.model_attributes.array_to_df(arr_agrc_yield, self.modvar_agrc_yield),
+            self.model_attributes.array_to_df(arr_land_use*scalar_lndu_input_area_to_output_area, self.modvar_lndu_area_by_cat),
+            self.model_attributes.array_to_df(arrs_lndu_conv_to*scalar_lndu_input_area_to_output_area, self.modvar_lndu_area_converted_to_type),
+            self.model_attributes.array_to_df(arrs_lndu_conv_from*scalar_lndu_input_area_to_output_area, self.modvar_lndu_area_converted_from_type),
+            self.model_attributes.array_to_df(arr_lvst_net_import_increase, self.modvar_lvst_net_imports)
         ]
 
 
         ##  EXISTENCE EMISSIONS FOR OTHER LANDS, INCLUDING AG ACTIVITY ON PASTURES
 
-        # dictionary variables mapping emission factor variables to output variables
-        dict_modvars_lndu_simple_efs = {
-            self.modvar_lndu_ef_n2o_past: self.modvar_lndu_emissions_n2o_from_pastures,
-            self.modvar_lndu_ef_co2_soilcarb: self.modvar_lndu_emissions_co2_from_pastures,
-            self.modvar_lndu_ef_ch4_boc: self.modvar_lndu_emissions_ch4_from_wetlands
-        }
-        # add to output dataframe
-        df_out += self.model_attributes.get_simple_input_to_output_emission_arrays(df_afolu_trajectories, df_land_use, dict_modvars_lndu_simple_efs, self.modvar_lndu_area_by_cat)
+        # get CO2 emissions from soil carbon in pastures
+        arr_lndu_ef_co2_soilcarb = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_ef_co2_soilcarb, True, "array_units_corrected")
+        arr_lndu_ef_co2_soilcarb *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.model_socioeconomic.modvar_gnrl_area,
+            self.modvar_lndu_ef_co2_soilcarb,
+            "area"
+        )
+        arr_lndu_area_co2_soilcarb = np.array(df_land_use[self.model_attributes.build_target_varlist_from_source_varcats(self.modvar_lndu_ef_co2_soilcarb, self.modvar_lndu_area_by_cat)])
+        # get CH4 emissions from wetlands
+        arr_lndu_ef_ch4_boc = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_ef_ch4_boc, True, "array_units_corrected")
+        arr_lndu_ef_ch4_boc *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.model_socioeconomic.modvar_gnrl_area,
+            self.modvar_lndu_ef_ch4_boc,
+            "area"
+        )
+        arr_lndu_area_ch4_boc = np.array(df_land_use[self.model_attributes.build_target_varlist_from_source_varcats(self.modvar_lndu_ef_ch4_boc, self.modvar_lndu_area_by_cat)])
+
+        df_out += [
+            self.model_attributes.array_to_df(arr_lndu_area_co2_soilcarb*arr_lndu_ef_co2_soilcarb, self.modvar_lndu_emissions_co2_from_pastures),
+            self.model_attributes.array_to_df(arr_lndu_area_ch4_boc*arr_lndu_ef_ch4_boc, self.modvar_lndu_emissions_ch4_from_wetlands)
+        ]
 
 
 
@@ -738,7 +823,17 @@ class AFOLU:
         arr_area_frst = np.array(df_land_use[self.model_attributes.build_varlist(self.subsec_name_lndu, variable_subsec = self.modvar_lndu_area_by_cat, restrict_to_category_values = fields_lndu_forest_ordered)])
         # get different variables
         arr_frst_ef_sequestration = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_sq_co2, True, "array_units_corrected")
+        arr_frst_ef_sequestration *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.model_socioeconomic.modvar_gnrl_area,
+            self.modvar_frst_sq_co2,
+            "area"
+        )
         arr_frst_ef_methane = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_ef_ch4, True, "array_units_corrected")
+        arr_frst_ef_methane *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.model_socioeconomic.modvar_gnrl_area,
+            self.modvar_frst_ef_ch4,
+            "area"
+        )
         # build output variables
         df_out += [
             self.model_attributes.array_to_df(-1*arr_area_frst*arr_frst_ef_sequestration, self.modvar_frst_emissions_sequestration),
@@ -760,17 +855,40 @@ class AFOLU:
         # fraction of cropland represented by each crop
         arr_agrc_frac_cropland_area = self.check_cropland_fractions(df_agrc_frac_cropland, "calculated")
         arr_agrc_crop_area = (arr_agrc_frac_cropland_area.transpose()*vec_cropland_area.transpose()).transpose()
-        # unit-corrected emission factors
+        # unit-corrected emission factors - ch4
         arr_agrc_ef_ch4 = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_ch4, True, "array_units_corrected", expand_to_all_cats = True)
-        arr_agrc_ef_co2 = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_co2, True, "array_units_corrected")
-        arr_agrc_ef_co2_yield = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_co2_yield, True, "array_units_corrected")
+        arr_agrc_ef_ch4 *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.model_socioeconomic.modvar_gnrl_area,
+            self.modvar_agrc_ef_ch4,
+            "area"
+        )
+        # soil carbon
+        arr_agrc_ef_co2_soil_carbon = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_co2_soil_carbon, True, "array_units_corrected", expand_to_all_cats = True)
+        arr_agrc_ef_co2_soil_carbon *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.model_socioeconomic.modvar_gnrl_area,
+            self.modvar_agrc_ef_co2_soil_carbon,
+            "area"
+        )
+        # biomass
+        arr_agrc_ef_co2_biomass = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_co2_biomass, True, "array_units_corrected", expand_to_all_cats = True)
+        arr_agrc_ef_co2_biomass *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.model_socioeconomic.modvar_gnrl_area,
+            self.modvar_agrc_ef_co2_biomass,
+            "area"
+        )
+        # biomass burning n2o
         arr_agrc_ef_n2o = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_n2o_burning, True, "array_units_corrected")
+        arr_agrc_ef_n2o *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.model_socioeconomic.modvar_gnrl_area,
+            self.modvar_agrc_ef_n2o_burning,
+            "area"
+        )
 
         # add to output dataframe
         df_out += [
-            self.model_attributes.array_to_df(arr_agrc_crop_area, self.modvar_agrc_area_crop),
+            self.model_attributes.array_to_df(arr_agrc_crop_area*scalar_lndu_input_area_to_output_area, self.modvar_agrc_area_crop),
             self.model_attributes.array_to_df(arr_agrc_ef_ch4*arr_agrc_crop_area, self.modvar_agrc_emissions_ch4_crops, reduce_from_all_cats_to_specified_cats = True),
-            self.model_attributes.array_to_df(arr_agrc_ef_co2*arr_agrc_crop_area + arr_agrc_yield*arr_agrc_ef_co2_yield, self.modvar_agrc_emissions_co2_crops),
+            self.model_attributes.array_to_df((arr_agrc_ef_co2_soil_carbon + arr_agrc_ef_co2_biomass)*arr_agrc_crop_area, self.modvar_agrc_emissions_co2_crops),
             self.model_attributes.array_to_df(arr_agrc_ef_n2o*arr_agrc_crop_area, self.modvar_agrc_emissions_n2o_crops)
         ]
 
@@ -783,37 +901,230 @@ class AFOLU:
         # get area of grassland/pastures
         field_lvst_graze_array = self.model_attributes.build_varlist(self.subsec_name_lndu, variable_subsec = self.modvar_lndu_area_by_cat, restrict_to_category_values = [self.cat_lndu_grazing])[0]
         vec_lvst_graze_area = np.array(df_land_use[field_lvst_graze_array])
-        # estimate the total number of livestock that are raised, then get emission factor
-        arr_lvst_emissions_ch4_ef = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_ef_ch4_ef, True, "array_units_corrected")
-        #arr_lvst_emissions_ch4_mm = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_ef_ch4_mm, True, "array_units_corrected")
-        #arr_lvst_emissions_n2o_mm = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_ef_n2o_mm, True, "array_units_corrected")
+        # estimate the total number of livestock that are raised
         arr_lvst_pop = arr_lvst_dem_pop - arr_lvst_net_import_increase
+        arr_lvst_total_weight = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_animal_weight, True, "array_base", expand_to_all_cats = True)
+        arr_lvst_total_animal_mass = arr_lvst_pop*arr_lvst_total_weight
+        arr_lvst_aggregate_animal_mass = np.sum(arr_lvst_total_animal_mass, axis = 1)
+        arr_lvst_aggregate_animal_mass *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_lvst_animal_weight,
+            self.modvar_lvst_total_animal_mass,
+            "mass"
+        )
+        # get the enteric fermentation emission factor
+        arr_lvst_emissions_ch4_ef = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_ef_ch4_ef, True, "array_units_corrected")
         # add to output dataframe
         df_out += [
             self.model_attributes.array_to_df(arr_lvst_emissions_ch4_ef*arr_lvst_pop, self.modvar_lvst_emissions_ch4_ef),
-            #self.model_attributes.array_to_df(arr_lvst_emissions_ch4_mm*arr_lvst_pop, self.modvar_lvst_emissions_ch4_mm),
-            #self.model_attributes.array_to_df(arr_lvst_emissions_n2o_mm*arr_lvst_pop, self.modvar_lvst_emissions_n2o_mm),
-            self.model_attributes.array_to_df(arr_lvst_pop, self.modvar_lvst_pop)
+            self.model_attributes.array_to_df(arr_lvst_pop, self.modvar_lvst_pop),
+            self.model_attributes.array_to_df(arr_lvst_aggregate_animal_mass, self.modvar_lvst_total_animal_mass)
         ]
+
+
+        ##  MANURE MANAGEMENT DATA
+
+        # nitrogen and volative solids generated (passed to manure management--unitless, so they take the mass of modvar_lvst_animal_weight)
+        arr_lvst_nitrogen = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_genfactor_nitrogen, True, "array_base", expand_to_all_cats = True)
+        arr_lvst_nitrogen *= arr_lvst_total_animal_mass*self.model_attributes.configuration.get("days_per_year")
+        arr_lvst_volatile_solids = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_genfactor_volatile_solids, True, "array_base", expand_to_all_cats = True)
+        arr_lvst_volatile_solids *= arr_lvst_total_animal_mass*self.model_attributes.configuration.get("days_per_year")
+        arr_lvst_b0 = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_b0_manure_ch4, True, "array_units_corrected_gas", expand_to_all_cats = True)
+
 
 
         #####################################
         #    LIVESTOCK MANURE MANAGEMENT    #
         #####################################
-        """
+
         # first, retrieve energy fractions and ensure they sum to 1
         dict_arrs_lsmm_frac_manure = self.model_attributes.get_multivariables_with_bounded_sum_by_category(
             df_afolu_trajectories,
-            self.modvar_inen_list_fuel_fractions,
+            self.modvar_list_lvst_mm_fractions,
             1,
             force_sum_equality = True,
             msg_append = "Energy fractions by category do not sum to 1. See definition of dict_arrs_inen_frac_energy."
         )
-        """
+
+        # get variables that can be indexed below
+        arr_lsmm_ef_direct_n2o = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lsmm_ef_direct_n2o, True, "array_base", expand_to_all_cats = True)
+        arr_lsmm_frac_lost_leaching = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lsmm_frac_loss_leaching, True, "array_base", expand_to_all_cats = True, var_bounds = (0, 1))
+        arr_lsmm_frac_lost_volatilisation = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lsmm_frac_loss_volatilisation, True, "array_base", expand_to_all_cats = True, var_bounds = (0, 1))
+        arr_lsmm_mcf_by_pathway = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lsmm_mcf_by_pathway, True, "array_base", expand_to_all_cats = True, var_bounds = (0, 1))
+        arr_lsmm_n_from_bedding = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lsmm_n_from_bedding, True, "array_base", expand_to_all_cats = True)
+        arr_lsmm_n_from_codigestates = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lsmm_n_from_codigestates, True, "array_base", expand_to_all_cats = True, var_bounds = (0, np.inf))
+        arr_lsmm_rf_biogas = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lsmm_rf_biogas, True, "array_base", expand_to_all_cats = True, var_bounds = (0, 1))
+        vec_lsmm_frac_n_in_dung = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_frac_exc_n_in_dung, False, "array_base", var_bounds = (0, 1))
+        vec_lsmm_ratio_n2_to_n2o = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lsmm_ratio_n2_to_n2o, False, "array_base")
+
+        # soil EF4/EF5 from Table 11.3 - use average fractions from grasslands
+        arr_soil_ef_ef4 = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_soil_ef4_n_volatilisation, False, "array_base")
+        vec_soil_ef_ef4 = np.sum(arr_soil_ef_ef4, axis = 1)/2
+        print("TEMPORARY WORK -- ASSUMED 50% DRY/WET--TO GET RUNNING - FIX TO READ FROM VARS!")
+        vec_soil_ef_ef5 = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_soil_ef5_n_leaching, False, "array_base")
+
+        # convert bedding/co-digestates to animal weight masses
+        arr_lsmm_n_from_bedding *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_lsmm_n_from_bedding,
+            self.modvar_lvst_animal_weight,
+            "mass"
+        )
+
+        # initialize output arrays
+        arr_lsmm_biogas_recovered = np.zeros(arr_lsmm_ef_direct_n2o.shape)
+        arr_lsmm_emission_ch4 = np.zeros(arr_lsmm_ef_direct_n2o.shape)
+        arr_lsmm_emission_n2o = np.zeros(arr_lsmm_ef_direct_n2o.shape)
+        arr_lsmm_nitrogen_available = np.zeros(arr_lsmm_ef_direct_n2o.shape)
+        # initialize some aggregations
+        vec_lsmm_nitrogen_to_fertilizer_dung = 0
+        vec_lsmm_nitrogen_to_fertilizer_urea = 0
+
+        # loop over manure pathways to
+        for var_lvst_mm_frac in self.modvar_list_lvst_mm_fractions:
+            # get the current variable
+            arr_lsmm_fracs_by_lvst = dict_arrs_lsmm_frac_manure[var_lvst_mm_frac]
+            arr_lsmm_total_nitrogen_cur = arr_lvst_nitrogen*arr_lsmm_fracs_by_lvst
+            # retrive the livestock management category
+            cat_lsmm = ds.clean_schema(self.model_attributes.get_variable_attribute(var_lvst_mm_frac, pycat_lsmm))
+            index_cat_lsmm = attr_lsmm.get_key_value_index(cat_lsmm)
+
+
+            ##  METHANE EMISSIONS
+
+            # get MCF, b0, and total volatile solids - USE EQ. 10.23
+            vec_lsmm_mcf_cur = arr_lsmm_mcf_by_pathway[:, index_cat_lsmm]
+            arr_lsmm_emissions_ch4_cur = arr_lvst_b0*arr_lvst_volatile_solids*arr_lsmm_fracs_by_lvst
+            arr_lsmm_emissions_ch4_cur = (arr_lsmm_emissions_ch4_cur.transpose()*vec_lsmm_mcf_cur).transpose()
+            # get biogas recovery
+            arr_lsmm_biogas_recovered_cur = (arr_lsmm_emissions_ch4_cur.transpose()*arr_lsmm_rf_biogas[:, index_cat_lsmm]).transpose()
+            arr_lsmm_emissions_ch4_cur -= arr_lsmm_biogas_recovered_cur
+            arr_lsmm_biogas_recovered[:, index_cat_lsmm] = np.sum(arr_lsmm_biogas_recovered_cur, axis = 1)
+            # adjust
+            arr_lsmm_emissions_ch4_cur *= self.model_attributes.get_scalar(self.modvar_lvst_animal_weight, "mass")
+            arr_lsmm_emission_ch4[:, index_cat_lsmm] = np.sum(arr_lsmm_emissions_ch4_cur, axis = 1)
+
+
+            ##  NITROGEN EMISSIONS AND FERTILIZER AVAILABILITY
+
+            # get total nitrogen deposited
+            vec_lsmm_nitrogen_treated_cur = np.sum(arr_lsmm_total_nitrogen_cur, axis = 1)
+            vec_lsmm_n_from_bedding = arr_lsmm_n_from_bedding[:, index_cat_lsmm]
+            vec_lsmm_n_from_codigestates = arr_lsmm_n_from_codigestates[:, index_cat_lsmm]
+            # get nitrogen from bedding per animal
+            vec_lsmm_n_from_bedding *= np.sum(arr_lvst_pop*arr_lsmm_fracs_by_lvst, axis = 1)
+
+            # get totals lost to different pathways
+            vec_lsmm_frac_lost_direct = sf.vec_bounds((1 + vec_lsmm_ratio_n2_to_n2o)*arr_lsmm_ef_direct_n2o[:, index_cat_lsmm], (0, 1))
+            vec_lsmm_frac_lost_leaching = arr_lsmm_frac_lost_leaching[:, index_cat_lsmm]
+            vec_lsmm_frac_lost_volatilisation = arr_lsmm_frac_lost_volatilisation[:, index_cat_lsmm]
+            # apply the limiter, which prevents their total from exceeding 1
+            vec_lsmm_frac_lost_direct, vec_lsmm_frac_lost_leaching, vec_lsmm_frac_lost_volatilisation = sf.vector_limiter(
+                [
+                    vec_lsmm_frac_lost_direct,
+                    vec_lsmm_frac_lost_leaching,
+                    vec_lsmm_frac_lost_volatilisation
+                ],
+                (0, 1)
+            )
+            vec_lsmm_frac_loss_ms = vec_lsmm_frac_lost_leaching + vec_lsmm_frac_lost_volatilisation + vec_lsmm_frac_lost_direct
+            vec_lsmm_n_lost = vec_lsmm_nitrogen_treated_cur*(1 + vec_lsmm_n_from_codigestates)*self.factor_n2on_to_n2o
+
+            # 10.25 FOR DIRECT EMISSIONS
+            arr_lsmm_emission_n2o[:, index_cat_lsmm] = vec_lsmm_n_lost*arr_lsmm_ef_direct_n2o[:, index_cat_lsmm]
+            # 10.28 FOR LOSSES DUE TO VOLATILISATION
+            arr_lsmm_emission_n2o[:, index_cat_lsmm] += vec_lsmm_n_lost*vec_soil_ef_ef4*vec_lsmm_frac_lost_volatilisation
+            # 10.29 FOR LOSSES DUE TO LEACHING
+            arr_lsmm_emission_n2o[:, index_cat_lsmm] += vec_lsmm_n_lost*vec_soil_ef_ef5*vec_lsmm_frac_lost_leaching
+            # BASED ON EQ. 10.34A in IPCC GNGHGI 2019R FOR NITROGEN AVAILABILITY - note: co-digestates are entered as an inflation factor
+            vec_lsmm_nitrogen_available = (vec_lsmm_nitrogen_treated_cur*(1 + vec_lsmm_n_from_codigestates))*(1 - vec_lsmm_frac_loss_ms) + vec_lsmm_n_from_bedding
+
+            if cat_lsmm == self.cat_lsmm_incineration:
+                # if incinerating, send urea nitrogen to pasture
+                index_cat_lsmm_pasture = attr_lsmm.get_key_value_index(self.cat_lsmm_pasture)
+                arr_lsmm_nitrogen_available[:, index_cat_lsmm_pasture] += vec_lsmm_nitrogen_available*(1 - vec_lsmm_frac_n_in_dung)
+                # get incinerated dung
+                vec_lsmm_nitrogen_to_incinerator = vec_lsmm_nitrogen_available*vec_lsmm_frac_n_in_dung
+                vec_lsmm_nitrogen_to_incinerator *= self.model_attributes.get_variable_unit_conversion_factor(
+                    self.modvar_lvst_animal_weight,
+                    self.modvar_lsmm_dung_incinerated,
+                    "mass"
+                )
+                # add to output
+                df_out += [
+                    self.model_attributes.array_to_df(vec_lsmm_nitrogen_to_incinerator, self.modvar_lsmm_dung_incinerated)
+                ]
+
+            else:
+                # add to total by animal and splits by dung/urea (used in Soil Management subsector)
+                arr_lsmm_nitrogen_available[:, index_cat_lsmm] += vec_lsmm_nitrogen_available
+                vec_lsmm_nitrogen_to_fertilizer_dung += vec_lsmm_nitrogen_available*vec_lsmm_frac_n_in_dung
+                vec_lsmm_nitrogen_to_fertilizer_urea += vec_lsmm_nitrogen_available*(1 - vec_lsmm_frac_n_in_dung)
+
+        # get pasture and fertilizer totals
+        vec_lsmm_nitrogen_to_pasture = arr_lsmm_nitrogen_available[:, attr_lsmm.get_key_value_index(self.cat_lsmm_pasture)].copy()
+        vec_lsmm_nitrogen_to_pasture *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_lvst_animal_weight,
+            self.modvar_lsmm_n_to_pastures,
+            "mass"
+        )
+        arr_lsmm_nitrogen_available[:, attr_lsmm.get_key_value_index(self.cat_lsmm_pasture)] = np.zeros(len(arr_lsmm_nitrogen_available))
+
+
+        ##  UNITS CONVERSTION
+
+        # biogas recovery
+        arr_lsmm_biogas_recovered *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_lvst_animal_weight,
+            self.modvar_lsmm_rf_biogas_recovered,
+            "mass"
+        )
+        # total nitrogen available for fertilizer by pathway
+        arr_lsmm_nitrogen_available *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_lvst_animal_weight,
+            self.modvar_lsmm_n_to_fertilizer,
+            "mass"
+        )
+        # nitrogen available from dung/urea
+        vec_lsmm_nitrogen_to_fertilizer_dung *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_lvst_animal_weight,
+            self.modvar_lsmm_n_to_fertilizer_agg_dung,
+            "mass"
+        )
+        vec_lsmm_nitrogen_to_fertilizer_urea *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_lvst_animal_weight,
+            self.modvar_lsmm_n_to_fertilizer_agg_urea,
+            "mass"
+        )
+        # n2o emissions
+        arr_lsmm_emission_n2o *= self.model_attributes.get_scalar(self.modvar_lsmm_emissions_n2o, "gas")
+        arr_lsmm_emission_n2o *= self.model_attributes.get_scalar(self.modvar_lvst_animal_weight, "mass")
+
+        df_out += [
+            self.model_attributes.array_to_df(arr_lsmm_emission_ch4, self.modvar_lsmm_emissions_ch4),
+            self.model_attributes.array_to_df(arr_lsmm_emission_n2o, self.modvar_lsmm_emissions_n2o),
+            self.model_attributes.array_to_df(vec_lsmm_nitrogen_to_pasture, self.modvar_lsmm_n_to_pastures),
+            self.model_attributes.array_to_df(arr_lsmm_nitrogen_available, self.modvar_lsmm_n_to_fertilizer),
+            self.model_attributes.array_to_df(vec_lsmm_nitrogen_to_fertilizer_dung, self.modvar_lsmm_n_to_fertilizer_agg_dung),
+            self.model_attributes.array_to_df(vec_lsmm_nitrogen_to_fertilizer_urea, self.modvar_lsmm_n_to_fertilizer_agg_urea),
+            self.model_attributes.array_to_df(arr_lsmm_biogas_recovered, self.modvar_lsmm_rf_biogas_recovered, reduce_from_all_cats_to_specified_cats = True)
+        ]
+
+
+
 
         #########################
         #    SOIL MANAGEMENT    #
         #########################
+
+        # get mineral soils based on land use categories converted to cropland
+        cats_lndu_to_crop_mineral = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lndu, {"mineralization_in_land_use_conversion_to_managed": 1})
+        inds_lndu_to_crop_mineral = [attr_lndu.get_key_value_index(x) for x in cats_lndu_to_crop_mineral]
+        ind_lndu_cropland = attr_lndu.get_key_value_index(self.cat_lndu_crop)
+        vec_lndu_mask_crop_mineral = np.zeros(len(attr_lndu.key_values))
+        np.put(vec_lndu_mask_crop_mineral, inds_lndu_to_crop_mineral, 1)
+        vec_lndu_land_conv_to_cropland_mineral_soils = np.array([np.dot(x[:, ind_lndu_cropland], vec_lndu_mask_crop_mineral) for x in arrs_lndu_land_conv])
+
+        # other soils
+
 
 
 
