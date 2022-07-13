@@ -206,10 +206,10 @@ Variables by Partial Category
 Categories
 ----------
 
-Transportation is divided into the following categories. These categories are associated with different
+Transportation is divided into the following categories. These categories are associated with different transportation demand categories (see below), which govern mode-shifting.
 
 .. csv-table:: Other categories (``$CAT-TRANSPORTATION$`` attribute table)
-   :file: ./csvs/attribute_cat_trns.csv
+   :file: ./csvs/attribute_cat_transportation.csv
    :header-rows: 1
 
 ----
@@ -239,8 +239,8 @@ Variables by Partial Category
 Categories
 ----------
 
-Transportation demand is divided into the following categories. These categories are associated with different
+Transportation demand is divided into the following categories. These categories are associated with different allowable mode shifts between vehicle types.
 
 .. csv-table:: Transportation Demand categories (``$CAT-TRANSPORTATION-DEMAND$`` attribute table)
-   :file: ./csvs/attribute_cat_scoe.csv
+   :file: ./csvs/attribute_cat_transportation_demand.csv
    :header-rows: 1

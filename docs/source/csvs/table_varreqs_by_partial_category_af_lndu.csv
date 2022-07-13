@@ -3,6 +3,7 @@ Input,Land Use BOC :math:`\text{CH}_4` Emission Factor,Annual average :math:`\te
 Input,Land Use Fraction Dry," | Used to calculate :math:`\text{N}_2\text{O}` emissions from fertilizer application. 
  | 
  | Land Use Fraction Dry and Land Use Fraction Wet must sum to 1",``frac_lndu_$CAT-LANDUSE$_cl2_dry``,,``grasslands``,,,,0,1,1,``dry_climate``
+Input,Land Use Fraction Fertilized,Fraction of the land use category that receives fertilizer. Used to identify agricultural grasslands.,``frac_lndu_receiving_fertilizer_$CAT-LANDUSE$``,,``croplands``|``grasslands``,,,,0,1,1,none
 Input,Land Use Fraction Temperate," | Used to calculate :math:`\text{N}_2\text{O}` emissions from organic soils. 
  | 
  | Land Use Fraction Temperate and Land Use Fraction Tropical must sum to 1",``frac_lndu_$CAT-LANDUSE$_cl1_temperate``,,``grasslands``,,,,0,1,1,``temperate_crop_grass``

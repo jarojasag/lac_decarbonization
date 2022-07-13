@@ -356,6 +356,7 @@ class ModelAttributes:
         self.field_enfu_electricity_demand_category = "electricity_demand_category"
 
         # run checks and raise errors if invalid data are found in the attribute tables
+        self.check_agrc_attribute_tables()
         self.check_enfu_attribute_table()
         self.check_inen_enfu_crosswalk()
         self.check_lndu_attribute_tables()
@@ -1130,6 +1131,32 @@ class ModelAttributes:
     #    SECTOR-SPECIFIC AND CROSS SECTORIAL CHECKS    #
     ####################################################
 
+    def check_agrc_attribute_tables(self):
+
+        # check the crosswalk for correct specification of soil management categories
+        self.check_subsector_attribute_table_crosswalk(
+            self.subsec_name_agrc,
+            self.subsec_name_soil,
+            type_primary = "varreqs_all",
+            type_target = "categories",
+            injection_q = True
+        )
+
+        # next, check for category specifications in attribute table
+        attr = self.get_attribute_table(self.subsec_name_agrc)
+        fields_req = ["apply_vegetarian_exchange_scalar", "rice_category"]
+        sf.check_fields(attr.table, fields_req, f"Error in fields in {self.subsec_name_agrc} attribute table at {attr.fp_table} ")
+
+        # check the vegetarian scalar
+        if not set(attr.table["apply_vegetarian_exchange_scalar"]).issubset(set({0, 1})):
+            raise ValueError(f"Invalid values found in field 'apply_vegetarian_exchange_scalar' in {self.subsec_name_agrc} attribute table: only 0 and 1 should be specified.")
+        # check rice
+        if not set(attr.table["rice_category"]).issubset(set({0, 1})):
+            raise ValueError(f"Invalid values found in field 'rice_category' in {self.subsec_name_agrc} attribute table: only 0 and 1 should be specified.")
+        elif sum(attr.table["rice_category"]) != 1:
+            raise ValueError(f"Invalid specification of Rice found in {self.subsec_name_agrc} attribute table: exactly 1 category should be specfied as the Rice category.\n\nUse 1 to flag the category; all other values should be 0.")
+
+
     ##  function to check attribute crosswalks (e.g., one attribute table specifies another category as an element; this function verifies that they are valid)
     def check_subsector_attribute_table_crosswalk(self,
         dict_subsector_primary: dict,
@@ -1269,6 +1296,7 @@ class ModelAttributes:
             vals = set(attribute_landuse.table[field])
             if (not vals.issubset(set({0, 1}))) or (sum(attribute_landuse.table[field]) > 1):
                 raise ValueError(f"Invalid specification of field '{field}' in {subsec} attribute located at {attribute_landuse.fp_table}. Check to ensure that at most 1 is specified; all other entries should be 0.")
+
         # check to ensure that source categories for mineralization in soil management are specified properly
         field_mnrl = "mineralization_in_land_use_conversion_to_managed"
         cats_crop = self.get_categories_from_attribute_characteristic(self.subsec_name_lndu, {"crop_category": 1})
@@ -1276,6 +1304,21 @@ class ModelAttributes:
         if len(set(cats_crop) & set(cats_mnrl)) > 0:
             raise ValueError(f"Invalid specification of field '{field_mnrl}' in {self.subsec_name_lndu} attribute located at {attribute_landuse.fp_table}. Category '{cats_crop[0]}' cannot be specified as a target category.")
 
+        # check that land use/soil and forest/soil crosswalks are properly specified
+        self.check_subsector_attribute_table_crosswalk(
+            self.subsec_name_frst,
+            self.subsec_name_soil,
+            type_primary = "varreqs_all",
+            type_target = "categories",
+            injection_q = True
+        )
+        self.check_subsector_attribute_table_crosswalk(
+            self.subsec_name_lndu,
+            self.subsec_name_soil,
+            type_primary = "varreqs_partial",
+            type_target = "categories",
+            injection_q = True
+        )
 
 
     ##  check the livestock manure management attribute table

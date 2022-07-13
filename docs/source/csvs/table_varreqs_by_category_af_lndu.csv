@@ -6,3 +6,4 @@ Output,:math:`\text{CO}_2` Emissions from Land Use Conversion,Emissions calculat
 Output,Land Use Area,Area of each land use category,``area_lndu_$CAT-LANDUSE$``,,Internally calcualted using Markov with non-stationary transition probabilities.,,,1,1,1
 Output,Area of Land Use Area Conversion Away from Type,,``area_lndu_conversion_from_$CAT-LANDUSE$``,,,,,1,1,1
 Output,Area of Land Use Area Conversion To Type,,``area_lndu_conversion_to_$CAT-LANDUSE$``,,,,,1,1,1
+Input,Soil Carbon Land Use Factor,"See :math:`F_{LU}` in Equation 2.25 and Box 2.2, V4, C2 IPPC GNGHGI (2019R)",``factor_lndu_soil_carbon_$CAT-LANDUSE$``,,,,,0,1,1
