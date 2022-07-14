@@ -1061,7 +1061,8 @@ class AFOLU:
         arr_lvst_volatile_solids = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_genfactor_volatile_solids, True, "array_base", expand_to_all_cats = True)
         arr_lvst_volatile_solids *= arr_lvst_total_animal_mass*self.model_attributes.configuration.get("days_per_year")
         arr_lvst_b0 = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_b0_manure_ch4, True, "array_units_corrected_gas", expand_to_all_cats = True)
-
+        # get ratio of n to volatile solids
+        arr_lvst_ratio_vs_to_n = arr_lvst_volatile_solids/arr_lvst_nitrogen
 
 
         #####################################
@@ -1176,18 +1177,31 @@ class AFOLU:
             # check categories
             if cat_lsmm in cats_lsmm_manure_retrieval:
                 if cat_lsmm == self.cat_lsmm_incineration:
+
+                    ##  MANURE (VOLATILE SOLIDS) FOR INCINERATION:
+
+                    vec_lsmm_volatile_solids_incinerated = np.sum(arr_lvst_volatile_solids*arr_lsmm_fracs_by_lvst, axis = 1)
+                    vec_lsmm_volatile_solids_incinerated *= self.model_attributes.get_variable_unit_conversion_factor(
+                        self.modvar_lvst_animal_weight,
+                        self.modvar_lsmm_dung_incinerated,
+                        "mass"
+                    )
+
+                    ##  N2O WORK
+
                     # if incinerating, send urine nitrogen to pasture
                     vec_lsmm_nitrogen_to_pasture += vec_lsmm_nitrogen_available*(1 - vec_lsmm_frac_n_in_dung)
-                    # get incinerated dung
+                    # get incinerated N in dung - not used yet
                     vec_lsmm_nitrogen_to_incinerator = vec_lsmm_nitrogen_available*vec_lsmm_frac_n_in_dung
                     vec_lsmm_nitrogen_to_incinerator *= self.model_attributes.get_variable_unit_conversion_factor(
                         self.modvar_lvst_animal_weight,
                         self.modvar_lsmm_dung_incinerated,
                         "mass"
                     )
+
                     # add to output
                     df_out += [
-                        self.model_attributes.array_to_df(vec_lsmm_nitrogen_to_incinerator, self.modvar_lsmm_dung_incinerated)
+                        self.model_attributes.array_to_df(vec_lsmm_volatile_solids_incinerated, self.modvar_lsmm_dung_incinerated)
                     ]
 
                 else:

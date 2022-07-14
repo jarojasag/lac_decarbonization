@@ -182,6 +182,7 @@ class CircularEconomy:
         list_vars_required_for_integration = [
         # DROP FIRST THREE
         # TEMP INCLUDE
+            self.model_afolu.modvar_lsmm_dung_incinerated,
             self.model_afolu.modvar_lvst_pop,
 			self.model_afolu.modvar_lvst_net_imports,
             self.model_afolu.modvar_lvst_animal_weight,
