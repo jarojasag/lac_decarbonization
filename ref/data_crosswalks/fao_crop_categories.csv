@@ -5,8 +5,8 @@ Agave fibres nes,fibers,fibers,fibers
 Apples,fruits,fruits,woody_perennial
 Apricots,fruits,fruits,woody_perennial
 Areca nuts,nuts,nuts,woody_perennial
-Artichokes,vegetables,vegetables,annual_crops
-Asparagus,vegetables,vegetables,annual_crops
+Artichokes,vegetables,vegetables_and_vines,annual_crops
+Asparagus,vegetables,vegetables_and_vines,annual_crops
 Avocados,fruits,fruits,woody_perennial
 Bambara beans,pulses,pulses,perennial_crops
 Bananas,fruits,fruits,woody_perennial
@@ -19,24 +19,24 @@ Blueberries,fruits,fruits,woody_perennial
 "Brazil nuts, with shell",nuts,nuts,woody_perennial
 "Broad beans, horse beans, dry",pulses,pulses,perennial_crops
 Buckwheat,cereals,cereals,cereals
-Cabbages and other brassicas,vegetables,vegetables,annual_crops
+Cabbages and other brassicas,vegetables,vegetables_and_vines,annual_crops
 Canary seed,cereals,cereals,cereals
 Carobs,fruits,fruits,woody_perennial
-Carrots and turnips,vegetables,vegetables,annual_crops
+Carrots and turnips,vegetables,vegetables_and_vines,annual_crops
 "Cashew nuts, with shell",nuts,nuts,woody_perennial
 Cashewapple,fruits,fruits,woody_perennial
 Cassava,tubers,tubers,tubers
-Cassava leaves,vegetables,vegetables,annual_crops
+Cassava leaves,vegetables,vegetables_and_vines,annual_crops
 Castor oil seed,oil_bearing_perennial,other_woody_perennial,woody_perennial
-Cauliflowers and broccoli,vegetables,vegetables,annual_crops
+Cauliflowers and broccoli,vegetables,vegetables_and_vines,annual_crops
 Cereals nes,cereals,cereals,cereals
 Cherries,fruits,fruits,woody_perennial
 "Cherries, sour",fruits,fruits,woody_perennial
 Chestnut,nuts,nuts,woody_perennial
 Chick peas,pulses,pulses,perennial_crops
 Chicory roots,herbs,herbs_and_other_perennial_crops,herbs
-"Chillies and peppers, dry",vegetables,vegetables,annual_crops
-"Chillies and peppers, green",vegetables,vegetables,annual_crops
+"Chillies and peppers, dry",vegetables,vegetables_and_vines,annual_crops
+"Chillies and peppers, green",vegetables,vegetables_and_vines,annual_crops
 Cinnamon (cannella),bevs_and_spices,bevs_and_spices,woody_perennial
 Cloves,bevs_and_spices,bevs_and_spices,woody_perennial
 "Cocoa, beans",bevs_and_spices,bevs_and_spices,woody_perennial
@@ -44,10 +44,10 @@ Coconuts,fruits,fruits,woody_perennial
 "Coffee, green",bevs_and_spices,bevs_and_spices,woody_perennial
 "Cow peas, dry",pulses,pulses,perennial_crops
 Cranberries,fruits,fruits,woody_perennial
-Cucumbers and gherkins,vegetables,vegetables,annual_crops
+Cucumbers and gherkins,vegetables,vegetables_and_vines,annual_crops
 Currants,fruits,fruits,woody_perennial
 Dates,fruits,fruits,woody_perennial
-Eggplants (aubergines),vegetables,vegetables,annual_crops
+Eggplants (aubergines),vegetables,vegetables_and_vines,annual_crops
 Fibre crops nes,cereals,cereals,cereals
 Figs,fruits,fruits,woody_perennial
 Flax fibre and tow,cereals,cereals,cereals
@@ -57,7 +57,7 @@ Fonio,cereals,cereals,cereals
 "Fruit, pome nes",fruits,fruits,woody_perennial
 "Fruit, stone nes",fruits,fruits,woody_perennial
 "Fruit, tropical fresh nes",fruits,fruits,woody_perennial
-Garlic,vegetables,vegetables,annual_crops
+Garlic,vegetables,vegetables_and_vines,annual_crops
 Ginger,perennial_herbs,herbs_and_other_perennial_crops,herbs
 Gooseberries,fruits,fruits,woody_perennial
 "Grain, mixed",cereals,cereals,cereals
@@ -74,10 +74,10 @@ Kapok fruit,fruits,fruits,woody_perennial
 Karite nuts (sheanuts),nuts,nuts,woody_perennial
 Kiwi fruit,fruits,fruits,woody_perennial
 Kola nuts,nuts,nuts,woody_perennial
-"Leeks, other alliaceous vegetables",vegetables,vegetables,annual_crops
+"Leeks, other alliaceous vegetables",vegetables,vegetables_and_vines,annual_crops
 Lemons and limes,fruits,fruits,woody_perennial
 Lentils,pulses,pulses,perennial_crops
-Lettuce and chicory,vegetables,vegetables,annual_crops
+Lettuce and chicory,vegetables,vegetables_and_vines,annual_crops
 Linseed,oil_bearing_annual,other_annual,annual_crops
 Lupins,pulses,pulses,perennial_crops
 Maize,cereals,cereals,cereals
@@ -85,20 +85,20 @@ Maize,cereals,cereals,cereals
 "Mangoes, mangosteens, guavas",fruits,fruits,woody_perennial
 Manila fibre (abaca),fibers,fibers,fibers
 Mate,bevs_and_spices,bevs_and_spices,woody_perennial
-"Melons, other (inc.cantaloupes)",vegetables,vegetables,annual_crops
+"Melons, other (inc.cantaloupes)",vegetables,vegetables_and_vines,annual_crops
 Melonseed,oil_bearing_annual,other_annual,annual_crops
 Millet,cereals,cereals,cereals
-Mushrooms and truffles,vegetables,vegetables,annual_crops
+Mushrooms and truffles,vegetables,vegetables_and_vines,annual_crops
 Mustard seed,herbs,herbs_and_other_perennial_crops,herbs
 "Nutmeg, mace and cardamoms",bevs_and_spices,bevs_and_spices,woody_perennial
 Nuts nes,nuts,nuts,woody_perennial
 Oats,cereals,cereals,cereals
 Oil palm fruit,oil_bearing_perennial,other_woody_perennial,woody_perennial
 Oilseeds nes,oil_bearing_perennial,other_woody_perennial,woody_perennial
-Okra,vegetables,vegetables,annual_crops
+Okra,vegetables,vegetables_and_vines,annual_crops
 Olives,fruits,fruits,woody_perennial
-"Onions, dry",vegetables,vegetables,annual_crops
-"Onions, shallots, green",vegetables,vegetables,annual_crops
+"Onions, dry",vegetables,vegetables_and_vines,annual_crops
+"Onions, shallots, green",vegetables,vegetables_and_vines,annual_crops
 Oranges,fruits,fruits,woody_perennial
 Papayas,fruits,fruits,woody_perennial
 Peaches and nectarines,fruits,fruits,woody_perennial
@@ -116,7 +116,7 @@ Plums and sloes,fruits,fruits,woody_perennial
 Poppy seed,oil_bearing_annual,other_annual,annual_crops
 Potatoes,tubers,tubers,tubers
 Pulses nes,pulses,pulses,perennial_crops
-"Pumpkins, squash and gourds",vegetables,vegetables,annual_crops
+"Pumpkins, squash and gourds",vegetables,vegetables_and_vines,annual_crops
 "Pyrethrum, dried",perennial_plants,herbs_and_other_perennial_crops,perennial_crops
 Quinces,fruits,fruits,woody_perennial
 Quinoa,cereals,cereals,cereals
@@ -134,28 +134,28 @@ Sisal,perennial_plants,herbs_and_other_perennial_crops,perennial_crops
 Sorghum,cereals,cereals,cereals
 Soybeans,oil_bearing_annual,other_annual,annual_crops
 Spices nes,bevs_and_spices,bevs_and_spices,woody_perennial
-Spinach,vegetables,vegetables,annual_crops
+Spinach,vegetables,vegetables_and_vines,annual_crops
 Strawberries,fruits,fruits,woody_perennial
-String beans,vegetables,vegetables,annual_crops
+String beans,vegetables,vegetables_and_vines,annual_crops
 Sugar beet,tubers,tubers,tubers
 Sugar cane,sugar_cane,sugar_cane,perennial_crops
 Sugar crops nes,sugar_cane,sugar_cane,perennial_crops
-Sunflower seed,vegetables,vegetables,annual_crops
+Sunflower seed,vegetables,vegetables_and_vines,annual_crops
 Sweet potatoes,tubers,tubers,tubers
 Tallowtree seed,oil_bearing_perennial,other_woody_perennial,woody_perennial
 "Tangerines, mandarins, clementines, satsumas",fruits,fruits,woody_perennial
 Taro (cocoyam),tubers,tubers,tubers
 Tea,bevs_and_spices,bevs_and_spices,woody_perennial
 "Tobacco, unmanufactured",other_annual,other_annual,annual_crops
-Tomatoes,vegetables,vegetables,annual_crops
+Tomatoes,vegetables,vegetables_and_vines,annual_crops
 Triticale,cereals,cereals,cereals
 Tung nuts,nuts,nuts,woody_perennial
 Vanilla,perennial_herbs,herbs_and_other_perennial_crops,herbs
-"Vegetables, fresh nes",vegetables,vegetables,annual_crops
-"Vegetables, leguminous nes",vegetables,vegetables,annual_crops
+"Vegetables, fresh nes",vegetables,vegetables_and_vines,annual_crops
+"Vegetables, leguminous nes",vegetables,vegetables_and_vines,annual_crops
 Vetches,pulses,pulses,perennial_crops
 "Walnuts, with shell",nuts,nuts,woody_perennial
-Watermelons,vegetables,vegetables,annual_crops
+Watermelons,vegetables,vegetables_and_vines,annual_crops
 Wheat,cereals,cereals,cereals
 Yams,tubers,tubers,tubers
 Yautia (cocoyam),tubers,tubers,tubers
