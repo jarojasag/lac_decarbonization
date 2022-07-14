@@ -1319,6 +1319,14 @@ class ModelAttributes:
             type_target = "categories",
             injection_q = True
         )
+        # check that forest/land use crosswalk is set properly
+        self.check_subsector_attribute_table_crosswalk(
+            self.subsec_name_frst,
+            self.subsec_name_lndu,
+            type_primary = "categories",
+            type_target = "categories",
+            injection_q = True
+        )
 
 
     ##  check the livestock manure management attribute table

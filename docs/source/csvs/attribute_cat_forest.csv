@@ -1,4 +1,4 @@
-﻿Category Name,``$CAT-FOREST$``,Description,Data Source,Hyperlink,Notes
-Mangroves,``mangroves``,,,,
-Primary,``primary``,,,,
-Secondary,``secondary``,,,,
+﻿Category Name,``$CAT-FOREST$``,Description,Data Source,Hyperlink,Notes,``$CAT-LANDUSE$``
+Mangroves,``mangroves``,,,,,``forests_mangroves``
+Primary,``primary``,,,,,``forests_primary``
+Secondary,``secondary``,,,,,``forests_secondary``
