@@ -33,8 +33,11 @@ class IPPU:
         ##  SET MODEL VARIABLES
 
         # ippu model variables
-        self.modvar_ippu_change_net_imports = "Change to Net Imports of Recyclable Products"
+        self.modvar_ippu_average_construction_materials_required_per_household = "Average per Household Demand for Construction Materials"
+        self.modvar_ippu_average_lifespan_housing = "Average Lifespan of Housing Construction"
+        self.modvar_ippu_change_net_imports = "Change to Net Imports of Products"
         self.modvar_ippu_clinker_fraction_cement = "Clinker Fraction of Cement"
+        self.modvar_ippu_demand_for_harvested_wood = "Demand for Harvested Wood"
         self.modvar_ippu_ef_ch4_per_prod_process = ":math:\\text{CH}_4 Production Process Emission Factor"
         self.modvar_ippu_ef_co2_per_prod_process = ":math:\\text{CO}_2 Production Process Emission Factor"
         self.modvar_ippu_ef_co2_per_prod_produse = ":math:\\text{CO}_2 Product Use Emission Factor"
@@ -84,12 +87,14 @@ class IPPU:
         self.modvar_ippu_max_recycled_material_ratio = "Maximum Recycled Material Ratio in Virgin Process"
         self.modvar_ippu_net_imports_clinker = "Net Imports of Cement Clinker"
         self.modvar_ippu_prod_qty_init = "Initial Industrial Production"
+        self.modvar_ippu_qty_total_production = "Industrial Production"
+        self.modvar_ippu_qty_recycled_used_in_production = "Recycled Material Used in Industrial Production"
+        self.modvar_ippu_ratio_of_production_to_harvested_wood = "Ratio of Production to Harvested Wood Demand"
         self.modvar_ippu_scalar_production = "Industrial Production Scalar"
         self.modvar_ippu_useinit_nonenergy_fuel = "Initial Non-Energy Fuel Use"
         self.modvar_ippu_wwf_cod = "COD Wastewater Factor"
         self.modvar_ippu_wwf_vol = "Wastewater Production Factor"
-        self.modvar_ippu_qty_total_production = "Industrial Production"
-        self.modvar_ippu_qty_recycled_used_in_production = "Recycled Material Used in Industrial Production"
+
 
         # variables from other sectors
         self.modvar_waso_waste_total_recycled = "Total Waste Recycled"
@@ -224,6 +229,45 @@ class IPPU:
     #    SUBSECTOR SPECIFIC FUNCTIONS    #
     ######################################
 
+    # project construction of households
+    def project_hh_construction(self,
+        vec_hh: np.ndarray,
+        vec_average_lifetime_hh: np.ndarray
+    ) -> np.ndarray:
+        """
+            project the number of households constructed based on the number of households and the average lifetime of households
+
+            Function Arguments
+            ------------------
+            vec_hh: vector of housholds by time period
+            vec_average_lifetime_hh: vector of average household lifetimes.
+        """
+
+        if len(vec_average_lifetime_hh) != len(vec_hh):
+            warning(f"Error in project_hh_construction: average lifetime of housholds and number of households should have the same length vectors. Setting lifetime to repeat of final value.")
+            vec_average_lifetime_hh = np.conactenate([vec_average_lifetime_hh, np.array([vec_average_lifetime_hh[-1] for x in range(len(vec_hh) - len(vec_average_lifetime_hh))])])
+
+        n_projection_time_periods = len(vec_hh)
+        # get estimates for new housing stock -- last year, use trend
+        vec_new_housing_stock_changes = sf.vec_bounds(vec_hh[1:] - vec_hh[0:-1], (0, np.inf))
+        vec_new_housing_stock_changes = np.insert(vec_new_housing_stock_changes, len(vec_new_housing_stock_changes), np.round(vec_new_housing_stock_changes[-1]**2/vec_new_housing_stock_changes[-2]))
+        # back-project to estimate replacement construction
+        scalar_gr_hh = np.mean((vec_hh[1:]/vec_hh[0:-1])[0:3])
+        vec_old_housing_stock_rev = np.round(vec_hh[0]*scalar_gr_hh**(-np.arange(1, 100 + 1)))
+        vec_est_new_builds = np.zeros(n_projection_time_periods)
+        for i in range(n_projection_time_periods):
+            ind_lifetime_cur_stock = int(max(0, i - vec_average_lifetime_hh[0] + 1))
+            ind_lifetime_old_stock = int(vec_average_lifetime_hh[0] - i - 1)
+            if ind_lifetime_old_stock >= 0:
+                old_stock = vec_old_housing_stock_rev[ind_lifetime_old_stock] if (ind_lifetime_old_stock < len(vec_old_housing_stock_rev)) else 0
+                old_stock_refreshed = np.round(old_stock/vec_average_lifetime_hh[0])
+            else:
+                old_stock_refreshed = np.round(vec_hh[ind_lifetime_old_stock]/vec_average_lifetime_hh[ind_lifetime_cur_stock])
+
+            vec_est_new_builds[i] = old_stock_refreshed + vec_new_housing_stock_changes[i]
+
+        return vec_est_new_builds
+
 
     # project industrial production—broken out so that other sectors can call it
     def project_industrial_production(self,
@@ -232,29 +276,27 @@ class IPPU:
         dict_dims: dict = None,
         n_projection_time_periods: int = None,
         projection_time_periods: list = None,
+        modvar_average_lifespan_housing: str = None,
         modvar_elast_ind_prod_to_gdp: str = None,
+        modvar_num_hh: str = None,
         modvar_prod_qty_init: str = None,
         modvar_scalar_prod: str = None
     ) -> np.ndarray:
         """
-            project_industrial_production() can be called from other sectors to simplify calculation of industrial production.
+            Can be called from other sectors to simplify calculation of industrial production. Includes swap of demand for cement product and wood products in new housing construction.
 
             Function Arguments
             ------------------
             df_ippu_trajectories: pd.DataFrame of input variable trajectories.
-
             vec_rates_gdp: vector of rates of change to gdp (length = len(df_ippu_trajectories) - 1)
-
             dict_dims: dict of dimensions (returned from check_projection_input_df). Default is None.
-
             n_projection_time_periods: int giving number of time periods (returned from check_projection_input_df). Default is None.
-
             projection_time_periods: list of time periods (returned from check_projection_input_df). Default is None.
-
-            modvar_prod_qty_init: model variable giving initial production quantity
-
+            modvar_average_lifespan_housing: average lifespan of housing
             modvar_elast_ind_prod_to_gdp: model variable giving elasticity of production to gdp
-
+            modvar_num_hh: model variable giving the number of households
+            modvar_prod_qty_init: model variable giving initial production quantity
+            modvar_scalar_prod: model variable with the production scalar
 
             Notes
             -----
@@ -265,7 +307,9 @@ class IPPU:
             dict_dims, df_ippu_trajectories, n_projection_time_periods, projection_time_periods = self.model_attributes.check_projection_input_df(df_ippu_trajectories, True, True, True)
 
         # set defaults
+        modvar_average_lifespan_housing = self.modvar_ippu_average_lifespan_housing if (modvar_average_lifespan_housing is None) else modvar_average_lifespan_housing
         modvar_elast_ind_prod_to_gdp = self.modvar_ippu_elast_ind_prod_to_gdp if (modvar_elast_ind_prod_to_gdp is None) else modvar_elast_ind_prod_to_gdp
+        modvar_num_hh = self.model_socioeconomic.modvar_grnl_num_hh if (modvar_num_hh is None) else modvar_num_hh
         modvar_prod_qty_init = self.modvar_ippu_prod_qty_init if (modvar_prod_qty_init is None) else modvar_prod_qty_init
         modvar_scalar_prod = self.modvar_ippu_scalar_production if (modvar_scalar_prod is None) else modvar_scalar_prod
 
@@ -278,7 +322,26 @@ class IPPU:
         array_prod_scalar = self.model_attributes.get_standard_variables(df_ippu_trajectories, modvar_scalar_prod, False, return_type = "array_base", var_bounds = (0, np.inf), expand_to_all_cats = True)
         array_ippu_ind_prod *= array_prod_scalar
 
-        return array_ippu_ind_prod
+        # adjust housing construction
+        vec_hh = self.model_attributes.get_standard_variables(df_ippu_trajectories, self.model_socioeconomic.modvar_grnl_num_hh, False, return_type = "array_base")
+        vec_ippu_average_lifetime_hh = self.model_attributes.get_standard_variables(df_ippu_trajectories, self.modvar_ippu_average_lifespan_housing, False, return_type = "array_base")
+        vec_ippu_housing_construction = self.project_hh_construction(vec_hh, vec_ippu_average_lifetime_hh)
+        # get average materials required, then project forward a "bau" approach (calculated using material reqs at t = 0)
+        arr_ippu_materials_required = self.model_attributes.get_standard_variables(df_ippu_trajectories, self.modvar_ippu_average_construction_materials_required_per_household, True, return_type = "array_base", expand_to_all_cats = True, var_bounds = (0, np.inf))
+        arr_ippu_materials_required *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_ippu_average_construction_materials_required_per_household,
+            self.modvar_ippu_prod_qty_init,
+            "mass"
+        )
+        arr_ippu_materials_required_baseline = np.outer(vec_ippu_housing_construction, arr_ippu_materials_required[0])
+        arr_ippu_materials_required = (arr_ippu_materials_required.transpose()*vec_ippu_housing_construction).transpose()
+        arr_ippu_materials_required_change = arr_ippu_materials_required - arr_ippu_materials_required_baseline
+        # adjust production and net imports
+        array_ippu_ind_balance = array_ippu_ind_prod + arr_ippu_materials_required_change
+        array_ippu_ind_prod = sf.vec_bounds(array_ippu_ind_balance, (0, np.inf))
+        array_ippu_change_to_net_imports_cur = array_ippu_ind_balance - array_ippu_ind_prod
+
+        return array_ippu_ind_prod, array_ippu_change_to_net_imports_cur
 
 
     ##  project production and adjust recycling
@@ -288,12 +351,17 @@ class IPPU:
         dict_dims: dict = None,
         n_projection_time_periods: int = None,
         projection_time_periods: list = None,
+        modvar_average_lifespan_housing: str = None,
         modvar_change_net_imports: str = None,
+        modvar_demand_for_harvested_wood: str = None,
         modvar_elast_ind_prod_to_gdp: str = None,
         modvar_max_recycled_material_ratio: str = None,
+        modvar_num_hh: str = None,
         modvar_prod_qty_init: str = None,
         modvar_qty_recycled_used_in_production: str = None,
         modvar_qty_total_production: str = None,
+        modvar_ratio_of_production_to_harvested_wood: str = None,
+        modvar_scalar_prod: str = None,
         modvar_waste_total_recycled: str = None
     ) -> tuple:
         """
@@ -302,29 +370,25 @@ class IPPU:
             Function Arguments
             ------------------
             df_ippu_trajectories: pd.DataFrame of input variable trajectories.
-
             vec_rates_gdp: vector of rates of change of gdp. Entry at index t is the change from time t-1 to t (length = len(df_ippu_trajectories) - 1)
-
             dict_dims: dict of dimensions (returned from check_projection_input_df). Default is None.
-
             n_projection_time_periods: int giving number of time periods (returned from check_projection_input_df). Default is None.
-
             projection_time_periods: list of time periods (returned from check_projection_input_df). Default is None.
 
 
-            Keyword Arguments (variables)
+            Model Variable Keyword arguments
             -----------------------------
-            modvar_change_net_imports: model variable denoting the change to net imports
-
-            modvar_prod_qty_init: model variable denoting the initial production quantity
-
-            modvar_elast_ind_prod_to_gdp: model variable denoting the elasticity of production to gdp
-
-            modvar_max_recycled_material_ratio: model variable denoting the maximum fraction of virgin production that can be replaced by recylables (e.g., cullet in glass production)
-
-            modvar_qty_total_production: model variable denoting total industrial production
-
-            modvar_waste_total_recycled: model variable denoted the total waste recycled (from CircularEconomy)
+            modvar_average_lifespan_housing: average lifetime of housing
+            modvar_change_net_imports: change to net imports
+            modvar_demand_for_harvested_wood: final demand for harvested wood
+            modvar_prod_qty_init: initial production quantity
+            modvar_elast_ind_prod_to_gdp: elasticity of production to gdp
+            modvar_max_recycled_material_ratio: maximum fraction of virgin production that can be replaced by recylables (e.g., cullet in glass production)
+            modvar_num_hh: number of households
+            modvar_qty_total_production: total industrial production
+            modvar_scalar_prod: scalar applied to future production--used to change economic mix
+            modvar_ratio_of_production_to_harvested_wood: ratio of production output to input wood
+            modvar_waste_total_recycled: total waste recycled (from CircularEconomy)
 
             Notes
             -----
@@ -332,12 +396,16 @@ class IPPU:
         """
 
         # set defaults
+        modvar_average_lifespan_housing = self.modvar_ippu_average_lifespan_housing if (modvar_average_lifespan_housing is None) else modvar_average_lifespan_housing
         modvar_change_net_imports = self.modvar_ippu_change_net_imports if (modvar_change_net_imports is None) else modvar_change_net_imports
+        modvar_demand_for_harvested_wood = self.modvar_ippu_demand_for_harvested_wood if (modvar_demand_for_harvested_wood is None) else modvar_demand_for_harvested_wood
         modvar_elast_ind_prod_to_gdp = self.modvar_ippu_elast_ind_prod_to_gdp if (modvar_elast_ind_prod_to_gdp is None) else modvar_elast_ind_prod_to_gdp
         modvar_max_recycled_material_ratio = self.modvar_ippu_max_recycled_material_ratio if (modvar_max_recycled_material_ratio is None) else modvar_max_recycled_material_ratio
+        modvar_num_hh = self.model_socioeconomic.modvar_grnl_num_hh if (modvar_num_hh is None) else modvar_num_hh
         modvar_prod_qty_init = self.modvar_ippu_prod_qty_init if (modvar_prod_qty_init is None) else modvar_prod_qty_init
         modvar_qty_recycled_used_in_production = self.modvar_ippu_qty_recycled_used_in_production if (modvar_qty_recycled_used_in_production is None) else modvar_qty_recycled_used_in_production
         modvar_qty_total_production = self.modvar_ippu_qty_total_production if (modvar_qty_total_production is None) else modvar_qty_total_production
+        modvar_ratio_of_production_to_harvested_wood = self.modvar_ippu_ratio_of_production_to_harvested_wood if (modvar_ratio_of_production_to_harvested_wood is None) else modvar_ratio_of_production_to_harvested_wood
         modvar_waste_total_recycled = self.modvar_waso_waste_total_recycled if (modvar_waste_total_recycled is None) else modvar_waste_total_recycled
 
         # allows production to be run outside of the project method
@@ -360,16 +428,19 @@ class IPPU:
         )
 
         # initialize production + initialize change to net imports as 0 (reduce categories later)
-        array_ippu_production = self.project_industrial_production(
+        array_ippu_production, array_ippu_change_net_imports = self.project_industrial_production(
             df_ippu_trajectories,
             vec_rates_gdp,
             dict_dims,
             n_projection_time_periods,
             projection_time_periods,
+            modvar_average_lifespan_housing,
             modvar_elast_ind_prod_to_gdp,
-            modvar_prod_qty_init
+            modvar_num_hh,
+            modvar_prod_qty_init,
+            modvar_scalar_prod
         )
-        array_ippu_change_net_imports = np.zeros(array_ippu_production.shape)
+
 
         # perform adjustments to production if recycling is denoted
         if array_ippu_recycled is not None:
@@ -443,8 +514,20 @@ class IPPU:
             modvar_qty_total_production,
             "mass"
         )
+
+
+        ##  finally, get wood harvested equivalent for AFOLU
+        arr_ippu_ratio_of_production_to_wood_harvesting = self.model_attributes.get_standard_variables(df_ippu_trajectories, modvar_ratio_of_production_to_harvested_wood, False, return_type = "array_base", expand_to_all_cats = True, var_bounds = (0, np.inf))
+        arr_ippu_harvested_wood = np.nan_to_num(array_ippu_production/arr_ippu_ratio_of_production_to_wood_harvesting, 0.0, posinf = 0.0)
+        arr_ippu_harvested_wood *= self.model_attributes.get_variable_unit_conversion_factor(
+            modvar_prod_qty_init,
+            modvar_demand_for_harvested_wood,
+            "mass"
+        )
+
         df_out = [
             self.model_attributes.array_to_df(array_ippu_change_net_imports, modvar_change_net_imports, False, True),
+            self.model_attributes.array_to_df(arr_ippu_harvested_wood, modvar_demand_for_harvested_wood, False, True),
             self.model_attributes.array_to_df(array_ippu_production, modvar_qty_total_production, False, True),
             self.model_attributes.array_to_df(array_ippu_production, modvar_qty_recycled_used_in_production, False, True)
         ]
@@ -492,12 +575,12 @@ class IPPU:
 
         # get some vectors
         vec_gdp = self.model_attributes.get_standard_variables(df_ippu_trajectories, self.model_socioeconomic.modvar_econ_gdp, False, return_type = "array_base")
+        vec_hh = self.model_attributes.get_standard_variables(df_ippu_trajectories, self.model_socioeconomic.modvar_grnl_num_hh, False, return_type = "array_base")
         vec_pop = self.model_attributes.get_standard_variables(df_ippu_trajectories, self.model_socioeconomic.modvar_gnrl_pop_total, False, return_type = "array_base")
         array_pop = self.model_attributes.get_standard_variables(df_ippu_trajectories, self.model_socioeconomic.modvar_gnrl_subpop, False, return_type = "array_base")
         vec_gdp_per_capita = np.array(df_se_internal_shared_variables["vec_gdp_per_capita"])
         vec_rates_gdp = np.array(df_se_internal_shared_variables["vec_rates_gdp"].dropna())
         vec_rates_gdp_per_capita = np.array(df_se_internal_shared_variables["vec_rates_gdp_per_capita"].dropna())
-
 
         ##  OUTPUT INITIALIZATION
         df_out = [df_ippu_trajectories[self.required_dimensions].copy()]

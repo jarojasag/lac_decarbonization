@@ -122,7 +122,16 @@ class CircularEconomy:
         self.modvar_trww_total_p_treated = "Total Phosphorous Removed in Treatment"
         self.modvar_trww_vol_ww_treated = "Volume of Wastewater Treated"
 
-        # optional integration variables
+
+        ##  INTEGRATION VARIABLES
+
+        # set variables from other sectors - AFOLU
+        self.modvar_lsmm_dung_incinerated = "Dung Incinerated"
+        self.modvar_lvst_animal_weight = "Animal Weight"
+        self.modvar_lvst_net_imports = "Change to Net Imports of Livestock"
+        self.modvar_lvst_pop = "Livestock Head Count"
+        self.modvar_lvst_total_animal_mass = "Total Domestic Animal Mass"
+        # set integration variables
         self.integration_variables = self.set_integrated_variables()
 
 
@@ -143,9 +152,8 @@ class CircularEconomy:
         self.factor_c_to_co2 = float(11/3)
         self.factor_molecular_weight_ch4 = float(4/3)
 
-        # add socioeconomic
+        # add socioeconomic class
         self.model_socioeconomic = Socioeconomic(self.model_attributes)
-        self.model_afolu = AFOLU(self.model_attributes)
 
 
 
@@ -178,15 +186,16 @@ class CircularEconomy:
         required_vars, output_vars = self.model_attributes.get_input_output_fields(subsectors)
         return required_vars + self.get_required_dimensions(), output_vars
 
+
     def set_integrated_variables(self):
         list_vars_required_for_integration = [
         # DROP FIRST THREE
         # TEMP INCLUDE
-            self.model_afolu.modvar_lsmm_dung_incinerated,
-            self.model_afolu.modvar_lvst_pop,
-			self.model_afolu.modvar_lvst_net_imports,
-            self.model_afolu.modvar_lvst_animal_weight,
-            self.model_afolu.modvar_lvst_total_animal_mass
+            self.modvar_lsmm_dung_incinerated,
+            self.modvar_lvst_pop,
+			self.modvar_lvst_net_imports,
+            self.modvar_lvst_animal_weight,
+            self.modvar_lvst_total_animal_mass
 		]
 
         return list_vars_required_for_integration

@@ -1,6 +1,8 @@
 import support_functions as sf
 import data_structures as ds
 from model_socioeconomic import Socioeconomic
+from model_energy import NonElectricEnergy
+from model_ippu import IPPU
 import pandas as pd
 import numpy as np
 import time
@@ -20,6 +22,7 @@ class AFOLU:
         self.subsec_name_econ = "Economy"
         self.subsec_name_frst = "Forest"
         self.subsec_name_gnrl = "General"
+        self.subsec_name_ippu = "IPPU"
         self.subsec_name_lndu = "Land Use"
         self.subsec_name_lsmm = "Livestock Manure Management"
         self.subsec_name_lvst = "Livestock"
@@ -84,15 +87,23 @@ class AFOLU:
         self.cat_agrc_rice = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_agrc, {"rice_category": 1})[0]
 
         # forest model variables
-        self.modvar_frst_elas_wood_demand = "Elasticity of Wood Products Demand to Value Added"
-        self.modvar_frst_ef_fires = "Forest Fire Emission Factor"
-        self.modvar_frst_ef_ch4 = "Forest Methane Emissions"
-        self.modvar_frst_emissions_sequestration = ":math:\\text{CO}_2 Emissions from Forest Sequestration"
-        self.modvar_frst_emissions_methane = ":math:\\text{CH}_4 Emissions from Forests"
+        self.modvar_frst_average_fraction_burned_annually = "Average Fraction of Forest Burned Annually"
+        self.modvar_frst_biomass_consumed_fire_temperate = "Fire Biomass Consumption for Temperate Forests"
+        self.modvar_frst_biomass_consumed_fire_tropical = "Fire Biomass Consumption for Tropical Forests"
+        self.modvar_frst_ef_c_per_hwp = "C Carbon Harvested Wood Products Emission Factor"
+        self.modvar_frst_ef_co2_fires = ":math:\\text{CO}_2 Forest Fire Emission Factor"
+        self.modvar_frst_ef_ch4 = ":math:\\text{CH}_4 Forest Methane Emissions"
+        self.modvar_frst_emissions_co2_fires = ":math:\\text{CO}_2 Emissions from Forest Fires"
+        self.modvar_frst_emissions_co2_hwp = ":math:\\text{CO}_2 Emissions from Harvested Wood Products"
+        self.modvar_frst_emissions_ch4 = ":math:\\text{CH}_4 Emissions from Forests"
+        self.modvar_frst_emissions_co2_sequestration = ":math:\\text{CO}_2 Emissions from Forest Sequestration"
         self.modvar_frst_frac_temperate_nutrient_poor = "Forest Fraction Temperate Nutrient Poor"
         self.modvar_frst_frac_temperate_nutrient_rich = "Forest Fraction Temperate Nutrient Rich"
         self.modvar_frst_frac_tropical = "Forest Fraction Tropical"
+        self.modvar_frst_hwp_half_life_paper = "HWP Half Life Paper"
+        self.modvar_frst_hwp_half_life_wood = "HWP Half Life Wood"
         self.modvar_frst_sq_co2 = "Forest Sequestration Emission Factor"
+        self.modvar_frst_init_per_hh_wood_demand = "Initial Per Household Wood Demand"
         #additional lists
         self.modvar_list_frst_frac_temptrop = [
             self.modvar_frst_frac_temperate_nutrient_poor,
@@ -228,8 +239,16 @@ class AFOLU:
         self.modvar_soil_ratio_c_to_n_soil_organic_matter = "C to N Ratio of Soil Organic Matter"
         self.modvar_soil_qtyinit_liming_dolomite = "Initial Liming Dolomite Applied to Soils"
         self.modvar_soil_qtyinit_liming_limestone = "Initial Liming Limestone Applied to Soils"
+
+
+        ##  INTEGRATION VARIABLES
+
+        # key categories
+        self.cat_ippu_paper = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_ippu, {"virgin_paper_category": 1})[0]
+        self.cat_ippu_wood = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_ippu, {"virgin_wood_category": 1})[0]
         # variable required for integration
         self.integration_variables = self.set_integrated_variables()
+
 
         ##  MISCELLANEOUS VARIABLES
 
@@ -243,6 +262,8 @@ class AFOLU:
 
         # add socioeconomic
         self.model_socioeconomic = Socioeconomic(self.model_attributes)
+        self.model_energy = NonElectricEnergy(self.model_attributes)
+        self.model_ippu = IPPU(self.model_attributes)
 
 
     ##  FUNCTIONS FOR MODEL ATTRIBUTE DIMENSIONS
@@ -738,6 +759,7 @@ class AFOLU:
 
         # get some vectors
         vec_gdp = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.model_socioeconomic.modvar_econ_gdp, False, return_type = "array_base")
+        vec_hh = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.model_socioeconomic.modvar_grnl_num_hh, False, return_type = "array_base")
         vec_pop = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.model_socioeconomic.modvar_gnrl_pop_total, False, return_type = "array_base")
         vec_gdp_per_capita = np.array(df_se_internal_shared_variables["vec_gdp_per_capita"])
         vec_rates_gdp = np.array(df_se_internal_shared_variables["vec_rates_gdp"].dropna())
@@ -974,12 +996,150 @@ class AFOLU:
         )
         # build output variables
         df_out += [
-            self.model_attributes.array_to_df(-1*arr_area_frst*arr_frst_ef_sequestration, self.modvar_frst_emissions_sequestration),
-            self.model_attributes.array_to_df(arr_area_frst*arr_frst_ef_methane, self.modvar_frst_emissions_methane)
+            self.model_attributes.array_to_df(-1*arr_area_frst*arr_frst_ef_sequestration, self.modvar_frst_emissions_co2_sequestration),
+            self.model_attributes.array_to_df(arr_area_frst*arr_frst_ef_methane, self.modvar_frst_emissions_ch4)
         ]
 
-        ##  NEEDED: FOREST FIRES (ADD HERE)
-        ##  NEEDED: WOOD PRODUCTS (ADD HERE)
+
+        ##  FOREST FIRES
+
+        # initialize some variables that are called below
+        arr_frst_frac_burned = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_average_fraction_burned_annually, True, "array_base", expand_to_all_cats = True, var_bounds = (0, 1))
+        arr_frst_ef_co2_fires = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_ef_co2_fires, True, "array_base", expand_to_all_cats = True)
+        # temperate biomass burned
+        arr_frst_biomass_consumed_temperate = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_biomass_consumed_fire_temperate, True, "array_base", expand_to_all_cats = True, var_bounds = (0, 1))
+        arr_frst_biomass_consumed_temperate *= self.model_attributes.get_scalar(self.modvar_frst_biomass_consumed_fire_temperate, "mass")
+        arr_frst_biomass_consumed_temperate /= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_frst_biomass_consumed_fire_temperate,
+            self.model_socioeconomic.modvar_gnrl_area,
+            "area"
+        )
+        # tropical biomass burned
+        arr_frst_biomass_consumed_tropical = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_biomass_consumed_fire_tropical, True, "array_base", expand_to_all_cats = True, var_bounds = (0, 1))
+        arr_frst_biomass_consumed_tropical *= self.model_attributes.get_scalar(self.modvar_frst_biomass_consumed_fire_tropical, "mass")
+        arr_frst_biomass_consumed_tropical /= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_frst_biomass_consumed_fire_tropical,
+            self.model_socioeconomic.modvar_gnrl_area,
+            "area"
+        )
+
+        # setup biomass arrays as a dictionary
+        dict_frst_modvar_to_array_forest_fires = {
+            self.modvar_frst_frac_temperate_nutrient_poor: arr_frst_biomass_consumed_temperate,
+            self.modvar_frst_frac_temperate_nutrient_rich: arr_frst_biomass_consumed_temperate,
+            self.modvar_frst_frac_tropical: arr_frst_biomass_consumed_tropical
+        }
+        # loop over tropical/temperate NP/temperate NR
+        arr_frst_emissions_co2_fires = 0.0
+        for modvar in self.modvar_list_frst_frac_temptrop:
+            # soil category
+            cat_soil = ds.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
+            ind_soil = attr_soil.get_key_value_index(cat_soil)
+            self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_ef_ch4, True, "array_units_corrected")
+            # get forest area
+            arr_frst_area_temptrop_burned_cur = arr_area_frst*dict_arrs_frst_frac_temptrop[modvar]*arr_frst_frac_burned
+            arr_frst_total_dry_mass_burned_cur = arr_frst_area_temptrop_burned_cur*dict_frst_modvar_to_array_forest_fires[modvar]
+            arr_frst_emissions_co2_fires += arr_frst_total_dry_mass_burned_cur*arr_frst_ef_co2_fires
+
+        # add to output
+        df_out += [
+            self.model_attributes.array_to_df(np.sum(arr_frst_emissions_co2_fires, axis = 1), self.modvar_frst_emissions_co2_fires)
+        ]
+
+
+        ##  HARVESTED WOOD PRODUCTS
+
+### NOTE: ADD SOME INTEGRATION CHECKS/OPTIONAL VARIABLE PIECES HERE
+
+        # get projections of industrial wood and paper product demand
+        attr_ippu = self.model_attributes.get_attribute_table(self.subsec_name_ippu)
+        ind_paper = attr_ippu.get_key_value_index(self.cat_ippu_paper)
+        ind_wood = attr_ippu.get_key_value_index(self.cat_ippu_wood)
+        # production data
+        arr_production, dfs_ippu_harvested_wood = self.model_ippu.get_production_with_recycling_adjustment(df_afolu_trajectories, vec_rates_gdp)
+        list_ippu_vars = self.model_attributes.build_varlist(self.subsec_name_ippu, self.model_ippu.modvar_ippu_demand_for_harvested_wood)
+        arr_frst_harvested_wood_industrial = 0.0
+        vec_frst_harvested_wood_industrial_paper = 0.0
+        vec_frst_harvested_wood_industrial_wood = 0.0
+        # find the data frame with output
+        keep_going = True
+        i = 0
+        while (i < len(dfs_ippu_harvested_wood)) and keep_going:
+            df = dfs_ippu_harvested_wood[i]
+            if set(list_ippu_vars).issubset(df.columns):
+                arr_frst_harvested_wood_industrial = self.model_attributes.get_standard_variables(df, self.model_ippu.modvar_ippu_demand_for_harvested_wood, False, "array_base", expand_to_all_cats = True)
+                vec_frst_harvested_wood_industrial_paper = arr_frst_harvested_wood_industrial[:, ind_paper]
+                vec_frst_harvested_wood_industrial_wood = arr_frst_harvested_wood_industrial[:, ind_wood]
+                keep_going = False
+
+            i += 1
+        # remove some unneeded vars
+        array_ippu_production = 0
+        dfs_ippu_harvested_wood = 0
+
+
+        # get changes in biomass energy demand for stationary emissions (largely driven by wood)
+        df_scoe = self.model_energy.project_scoe(df_afolu_trajectories, vec_hh, vec_gdp, vec_rates_gdp_per_capita, dict_dims, n_projection_time_periods, projection_time_periods)
+        vec_scoe_biomass_fuel_demand = self.model_attributes.get_standard_variables(df_scoe, self.model_energy.modvar_scoe_energy_demand_heat_biomass, False, "array_base")
+        vec_scoe_biomass_fuel_demand_change = np.nan_to_num(vec_scoe_biomass_fuel_demand[1:]/vec_scoe_biomass_fuel_demand[0:-1], 1.0, posinf = 1.0)
+        vec_scoe_biomass_fuel_demand_growth_rate = np.cumprod(np.insert(vec_scoe_biomass_fuel_demand_change, 0, 1.0))
+        df_scoe = 0
+        # get initial domestic demand
+        vec_frst_harvested_wood_domestic = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_init_per_hh_wood_demand, False, "array_base")
+        vec_frst_harvested_wood_domestic *= vec_hh[0]
+        vec_frst_harvested_wood_domestic *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_frst_init_per_hh_wood_demand,
+            self.model_ippu.modvar_ippu_demand_for_harvested_wood,
+            "mass"
+        )
+        vec_frst_harvested_wood_domestic = vec_frst_harvested_wood_domestic[0]*vec_scoe_biomass_fuel_demand_growth_rate
+
+
+        # get half-life factors for FOD model
+        vec_frst_k_hwp_paper = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_hwp_half_life_paper, False, "array_base")
+        vec_frst_k_hwp_paper = np.log(2)/vec_frst_k_hwp_paper
+        vec_frst_k_hwp_wood = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_hwp_half_life_wood, False, "array_base")
+        vec_frst_k_hwp_wood = np.log(2)/vec_frst_k_hwp_wood
+        # totals
+        vec_frst_c_paper = vec_frst_harvested_wood_industrial_paper
+        vec_frst_c_wood = vec_frst_harvested_wood_industrial_wood + vec_frst_harvested_wood_domestic
+        # set a lookback to 10 years
+        n_years_lookback = 15
+        vec_frst_c_paper = np.concatenate([np.array([vec_frst_c_paper[0] for x in range(n_years_lookback)]), vec_frst_c_paper])
+        vec_frst_c_wood = np.concatenate([np.array([vec_frst_c_wood[0] for x in range(n_years_lookback)]), vec_frst_c_wood])
+        vec_frst_k_hwp_paper = np.concatenate([np.array([vec_frst_k_hwp_paper[0] for x in range(n_years_lookback)]), vec_frst_k_hwp_paper])
+        vec_frst_k_hwp_wood = np.concatenate([np.array([vec_frst_k_hwp_wood[0] for x in range(n_years_lookback)]), vec_frst_k_hwp_wood])
+        # initialize and run
+        vec_frst_c_from_hwp_paper = np.zeros(len(vec_frst_k_hwp_paper))
+        vec_frst_c_from_hwp_paper[0] = vec_frst_c_paper[0]
+        vec_frst_c_from_hwp_wood = np.zeros(len(vec_frst_k_hwp_wood))
+        vec_frst_c_from_hwp_wood[0] = vec_frst_c_wood[0]
+
+        for i in range(len(vec_frst_c_from_hwp_paper) - 1):
+            # paper
+            current_stock_paper = vec_frst_c_from_hwp_paper[0] if (i == 0) else vec_frst_c_from_hwp_paper[i - 1]
+            exp_k_paper = np.exp(-vec_frst_k_hwp_paper[i])
+            vec_frst_c_from_hwp_paper[i + 1] = current_stock_paper*exp_k_paper + (1 - exp_k_paper)/vec_frst_k_hwp_paper[i]*vec_frst_c_paper[i]
+
+            # wood
+            current_stock_wood = vec_frst_c_from_hwp_wood[0] if (i == 0) else vec_frst_c_wood[i - 1]
+            exp_k_wood = np.exp(-vec_frst_k_hwp_wood[i])
+            vec_frst_c_from_hwp_wood[i + 1] = current_stock_wood*exp_k_wood + (1 - exp_k_wood)/vec_frst_k_hwp_wood[i]*vec_frst_c_wood[i]
+
+        # reduce from look back
+        vec_frst_c_from_hwp_paper = vec_frst_c_from_hwp_paper[(n_years_lookback - 1):]
+        vec_frst_c_from_hwp_wood = vec_frst_c_from_hwp_wood[(n_years_lookback - 1):]
+        vec_frst_c_from_hwp_paper_delta = vec_frst_c_from_hwp_paper[1:] - vec_frst_c_from_hwp_paper[0:-1]
+        vec_frst_c_from_hwp_wood_delta = vec_frst_c_from_hwp_wood[1:] - vec_frst_c_from_hwp_wood[0:-1]
+        # get emissions from co2
+        vec_frst_emissions_co2_hwp = vec_frst_c_from_hwp_paper_delta + vec_frst_c_from_hwp_wood_delta
+        vec_frst_emissions_co2_hwp *= self.factor_c_to_co2
+        vec_frst_emissions_co2_hwp *= self.model_attributes.get_scalar(self.model_ippu.modvar_ippu_demand_for_harvested_wood, "mass")
+
+        # add to output
+        df_out += [
+            self.model_attributes.array_to_df(vec_frst_emissions_co2_hwp, self.modvar_frst_emissions_co2_hwp)
+        ]
 
 
 
@@ -1787,6 +1947,8 @@ class AFOLU:
         df_out += [
             self.model_attributes.array_to_df(vec_soil_emission_co2_lime_use + vec_soil_emission_co2_urea_use, self.modvar_soil_emissions_co2_lime_urea)
         ]
+
+
 
 
         df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)

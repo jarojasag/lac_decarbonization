@@ -30,7 +30,7 @@ self.modvar_list_agrc_frac_temptrop = [
 ]
 
 # forest model variables
-self.modvar_frst_elas_wood_demand = "Elasticity of Wood Products Demand to Value Added"
+self.modvar_frst_average_fraction_burned_annually = "Average Fraction of Forest Burned Annually"
 self.modvar_frst_ef_fires = "Forest Fire Emission Factor"
 self.modvar_frst_ef_ch4 = "Forest Methane Emissions"
 self.modvar_frst_emissions_sequestration = ":math:\\text{CO}_2 Emissions from Forest Sequestration"
@@ -39,12 +39,19 @@ self.modvar_frst_frac_temperate_nutrient_poor = "Forest Fraction Temperate Nutri
 self.modvar_frst_frac_temperate_nutrient_rich = "Forest Fraction Temperate Nutrient Rich"
 self.modvar_frst_frac_tropical = "Forest Fraction Tropical"
 self.modvar_frst_sq_co2 = "Forest Sequestration Emission Factor"
+self.modvar_frst_init_per_hh_wood_demand = "Initial Per Household Wood Demand"
 #additional lists
 self.modvar_list_frst_frac_temptrop = [
     self.modvar_frst_frac_temperate_nutrient_poor,
     self.modvar_frst_frac_temperate_nutrient_rich,
     self.modvar_frst_frac_tropical
 ]
+
+self.modvar_ippu_average_construction_materials_required_per_household = "Average per Household Demand for Construction Materials"
+self.modvar_ippu_ratio_of_production_to_harvested_wood = "Ratio of Production to Harvested Wood Demand"
+
+
+
 
 # land use model variables
 self.modvar_lndu_area_by_cat = "Land Use Area"
