@@ -193,6 +193,7 @@ class Configuration:
         valid_area = self.get_valid_values_from_attribute_column(attr_area, "area_equivalent_", str, "unit_area_to_area")
         valid_energy = self.get_valid_values_from_attribute_column(attr_energy, "energy_equivalent_", str, "unit_energy_to_energy")
         valid_gwp = self.get_valid_values_from_attribute_column(attr_gas, "global_warming_potential_", int)
+        valid_historical_hwp_method = ["back_project", "historical"]
         valid_historical_solid_waste_method = ["back_project", "historical"]
         valid_length = self.get_valid_values_from_attribute_column(attr_length, "length_equivalent_", str, "unit_length_to_length")
         valid_mass = self.get_valid_values_from_attribute_column(attr_mass, "mass_equivalent_", str, "unit_mass_to_mass")
@@ -203,6 +204,7 @@ class Configuration:
             "energy_units": valid_energy,
             "emissions_mass": valid_mass,
             "global_warming_potential": valid_gwp,
+            "historicall_harvested_wood_products_method": valid_historical_hwp_method,
             "historical_solid_waste_method": valid_historical_solid_waste_method,
             "length_units": valid_length,
             "volume_units": valid_volume
@@ -394,6 +396,39 @@ class ModelAttributes:
             missing_vals = sf.print_setdiff(set(self.sort_ordered_dimensions_of_analysis), set(self.all_dims))
             raise ValueError(f"Missing specification of required dimensions of analysis: no attribute tables for dimensions {missing_vals} found in directory '{self.attribute_directory}'.")
 
+
+    ##  check data frames specified for integrated variables
+    def check_integrated_df_vars(self,
+        df_in: pd.DataFrame,
+        dict_integrated_vars: dict,
+        subsec: str = "all"
+    ) -> dict:
+
+        # initialize list of subsectors to provide checks for
+        subsecs = list(dict_integrated_vars.keys()) if (subsec == "all") else [subsec]
+        dict_out = {}
+        #
+        for subsec0 in subsecs:
+            subsec = self.check_subsector(subsec0, throw_error_q = False)
+            if (subsec is not None):
+                fields_req = []
+                for modvar in dict_integrated_vars[subsec]:
+                    fields_req += self.build_varlist(subsec, modvar)
+
+                # check for required variables
+                subsec_val = True
+                if not set(fields_req).issubset(df_in.columns):
+                    set_missing = list(set(fields_req) - set(df_in.columns))
+                    set_missing = sf.format_print_list(set_missing)
+                    warnings.warn(f"Integration in subsector '{subsec}' cannot proceed: The fields {set_missing} are missing.")
+                    subsec_val = False
+            else:
+                warnings.warn(f"Invalid subsector '{subsec}' found in check_integrated_df_vars: The subsector does not exist.")
+                subsec_val = False
+
+            dict_out.update({subsec: subsec_val})
+
+        return dict_out[subsec] if (subsec != "all") else dict_out
 
     ##  function to ensure a sector is properly specified
     def check_sector(self, sector: str):
@@ -2581,7 +2616,8 @@ class ModelAttributes:
         internal_variable: str,
         component_variable: str,
         attribute_sum_specification_field: str,
-        action: str = "add"
+        action: str = "add",
+        return_type: type = float
     ):
         # get the field to add
         field_check = self.build_varlist(subsector, variable_subsec = internal_variable)[0]
@@ -2600,14 +2636,15 @@ class ModelAttributes:
                 fields_sum = self.get_mutex_cats_for_internal_variable(subsector, component_variable, attribute_sum_specification_field, "fields")
                 sf.check_fields(df_in, fields_sum)
                 # add to the data frame (inline)
-                df_in[field_check] = df_in[fields_sum].sum(axis = 1)
+                df_in[field_check] = df_in[fields_sum].sum(axis = 1).astype(return_type)
 
 
     ##  manage internal variables in data frames
     def manage_gdp_to_df(self, df_in: pd.DataFrame, action: str = "add"):
-        return self.manage_internal_variable_to_df(df_in, "Economy", "GDP", "Value Added", "gdp_component", action)
+        return self.manage_internal_variable_to_df(df_in, "Economy", "GDP", "Value Added", "gdp_component", action, float)
     def manage_pop_to_df(self, df_in: pd.DataFrame, action: str = "add"):
-        return self.manage_internal_variable_to_df(df_in, "General", "Total Population", "Population", "total_population_component", action)
+        return self.manage_internal_variable_to_df(df_in, "General", "Total Population", "Population", "total_population_component", action, int)
+
 
 
 

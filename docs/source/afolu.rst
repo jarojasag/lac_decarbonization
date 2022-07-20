@@ -164,11 +164,56 @@ Variables by Category
    :file: ./csvs/table_varreqs_by_category_af_lsmm.csv
    :header-rows: 1
 
+
+Variables by Partial Category
+-----------------------------
+
+Livestock manure management includes some variables that apply only to a subset of categories. These variables are described below. The categories that variables apply to are described in the ``category`` column.
+
+   .. csv-table:: Trajectories of the following variables are needed for **some** livestock manure management categories.
+      :file: ./csvs/table_varreqs_by_partial_category_af_lsmm.csv
+      :header-rows: 1
+
+
 Categories
 ----------
 
 Manure management is divided into the following categories, given by ``$CAT-MANURE-MANAGEMENT$``.
 
-.. csv-table:: Livestock categories (``$CAT-MANURE-MANAGEMENT$`` attribute table)
+.. csv-table:: Livestock manure management categories (``$CAT-MANURE-MANAGEMENT$`` attribute table)
    :file: ./csvs/attribute_cat_manure_management.csv
+   :header-rows: 1
+
+
+
+Soil Management
+===============
+
+EXPLANATION HERE
+
+Variables by Category
+---------------------
+
+.. csv-table:: For each soil management category, trajectories of the following variables are needed.
+   :file: ./csvs/table_varreqs_by_category_af_soil.csv
+   :header-rows: 1
+
+
+Variables by Partial Category
+-----------------------------
+
+   Soil management includes some variables that apply only to a subset of categories. These variables are described below. The categories that variables apply to are described in the ``category`` column.
+
+   .. csv-table:: Trajectories of the following variables are needed for **some** soil management categories.
+      :file: ./csvs/table_varreqs_by_partial_category_af_soil.csv
+      :header-rows: 1
+
+
+Categories
+----------
+
+Soil management is divided into the following categories, given by ``$CAT-SOIL-MANAGEMENT$``.
+
+.. csv-table:: Soil management categories (``$CAT-SOIL-MANAGEMENT$`` attribute table)
+   :file: ./csvs/attribute_cat_soil_management.csv
    :header-rows: 1

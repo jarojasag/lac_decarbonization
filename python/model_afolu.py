@@ -26,6 +26,7 @@ class AFOLU:
         self.subsec_name_lndu = "Land Use"
         self.subsec_name_lsmm = "Livestock Manure Management"
         self.subsec_name_lvst = "Livestock"
+        self.subsec_name_scoe = "Stationary Combustion and Other Energy"
         self.subsec_name_soil = "Soil Management"
 
         # initialzie dynamic variables
@@ -56,6 +57,7 @@ class AFOLU:
         self.modvar_agrc_frac_animal_feed = "Crop Fraction Animal Feed"
         self.modvar_agrc_frac_dry = "Agriculture Fraction Dry"
         self.modvar_agrc_frac_dry_matter_in_crop = "Dry Matter Fraction of Harvested Crop"
+        self.modvar_agrc_frac_production_lost = "Fraction of Food Produced Lost Before Consumption"
         self.modvar_agrc_frac_residues_removed = "Fraction of Residues Removed"
         self.modvar_agrc_frac_residues_burned = "Fraction of Residues Burned"
         self.modvar_agrc_frac_temperate = "Agriculture Fraction Temperate"
@@ -68,6 +70,7 @@ class AFOLU:
         self.modvar_agrc_ratio_below_ground_biomass_to_above_ground_biomass = "Ratio of Below Ground Biomass to Above Ground Biomass"
         self.modvar_agrc_regression_m_above_ground_residue = "Above Ground Residue Dry Matter Slope"
         self.modvar_agrc_regression_b_above_ground_residue = "Above Ground Residue Dry Matter Intercept"
+        self.modvar_agrc_total_food_lost_in_ag = "Total Food Produced Lost Before Consumption"
         self.modvar_agrc_yf = "Crop Yield Factor"
         self.modvar_agrc_yield = "Crop Yield"
         # additional lists
@@ -243,11 +246,16 @@ class AFOLU:
 
         ##  INTEGRATION VARIABLES
 
+        # add other model classes--required for integration variables
+        self.model_socioeconomic = Socioeconomic(self.model_attributes)
+        self.model_energy = NonElectricEnergy(self.model_attributes)
+        self.model_ippu = IPPU(self.model_attributes)
+
         # key categories
         self.cat_ippu_paper = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_ippu, {"virgin_paper_category": 1})[0]
         self.cat_ippu_wood = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_ippu, {"virgin_wood_category": 1})[0]
         # variable required for integration
-        self.integration_variables = self.set_integrated_variables()
+        self.dict_integration_variables_by_subsector, self.integration_variables = self.set_integrated_variables()
 
 
         ##  MISCELLANEOUS VARIABLES
@@ -256,20 +264,12 @@ class AFOLU:
         self.factor_c_to_co2 = float(11/3)
         self.factor_n2on_to_n2o = float(11/7)
 
-        # TEMP:SET TO DERIVE FROM ATTRIBUTE TABLES---
-        self.cat_lndu_crop = "croplands"
-        self.cat_lndu_grazing = "grasslands"
-
-        # add socioeconomic
-        self.model_socioeconomic = Socioeconomic(self.model_attributes)
-        self.model_energy = NonElectricEnergy(self.model_attributes)
-        self.model_ippu = IPPU(self.model_attributes)
 
 
     ##  FUNCTIONS FOR MODEL ATTRIBUTE DIMENSIONS
 
-    def check_df_fields(self, df_afolu_trajectories):
-        check_fields = self.required_variables
+    def check_df_fields(self, df_afolu_trajectories, check_fields = None):
+        check_fields = self.required_variables if (check_fields is None) else check_fields
         # check for required variables
         if not set(check_fields).issubset(df_afolu_trajectories.columns):
             set_missing = list(set(check_fields) - set(df_afolu_trajectories.columns))
@@ -294,8 +294,74 @@ class AFOLU:
         return required_vars + self.get_required_dimensions(), output_vars
 
     def set_integrated_variables(self):
+        dict_vars_required_for_integration = {
+            # ippu variables required for estimating HWP
+            self.subsec_name_ippu: [
+                self.model_ippu.modvar_ippu_average_lifespan_housing,
+                self.model_ippu.modvar_ippu_change_net_imports,
+                self.model_ippu.modvar_ippu_demand_for_harvested_wood,
+                self.model_ippu.modvar_ippu_elast_ind_prod_to_gdp,
+                self.model_ippu.modvar_ippu_max_recycled_material_ratio,
+                self.model_ippu.model_socioeconomic.modvar_grnl_num_hh,
+                self.model_ippu.modvar_ippu_prod_qty_init,
+                self.model_ippu.modvar_ippu_qty_recycled_used_in_production,
+                self.model_ippu.modvar_ippu_qty_total_production,
+                self.model_ippu.modvar_ippu_ratio_of_production_to_harvested_wood,
+                self.model_ippu.modvar_waso_waste_total_recycled
+            ],
+            # SCOE variables required for projecting changes to wood energy demand
+            self.subsec_name_scoe: [
+                self.model_energy.modvar_scoe_consumpinit_energy_per_hh_elec,
+                self.model_energy.modvar_scoe_consumpinit_energy_per_hh_heat,
+                self.model_energy.modvar_scoe_consumpinit_energy_per_mmmgdp_elec,
+                self.model_energy.modvar_scoe_consumpinit_energy_per_mmmgdp_heat,
+                self.model_energy.modvar_scoe_efficiency_fact_heat_en_coal,
+                self.model_energy.modvar_scoe_efficiency_fact_heat_en_diesel,
+                self.model_energy.modvar_scoe_efficiency_fact_heat_en_electricity,
+                self.model_energy.modvar_scoe_efficiency_fact_heat_en_gasoline,
+                self.model_energy.modvar_scoe_efficiency_fact_heat_en_hydrogen,
+                self.model_energy.modvar_scoe_efficiency_fact_heat_en_kerosene,
+                self.model_energy.modvar_scoe_efficiency_fact_heat_en_natural_gas,
+                self.model_energy.modvar_scoe_efficiency_fact_heat_en_pliqgas,
+                self.model_energy.modvar_scoe_efficiency_fact_heat_en_solid_biomass,
+                self.model_energy.modvar_scoe_elasticity_hh_energy_demand_electric_to_gdppc,
+                self.model_energy.modvar_scoe_elasticity_hh_energy_demand_heat_to_gdppc,
+                self.model_energy.modvar_scoe_elasticity_mmmgdp_energy_demand_elec_to_gdppc,
+                self.model_energy.modvar_scoe_elasticity_mmmgdp_energy_demand_heat_to_gdppc,
+                self.model_energy.modvar_scoe_emissions_ch4,
+                self.model_energy.modvar_scoe_emissions_co2,
+                self.model_energy.modvar_scoe_emissions_n2o,
+                self.model_energy.modvar_scoe_energy_demand_electricity,
+                self.model_energy.modvar_scoe_energy_demand_electricity_agg,
+                self.model_energy.modvar_scoe_energy_demand_heat,
+                self.model_energy.modvar_scoe_energy_demand_heat_agg,
+                self.model_energy.modvar_scoe_energy_demand_heat_biomass,
+                self.model_energy.modvar_scoe_energy_demand_heat_coal,
+                self.model_energy.modvar_scoe_energy_demand_heat_diesel,
+                self.model_energy.modvar_scoe_energy_demand_heat_electricity,
+                self.model_energy.modvar_scoe_energy_demand_heat_gasoline,
+                self.model_energy.modvar_scoe_energy_demand_heat_hydrogen,
+                self.model_energy.modvar_scoe_energy_demand_heat_kerosene,
+                self.model_energy.modvar_scoe_energy_demand_heat_natural_gas,
+                self.model_energy.modvar_scoe_energy_demand_heat_pliq_gas,
+                self.model_energy.modvar_scoe_frac_heat_en_coal,
+                self.model_energy.modvar_scoe_frac_heat_en_diesel,
+                self.model_energy.modvar_scoe_frac_heat_en_electricity,
+                self.model_energy.modvar_scoe_frac_heat_en_gasoline,
+                self.model_energy.modvar_scoe_frac_heat_en_hydrogen,
+                self.model_energy.modvar_scoe_frac_heat_en_kerosene,
+                self.model_energy.modvar_scoe_frac_heat_en_natural_gas,
+                self.model_energy.modvar_scoe_frac_heat_en_pliqgas,
+                self.model_energy.modvar_scoe_frac_heat_en_solid_biomass
+            ]
+        }
+
+        # set complete output list of integration variables
         list_vars_required_for_integration = []
-        return list_vars_required_for_integration
+        for k in dict_vars_required_for_integration.keys():
+            list_vars_required_for_integration += dict_vars_required_for_integration[k]
+
+        return dict_vars_required_for_integration, list_vars_required_for_integration
 
 
     ######################################
@@ -515,8 +581,8 @@ class AFOLU:
         ind_pstr = attr_lndu.get_key_value_index(self.cat_lndu_pstr)
 
         # initialize variables
-        arr_lvst_dem_gr = np.cumprod(arr_lvst_dem/arr_lvst_dem[0], axis = 0)
-        vec_lvst_cc_init = vec_lvst_pop_init/(vec_initial_area[ind_pstr]*vec_lvst_pstr_weights)
+        arr_lvst_dem_gr = np.nan_to_num(np.cumprod(arr_lvst_dem/arr_lvst_dem[0], axis = 0), posinf = 1)
+        vec_lvst_cc_init = np.nan_to_num(vec_lvst_pop_init/(vec_initial_area[ind_pstr]*vec_lvst_pstr_weights), 0.0, posinf = 0.0)
 
         # intilize output arrays, including land use, land converted, emissions, and adjusted transitions
         arr_agrc_frac_cropland = np.array([vec_agrc_frac_cropland_area for k in range(n_tp)])
@@ -559,15 +625,16 @@ class AFOLU:
             vec_lvst_net_import_increase = vec_lvst_net_surplus - vec_lvst_reallocation # demand for livestock met by increasing net imports (neg => net exports)
 
             # calculate required increase in transition probabilities
-            area_lndu_pstr_increase = sum(np.nan_to_num(vec_lvst_reallocation/vec_lvst_cc_proj))
+            area_lndu_pstr_increase = sum(np.nan_to_num(vec_lvst_reallocation/vec_lvst_cc_proj, 0, posinf = 0.0))
             scalar_lndu_pstr = (area_pstr_cur + area_lndu_pstr_increase)/np.dot(x, arrs_transitions[i_tr][:, ind_pstr])
 
             # AGRICULTURE - calculate demand increase in crops, which is a function of gdp/capita (exogenous) and livestock demand (used for feed)
             vec_agrc_feed_dem_yield = sum((arr_lndu_yield_by_lvst*arr_lvst_dem_gr[i + 1]).transpose())
             vec_agrc_total_dem_yield = (arr_agrc_nonfeeddem_yield[i + 1] + vec_agrc_feed_dem_yield)
-            vec_agrc_dem_cropareas = vec_agrc_total_dem_yield/arr_agrc_yield_factors[i + 1]
+            vec_agrc_dem_cropareas = np.nan_to_num(vec_agrc_total_dem_yield/arr_agrc_yield_factors[i + 1], posinf = 0.0)
             vec_agrc_net_surplus_cropland_area_cur = vec_agrc_dem_cropareas - vec_agrc_cropland_area_proj
             vec_agrc_reallocation = vec_agrc_net_surplus_cropland_area_cur*vec_lndu_yrf[i + 1]
+
             # get surplus yield (increase to net imports)
             vec_agrc_net_imports_increase_yield = (vec_agrc_net_surplus_cropland_area_cur - vec_agrc_reallocation)*arr_agrc_yield_factors[i + 1]
             vec_agrc_cropareas_adj = vec_agrc_cropland_area_proj + vec_agrc_reallocation
@@ -685,6 +752,158 @@ class AFOLU:
         return arr_emissions_conv, arr_land_use, arrs_land_conv
 
 
+    ##  harvested wood products in forestry -- requires lots of integration
+    def project_harvested_wood_products(self,
+        df_afolu_trajectories: pd.DataFrame,
+        vec_hh: np.ndarray,
+        vec_gdp: np.ndarray,
+        vec_rates_gdp: np.ndarray,
+        vec_rates_gdp_per_capita: np.ndarray,
+        dict_dims: dict,
+        n_projection_time_periods: int,
+        projection_time_periods: np.ndarray,
+        dict_check_integrated_variables: dict
+    ):
+
+        # IPPU components
+        if dict_check_integrated_variables[self.subsec_name_ippu]:
+            # get projections of industrial wood and paper product demand
+            attr_ippu = self.model_attributes.get_attribute_table(self.subsec_name_ippu)
+            ind_paper = attr_ippu.get_key_value_index(self.cat_ippu_paper)
+            ind_wood = attr_ippu.get_key_value_index(self.cat_ippu_wood)
+            # production data
+            arr_production, dfs_ippu_harvested_wood = self.model_ippu.get_production_with_recycling_adjustment(df_afolu_trajectories, vec_rates_gdp)
+            list_ippu_vars = self.model_attributes.build_varlist(self.subsec_name_ippu, self.model_ippu.modvar_ippu_demand_for_harvested_wood)
+            arr_frst_harvested_wood_industrial = 0.0
+            vec_frst_harvested_wood_industrial_paper = 0.0
+            vec_frst_harvested_wood_industrial_wood = 0.0
+            # find the data frame with output
+            keep_going = True
+            i = 0
+            while (i < len(dfs_ippu_harvested_wood)) and keep_going:
+                df = dfs_ippu_harvested_wood[i]
+                if set(list_ippu_vars).issubset(df.columns):
+                    arr_frst_harvested_wood_industrial = self.model_attributes.get_standard_variables(df, self.model_ippu.modvar_ippu_demand_for_harvested_wood, False, "array_base", expand_to_all_cats = True)
+                    vec_frst_harvested_wood_industrial_paper = arr_frst_harvested_wood_industrial[:, ind_paper]
+                    vec_frst_harvested_wood_industrial_wood = arr_frst_harvested_wood_industrial[:, ind_wood]
+                    keep_going = False
+
+                i += 1
+            # remove some unneeded vars
+            array_ippu_production = 0
+            dfs_ippu_harvested_wood = 0
+        else:
+            arr_frst_harvested_wood_industrial = 0.0
+            vec_frst_harvested_wood_industrial_paper = 0.0
+            vec_frst_harvested_wood_industrial_wood = 0.0
+
+
+        # get initial domestic demand for wood products
+        vec_frst_harvested_wood_domestic = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_init_per_hh_wood_demand, False, "array_base")
+        vec_frst_harvested_wood_domestic *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_frst_init_per_hh_wood_demand,
+            self.model_ippu.modvar_ippu_demand_for_harvested_wood,
+            "mass"
+        )
+
+        # If energy components are available, scale hh demand from SCOE
+        if dict_check_integrated_variables[self.subsec_name_scoe]:
+            # get changes in biomass energy demand for stationary emissions (largely driven by wood)
+            df_scoe = self.model_energy.project_scoe(
+                df_afolu_trajectories,
+                vec_hh,
+                vec_gdp,
+                vec_rates_gdp_per_capita,
+                dict_dims,
+                n_projection_time_periods,
+                projection_time_periods
+            )
+            vec_scoe_biomass_fuel_demand = self.model_attributes.get_standard_variables(df_scoe, self.model_energy.modvar_scoe_energy_demand_heat_biomass, False, "array_base")
+            vec_scoe_biomass_fuel_demand_change = np.nan_to_num(vec_scoe_biomass_fuel_demand[1:]/vec_scoe_biomass_fuel_demand[0:-1], 1.0, posinf = 1.0)
+            vec_scoe_biomass_fuel_demand_growth_rate = np.cumprod(np.insert(vec_scoe_biomass_fuel_demand_change, 0, 1.0))
+            df_scoe = 0
+
+            vec_frst_harvested_wood_domestic *= vec_hh[0]
+            vec_frst_harvested_wood_domestic = vec_frst_harvested_wood_domestic[0]*vec_scoe_biomass_fuel_demand_growth_rate
+        else:
+            # assume growth proportional to HHs
+            vec_frst_harvested_wood_domestic *= vec_hh
+
+        # get half-life factors for FOD model
+        vec_frst_k_hwp_paper = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_hwp_half_life_paper, False, "array_base")
+        vec_frst_k_hwp_paper = np.log(2)/vec_frst_k_hwp_paper
+        vec_frst_k_hwp_wood = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_hwp_half_life_wood, False, "array_base")
+        vec_frst_k_hwp_wood = np.log(2)/vec_frst_k_hwp_wood
+        # totals
+        vec_frst_ef_c = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_ef_c_per_hwp, False, "array_base", var_bounds = (0, np.inf))
+        vec_frst_c_paper = vec_frst_harvested_wood_industrial_paper*vec_frst_ef_c
+        vec_frst_c_wood = (vec_frst_harvested_wood_industrial_wood + vec_frst_harvested_wood_domestic)*vec_frst_ef_c
+        self.vec_frst_c_wood = vec_frst_c_wood
+
+        # set a lookback based on some number of years (max half-life to estimate some amount of carbon stock)
+        if self.model_attributes.configuration.get("historical_harvested_wood_products_method") == "back_project":
+            n_years_lookback = int(self.model_attributes.configuration.get("historical_back_proj_n_periods"))#int(np.round(np.log(2)*max(max(1/vec_frst_k_hwp_paper), max(1/vec_frst_k_hwp_wood))))
+            if n_years_lookback > 0:
+                n_years_mean = min(5, len(vec_frst_c_paper))
+                # back-project previous paper products
+                r_paper = np.mean(vec_frst_c_paper[1:(1 + n_years_mean)]/vec_frst_c_paper[0:n_years_mean])
+                vec_frst_c_paper = np.concatenate([
+                    np.array([vec_frst_c_paper[0]*(r_paper**(x - n_years_lookback)) for x in range(n_years_lookback)]),
+                    vec_frst_c_paper
+                ])
+                # back-project previous wood products
+                r_wood = np.mean(vec_frst_c_wood[1:(1 + n_years_mean)]/vec_frst_c_wood[0:n_years_mean])
+                vec_frst_c_wood = np.concatenate([
+                    np.array([vec_frst_c_wood[0]*(r_wood**(x - n_years_lookback)) for x in range(n_years_lookback)]),
+                    vec_frst_c_wood
+                ])
+                vec_frst_k_hwp_paper = np.concatenate([np.array([vec_frst_k_hwp_paper[0] for x in range(n_years_lookback)]), vec_frst_k_hwp_paper])
+                vec_frst_k_hwp_wood = np.concatenate([np.array([vec_frst_k_hwp_wood[0] for x in range(n_years_lookback)]), vec_frst_k_hwp_wood])
+        else:
+            # set up n_years_lookback to be based on historical
+            n_years_lookback = 0
+            raise ValueError(f"Error in project_harvested_wood_products: historical_harvested_wood_products_method 'historical' not supported at the moment.")
+
+        # initialize and run using assumptions of steady-state (see Equation 12.4)
+        vec_frst_c_from_hwp_paper = np.zeros(len(vec_frst_k_hwp_paper))
+        vec_frst_c_from_hwp_paper[0] = np.mean(vec_frst_c_paper[0:min(5, len(vec_frst_c_paper))])/vec_frst_k_hwp_paper[0]
+        vec_frst_c_from_hwp_wood = np.zeros(len(vec_frst_k_hwp_wood))
+        vec_frst_c_from_hwp_wood[0] = np.mean(vec_frst_c_wood[0:min(5, len(vec_frst_c_wood))])/vec_frst_k_hwp_wood[0]
+
+        # execute the FOD model
+        for i in range(len(vec_frst_c_from_hwp_paper) - 1):
+            # paper
+            current_stock_paper = vec_frst_c_from_hwp_paper[0] if (i == 0) else vec_frst_c_from_hwp_paper[i]
+            exp_k_paper = np.exp(-vec_frst_k_hwp_paper[i])
+            vec_frst_c_from_hwp_paper[i + 1] = current_stock_paper*exp_k_paper + ((1 - exp_k_paper)/vec_frst_k_hwp_paper[i])*vec_frst_c_paper[i]
+            # wood
+            current_stock_wood = vec_frst_c_from_hwp_wood[0] if (i == 0) else vec_frst_c_from_hwp_wood[i]
+            exp_k_wood = np.exp(-vec_frst_k_hwp_wood[i])
+            vec_frst_c_from_hwp_wood[i + 1] = current_stock_wood*exp_k_wood + ((1 - exp_k_wood)/vec_frst_k_hwp_wood[i])*vec_frst_c_wood[i]
+
+        # reduce from look back
+        if n_years_lookback > 0:
+            vec_frst_c_from_hwp_paper = vec_frst_c_from_hwp_paper[(n_years_lookback - 1):]
+            vec_frst_c_from_hwp_wood = vec_frst_c_from_hwp_wood[(n_years_lookback - 1):]
+        vec_frst_c_from_hwp_paper_delta = vec_frst_c_from_hwp_paper[1:] - vec_frst_c_from_hwp_paper[0:-1]
+        vec_frst_c_from_hwp_wood_delta = vec_frst_c_from_hwp_wood[1:] - vec_frst_c_from_hwp_wood[0:-1]
+
+        v_print = self.factor_c_to_co2*vec_frst_c_wood*self.model_attributes.get_scalar(self.model_ippu.modvar_ippu_demand_for_harvested_wood, "mass")
+        v_mult = (1 - np.exp(-vec_frst_k_hwp_wood))/vec_frst_k_hwp_wood
+
+        # get emissions from co2
+        vec_frst_emissions_co2_hwp = vec_frst_c_from_hwp_paper_delta + vec_frst_c_from_hwp_wood_delta
+        vec_frst_emissions_co2_hwp *= self.factor_c_to_co2
+        vec_frst_emissions_co2_hwp *= -1*self.model_attributes.get_scalar(self.model_ippu.modvar_ippu_demand_for_harvested_wood, "mass")
+
+        list_dfs_out = [
+            self.model_attributes.array_to_df(vec_frst_emissions_co2_hwp, self.modvar_frst_emissions_co2_hwp)
+        ]
+
+        return list_dfs_out
+
+
+
     ##  LIVESTOCK
 
     def reassign_pops_from_proj_to_carry(self, arr_lu_derived, arr_dem_based):
@@ -737,7 +956,8 @@ class AFOLU:
         # check that all required fields are contained—assume that it is ordered by time period
         self.check_df_fields(df_afolu_trajectories)
         dict_dims, df_afolu_trajectories, n_projection_time_periods, projection_time_periods = self.model_attributes.check_projection_input_df(df_afolu_trajectories, True, True, True)
-
+        # check integrated variables for HWP
+        dict_check_integrated_variables = self.model_attributes.check_integrated_df_vars(df_afolu_trajectories, self.dict_integration_variables_by_subsector, "all")
 
         ##  CATEGORY INITIALIZATION
         pycat_agrc = self.model_attributes.get_subsector_attribute(self.subsec_name_agrc, "pycategory_primary")
@@ -837,10 +1057,13 @@ class AFOLU:
         vec_agrc_scale_demands_for_veg = np.array(self.model_attributes.get_ordered_category_attribute(self.subsec_name_agrc, "apply_vegetarian_exchange_scalar"))
         arr_agrc_demscale = np.outer(vec_agrc_demscale, vec_agrc_scale_demands_for_veg)
         arr_agrc_demscale = arr_agrc_demscale + np.outer(np.ones(len(vec_agrc_demscale)), 1 - vec_agrc_scale_demands_for_veg)
+        # get production wasted and adjust the demand scalar again
+        vec_agrc_frac_production_lost = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_frac_production_lost, False, "array_base", var_bounds = (0, 1))
+        vec_agrc_frac_production_lost_scalar = np.nan_to_num((1 - vec_agrc_frac_production_lost[0])/(1 - vec_agrc_frac_production_lost), posinf = 0.0)
+        arr_agrc_demscale = (arr_agrc_demscale.transpose()*vec_agrc_frac_production_lost_scalar).transpose()
         arr_agrc_nonfeeddem_yield = self.project_per_capita_demand(vec_agrc_yield_init_nonlvstfeed, vec_pop, vec_rates_gdp_per_capita, arr_agrc_elas_crop_demand, arr_agrc_demscale, float)
         # array gives the total yield of crop type i allocated to livestock type j at time 0
         arr_lndu_yield_i_reqd_lvst_j_init = np.outer(vec_agrc_yield_init_lvstfeed, vec_lvst_feed_allocation_weights)
-
 
         ################################################
         #    CALCULATE LAND USE + AGRC/LVST DRIVERS    #
@@ -871,15 +1094,29 @@ class AFOLU:
         arrs_lndu_conv_to = np.array([np.sum(x - np.diag(np.diagonal(x)), axis = 0) for x in arrs_lndu_land_conv])
         arrs_lndu_conv_from = np.array([np.sum(x - np.diag(np.diagonal(x)), axis = 1) for x in arrs_lndu_land_conv])
 
+        # get total production wasted
+        vec_agrc_food_produced_wasted_before_consumption = np.sum(arr_agrc_nonfeeddem_yield.transpose()*vec_agrc_frac_production_lost, axis = 0)
+        vec_agrc_food_produced_wasted_before_consumption *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_agrc_yf,
+            self.modvar_agrc_total_food_lost_in_ag,
+            "mass"
+        )
+        # convert yield out units
+        arr_agrc_yield_out = arr_agrc_yield*self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_agrc_yf,
+            self.modvar_agrc_yield,
+            "mass"
+        )
         # add to output data frame
         df_out += [
             df_agrc_frac_cropland,
             self.model_attributes.array_to_df(arr_agrc_net_import_increase, self.modvar_agrc_net_imports),
-            self.model_attributes.array_to_df(arr_lndu_emissions_conv, self.modvar_lndu_emissions_conv, True),
-            self.model_attributes.array_to_df(arr_agrc_yield, self.modvar_agrc_yield),
+            self.model_attributes.array_to_df(vec_agrc_food_produced_wasted_before_consumption, self.modvar_agrc_total_food_lost_in_ag),
+            self.model_attributes.array_to_df(arr_agrc_yield_out, self.modvar_agrc_yield),
             self.model_attributes.array_to_df(arr_land_use*scalar_lndu_input_area_to_output_area, self.modvar_lndu_area_by_cat),
-            self.model_attributes.array_to_df(arrs_lndu_conv_to*scalar_lndu_input_area_to_output_area, self.modvar_lndu_area_converted_to_type),
             self.model_attributes.array_to_df(arrs_lndu_conv_from*scalar_lndu_input_area_to_output_area, self.modvar_lndu_area_converted_from_type),
+            self.model_attributes.array_to_df(arrs_lndu_conv_to*scalar_lndu_input_area_to_output_area, self.modvar_lndu_area_converted_to_type),
+            self.model_attributes.array_to_df(arr_lndu_emissions_conv, self.modvar_lndu_emissions_conv, True),
             self.model_attributes.array_to_df(arr_lvst_net_import_increase, self.modvar_lvst_net_imports)
         ]
 
@@ -1050,111 +1287,168 @@ class AFOLU:
         ##  HARVESTED WOOD PRODUCTS
 
 ### NOTE: ADD SOME INTEGRATION CHECKS/OPTIONAL VARIABLE PIECES HERE
+        """
+        def project_harvested_wood_products(self,
+            df_afolu_trajectories: pd.DataFrame,
+            vec_hh: np.ndarray,
+            vec_gdp: np.ndarray,
+            vec_rates_gdp_per_capita: np.ndarray,
+            dict_dims: dict,
+            n_projection_time_periods: int,
+            projection_time_periods: np.ndarray,
+            dict_check_integrated_variables: dict
+        ):
 
-        # get projections of industrial wood and paper product demand
-        attr_ippu = self.model_attributes.get_attribute_table(self.subsec_name_ippu)
-        ind_paper = attr_ippu.get_key_value_index(self.cat_ippu_paper)
-        ind_wood = attr_ippu.get_key_value_index(self.cat_ippu_wood)
-        # production data
-        arr_production, dfs_ippu_harvested_wood = self.model_ippu.get_production_with_recycling_adjustment(df_afolu_trajectories, vec_rates_gdp)
-        list_ippu_vars = self.model_attributes.build_varlist(self.subsec_name_ippu, self.model_ippu.modvar_ippu_demand_for_harvested_wood)
-        arr_frst_harvested_wood_industrial = 0.0
-        vec_frst_harvested_wood_industrial_paper = 0.0
-        vec_frst_harvested_wood_industrial_wood = 0.0
-        # find the data frame with output
-        keep_going = True
-        i = 0
-        while (i < len(dfs_ippu_harvested_wood)) and keep_going:
-            df = dfs_ippu_harvested_wood[i]
-            if set(list_ippu_vars).issubset(df.columns):
-                arr_frst_harvested_wood_industrial = self.model_attributes.get_standard_variables(df, self.model_ippu.modvar_ippu_demand_for_harvested_wood, False, "array_base", expand_to_all_cats = True)
-                vec_frst_harvested_wood_industrial_paper = arr_frst_harvested_wood_industrial[:, ind_paper]
-                vec_frst_harvested_wood_industrial_wood = arr_frst_harvested_wood_industrial[:, ind_wood]
-                keep_going = False
+            # IPPU components
+            if dict_check_integrated_variables[self.subsec_name_ippu]:
+                # get projections of industrial wood and paper product demand
+                attr_ippu = self.model_attributes.get_attribute_table(self.subsec_name_ippu)
+                ind_paper = attr_ippu.get_key_value_index(self.cat_ippu_paper)
+                ind_wood = attr_ippu.get_key_value_index(self.cat_ippu_wood)
+                # production data
+                arr_production, dfs_ippu_harvested_wood = self.model_ippu.get_production_with_recycling_adjustment(df_afolu_trajectories, vec_rates_gdp)
+                list_ippu_vars = self.model_attributes.build_varlist(self.subsec_name_ippu, self.model_ippu.modvar_ippu_demand_for_harvested_wood)
+                arr_frst_harvested_wood_industrial = 0.0
+                vec_frst_harvested_wood_industrial_paper = 0.0
+                vec_frst_harvested_wood_industrial_wood = 0.0
+                # find the data frame with output
+                keep_going = True
+                i = 0
+                while (i < len(dfs_ippu_harvested_wood)) and keep_going:
+                    df = dfs_ippu_harvested_wood[i]
+                    if set(list_ippu_vars).issubset(df.columns):
+                        arr_frst_harvested_wood_industrial = self.model_attributes.get_standard_variables(df, self.model_ippu.modvar_ippu_demand_for_harvested_wood, False, "array_base", expand_to_all_cats = True)
+                        vec_frst_harvested_wood_industrial_paper = arr_frst_harvested_wood_industrial[:, ind_paper]
+                        vec_frst_harvested_wood_industrial_wood = arr_frst_harvested_wood_industrial[:, ind_wood]
+                        keep_going = False
 
-            i += 1
-        # remove some unneeded vars
-        array_ippu_production = 0
-        dfs_ippu_harvested_wood = 0
+                    i += 1
+                # remove some unneeded vars
+                array_ippu_production = 0
+                dfs_ippu_harvested_wood = 0
+            else:
+                arr_frst_harvested_wood_industrial = 0.0
+                vec_frst_harvested_wood_industrial_paper = 0.0
+                vec_frst_harvested_wood_industrial_wood = 0.0
 
-        # get changes in biomass energy demand for stationary emissions (largely driven by wood)
-        df_scoe = self.model_energy.project_scoe(df_afolu_trajectories, vec_hh, vec_gdp, vec_rates_gdp_per_capita, dict_dims, n_projection_time_periods, projection_time_periods)
-        vec_scoe_biomass_fuel_demand = self.model_attributes.get_standard_variables(df_scoe, self.model_energy.modvar_scoe_energy_demand_heat_biomass, False, "array_base")
-        vec_scoe_biomass_fuel_demand_change = np.nan_to_num(vec_scoe_biomass_fuel_demand[1:]/vec_scoe_biomass_fuel_demand[0:-1], 1.0, posinf = 1.0)
-        vec_scoe_biomass_fuel_demand_growth_rate = np.cumprod(np.insert(vec_scoe_biomass_fuel_demand_change, 0, 1.0))
-        df_scoe = 0
-        # get initial domestic demand
-        vec_frst_harvested_wood_domestic = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_init_per_hh_wood_demand, False, "array_base")
-        vec_frst_harvested_wood_domestic *= vec_hh[0]
-        vec_frst_harvested_wood_domestic *= self.model_attributes.get_variable_unit_conversion_factor(
-            self.modvar_frst_init_per_hh_wood_demand,
-            self.model_ippu.modvar_ippu_demand_for_harvested_wood,
-            "mass"
-        )
-        vec_frst_harvested_wood_domestic = vec_frst_harvested_wood_domestic[0]*vec_scoe_biomass_fuel_demand_growth_rate
 
-        # get half-life factors for FOD model
-        vec_frst_k_hwp_paper = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_hwp_half_life_paper, False, "array_base")
-        vec_frst_k_hwp_paper = np.log(2)/vec_frst_k_hwp_paper
-        vec_frst_k_hwp_wood = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_hwp_half_life_wood, False, "array_base")
-        vec_frst_k_hwp_wood = np.log(2)/vec_frst_k_hwp_wood
-        # totals
-        vec_frst_ef_c = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_ef_c_per_hwp, False, "array_base", var_bounds = (0, np.inf))
-        vec_frst_c_paper = vec_frst_harvested_wood_industrial_paper*vec_frst_ef_c
-        vec_frst_c_wood = (vec_frst_harvested_wood_industrial_wood + vec_frst_harvested_wood_domestic)*vec_frst_ef_c
-        self.vec_frst_c_wood = vec_frst_c_wood
-        # set a lookback based on some number of years (max half-life to estimate some amount of carbon stock)
-        n_years_lookback = 10#int(np.round(np.log(2)*max(max(1/vec_frst_k_hwp_paper), max(1/vec_frst_k_hwp_wood))))
-        if n_years_lookback > 0:
-            n_years_mean = min(5, len(vec_frst_c_paper))
-            # back-project previous paper products
-            r_paper = np.mean(vec_frst_c_paper[1:(1 + n_years_mean)]/vec_frst_c_paper[0:n_years_mean])
-            vec_frst_c_paper = np.concatenate([
-                np.array([vec_frst_c_paper[0]*(r_paper**(x - n_years_lookback)) for x in range(n_years_lookback)]),
-                vec_frst_c_paper
-            ])
-            # back-project previous wood products
-            r_wood = np.mean(vec_frst_c_wood[1:(1 + n_years_mean)]/vec_frst_c_wood[0:n_years_mean])
-            vec_frst_c_wood = np.concatenate([
-                np.array([vec_frst_c_wood[0]*(r_wood**(x - n_years_lookback)) for x in range(n_years_lookback)]),
-                vec_frst_c_wood
-            ])
-            vec_frst_k_hwp_paper = np.concatenate([np.array([vec_frst_k_hwp_paper[0] for x in range(n_years_lookback)]), vec_frst_k_hwp_paper])
-            vec_frst_k_hwp_wood = np.concatenate([np.array([vec_frst_k_hwp_wood[0] for x in range(n_years_lookback)]), vec_frst_k_hwp_wood])
+            # get initial domestic demand for wood products
+            vec_frst_harvested_wood_domestic = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_init_per_hh_wood_demand, False, "array_base")
+            vec_frst_harvested_wood_domestic *= self.model_attributes.get_variable_unit_conversion_factor(
+                self.modvar_frst_init_per_hh_wood_demand,
+                self.model_ippu.modvar_ippu_demand_for_harvested_wood,
+                "mass"
+            )
 
-        # initialize and run using assumptions of steady-state (see Equation 12.4)
-        vec_frst_c_from_hwp_paper = np.zeros(len(vec_frst_k_hwp_paper))
-        vec_frst_c_from_hwp_paper[0] = np.mean(vec_frst_c_paper[0:min(5, len(vec_frst_c_paper))])/vec_frst_k_hwp_paper[0]
-        vec_frst_c_from_hwp_wood = np.zeros(len(vec_frst_k_hwp_wood))
-        vec_frst_c_from_hwp_wood[0] = np.mean(vec_frst_c_wood[0:min(5, len(vec_frst_c_wood))])/vec_frst_k_hwp_wood[0]
+            # If energy components are available, scale hh demand from SCOE
+            if dict_check_integrated_variables[self.subsec_name_scoe]:
 
-        # execute the FOD model
-        for i in range(len(vec_frst_c_from_hwp_paper) - 1):
-            # paper
-            current_stock_paper = vec_frst_c_from_hwp_paper[0] if (i == 0) else vec_frst_c_from_hwp_paper[i]
-            exp_k_paper = np.exp(-vec_frst_k_hwp_paper[i])
-            vec_frst_c_from_hwp_paper[i + 1] = current_stock_paper*exp_k_paper + ((1 - exp_k_paper)/vec_frst_k_hwp_paper[i])*vec_frst_c_paper[i]
-            # wood
-            current_stock_wood = vec_frst_c_from_hwp_wood[0] if (i == 0) else vec_frst_c_from_hwp_wood[i]
-            exp_k_wood = np.exp(-vec_frst_k_hwp_wood[i])
-            vec_frst_c_from_hwp_wood[i + 1] = current_stock_wood*exp_k_wood + ((1 - exp_k_wood)/vec_frst_k_hwp_wood[i])*vec_frst_c_wood[i]
+                # get changes in biomass energy demand for stationary emissions (largely driven by wood)
+                df_scoe = self.model_energy.project_scoe(
+                    df_afolu_trajectories,
+                    vec_hh,
+                    vec_gdp,
+                    vec_rates_gdp_per_capita,
+                    dict_dims,
+                    n_projection_time_periods,
+                    projection_time_periods
+                )
+                vec_scoe_biomass_fuel_demand = self.model_attributes.get_standard_variables(df_scoe, self.model_energy.modvar_scoe_energy_demand_heat_biomass, False, "array_base")
+                vec_scoe_biomass_fuel_demand_change = np.nan_to_num(vec_scoe_biomass_fuel_demand[1:]/vec_scoe_biomass_fuel_demand[0:-1], 1.0, posinf = 1.0)
+                vec_scoe_biomass_fuel_demand_growth_rate = np.cumprod(np.insert(vec_scoe_biomass_fuel_demand_change, 0, 1.0))
+                df_scoe = 0
 
-        # reduce from look back
-        if n_years_lookback > 0:
-            vec_frst_c_from_hwp_paper = vec_frst_c_from_hwp_paper[(n_years_lookback - 1):]
-            vec_frst_c_from_hwp_wood = vec_frst_c_from_hwp_wood[(n_years_lookback - 1):]
-        vec_frst_c_from_hwp_paper_delta = vec_frst_c_from_hwp_paper[1:] - vec_frst_c_from_hwp_paper[0:-1]
-        vec_frst_c_from_hwp_wood_delta = vec_frst_c_from_hwp_wood[1:] - vec_frst_c_from_hwp_wood[0:-1]
+                vec_frst_harvested_wood_domestic *= vec_hh[0]
+                vec_frst_harvested_wood_domestic = vec_frst_harvested_wood_domestic[0]*vec_scoe_biomass_fuel_demand_growth_rate
+            else:
+                # assume growth linear with HHs
+                vec_frst_harvested_wood_domestic *= vec_hh
 
-        # get emissions from co2
-        vec_frst_emissions_co2_hwp = vec_frst_c_from_hwp_paper_delta + vec_frst_c_from_hwp_wood_delta
-        vec_frst_emissions_co2_hwp *= self.factor_c_to_co2
-        vec_frst_emissions_co2_hwp *= -1*self.model_attributes.get_scalar(self.model_ippu.modvar_ippu_demand_for_harvested_wood, "mass")
+            # get half-life factors for FOD model
+            vec_frst_k_hwp_paper = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_hwp_half_life_paper, False, "array_base")
+            vec_frst_k_hwp_paper = np.log(2)/vec_frst_k_hwp_paper
+            vec_frst_k_hwp_wood = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_hwp_half_life_wood, False, "array_base")
+            vec_frst_k_hwp_wood = np.log(2)/vec_frst_k_hwp_wood
+            # totals
+            vec_frst_ef_c = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_ef_c_per_hwp, False, "array_base", var_bounds = (0, np.inf))
+            vec_frst_c_paper = vec_frst_harvested_wood_industrial_paper*vec_frst_ef_c
+            vec_frst_c_wood = (vec_frst_harvested_wood_industrial_wood + vec_frst_harvested_wood_domestic)*vec_frst_ef_c
+            self.vec_frst_c_wood = vec_frst_c_wood
 
+            # set a lookback based on some number of years (max half-life to estimate some amount of carbon stock)
+            if self.model_attributes.configuration.get("historical_harvested_wood_products_method") == "back_project":
+                n_years_lookback = int(self.model_attributes.configuration.get("historical_back_proj_n_periods"))#int(np.round(np.log(2)*max(max(1/vec_frst_k_hwp_paper), max(1/vec_frst_k_hwp_wood))))
+                if n_years_lookback > 0:
+                    n_years_mean = min(5, len(vec_frst_c_paper))
+                    # back-project previous paper products
+                    r_paper = np.mean(vec_frst_c_paper[1:(1 + n_years_mean)]/vec_frst_c_paper[0:n_years_mean])
+                    vec_frst_c_paper = np.concatenate([
+                        np.array([vec_frst_c_paper[0]*(r_paper**(x - n_years_lookback)) for x in range(n_years_lookback)]),
+                        vec_frst_c_paper
+                    ])
+                    # back-project previous wood products
+                    r_wood = np.mean(vec_frst_c_wood[1:(1 + n_years_mean)]/vec_frst_c_wood[0:n_years_mean])
+                    vec_frst_c_wood = np.concatenate([
+                        np.array([vec_frst_c_wood[0]*(r_wood**(x - n_years_lookback)) for x in range(n_years_lookback)]),
+                        vec_frst_c_wood
+                    ])
+                    vec_frst_k_hwp_paper = np.concatenate([np.array([vec_frst_k_hwp_paper[0] for x in range(n_years_lookback)]), vec_frst_k_hwp_paper])
+                    vec_frst_k_hwp_wood = np.concatenate([np.array([vec_frst_k_hwp_wood[0] for x in range(n_years_lookback)]), vec_frst_k_hwp_wood])
+            else:
+                # set up n_years_lookback to be based on historical
+                n_years_lookback = 0
+                raise ValueError(f"Error in project_harvested_wood_products: historical_harvested_wood_products_method 'historical' not supported at the moment.")
+
+            # initialize and run using assumptions of steady-state (see Equation 12.4)
+            vec_frst_c_from_hwp_paper = np.zeros(len(vec_frst_k_hwp_paper))
+            vec_frst_c_from_hwp_paper[0] = np.mean(vec_frst_c_paper[0:min(5, len(vec_frst_c_paper))])/vec_frst_k_hwp_paper[0]
+            vec_frst_c_from_hwp_wood = np.zeros(len(vec_frst_k_hwp_wood))
+            vec_frst_c_from_hwp_wood[0] = np.mean(vec_frst_c_wood[0:min(5, len(vec_frst_c_wood))])/vec_frst_k_hwp_wood[0]
+
+            # execute the FOD model
+            for i in range(len(vec_frst_c_from_hwp_paper) - 1):
+                # paper
+                current_stock_paper = vec_frst_c_from_hwp_paper[0] if (i == 0) else vec_frst_c_from_hwp_paper[i]
+                exp_k_paper = np.exp(-vec_frst_k_hwp_paper[i])
+                vec_frst_c_from_hwp_paper[i + 1] = current_stock_paper*exp_k_paper + ((1 - exp_k_paper)/vec_frst_k_hwp_paper[i])*vec_frst_c_paper[i]
+                # wood
+                current_stock_wood = vec_frst_c_from_hwp_wood[0] if (i == 0) else vec_frst_c_from_hwp_wood[i]
+                exp_k_wood = np.exp(-vec_frst_k_hwp_wood[i])
+                vec_frst_c_from_hwp_wood[i + 1] = current_stock_wood*exp_k_wood + ((1 - exp_k_wood)/vec_frst_k_hwp_wood[i])*vec_frst_c_wood[i]
+
+            # reduce from look back
+            if n_years_lookback > 0:
+                vec_frst_c_from_hwp_paper = vec_frst_c_from_hwp_paper[(n_years_lookback - 1):]
+                vec_frst_c_from_hwp_wood = vec_frst_c_from_hwp_wood[(n_years_lookback - 1):]
+            vec_frst_c_from_hwp_paper_delta = vec_frst_c_from_hwp_paper[1:] - vec_frst_c_from_hwp_paper[0:-1]
+            vec_frst_c_from_hwp_wood_delta = vec_frst_c_from_hwp_wood[1:] - vec_frst_c_from_hwp_wood[0:-1]
+
+            v_print = self.factor_c_to_co2*vec_frst_c_wood*self.model_attributes.get_scalar(self.model_ippu.modvar_ippu_demand_for_harvested_wood, "mass")
+            v_mult = (1 - np.exp(-vec_frst_k_hwp_wood))/vec_frst_k_hwp_wood
+
+            # get emissions from co2
+            vec_frst_emissions_co2_hwp = vec_frst_c_from_hwp_paper_delta + vec_frst_c_from_hwp_wood_delta
+            vec_frst_emissions_co2_hwp *= self.factor_c_to_co2
+            vec_frst_emissions_co2_hwp *= -1*self.model_attributes.get_scalar(self.model_ippu.modvar_ippu_demand_for_harvested_wood, "mass")
+
+            list_dfs_out = [
+                self.model_attributes.array_to_df(vec_frst_emissions_co2_hwp, self.modvar_frst_emissions_co2_hwp)
+            ]
+
+            return list_dfs_out
+        """
         # add to output
-        df_out += [
-            self.model_attributes.array_to_df(vec_frst_emissions_co2_hwp, self.modvar_frst_emissions_co2_hwp)
-        ]
+        df_out += self.project_harvested_wood_products(
+            df_afolu_trajectories,
+            vec_hh,
+            vec_gdp,
+            vec_rates_gdp,
+            vec_rates_gdp_per_capita,
+            dict_dims,
+            n_projection_time_periods,
+            projection_time_periods,
+            self.dict_integration_variables_by_subsector
+        )
 
 
 
@@ -1206,7 +1500,7 @@ class AFOLU:
         ###################
 
         # get area of grassland/pastures
-        field_lvst_graze_array = self.model_attributes.build_varlist(self.subsec_name_lndu, variable_subsec = self.modvar_lndu_area_by_cat, restrict_to_category_values = [self.cat_lndu_grazing])[0]
+        field_lvst_graze_array = self.model_attributes.build_varlist(self.subsec_name_lndu, variable_subsec = self.modvar_lndu_area_by_cat, restrict_to_category_values = [self.cat_lndu_pstr])[0]
         vec_lvst_graze_area = np.array(df_land_use[field_lvst_graze_array])
         # estimate the total number of livestock that are raised
         arr_lvst_pop = arr_lvst_dem_pop - arr_lvst_net_import_increase
