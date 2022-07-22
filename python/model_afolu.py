@@ -120,8 +120,6 @@ class AFOLU:
         self.modvar_lndu_ef_co2_conv = ":math:\\text{CO}_2 Land Use Conversion Emission Factor"
         self.modvar_lndu_emissions_conv = ":math:\\text{CO}_2 Emissions from Land Use Conversion"
         self.modvar_lndu_emissions_ch4_from_wetlands = ":math:\\text{CH}_4 Emissions from Wetlands"
-        self.modvar_lndu_emissions_n2o_from_pastures = ":math:\\text{N}_2\\text{O} Emissions from Pastures"
-        self.modvar_lndu_emissions_co2_from_pastures = ":math:\\text{CO}_2 Emissions from Pastures"
         self.modvar_lndu_factor_soil_carbon = "Soil Carbon Land Use Factor"
         self.modvar_lndu_frac_dry = "Land Use Fraction Dry"
         self.modvar_lndu_frac_fertilized = "Land Use Fraction Fertilized"
@@ -131,7 +129,6 @@ class AFOLU:
         self.modvar_lndu_frac_wet = "Land Use Fraction Wet"
         self.modvar_lndu_initial_frac = "Initial Land Use Area Proportion"
         self.modvar_lndu_ef_ch4_boc = "Land Use BOC :math:\\text{CH}_4 Emission Factor"
-        self.modvar_lndu_ef_co2_soilcarb = "Land Use Soil Carbon :math:\\text{CO}_2 Emission Factor"
         self.modvar_lndu_prob_transition = "Unadjusted Land Use Transition Probability"
         self.modvar_lndu_reallocation_factor = "Land Use Yield Reallocation Factor"
         self.modvar_lndu_vdes = "Vegetarian Diet Exchange Scalar"
@@ -1123,14 +1120,6 @@ class AFOLU:
 
         ##  EXISTENCE EMISSIONS FOR OTHER LANDS, INCLUDING AG ACTIVITY ON PASTURES
 
-        # get CO2 emissions from soil carbon in pastures
-        arr_lndu_ef_co2_soilcarb = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_ef_co2_soilcarb, True, "array_units_corrected")
-        arr_lndu_ef_co2_soilcarb *= self.model_attributes.get_variable_unit_conversion_factor(
-            self.model_socioeconomic.modvar_gnrl_area,
-            self.modvar_lndu_ef_co2_soilcarb,
-            "area"
-        )
-        arr_lndu_area_co2_soilcarb = np.array(df_land_use[self.model_attributes.build_target_varlist_from_source_varcats(self.modvar_lndu_ef_co2_soilcarb, self.modvar_lndu_area_by_cat)])
         # get CH4 emissions from wetlands
         arr_lndu_ef_ch4_boc = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_ef_ch4_boc, True, "array_units_corrected")
         arr_lndu_ef_ch4_boc *= self.model_attributes.get_variable_unit_conversion_factor(
@@ -1141,7 +1130,6 @@ class AFOLU:
         arr_lndu_area_ch4_boc = np.array(df_land_use[self.model_attributes.build_target_varlist_from_source_varcats(self.modvar_lndu_ef_ch4_boc, self.modvar_lndu_area_by_cat)])
 
         df_out += [
-            self.model_attributes.array_to_df(arr_lndu_area_co2_soilcarb*arr_lndu_ef_co2_soilcarb, self.modvar_lndu_emissions_co2_from_pastures),
             self.model_attributes.array_to_df(arr_lndu_area_ch4_boc*arr_lndu_ef_ch4_boc, self.modvar_lndu_emissions_ch4_from_wetlands)
         ]
 
