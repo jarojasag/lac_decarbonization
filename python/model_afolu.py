@@ -45,7 +45,6 @@ class AFOLU:
         self.modvar_combustion_factor = "AGRC Combustion Factor"
         self.modvar_agrc_ef_ch4 = ":math:\\text{CH}_4 Crop Anaerobic Decomposition Emission Factor"
         self.modvar_agrc_ef_co2_biomass = ":math:\\text{CO}_2 Crop Biomass Emission Factor"
-        self.modvar_agrc_ef_co2_soil_carbon = ":math:\\text{CO}_2 Crop Soil Carbon Emission Factor"
         self.modvar_agrc_ef_n2o_burning = ":math:\\text{N}_2\\text{O} Crop Biomass Burning Emission Factor"
         self.modvar_agrc_ef_n2o_fertilizer = ":math:\\text{N}_2\\text{O} Crop Fertilizer and Lime Emission Factor"
         self.modvar_agrc_elas_crop_demand_income = "Crop Demand Income Elasticity"
@@ -224,6 +223,7 @@ class AFOLU:
         self.modvar_soil_ef5_n_leaching = "EF5 N Leaching and Runoff Emission Factor"
         self.modvar_soil_ef_c_liming_dolomite = "C Liming Emission Factor Dolomite"
         self.modvar_soil_ef_c_liming_limestone = "C Liming Emission Factor Limestone"
+        self.modvar_soil_ef_c_organic_soils = "C Annual Cultivated Organic Soils Emission Factor"
         self.modvar_soil_ef_c_urea = "C Urea Emission Factor"
         self.modvar_soil_emissions_co2_lime_urea = ":math:\\text{CO}_2 Emissions from Lime and Urea"
         self.modvar_soil_emissions_n2o_fertilizer = ":math:\\text{N}_2\\text{O} Emissions from Fertilizer Use"
@@ -234,7 +234,6 @@ class AFOLU:
         self.modvar_soil_frac_n_lost_volatilisation_on = "Volatilisation Fraction from Organic Amendments and Fertilizers"
         self.modvar_soil_frac_n_lost_volatilisation_sn_non_urea = "Volatilisation Fraction from Non-Urea Synthetic Fertilizers"
         self.modvar_soil_frac_n_lost_volatilisation_sn_urea = "Volatilisation Fraction from Urea Synthetic Fertilizers"
-        self.modvar_soil_frac_organic_soils_drained = "Fraction of Organic Soils Drained"
         self.modvar_soil_frac_soc_lost = "Fraction of SOC Lost in Cropland"
         self.modvar_soil_frac_synethic_fertilizer_urea = "Fraction Synthetic Fertilizer Use Urea"
         self.modvar_soil_fertuse_synthetic = "Initial Synthetic Fertilizer Use"
@@ -242,6 +241,7 @@ class AFOLU:
         self.modvar_soil_ratio_c_to_n_soil_organic_matter = "C to N Ratio of Soil Organic Matter"
         self.modvar_soil_qtyinit_liming_dolomite = "Initial Liming Dolomite Applied to Soils"
         self.modvar_soil_qtyinit_liming_limestone = "Initial Liming Limestone Applied to Soils"
+
 
 
         ##  INTEGRATION VARIABLES
@@ -1286,157 +1286,6 @@ class AFOLU:
 
         ##  HARVESTED WOOD PRODUCTS
 
-### NOTE: ADD SOME INTEGRATION CHECKS/OPTIONAL VARIABLE PIECES HERE
-        """
-        def project_harvested_wood_products(self,
-            df_afolu_trajectories: pd.DataFrame,
-            vec_hh: np.ndarray,
-            vec_gdp: np.ndarray,
-            vec_rates_gdp_per_capita: np.ndarray,
-            dict_dims: dict,
-            n_projection_time_periods: int,
-            projection_time_periods: np.ndarray,
-            dict_check_integrated_variables: dict
-        ):
-
-            # IPPU components
-            if dict_check_integrated_variables[self.subsec_name_ippu]:
-                # get projections of industrial wood and paper product demand
-                attr_ippu = self.model_attributes.get_attribute_table(self.subsec_name_ippu)
-                ind_paper = attr_ippu.get_key_value_index(self.cat_ippu_paper)
-                ind_wood = attr_ippu.get_key_value_index(self.cat_ippu_wood)
-                # production data
-                arr_production, dfs_ippu_harvested_wood = self.model_ippu.get_production_with_recycling_adjustment(df_afolu_trajectories, vec_rates_gdp)
-                list_ippu_vars = self.model_attributes.build_varlist(self.subsec_name_ippu, self.model_ippu.modvar_ippu_demand_for_harvested_wood)
-                arr_frst_harvested_wood_industrial = 0.0
-                vec_frst_harvested_wood_industrial_paper = 0.0
-                vec_frst_harvested_wood_industrial_wood = 0.0
-                # find the data frame with output
-                keep_going = True
-                i = 0
-                while (i < len(dfs_ippu_harvested_wood)) and keep_going:
-                    df = dfs_ippu_harvested_wood[i]
-                    if set(list_ippu_vars).issubset(df.columns):
-                        arr_frst_harvested_wood_industrial = self.model_attributes.get_standard_variables(df, self.model_ippu.modvar_ippu_demand_for_harvested_wood, False, "array_base", expand_to_all_cats = True)
-                        vec_frst_harvested_wood_industrial_paper = arr_frst_harvested_wood_industrial[:, ind_paper]
-                        vec_frst_harvested_wood_industrial_wood = arr_frst_harvested_wood_industrial[:, ind_wood]
-                        keep_going = False
-
-                    i += 1
-                # remove some unneeded vars
-                array_ippu_production = 0
-                dfs_ippu_harvested_wood = 0
-            else:
-                arr_frst_harvested_wood_industrial = 0.0
-                vec_frst_harvested_wood_industrial_paper = 0.0
-                vec_frst_harvested_wood_industrial_wood = 0.0
-
-
-            # get initial domestic demand for wood products
-            vec_frst_harvested_wood_domestic = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_init_per_hh_wood_demand, False, "array_base")
-            vec_frst_harvested_wood_domestic *= self.model_attributes.get_variable_unit_conversion_factor(
-                self.modvar_frst_init_per_hh_wood_demand,
-                self.model_ippu.modvar_ippu_demand_for_harvested_wood,
-                "mass"
-            )
-
-            # If energy components are available, scale hh demand from SCOE
-            if dict_check_integrated_variables[self.subsec_name_scoe]:
-
-                # get changes in biomass energy demand for stationary emissions (largely driven by wood)
-                df_scoe = self.model_energy.project_scoe(
-                    df_afolu_trajectories,
-                    vec_hh,
-                    vec_gdp,
-                    vec_rates_gdp_per_capita,
-                    dict_dims,
-                    n_projection_time_periods,
-                    projection_time_periods
-                )
-                vec_scoe_biomass_fuel_demand = self.model_attributes.get_standard_variables(df_scoe, self.model_energy.modvar_scoe_energy_demand_heat_biomass, False, "array_base")
-                vec_scoe_biomass_fuel_demand_change = np.nan_to_num(vec_scoe_biomass_fuel_demand[1:]/vec_scoe_biomass_fuel_demand[0:-1], 1.0, posinf = 1.0)
-                vec_scoe_biomass_fuel_demand_growth_rate = np.cumprod(np.insert(vec_scoe_biomass_fuel_demand_change, 0, 1.0))
-                df_scoe = 0
-
-                vec_frst_harvested_wood_domestic *= vec_hh[0]
-                vec_frst_harvested_wood_domestic = vec_frst_harvested_wood_domestic[0]*vec_scoe_biomass_fuel_demand_growth_rate
-            else:
-                # assume growth linear with HHs
-                vec_frst_harvested_wood_domestic *= vec_hh
-
-            # get half-life factors for FOD model
-            vec_frst_k_hwp_paper = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_hwp_half_life_paper, False, "array_base")
-            vec_frst_k_hwp_paper = np.log(2)/vec_frst_k_hwp_paper
-            vec_frst_k_hwp_wood = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_hwp_half_life_wood, False, "array_base")
-            vec_frst_k_hwp_wood = np.log(2)/vec_frst_k_hwp_wood
-            # totals
-            vec_frst_ef_c = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_ef_c_per_hwp, False, "array_base", var_bounds = (0, np.inf))
-            vec_frst_c_paper = vec_frst_harvested_wood_industrial_paper*vec_frst_ef_c
-            vec_frst_c_wood = (vec_frst_harvested_wood_industrial_wood + vec_frst_harvested_wood_domestic)*vec_frst_ef_c
-            self.vec_frst_c_wood = vec_frst_c_wood
-
-            # set a lookback based on some number of years (max half-life to estimate some amount of carbon stock)
-            if self.model_attributes.configuration.get("historical_harvested_wood_products_method") == "back_project":
-                n_years_lookback = int(self.model_attributes.configuration.get("historical_back_proj_n_periods"))#int(np.round(np.log(2)*max(max(1/vec_frst_k_hwp_paper), max(1/vec_frst_k_hwp_wood))))
-                if n_years_lookback > 0:
-                    n_years_mean = min(5, len(vec_frst_c_paper))
-                    # back-project previous paper products
-                    r_paper = np.mean(vec_frst_c_paper[1:(1 + n_years_mean)]/vec_frst_c_paper[0:n_years_mean])
-                    vec_frst_c_paper = np.concatenate([
-                        np.array([vec_frst_c_paper[0]*(r_paper**(x - n_years_lookback)) for x in range(n_years_lookback)]),
-                        vec_frst_c_paper
-                    ])
-                    # back-project previous wood products
-                    r_wood = np.mean(vec_frst_c_wood[1:(1 + n_years_mean)]/vec_frst_c_wood[0:n_years_mean])
-                    vec_frst_c_wood = np.concatenate([
-                        np.array([vec_frst_c_wood[0]*(r_wood**(x - n_years_lookback)) for x in range(n_years_lookback)]),
-                        vec_frst_c_wood
-                    ])
-                    vec_frst_k_hwp_paper = np.concatenate([np.array([vec_frst_k_hwp_paper[0] for x in range(n_years_lookback)]), vec_frst_k_hwp_paper])
-                    vec_frst_k_hwp_wood = np.concatenate([np.array([vec_frst_k_hwp_wood[0] for x in range(n_years_lookback)]), vec_frst_k_hwp_wood])
-            else:
-                # set up n_years_lookback to be based on historical
-                n_years_lookback = 0
-                raise ValueError(f"Error in project_harvested_wood_products: historical_harvested_wood_products_method 'historical' not supported at the moment.")
-
-            # initialize and run using assumptions of steady-state (see Equation 12.4)
-            vec_frst_c_from_hwp_paper = np.zeros(len(vec_frst_k_hwp_paper))
-            vec_frst_c_from_hwp_paper[0] = np.mean(vec_frst_c_paper[0:min(5, len(vec_frst_c_paper))])/vec_frst_k_hwp_paper[0]
-            vec_frst_c_from_hwp_wood = np.zeros(len(vec_frst_k_hwp_wood))
-            vec_frst_c_from_hwp_wood[0] = np.mean(vec_frst_c_wood[0:min(5, len(vec_frst_c_wood))])/vec_frst_k_hwp_wood[0]
-
-            # execute the FOD model
-            for i in range(len(vec_frst_c_from_hwp_paper) - 1):
-                # paper
-                current_stock_paper = vec_frst_c_from_hwp_paper[0] if (i == 0) else vec_frst_c_from_hwp_paper[i]
-                exp_k_paper = np.exp(-vec_frst_k_hwp_paper[i])
-                vec_frst_c_from_hwp_paper[i + 1] = current_stock_paper*exp_k_paper + ((1 - exp_k_paper)/vec_frst_k_hwp_paper[i])*vec_frst_c_paper[i]
-                # wood
-                current_stock_wood = vec_frst_c_from_hwp_wood[0] if (i == 0) else vec_frst_c_from_hwp_wood[i]
-                exp_k_wood = np.exp(-vec_frst_k_hwp_wood[i])
-                vec_frst_c_from_hwp_wood[i + 1] = current_stock_wood*exp_k_wood + ((1 - exp_k_wood)/vec_frst_k_hwp_wood[i])*vec_frst_c_wood[i]
-
-            # reduce from look back
-            if n_years_lookback > 0:
-                vec_frst_c_from_hwp_paper = vec_frst_c_from_hwp_paper[(n_years_lookback - 1):]
-                vec_frst_c_from_hwp_wood = vec_frst_c_from_hwp_wood[(n_years_lookback - 1):]
-            vec_frst_c_from_hwp_paper_delta = vec_frst_c_from_hwp_paper[1:] - vec_frst_c_from_hwp_paper[0:-1]
-            vec_frst_c_from_hwp_wood_delta = vec_frst_c_from_hwp_wood[1:] - vec_frst_c_from_hwp_wood[0:-1]
-
-            v_print = self.factor_c_to_co2*vec_frst_c_wood*self.model_attributes.get_scalar(self.model_ippu.modvar_ippu_demand_for_harvested_wood, "mass")
-            v_mult = (1 - np.exp(-vec_frst_k_hwp_wood))/vec_frst_k_hwp_wood
-
-            # get emissions from co2
-            vec_frst_emissions_co2_hwp = vec_frst_c_from_hwp_paper_delta + vec_frst_c_from_hwp_wood_delta
-            vec_frst_emissions_co2_hwp *= self.factor_c_to_co2
-            vec_frst_emissions_co2_hwp *= -1*self.model_attributes.get_scalar(self.model_ippu.modvar_ippu_demand_for_harvested_wood, "mass")
-
-            list_dfs_out = [
-                self.model_attributes.array_to_df(vec_frst_emissions_co2_hwp, self.modvar_frst_emissions_co2_hwp)
-            ]
-
-            return list_dfs_out
-        """
         # add to output
         df_out += self.project_harvested_wood_products(
             df_afolu_trajectories,
@@ -1469,13 +1318,6 @@ class AFOLU:
             self.modvar_agrc_ef_ch4,
             "area"
         )
-        # soil carbon
-        arr_agrc_ef_co2_soil_carbon = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_co2_soil_carbon, True, "array_units_corrected", expand_to_all_cats = True)
-        arr_agrc_ef_co2_soil_carbon *= self.model_attributes.get_variable_unit_conversion_factor(
-            self.model_socioeconomic.modvar_gnrl_area,
-            self.modvar_agrc_ef_co2_soil_carbon,
-            "area"
-        )
         # biomass
         arr_agrc_ef_co2_biomass = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_co2_biomass, True, "array_units_corrected", expand_to_all_cats = True)
         arr_agrc_ef_co2_biomass *= self.model_attributes.get_variable_unit_conversion_factor(
@@ -1489,7 +1331,7 @@ class AFOLU:
         df_out += [
             self.model_attributes.array_to_df(arr_agrc_crop_area*scalar_lndu_input_area_to_output_area, self.modvar_agrc_area_crop),
             self.model_attributes.array_to_df(arr_agrc_ef_ch4*arr_agrc_crop_area, self.modvar_agrc_emissions_ch4_rice, reduce_from_all_cats_to_specified_cats = True),
-            self.model_attributes.array_to_df(arr_agrc_ef_co2_soil_carbon*arr_agrc_crop_area, self.modvar_agrc_emissions_co2_soil_carbon),
+            #self.model_attributes.array_to_df(arr_agrc_ef_co2_soil_carbon*arr_agrc_crop_area, self.modvar_agrc_emissions_co2_soil_carbon),
             self.model_attributes.array_to_df(arr_agrc_ef_co2_biomass*arr_agrc_crop_area, self.modvar_agrc_emissions_co2_biomass, reduce_from_all_cats_to_specified_cats = True)
         ]
 
@@ -1788,6 +1630,17 @@ class AFOLU:
         arr_soil_ef1_organic = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_soil_ef1_n_managed_soils_org_fert, True, "array_base", expand_to_all_cats = True)
         arr_soil_ef1_synthetic = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_soil_ef1_n_managed_soils_syn_fert, True, "array_base", expand_to_all_cats = True)
         vec_soil_ef1_rice = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_soil_ef1_n_managed_soils_rice, False, "array_base")
+        # finally, get the emission factor for C in organic cultivated soils as part of soil carbon
+        arr_soil_ef_c_organic_cultivated_soils = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_soil_ef_c_organic_soils, True, "array_base", expand_to_all_cats = True)
+        arr_soil_ef_c_organic_cultivated_soils *= self.model_attributes.get_scalar(
+            self.modvar_soil_ef_c_organic_soils,
+            "mass"
+        )
+        arr_soil_ef_c_organic_cultivated_soils /= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_soil_ef_c_organic_soils,
+            self.model_socioeconomic.modvar_gnrl_area,
+            "area"
+        )
 
 
         ##############################################################
@@ -1803,10 +1656,6 @@ class AFOLU:
         # some variables
         arr_lndu_frac_mineral_soils = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_frac_mineral_soils, True, "array_base", expand_to_all_cats = True, var_bounds = (0, 1))
         arr_lndu_frac_organic_soils = 1 - arr_lndu_frac_mineral_soils
-        vec_lndu_frac_drained_organic_soils = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_soil_frac_organic_soils_drained, False, "array_base", var_bounds = (0, 1))
-        arr_lndu_frac_drained_organic_soils = vec_lndu_frac_drained_organic_soils*arr_lndu_frac_organic_soils.transpose()
-        arr_lndu_frac_drained_organic_soils = arr_lndu_frac_drained_organic_soils.transpose()
-        arr_lndu_frac_non_drained_organic_soils = arr_lndu_frac_organic_soils - arr_lndu_frac_drained_organic_soils
         vec_soil_area_crop_pasture = np.sum(arr_land_use[:, [ind_crop, ind_pstr]], axis = 1)
 
 
@@ -1966,7 +1815,7 @@ class AFOLU:
         ]
 
 
-        ##  F_SOM
+        ##  F_SOM AND AGRICULTURAL SOIL CARBON
 
         # get carbon stocks and ratio of c to n
         arr_lndu_factor_soil_carbon = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_factor_soil_carbon, False, "array_base", expand_to_all_cats = True)
@@ -1986,6 +1835,7 @@ class AFOLU:
         vec_soil_soc_lost_in_cropland = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_soil_frac_soc_lost, False, "array_base", var_bounds = (0, 1))
 
         # initialize SOC totals
+        vec_soil_emissions_co2_organic_cultivated = 0.0
         vec_soil_soc_total = 0.0
         vec_soil_soc_total_mineral = 0.0
         vec_soil_ef1_soc_est = 0.0
@@ -2002,6 +1852,17 @@ class AFOLU:
             vec_soil_soc_total_cur = np.sum(arr_soil_soc_crop_drywet_cur, axis = 0)
             vec_soil_soc_total += vec_soil_soc_total_cur
             vec_soil_soc_total_mineral += vec_soil_soc_total_cur*arr_lndu_frac_mineral_soils[:, ind_crop]
+
+        # loop over tropical/temperate cropland to get soil carbon for
+        for modvar in self.modvar_list_agrc_frac_temptrop:
+            # soil category
+            cat_soil = ds.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
+            ind_soil = attr_soil.get_key_value_index(cat_soil)
+            # get land use category for soil carbon facto
+            arr_soil_soc_crop_temptrop_cur = (arr_agrc_crop_area*dict_arrs_agrc_frac_temptrop[modvar]).transpose()
+            arr_soil_soc_crop_temptrop_cur *= arr_lndu_frac_organic_soils[:, ind_crop]
+            # get SOC totals and integrate land-use specific mineral fractions
+            vec_soil_emissions_co2_organic_cultivated += np.sum(arr_soil_soc_crop_temptrop_cur*arr_soil_ef_c_organic_cultivated_soils[:, ind_soil], axis = 0)
 
         # loop over dry/wet to estimate carbon stocks in grassland
         for modvar in self.modvar_list_lndu_frac_drywet:
@@ -2030,13 +1891,18 @@ class AFOLU:
             vec_soil_soc_total += vec_soil_soc_total_cur
             vec_soil_soc_total_mineral += np.sum(arr_soil_soc_frst_temptrop_cur.transpose()*arr_lndu_frac_mineral_soils[:, inds_lndu], axis = 1)
 
-        # calculate the change in soil carbon year over year
+        # calculate the change in soil carbon year over year for all and for mineral
         vec_soil_delta_soc = vec_soil_soc_total[1:] - vec_soil_soc_total[0:-1]
         vec_soil_delta_soc = np.insert(vec_soil_delta_soc, 0, vec_soil_delta_soc[0])
         vec_soil_delta_soc_mineral = vec_soil_soc_total_mineral[1:] - vec_soil_soc_total_mineral[0:-1]
         vec_soil_delta_soc_mineral = np.insert(vec_soil_delta_soc_mineral, 0, vec_soil_delta_soc_mineral[0])
-        # calculate fraction mineral
+        # calculate FSOM from fraction mineral
         vec_soil_n2odirectn_fsom = -(vec_soil_delta_soc_mineral/vec_soil_ratio_c_to_n_soil_organic_matter)*vec_soil_ef1_soc_est
+        vec_soil_emission_co2_soil_carbon = -self.factor_c_to_co2*vec_soil_delta_soc_mineral
+        vec_soil_emission_co2_soil_carbon *= self.model_attributes.get_scalar(self.modvar_lsmm_n_to_fertilizer_agg_dung, "mass")
+        vec_soil_emission_co2_soil_carbon += vec_soil_emissions_co2_organic_cultivated*self.factor_c_to_co2
+        vec_soil_emission_co2_soil_carbon *= self.model_attributes.get_gwp("co2")
+
 
 
         ##  FINAL EF1 COMPONENTS
@@ -2072,7 +1938,7 @@ class AFOLU:
             cat_soil = ds.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
             ind_soil = attr_soil.get_key_value_index(cat_soil)
             vec_soil_crop_temptrop_cur = np.sum(arr_agrc_crop_area*dict_arrs_agrc_frac_temptrop[modvar], axis = 1)
-            vec_soil_crop_temptrop_cur *= arr_lndu_frac_drained_organic_soils[:, ind_crop]*arr_soil_ef2[:, ind_soil]
+            vec_soil_crop_temptrop_cur *= arr_lndu_frac_organic_soils[:, ind_crop]*arr_soil_ef2[:, ind_soil]
             vec_soil_n2on_direct_organic += vec_soil_crop_temptrop_cur
         # loop over dry/wet to estimate carbon stocks in grassland
         for modvar in self.modvar_list_lndu_frac_temptrop:
@@ -2080,7 +1946,7 @@ class AFOLU:
             cat_soil = ds.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
             ind_soil = attr_soil.get_key_value_index(cat_soil)
             vec_soil_pstr_temptrop_cur = (arr_land_use*dict_arrs_lndu_frac_temptrop[modvar])[:, ind_pstr]
-            vec_soil_pstr_temptrop_cur *= arr_lndu_frac_drained_organic_soils[:, ind_pstr]*arr_soil_ef2[:, ind_soil]
+            vec_soil_pstr_temptrop_cur *= arr_lndu_frac_organic_soils[:, ind_pstr]*arr_soil_ef2[:, ind_soil]
             vec_soil_n2on_direct_organic += vec_soil_pstr_temptrop_cur
         # loop over tropical/temperate NP/temperate NR
         for modvar in self.modvar_list_frst_frac_temptrop:
@@ -2090,7 +1956,7 @@ class AFOLU:
             # get land use category for soil carbon facto
             cats_lndu = [ds.clean_schema(x) for x in self.model_attributes.get_ordered_category_attribute(self.subsec_name_frst, pycat_lndu)]
             inds_lndu = [attr_lndu.get_key_value_index(x) for x in cats_lndu]
-            arr_soil_frst_temptrop_cur = np.sum(arr_area_frst*dict_arrs_frst_frac_temptrop[modvar]*arr_lndu_frac_drained_organic_soils[:, inds_lndu], axis = 1)
+            arr_soil_frst_temptrop_cur = np.sum(arr_area_frst*dict_arrs_frst_frac_temptrop[modvar]*arr_lndu_frac_organic_soils[:, inds_lndu], axis = 1)
             arr_soil_frst_temptrop_cur *= arr_soil_ef2[:, ind_soil]
             vec_soil_n2on_direct_organic += arr_soil_frst_temptrop_cur
 
@@ -2201,6 +2067,7 @@ class AFOLU:
         # build emissions outputs
         df_out += [
             self.model_attributes.array_to_df(vec_soil_emission_n2o_crop_residue*scalar_n2on_to_emission_out, self.modvar_agrc_emissions_n2o_crop_residues),
+            self.model_attributes.array_to_df(vec_soil_emission_co2_soil_carbon, self.modvar_agrc_emissions_co2_soil_carbon),
             self.model_attributes.array_to_df(vec_soil_emission_n2o_fertilizer*scalar_n2on_to_emission_out, self.modvar_soil_emissions_n2o_fertilizer),
             self.model_attributes.array_to_df(vec_soil_emission_n2o_mineral_soils*scalar_n2on_to_emission_out, self.modvar_soil_emissions_n2o_mineral_soils),
             self.model_attributes.array_to_df(vec_soil_emission_n2o_organic_soils*scalar_n2on_to_emission_out, self.modvar_soil_emissions_n2o_organic_soils),
