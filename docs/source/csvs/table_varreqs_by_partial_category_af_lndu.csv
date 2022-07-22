@@ -1,4 +1,5 @@
 ﻿Variable Type,Variable,Information,Variable Schema,Dashboard,Categories,Notes,Data Link,Reference,Internal Model Variable,Default LHS Scalar Minimum at Final Time Period,Default LHS Scalar Maximum at Final Time Period,``$CAT-SOIL-MANAGEMENT$``
+Input,Fraction of Soils Mineral,See ` Giulia Conchedda and Francesco N. Tubiello (2020) <https://doi.org/10.5194/essd-12-3113-2020>`_; 3% of soils globally are organic. Default value of 0.97 is assumed to be complement.,``frac_lndu_soil_mineral_$CAT-LANDUSE$``,,``croplands``|``grasslands``|``forests_mangroves``|``forests_primary``|``forests_secondary``,,,,0,1,1,none
 Input,Land Use BOC :math:`\text{CH}_4` Emission Factor,Annual average :math:`\text{CH}_4` emitted per ha due decay of organic matter (**CHECK THIS**).,"``ef_lndu_boc_$CAT-LANDUSE$_$UNIT-MASS$_$EMISSION-GAS$_$UNIT-AREA$``  (``$UNIT-MASS$ = gg``, ``$EMISSION-GAS$ = ch4``, ``$UNIT-AREA$ = ha``)",,``wetlands``,,,,0,1,1,none
 Input,Land Use Fraction Dry," | Used to calculate :math:`\text{N}_2\text{O}` emissions from fertilizer application. 
  | 
@@ -13,7 +14,6 @@ Input,Land Use Fraction Tropical," | Used to calculate :math:`\text{N}_2\text{O}
 Input,Land Use Fraction Wet," | Used to calculate :math:`\text{N}_2\text{O}` emissions from fertilizer application
  | 
  | Land Use Fraction Dry and Land Use Fraction Wet must sum to 1",``frac_lndu_$CAT-LANDUSE$_cl2_wet``,,``grasslands``,,,,0,1,1,``wet_climate``
-Input,Land Use Soil Carbon :math:`\text{CO}_2` Emission Factor,Annual average :math:`\text{CO}_2` emitted per ha due to soil carbon release from grazing (**CHECK THIS**),"``ef_lndu_soilcarbon_$CAT-LANDUSE$_$UNIT-MASS$_$EMISSION-GAS$_$UNIT-AREA$``  (``$UNIT-MASS$ = gg``, ``$EMISSION-GAS$ = co2``, ``$UNIT-AREA$ = ha``)",,``grasslands``,,,,0,1,1,none
 Input,Land Use Yield Reallocation Factor,"The land use yield reallocation factor :math:`\eta \in [0, 1]` is used to represent land use responsiveness to changes in demands. 
  | 
  | If :math:`\eta = 1`, then **land use will be reallocated**, diverging from the specified transition matrix. If demands exceed carrying capacity to meet all livestock and crop demands, then the transitions into grassland and cropland are increased to meet demands. If the carrying capacity exceeds demand, then transitions to grassland and croplands are reduced (which also increases forested land). 
@@ -24,6 +24,4 @@ Input,Land Use Yield Reallocation Factor,"The land use yield reallocation factor
 ",``lndu_reallocation_factor``,,none,,,,0,0,2,none
 Input,Vegetarian Diet Exchange Scalar,This scalar is applied to per capita crop demand for the proportion of the population that is vegetarian. ,``scalar_lndu_vegetarian_dietary_exchange``,,none,,,,0,0.6,1.4,none
 Output,:math:`\text{CH}_4` Emissions from Wetlands,,``emission_co2e_$EMISSION-GAS$_lndu_wetlands`` (``$EMISSION-GAS$ = ch4``),,none,,,,1,1,1,none
-Output,:math:`\text{CO}_2` Emissions from Pastures,Soil carbon emitted from grasslands,``emission_co2e_$EMISSION-GAS$_lndu_pastures`` (``$EMISSION-GAS$ = co2``),,none,,,,1,1,1,none
 Output,:math:`\text{N}_2\text{O}` Emissions from Pastures,Based on the **Land Use Pasture :math:`\text{N}_2\text{O}` Emission Factor** variable,``emission_co2e_$EMISSION-GAS$_lndu_pastures`` (``$EMISSION-GAS$ = n2o``),,none,,,,1,1,1,none
-Input,Fraction of Soils Mineral,,``frac_lndu_soil_mineral_$CAT-LANDUSE$``,,``croplands``|``grasslands``|``forests_mangroves``|``forests_primary``|``forests_secondary``,,,,0,1,1,none
