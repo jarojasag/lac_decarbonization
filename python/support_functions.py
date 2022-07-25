@@ -183,11 +183,27 @@ def df_get_missing_fields_from_source_df(df_target, df_source, side = "right", c
 
 
 ##  allows for multiplication of np.arrays that might be of the same shape or row-wise similar
-def do_array_mult(arr_stable:np.ndarray, arr_variable:np.ndarray) -> np.ndarray:
-    if (arr_variable.shape == arr_stable.shape) or (arr_variable.shape == (arr_stable.shape[1], )):
+def do_array_mult(
+    arr_stable: np.ndarray,
+    arr_variable: np.ndarray,
+    allow_outer: bool = True
+) -> np.ndarray:
+    """
+        multiply arrays while allowing for different shapes of arr_variable
+        - arr_stable: array with base shape
+        - arr_variable:
+            * if arr_stable is 2d, arr_variable can have shapes arr_stable.shape or (arr_stable[1], )
+            * if arr_stable is 1d, arr_variable can have shapes arr_stable.shape OR if allow_outer == True, returns np.outer(arr_stable, arr_variable)
+    """
+    if (arr_variable.shape == arr_stable.shape):
         return arr_variable*arr_stable
-    elif arr_variable.shape == (arr_stable.shape[0], ):
-        return (arr_stable.transpose()*arr_variable).transpose()
+    elif (len(arr_stable.shape) == 2):
+        if (arr_variable.shape == (arr_stable.shape[1], )):
+            return arr_variable*arr_stable
+        elif arr_variable.shape == (arr_stable.shape[0], ):
+            return (arr_stable.transpose()*arr_variable).transpose()
+    elif allow_outer:
+        return np.outer(arr_stable, arr_variable)
     else:
         raise ValueError(f"Error in do_array_mult: Incompatable shape {arr_variable.shape} in arr_variable. The stable array has shape {arr_stable.shape}.")
 

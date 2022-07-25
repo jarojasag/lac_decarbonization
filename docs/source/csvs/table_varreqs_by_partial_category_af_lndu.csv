@@ -24,4 +24,3 @@ Input,Land Use Yield Reallocation Factor,"The land use yield reallocation factor
 ",``lndu_reallocation_factor``,,none,,,,0,0,2,none
 Input,Vegetarian Diet Exchange Scalar,This scalar is applied to per capita crop demand for the proportion of the population that is vegetarian. ,``scalar_lndu_vegetarian_dietary_exchange``,,none,,,,0,0.6,1.4,none
 Output,:math:`\text{CH}_4` Emissions from Wetlands,,``emission_co2e_$EMISSION-GAS$_lndu_wetlands`` (``$EMISSION-GAS$ = ch4``),,none,,,,1,1,1,none
-Output,:math:`\text{N}_2\text{O}` Emissions from Pastures,Based on the **Land Use Pasture :math:`\text{N}_2\text{O}` Emission Factor** variable,``emission_co2e_$EMISSION-GAS$_lndu_pastures`` (``$EMISSION-GAS$ = n2o``),,none,,,,1,1,1,none

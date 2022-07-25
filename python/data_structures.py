@@ -337,6 +337,7 @@ class ModelAttributes:
         self.subsec_name_enfu = "Energy Fuels"
         self.subsec_name_enst = "Energy Storage"
         self.subsec_name_entc = "Energy Technology"
+        self.subsec_name_fgtv = "Fugitive Emissions"
         self.subsec_name_inen = "Industrial Energy"
         self.subsec_name_scoe = "Stationary Combustion and Other Energy"
         self.subsec_name_trns = "Transportation"
@@ -355,12 +356,13 @@ class ModelAttributes:
         self.all_primary_category_flags = self.get_all_primary_category_flags()
 
         # miscellaneous parameters that need to be checked before running
+        self.field_enfu_biofuels_demand_category = "biomass_demand_category"
         self.field_enfu_electricity_demand_category = "electricity_demand_category"
 
         # run checks and raise errors if invalid data are found in the attribute tables
         self.check_agrc_attribute_tables()
         self.check_enfu_attribute_table()
-        self.check_inen_enfu_crosswalk()
+        self.check_inen_attribute_tables()
         self.check_lndu_attribute_tables()
         self.check_lsmm_attribute_table()
         self.check_trde_category_variable_crosswalk()
@@ -1289,16 +1291,35 @@ class ModelAttributes:
     ##  function to check the energy fuels table to ensure that an electricity category is specified
     def check_enfu_attribute_table(self):
         # some shared values
-        subsec = "Energy Fuels"
+        subsec = self.subsec_name_enfu
         attr = self.get_attribute_table(subsec)
 
-        if not (set(attr.table[self.field_enfu_electricity_demand_category].astype(int)) == set([1 , 0]) and (sum(attr.table[self.field_enfu_electricity_demand_category]) == 1)):
-            raise ValueError(f"Error in subsector {subsec}: there must be a unique electricity category specified in fuels. Check the field '{self.field_enfu_electricity_demand_category}' in the table at '{attr.fp_table}'.")
+        for fld in [self.field_enfu_biofuels_demand_category, self.field_enfu_electricity_demand_category]:
+            if not (set(attr.table[fld].astype(int)) == set([1 , 0]) and (sum(attr.table[fld]) == 1)):
+                fld_disp = fld.replace("_demand_category", "")
+                raise ValueError(f"Error in subsector {subsec}: there must be a unique {fld_disp} category specified in fuels. Check the field '{fld}' in the table at '{attr.fp_table}'.")
 
 
-    ##  function to check the liquid waste/population crosswalk in liquid waste
-    def check_inen_enfu_crosswalk(self):
-        return self.check_subsector_attribute_table_crosswalk("Industrial Energy", "Energy Fuels", type_primary = "varreqs_partial", injection_q = False)
+    ##  function to check the industrial energy/fuels cw in industrial energy
+    def check_inen_attribute_tables(self):
+
+        # some shared values
+        subsec = self.subsec_name_inen
+        attr = self.get_attribute_table(subsec, "key_varreqs_partial")
+
+        # check
+        for fld in ["fuel_fraction_variable_by_fuel"]:
+
+            if fld not in attr.table.columns:
+                raise ValueError(f"Error in {subsec} attribute table: field {fld} not found in table at path '{attr.fp_table}'.")
+
+            elif not (set(attr.table[fld].astype(int)) == set([1 , 0])):
+                fld_disp = fld.replace("_demand_category", "")
+                raise ValueError(f"Error in subsector {subsec}: there must be a unique {fld_disp} category specified in fuels. Check the field '{fld}' in the table at '{attr.fp_table}'.")
+
+        # function to check the industrial energy/fuels cw in industrial energy
+        self.check_subsector_attribute_table_crosswalk(self.subsec_name_inen, self.subsec_name_enfu, type_primary = "varreqs_partial", injection_q = False)
+
 
 
     ##  function to check that the land use attribute tables are specified

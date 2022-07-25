@@ -45,27 +45,23 @@ class NonElectricEnergy:
         self.modvar_ccsq_emissions_ch4 = ":math:\\text{CH}_4 Emissions from CCSQ"
         self.modvar_ccsq_emissions_co2 = ":math:\\text{CO}_2 Emissions from CCSQ"
         self.modvar_ccsq_emissions_n2o = ":math:\\text{N}_2\\text{O} Emissions from CCSQ"
-        self.modvar_ccsq_energy_demand_electricity = "CCSQ Energy Demand Electricity"
+        self.modvar_ccsq_energy_demand_elec = "Electrical Energy Demand from CCSQ"
+        self.modvar_ccsq_energy_demand_heat = "Non-Electrical Heat Energy Demand from CCSQ"
         self.modvar_ccsq_energy_demand_heat_agg = "Total Non-Electrical Heat Energy Demand from CCSQ"
-        self.modvar_ccsq_energy_demand_heat_geothermal = "CCSQ Energy Demand Geothermal"
-        self.modvar_ccsq_energy_demand_heat_hydrogen = "CCSQ Energy Demand Hydrogen"
-        self.modvar_ccsq_energy_demand_heat_natural_gas = "CCSQ Energy Demand Natural Gas"
         self.modvar_ccsq_frac_en_electricity = "CCSQ Fraction Energy Electricity"
         self.modvar_ccsq_frac_en_heat = "CCSQ Fraction Energy Heat"
         self.modvar_ccsq_frac_heat_en_geothermal = "CCSQ Fraction Heat Energy Demand Geothermal"
         self.modvar_ccsq_frac_heat_en_hydrogen = "CCSQ Fraction Heat Energy Demand Hydrogen"
         self.modvar_ccsq_frac_heat_en_natural_gas = "CCSQ Fraction Heat Energy Demand Natural Gas"
         self.modvar_ccsq_total_sequestration = "Annual Capture and Sequestration by Type"
-        # get some dictionaries implied by the SCOE attribute tables
+        # get some dictionaries implied by the CCSQ attribute tables
         self.modvar_dicts_ccsq_fuel_vars = self.model_attributes.get_var_dicts_by_shared_category(
             self.subsec_name_ccsq,
             self.model_attributes.get_subsector_attribute(self.subsec_name_enfu, "pycategory_primary"),
-            ["energy_efficiency_variable_by_fuel", "fuel_fraction_variable_by_fuel", "energy_demand_variable_by_fuel"]
+            ["energy_efficiency_variable_by_fuel", "fuel_fraction_variable_by_fuel"]
         )
         # reassign as variables
         self.modvar_dict_ccsq_fuel_fractions_to_efficiency_factors = self.modvar_dicts_ccsq_fuel_vars["fuel_fraction_variable_by_fuel_to_energy_efficiency_variable_by_fuel"]
-        self.modvar_dict_ccsq_fuel_fractions_to_energy_demand = self.modvar_dicts_ccsq_fuel_vars["fuel_fraction_variable_by_fuel_to_energy_demand_variable_by_fuel"]
-
 
         # Energy Fuel model variables
         self.modvar_enfu_ef_combustion_co2 = ":math:\\text{CO}_2 Combustion Emission Factor"
@@ -74,6 +70,12 @@ class NonElectricEnergy:
         self.modvar_enfu_ef_combustion_stationary_ch4 = ":math:\\text{CH}_4 Stationary Combustion Emission Factor"
         self.modvar_enfu_ef_combustion_stationary_n2o = ":math:\\text{N}_2\\text{O} Stationary Combustion Emission Factor"
         self.modvar_enfu_efficiency_factor_industrial_energy = "Average Industrial Energy Fuel Efficiency Factor"
+        self.modvar_enfu_energy_demand_by_fuel_ccsq = "Energy Demand by Fuel in CCSQ"
+        self.modvar_enfu_energy_demand_by_fuel_elec = "Energy Demand by Fuel in Electricity"
+        self.modvar_enfu_energy_demand_by_fuel_inen = "Energy Demand by Fuel in Industrial Energy"
+        self.modvar_enfu_energy_demand_by_fuel_scoe = "Energy Demand by Fuel in SCOE"
+        self.modvar_enfu_energy_demand_by_fuel_total = "Total Energy Demand by Fuel"
+        self.modvar_enfu_energy_demand_by_fuel_trns = "Energy Demand by Fuel in Transportation"
         self.modvar_enfu_volumetric_energy_density = "Volumetric Energy Density"
 
         # Industrial Energy model variables
@@ -85,37 +87,28 @@ class NonElectricEnergy:
         self.modvar_inen_energy_demand_electricity_agg = "Total Electrical Energy Demand from Industrial Energy"
         self.modvar_inen_energy_demand_total = "Energy Demand from Industrial Energy"
         self.modvar_inen_energy_demand_total_agg = "Total Energy Demand from Industrial Energy"
-        self.modvar_inen_en_gdp_intensity_factor = "GDP Energy Intensity Factor"
-        self.modvar_inen_en_prod_intensity_factor = "Production Energy Intensity Factor"
-        self.modvar_inen_frac_en_coal = "Industrial Energy Fraction Coal"
-        self.modvar_inen_frac_en_coke = "Industrial Energy Fraction Coke"
-        self.modvar_inen_frac_en_diesel = "Industrial Energy Fraction Diesel"
-        self.modvar_inen_frac_en_electricity = "Industrial Energy Fraction Electricity"
-        self.modvar_inen_frac_en_furnace_gas = "Industrial Energy Fraction Furnace Gas"
-        self.modvar_inen_frac_en_gasoline = "Industrial Energy Fraction Gasoline"
-        self.modvar_inen_frac_en_hydrogen = "Industrial Energy Fraction Hydrogen"
-        self.modvar_inen_frac_en_kerosene = "Industrial Energy Fraction Kerosene"
-        self.modvar_inen_frac_en_natural_gas = "Industrial Energy Fraction Natural Gas"
-        self.modvar_inen_frac_en_oil = "Industrial Energy Fraction Oil"
-        self.modvar_inen_frac_en_pliqgas = "Industrial Energy Fraction Petroleum Liquid Gas"
-        self.modvar_inen_frac_en_solar = "Industrial Energy Fraction Solar"
-        self.modvar_inen_frac_en_solid_biomass = "Industrial Energy Fraction Solid Biomass"
-        # fuel fractions to check summation over
-        self.modvar_inen_list_fuel_fractions = [
-            self.modvar_inen_frac_en_coal,
-            self.modvar_inen_frac_en_coke,
-            self.modvar_inen_frac_en_diesel,
-            self.modvar_inen_frac_en_electricity,
-            self.modvar_inen_frac_en_furnace_gas,
-            self.modvar_inen_frac_en_gasoline,
-            self.modvar_inen_frac_en_hydrogen,
-            self.modvar_inen_frac_en_kerosene,
-            self.modvar_inen_frac_en_natural_gas,
-            self.modvar_inen_frac_en_oil,
-            self.modvar_inen_frac_en_pliqgas,
-            self.modvar_inen_frac_en_solar,
-            self.modvar_inen_frac_en_solid_biomass
-        ]
+        self.modvar_inen_en_gdp_intensity_factor = "Initial Energy Consumption Intensity of GDP"
+        self.modvar_inen_en_prod_intensity_factor = "Initial Energy Consumption Intensity of Production"
+        self.modvar_inen_frac_en_coal = "Industrial Energy Fuel Fraction Coal"
+        self.modvar_inen_frac_en_coke = "Industrial Energy Fuel Fraction Coke"
+        self.modvar_inen_frac_en_diesel = "Industrial Energy Fuel Fraction Diesel"
+        self.modvar_inen_frac_en_electricity = "Industrial Energy Fuel Fraction Electricity"
+        self.modvar_inen_frac_en_furnace_gas = "Industrial Energy Fuel Fraction Furnace Gas"
+        self.modvar_inen_frac_en_gasoline = "Industrial Energy Fuel Fraction Gasoline"
+        self.modvar_inen_frac_en_hydrogen = "Industrial Energy Fuel Fraction Hydrogen"
+        self.modvar_inen_frac_en_kerosene = "Industrial Energy Fuel Fraction Kerosene"
+        self.modvar_inen_frac_en_natural_gas = "Industrial Energy Fuel Fraction Natural Gas"
+        self.modvar_inen_frac_en_oil = "Industrial Energy Fuel Fraction Oil"
+        self.modvar_inen_frac_en_pliqgas = "Industrial Energy Fuel Fraction Petroleum Liquid Gas"
+        self.modvar_inen_frac_en_solar = "Industrial Energy Fuel Fraction Solar"
+        self.modvar_inen_frac_en_solid_biomass = "Industrial Energy Fuel Fraction Solid Biomass"
+        # get some dictionaries implied by the inen attribute tables
+        self.dict_inen_fuel_categories_to_fuel_variables, self.dict_inen_fuel_categories_to_unassigned_fuel_variables = self.get_dict_inen_fuel_categories_to_fuel_variables()
+        # some derivate lists of variables
+        self.modvars_inen_list_fuel_fraction = self.model_attributes.get_vars_by_assigned_class_from_akaf(
+            self.dict_inen_fuel_categories_to_fuel_variables,
+            "fuel_fraction"
+        )
 
         # Stationary Combustion and Other Energy variables
         self.modvar_scoe_consumpinit_energy_per_hh_elec = "SCOE Initial Per Household Electric Appliances Energy Consumption"
@@ -142,15 +135,6 @@ class NonElectricEnergy:
         self.modvar_scoe_energy_demand_electricity_agg = "Total Electrical Energy Demand from SCOE"
         self.modvar_scoe_energy_demand_heat = "Non-Electrical Heat Energy Demand from SCOE"
         self.modvar_scoe_energy_demand_heat_agg = "Total Non-Electrical Heat Energy Demand from SCOE"
-        self.modvar_scoe_energy_demand_heat_coal = "SCOE Heat Energy Demand Coal"
-        self.modvar_scoe_energy_demand_heat_diesel = "SCOE Heat Energy Demand Diesel"
-        self.modvar_scoe_energy_demand_heat_electricity = "SCOE Heat Energy Demand Electricity"
-        self.modvar_scoe_energy_demand_heat_gasoline = "SCOE Heat Energy Demand Gasoline"
-        self.modvar_scoe_energy_demand_heat_hydrogen = "SCOE Heat Energy Demand Hydrogen"
-        self.modvar_scoe_energy_demand_heat_kerosene = "SCOE Heat Energy Demand Kerosene"
-        self.modvar_scoe_energy_demand_heat_natural_gas = "SCOE Heat Energy Demand Natural Gas"
-        self.modvar_scoe_energy_demand_heat_pliq_gas = "SCOE Heat Energy Demand Petroleum Liquid Gas"
-        self.modvar_scoe_energy_demand_heat_biomass = "SCOE Heat Energy Demand Solid Biomass"
         self.modvar_scoe_frac_heat_en_coal = "SCOE Fraction Heat Energy Demand Coal"
         self.modvar_scoe_frac_heat_en_diesel = "SCOE Fraction Heat Energy Demand Diesel"
         self.modvar_scoe_frac_heat_en_electricity = "SCOE Fraction Heat Energy Demand Electricity"
@@ -168,7 +152,7 @@ class NonElectricEnergy:
         )
         # reassign as variables
         self.modvar_dict_scoe_fuel_fractions_to_efficiency_factors = self.modvar_dicts_scoe_fuel_vars["fuel_fraction_variable_by_fuel_to_energy_efficiency_variable_by_fuel"]
-        self.modvar_dict_scoe_fuel_fractions_to_energy_demand = self.modvar_dicts_scoe_fuel_vars["fuel_fraction_variable_by_fuel_to_energy_demand_variable_by_fuel"]
+
 
         # Transportation variables
         self.modvar_trns_average_vehicle_load_freight = "Average Freight Vehicle Load"
@@ -184,12 +168,6 @@ class NonElectricEnergy:
         self.modvar_trns_ef_combustion_mobile_gasoline_n2o = ":math:\\text{N}_2\\text{O} Gasoline Mobile Combustion Emission Factor"
         self.modvar_trns_ef_combustion_mobile_kerosene_n2o = ":math:\\text{N}_2\\text{O} Kerosene Mobile Combustion Emission Factor"
         self.modvar_trns_ef_combustion_mobile_natural_gas_n2o = ":math:\\text{N}_2\\text{O} Natural Gas Mobile Combustion Emission Factor"
-        self.modvar_trns_fuel_demand_biofuels_agg = "Total Fuel Demand Biofuels"
-        self.modvar_trns_fuel_demand_diesel_agg = "Total Fuel Demand Diesel"
-        self.modvar_trns_fuel_demand_gasoline_agg = "Total Fuel Demand Gasoline"
-        self.modvar_trns_fuel_demand_hydrogen_agg = "Total Fuel Demand Hydrogen"
-        self.modvar_trns_fuel_demand_kerosene_agg = "Total Fuel Demand Biofuels"
-        self.modvar_trns_fuel_demand_natural_gas_agg = "Total Fuel Demand NaturalGas"
         self.modvar_trns_fuel_efficiency_biofuels = "Fuel Efficiency Biofuels"
         self.modvar_trns_fuel_efficiency_diesel = "Fuel Efficiency Diesel"
         self.modvar_trns_fuel_efficiency_gasoline = "Fuel Efficiency Gasoline"
@@ -207,11 +185,21 @@ class NonElectricEnergy:
         self.modvar_trns_fuel_fraction_kerosene = "Transportation Mode Fuel Fraction Kerosene"
         self.modvar_trns_fuel_fraction_natural_gas = "Transportation Mode Fuel Fraction Natural Gas"
         self.modvar_tnrs_energy_demand_electricity = "Electrical Energy Demand from Transportation"
-        self.modvar_tnrs_energy_demand_electricity_agg = "Total Electrical Energy Demand from Transportation"
         self.modvar_trns_emissions_ch4 = ":math:\\text{CH}_4 Emissions from Transportation"
         self.modvar_trns_emissions_co2 = ":math:\\text{CO}_2 Emissions from Transportation"
         self.modvar_trns_emissions_n2o = ":math:\\text{N}_2\\text{O} Emissions from Transportation"
         self.modvar_trns_vehicle_distance_traveled = "Total Vehicle Distance Traveled"
+        # fuel variables dictionary for transportation
+        self.dict_trns_fuel_categories_to_fuel_variables, self.dict_trns_fuel_categories_to_unassigned_fuel_variables = self.get_dict_trns_fuel_categories_to_fuel_variables()
+        # some derivate lists of variables
+        self.modvars_trns_list_fuel_fraction = self.model_attributes.get_vars_by_assigned_class_from_akaf(
+            self.dict_trns_fuel_categories_to_fuel_variables,
+            "fuel_fraction"
+        )
+        self.modvars_trns_list_fuel_efficiency = self.model_attributes.get_vars_by_assigned_class_from_akaf(
+            self.dict_trns_fuel_categories_to_fuel_variables,
+            "fuel_efficiency"
+        )
 
         # Transportation Demand variables
         self.modvar_trde_demand_scalar = "Transportation Demand Scalar"
@@ -235,19 +223,7 @@ class NonElectricEnergy:
 
         ##  MISCELLANEOUS VARIABLES
         self.time_periods, self.n_time_periods = self.model_attributes.get_time_periods()
-        self.enfu_fuel_electricity = self.get_electricity_fuel()
-
-        # fuel variables dictionary for transportation
-        self.dict_trns_fuel_categories_to_fuel_variables, self.dict_trns_fuel_categories_to_unassigned_fuel_variables = self.get_dict_trns_fuel_categories_to_fuel_variables()
-        # some derivate lists of variables
-        self.modvars_trns_list_fuel_fraction = self.model_attributes.get_vars_by_assigned_class_from_akaf(
-            self.dict_trns_fuel_categories_to_fuel_variables,
-            "fuel_fraction"
-        )
-        self.modvars_trns_list_fuel_efficiency = self.model_attributes.get_vars_by_assigned_class_from_akaf(
-            self.dict_trns_fuel_categories_to_fuel_variables,
-            "fuel_efficiency"
-        )
+        self.cat_enfu_electricity = self.get_electricity_fuel()
 
 
 
@@ -350,6 +326,30 @@ class NonElectricEnergy:
     #    SUBSECTOR SPECIFIC FUNCTIONS    #
     ######################################
 
+    ##  industrial energy variables from fuel categories as specified by a matchstring
+    def get_dict_inen_fuel_categories_to_fuel_variables(self):
+        """
+            use get_dict_inen_fuel_categories_to_fuel_variables to return a dictionary with fuel categories as keys based on the Transportation attribute table;
+            {cat_fuel: {"fuel_efficiency": VARNAME_FUELEFFICIENCY, ...}}
+
+            for each key, the dict includes variables associated with the fuel cat_fuel:
+
+            - "fuel_fraction"
+        """
+
+        dict_out = self.model_attributes.assign_keys_from_attribute_fields(
+            self.subsec_name_inen,
+            "cat_fuel",
+            {
+                "Fuel Fraction": "fuel_fraction"
+            },
+            "varreqs_partial",
+            True
+        )
+
+        return dict_out
+
+
     ##  transportation variables from fuel categories as specified by a matchstring
     def get_dict_trns_fuel_categories_to_fuel_variables(self):
         """
@@ -372,8 +372,7 @@ class NonElectricEnergy:
                 "Fuel Efficiency": "fuel_efficiency",
                 "Fuel Fraction": "fuel_fraction",
                 ":math:\\text{CH}_4": "ef_ch4",
-                ":math:\\text{N}_2\\text{O}": "ef_n2o",
-                "Total Fuel Demand": "total_fuel_demand"
+                ":math:\\text{N}_2\\text{O}": "ef_n2o"
             },
             "varreqs_partial",
             True
@@ -383,7 +382,7 @@ class NonElectricEnergy:
 
 
     ##  project energy demands for scoe/ccsq
-    def project_energy_demands_by_fuel(self,
+    def project_energy_consumption_by_fuel_from_effvars(self,
         df_neenergy_trajectories:pd.DataFrame,
         modvar_consumption:str,
         arr_activity:np.ndarray,
@@ -394,28 +393,22 @@ class NonElectricEnergy:
     ) -> np.ndarray:
 
         """
-        Project energy demand--in terms of configuration units for energy--for a consumption variable for each fuel specified as a key in NonElectricEnergy.modvar_dict_scoe_fuel_fractions_to_efficiency_factors
+        Project energy consumption--in terms of configuration units for energy--for a consumption variable for each fuel specified as a key in NonElectricEnergy.modvar_dict_scoe_fuel_fractions_to_efficiency_factors
 
         Function Arguments
         ------------------
         - df_neenergy_trajectories: Dataframe of input variables
-
         - modvar_consumption: energy consumption variable, e.g. self.modvar_scoe_consumpinit_energy_per_hh_heat
-
         - arr_activity: per unit activity driving demands.
             * Specify as None if demands are not per-activity.
-
         - arr_elasticity: array of elasticities for each time step in df_neenergy_trajectories.
              * Setting to None will mean that specified future demands will be used (often constant).
-
         - arr_elastic_driver: the driver of elasticity in energy demands, e.g., vector of change rates of gdp per capita.
             * Must be such that df_neenergy_trajectories.shape[0] = arr_elastic_driver.shape[0] == arr_elasticity.shape[0] - 1.
             * Setting to None will mean that specified future demands will be used (often constant).
-
         - dict_fuel_fracs: dictionary mapping each fuel fraction variable to its fraction of energy.
-            * Each key must be a key in NonElectricEnergy.modvar_dict_scoe_fuel_fractions_to_efficiency_factors.
-
-        - dict_fuel_frac_to_eff: dictionary mapping fuel fraction variable to its associated efficiency variable
+            * Each key must be a key in dict_fuel_frac_to_eff.
+        - dict_fuel_frac_to_eff: dictionary mapping fuel fraction variable to its associated efficiency variable (SCOE and CCSQ)
         """
 
         ##  initialize consumption and the fraction -> efficiency dictionary
@@ -439,11 +432,11 @@ class NonElectricEnergy:
                 elif subsec_mv_consumption == self.subsec_name_ccsq:
                     dict_fuel_frac_to_eff = self.modvar_dict_ccsq_fuel_fractions_to_efficiency_factors
                 else:
-                    raise ValueError(f"Error in project_energy_demands_by_fuel: unable to infer dictionary for dict_fuel_frac_to_eff based on model variable '{modvar_consumption}'.")
+                    raise ValueError(f"Error in project_energy_consumption_by_fuel_from_effvars: unable to infer dictionary for dict_fuel_frac_to_eff based on model variable '{modvar_consumption}'.")
             else:
-                raise ValueError(f"Invalid model variable '{modvar_consumption}' found in project_energy_demands_by_fuel: the variable is undefined.")
+                raise ValueError(f"Invalid model variable '{modvar_consumption}' found in project_energy_consumption_by_fuel_from_effvars: the variable is undefined.")
         elif not isinstance(dict_fuel_frac_to_eff, dict):
-            raise ValueError(f"Error in project_energy_demands_by_fuel: invalid type '{type(dict_fuel_frac_to_eff)}' specified for dict_fuel_frac_to_eff.")
+            raise ValueError(f"Error in project_energy_consumption_by_fuel_from_effvars: invalid type '{type(dict_fuel_frac_to_eff)}' specified for dict_fuel_frac_to_eff.")
 
 
         ##  estimate demand at point of use (account for heat delivery efficiency)
@@ -453,7 +446,7 @@ class NonElectricEnergy:
 
         # use fractions of demand + efficiencies to calculate fraction of consumption
         for modvar_fuel_frac in dict_fuel_fracs.keys():
-            # get efficiency variable + variable arrays
+            # get efficiency, then fuel fractions
             modvar_fuel_eff = dict_fuel_frac_to_eff.get(modvar_fuel_frac)
             arr_frac = dict_fuel_fracs.get(modvar_fuel_frac)
             arr_efficiency = self.model_attributes.get_standard_variables(df_neenergy_trajectories, modvar_fuel_eff, True, "array_base", expand_to_all_cats = True)
@@ -465,7 +458,7 @@ class NonElectricEnergy:
             arr_growth_demand = sf.project_growth_scalar_from_elasticity(arr_elastic_driver, arr_elasticity, False, "standard")
             arr_demand = sf.do_array_mult(arr_demand[0]*arr_growth_demand, arr_activity)
         else:
-            #warnings.warn("Missing elasticity information found in 'project_energy_demands_by_fuel': using specified future demands.")
+            #warnings.warn("Missing elasticity information found in 'project_energy_consumption_by_fuel_from_effvars': using specified future demands.")
             arr_demand = sf.do_array_mult(arr_demand, arr_activity) if (arr_activity is not None) else arr_demand
 
         # calculate consumption
@@ -478,7 +471,86 @@ class NonElectricEnergy:
             # use consumption by fuel type and efficiency to get output demand for each fuel (in output energy units specified in config)
             arr_consumption_fuel = np.nan_to_num(arr_demand*arr_frac/arr_efficiency, 0.0)
             dict_consumption_by_fuel_out.update({modvar_fuel_frac: arr_consumption_fuel})
+
         return dict_consumption_by_fuel_out
+
+
+    # get energy consumption using fuel categories (average over input subsector categories) instead of individualized efficiency variables -- use for Industrial Energy
+    def project_energy_consumption_by_fuel_from_fuel_cats(self,
+        df_neenergy_trajectories: pd.DataFrame,
+        vec_consumption_intensity_initial: np.ndarray,
+        arr_driver: np.ndarray,
+        modvar_fuel_efficiency: str,
+        dict_fuel_fracs: dict,
+        dict_fuel_frac_to_fuel_cat: dict
+    ) -> np.ndarray:
+
+        """
+        Project energy consumption--in terms of units of the input vector vec_consumption_initial--given changing demand fractions and efficiency factors
+
+        Function Arguments
+        ------------------
+        - df_neenergy_trajectories: Dataframe of input variables
+        - vec_consumption_intensity_initial: array giving initial consumption (for initial time period only)
+        - arr_driver: driver of demand--either shape of (n_projection_time_periods, len(vec_consumption_intensity_initial)) or (n_projection_time_periods, )
+        - modvar_fuel_efficiency: string model variable for enfu fuel efficiency
+        - dict_fuel_fracs: dictionary mapping each fuel fraction variable to its fraction of energy.
+            * Each key must be a key in dict_fuel_frac_to_eff.
+        - dict_fuel_frac_to_fuel_cat: dictionary mapping fuel fraction variable to its associated fuel categor
+        """
+
+
+        """
+        # get the dictionary/run checks
+        if (dict_fuel_frac_to_fuel_cat is None):
+            # checks
+            self.model_attributes.check_subsector(subsector)
+
+            if subsec_mv_consumption is not None:
+                if subsector == self.subsec_name_inen:
+                    dict_fuel_frac_to_eff_cat = self
+                else:
+                    raise ValueError(f"Error in project_energy_consumption_by_fuel_from_effvars: unable to infer dictionary for dict_fuel_frac_to_fuel_cat based on model variable '{modvar_fuel_efficiency}'.")
+            else:
+                raise ValueError(f"Invalid model variable '{modvar_fuel_efficiency}' found in project_energy_consumption_by_fuel_from_fuel_cats: the variable is undefined.")
+        elif not isinstance(dict_fuel_frac_to_eff_cat, dict):
+            raise ValueError(f"Error in project_energy_consumption_by_fuel_from_fuel_cats: invalid type '{type(dict_fuel_frac_to_eff_cat)}' specified for dict_fuel_frac_to_eff_cat.")
+        """
+
+        ##  estimate demand at point of use (account for heat delivery efficiency)
+
+        # initializations
+        arr_frac_norm = 0
+        arr_enfu_efficiency = self.model_attributes.get_standard_variables(df_neenergy_trajectories, modvar_fuel_efficiency, True, "array_base", expand_to_all_cats = True)
+        attr_enfu = self.model_attributes.get_attribute_table(self.subsec_name_enfu)
+
+        # use fractions of demand + efficiencies to calculate fraction of consumption
+        for modvar_fuel_frac in dict_fuel_fracs.keys():
+            cat_fuel = dict_fuel_frac_to_fuel_cat.get(modvar_fuel_frac)
+            index_enfu_fuel = attr_enfu.get_key_value_index(cat_fuel)
+            # get efficiency, then fuel fractions
+            vec_efficiency = arr_enfu_efficiency[:, index_enfu_fuel]
+            arr_frac = dict_fuel_fracs.get(modvar_fuel_frac)
+            arr_frac_norm += np.nan_to_num(arr_frac.transpose()/vec_efficiency, 0.0)
+        # transpose again
+        arr_frac_norm = arr_frac_norm.transpose()
+        # project demand forward
+        arr_demand = np.nan_to_num(vec_consumption_intensity_initial/arr_frac_norm[0], 0.0)
+        arr_demand = sf.do_array_mult(arr_driver, arr_demand)
+
+        # calculate consumption
+        dict_consumption_by_fuel_out = {}
+        for modvar_fuel_frac in dict_fuel_fracs.keys():
+            cat_fuel = dict_fuel_frac_to_fuel_cat.get(modvar_fuel_frac)
+            index_enfu_fuel = attr_enfu.get_key_value_index(cat_fuel)
+            # get efficiency, then fuel fractions
+            vec_efficiency = arr_enfu_efficiency[:, index_enfu_fuel]
+            # use consumption by fuel type and efficiency to get output demand for each fuel (in output energy units specified in config)
+            arr_consumption_fuel = np.nan_to_num((arr_demand*arr_frac).transpose()/vec_efficiency, 0.0).transpose()
+            dict_consumption_by_fuel_out.update({modvar_fuel_frac: arr_consumption_fuel})
+
+        return dict_consumption_by_fuel_out
+
 
 
 
@@ -548,7 +620,7 @@ class NonElectricEnergy:
         # first, retrieve energy fractions and ensure they sum to 1
         dict_arrs_inen_frac_energy = self.model_attributes.get_multivariables_with_bounded_sum_by_category(
             df_neenergy_trajectories,
-            self.modvar_inen_list_fuel_fractions,
+            self.modvars_inen_list_fuel_fraction,
             1,
             force_sum_equality = True,
             msg_append = "Energy fractions by category do not sum to 1. See definition of dict_arrs_inen_frac_energy."
@@ -560,21 +632,46 @@ class NonElectricEnergy:
         # get production-based emissions - start with production, energy demand
         arr_inen_prod = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_ippu_qty_total_production, True, "array_base", expand_to_all_cats = True)
         arr_inen_prod_energy_intensity = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_inen_en_prod_intensity_factor, True, "array_base", expand_to_all_cats = True)
-        scalar_inen_prod_intensity_to_total_prod = self.model_attributes.get_variable_unit_conversion_factor(
+        # build dictionary for projection
+        dict_inen_fuel_frac_to_eff_cat = self.dict_inen_fuel_categories_to_fuel_variables.copy()
+        for k in dict_inen_fuel_frac_to_eff_cat.keys():
+            val = dict_inen_fuel_frac_to_eff_cat[k]["fuel_fraction"]
+            dict_inen_fuel_frac_to_eff_cat.update({k: val})
+        dict_inen_fuel_frac_to_eff_cat = sf.reverse_dict(dict_inen_fuel_frac_to_eff_cat)
+        # energy consumption at time 0 due to production in terms of units modvar_ippu_qty_total_production
+        arr_inen_energy_consumption_intensity_prod = arr_inen_prod_energy_intensity*self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_inen_en_prod_intensity_factor,
             self.modvar_ippu_qty_total_production,
             "mass"
         )
-        # energy intensity due to production in terms of units self.modvar_ippu_qty_total_production
-        arr_inen_energy_demand = arr_inen_prod*arr_inen_prod_energy_intensity*scalar_inen_prod_intensity_to_total_prod
+        dict_inen_energy_consumption_prod = self.project_energy_consumption_by_fuel_from_fuel_cats(
+            df_neenergy_trajectories,
+            arr_inen_energy_consumption_intensity_prod[0],
+            arr_inen_prod,
+            self.modvar_enfu_efficiency_factor_industrial_energy,
+            dict_arrs_inen_frac_energy,
+            dict_inen_fuel_frac_to_eff_cat
+        )
+        #HEREHERE
         # gdp-based emissions - get intensity, multiply by gdp, and scale to match energy units of production
-        arr_inen_gdp_energy_intensity = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_inen_en_gdp_intensity_factor, True, "array_base", expand_to_all_cats = True)
-        scalar_inen_gdp_energy_to_prod_energy = self.model_attributes.get_variable_unit_conversion_factor(
+        arr_inen_energy_consumption_intensity_gdp = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_inen_en_gdp_intensity_factor, True, "array_base", expand_to_all_cats = True)
+        arr_inen_energy_consumption_intensity_gdp *= self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_inen_en_gdp_intensity_factor,
             self.modvar_inen_en_prod_intensity_factor,
             "energy"
         )
-        arr_inen_energy_demand += (arr_inen_gdp_energy_intensity.transpose() * vec_gdp).transpose()*scalar_inen_gdp_energy_to_prod_energy
+        dict_inen_energy_consumption_gdp = self.project_energy_consumption_by_fuel_from_fuel_cats(
+            df_neenergy_trajectories,
+            arr_inen_energy_consumption_intensity_gdp[0],
+            vec_gdp,
+            self.modvar_enfu_efficiency_factor_industrial_energy,
+            dict_arrs_inen_frac_energy,
+            dict_inen_fuel_frac_to_eff_cat
+        )
+        # build aggregate consumption by fuel
+        dict_inen_energy_consumption = {}
+        for k in dict_inen_energy_consumption_prod.keys():
+            dict_inen_energy_consumption[k] = dict_inen_energy_consumption_gdp[k] + dict_inen_energy_consumption_prod[k]
 
 
         ##  GET EMISSION FACTORS
@@ -605,6 +702,7 @@ class NonElectricEnergy:
         ##  CALCULATE EMISSIONS AND ELECTRICITY DEMAND
 
         # initialize electrical demand to pass and output emission arrays
+        arr_inen_demand_by_fuel = np.zeros((n_projection_time_periods, len(attr_enfu.key_values)))
         arr_inen_demand_electricity = 0.0
         arr_inen_demand_electricity_total = 0.0
         arr_inen_demand_total = 0.0
@@ -612,21 +710,29 @@ class NonElectricEnergy:
         arr_inen_emissions_ch4 = 0.0
         arr_inen_emissions_co2 = 0.0
         arr_inen_emissions_n2o = 0.0
+        # set scalar to convert to enfu units
+        scalar_inen_to_enfu_var_units = self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_inen_en_prod_intensity_factor,
+            self.modvar_enfu_energy_demand_by_fuel_scoe,
+            "energy"
+        )
+
         # loop over fuels to
-        for var_ener_frac in self.modvar_inen_list_fuel_fractions:
-            # retrive the fuel category
+        for var_ener_frac in self.modvars_inen_list_fuel_fraction:
+            # retrive the fuel category and index
             cat_fuel = ds.clean_schema(self.model_attributes.get_variable_attribute(var_ener_frac, pycat_enfu))
-            # get the demand for the current fuel
-            arr_inen_endem_cur_fuel = dict_arrs_inen_frac_energy[var_ener_frac].copy()
-            arr_inen_endem_cur_fuel *= arr_inen_energy_demand
-            # get the category value index and
             index_cat_fuel = attr_enfu.get_key_value_index(cat_fuel)
+            # get the demand for the current fuel
+            arr_inen_endem_cur_fuel = dict_inen_energy_consumption[var_ener_frac].copy()
+            # get emissions from factors
             arr_inen_emissions_ch4 += arr_inen_endem_cur_fuel.transpose()*arr_inen_ef_by_fuel_ch4[:, index_cat_fuel]
             arr_inen_emissions_co2 += arr_inen_endem_cur_fuel.transpose()*arr_inen_ef_by_fuel_co2[:, index_cat_fuel]
             arr_inen_emissions_n2o += arr_inen_endem_cur_fuel.transpose()*arr_inen_ef_by_fuel_n2o[:, index_cat_fuel]
+            # update the demand for fuel in the output array
+            arr_inen_demand_by_fuel[:, index_cat_fuel] = np.sum(arr_inen_endem_cur_fuel, axis = 1)*scalar_inen_to_enfu_var_units
             # add electricity demand and total energy demand
-            arr_inen_demand_electricity += arr_inen_endem_cur_fuel if (cat_fuel == self.enfu_fuel_electricity) else 0.0
-            arr_inen_demand_electricity_total += arr_inen_endem_cur_fuel.sum(axis = 1) if (cat_fuel == self.enfu_fuel_electricity) else 0.0
+            arr_inen_demand_electricity += arr_inen_endem_cur_fuel if (cat_fuel == self.cat_enfu_electricity) else 0.0
+            arr_inen_demand_electricity_total += arr_inen_endem_cur_fuel.sum(axis = 1) if (cat_fuel == self.cat_enfu_electricity) else 0.0
             arr_inen_demand_total += arr_inen_endem_cur_fuel
             arr_inen_demand_total_total += arr_inen_endem_cur_fuel.sum(axis = 1)
 
@@ -644,6 +750,7 @@ class NonElectricEnergy:
             self.model_attributes.array_to_df(arr_inen_emissions_ch4, self.modvar_inen_emissions_ch4, False, True),
             self.model_attributes.array_to_df(arr_inen_emissions_co2, self.modvar_inen_emissions_co2, False, True),
             self.model_attributes.array_to_df(arr_inen_emissions_n2o, self.modvar_inen_emissions_n2o, False, True),
+            self.model_attributes.array_to_df(arr_inen_demand_by_fuel, self.modvar_enfu_energy_demand_by_fuel_inen),
             self.model_attributes.array_to_df(arr_inen_demand_electricity*scalar_energy, self.modvar_inen_energy_demand_electricity, False, True),
             self.model_attributes.array_to_df(arr_inen_demand_electricity_total*scalar_energy, self.modvar_inen_energy_demand_electricity_agg, False),
             self.model_attributes.array_to_df(arr_inen_demand_total*scalar_energy, self.modvar_inen_energy_demand_total, False, True),
@@ -748,7 +855,7 @@ class NonElectricEnergy:
         arr_scoe_demand_mmmgdp_elec *= self.model_attributes.get_scalar(self.modvar_scoe_consumpinit_energy_per_mmmgdp_elec, "energy")
 
         # next, use fuel mix + efficiencies to determine demands from final fuel consumption for heat energy_to_match
-        dict_scoe_demands_by_fuel_heat_hh = self.project_energy_demands_by_fuel(
+        dict_scoe_demands_by_fuel_heat_hh = self.project_energy_consumption_by_fuel_from_effvars(
             df_neenergy_trajectories,
             self.modvar_scoe_consumpinit_energy_per_hh_heat,
             vec_hh,
@@ -756,7 +863,7 @@ class NonElectricEnergy:
             vec_rates_gdp_per_capita,
             dict_arrs_scoe_frac_energy
         )
-        dict_scoe_demands_by_fuel_heat_mmmgdp = self.project_energy_demands_by_fuel(
+        dict_scoe_demands_by_fuel_heat_mmmgdp = self.project_energy_consumption_by_fuel_from_effvars(
             df_neenergy_trajectories,
             self.modvar_scoe_consumpinit_energy_per_mmmgdp_heat,
             vec_gdp,
@@ -786,33 +893,33 @@ class NonElectricEnergy:
         ##  CALCULATE EMISSIONS AND ELECTRICITY DEMAND
 
         # initialize electrical demand to pass and output emission arrays
+        arr_scoe_demand_by_fuel = np.zeros((n_projection_time_periods, len(attr_enfu.key_values)))
         arr_scoe_demand_electricity = arr_scoe_demand_hh_elec + arr_scoe_demand_mmmgdp_elec
         arr_scoe_demand_non_electric = 0.0
         arr_scoe_demand_non_electric_total = 0.0
         arr_scoe_emissions_ch4 = 0.0
         arr_scoe_emissions_co2 = 0.0
         arr_scoe_emissions_n2o = 0.0
+        # initialize the scalar to convert energy units to ENFU output
+        scalar_scoe_to_enfu_var_units = 1/self.model_attributes.get_scalar(self.modvar_enfu_energy_demand_by_fuel_scoe, "energy")
         # loop over fuels to calculate demand totals
         for var_ener_frac in list(self.modvar_dict_scoe_fuel_fractions_to_efficiency_factors.keys()):
-            # retrive the fuel category
+            # retrive the fuel category and index
             cat_fuel = ds.clean_schema(self.model_attributes.get_variable_attribute(var_ener_frac, pycat_enfu))
+            index_cat_fuel = attr_enfu.get_key_value_index(cat_fuel)
             # get the demand for the current fuel
             arr_scoe_endem_cur_fuel = dict_demands_by_fuel_heat[var_ener_frac]
-            # get the category value index and
-            index_cat_fuel = attr_enfu.get_key_value_index(cat_fuel)
+            arr_scoe_demand_by_fuel[:, index_cat_fuel] = np.sum(arr_scoe_endem_cur_fuel, axis = 1)*scalar_scoe_to_enfu_var_units
+            # apply emission factors
             arr_scoe_emissions_ch4 += arr_scoe_endem_cur_fuel.transpose()*arr_scoe_ef_by_fuel_ch4[:, index_cat_fuel]
             arr_scoe_emissions_co2 += arr_scoe_endem_cur_fuel.transpose()*arr_scoe_ef_by_fuel_co2[:, index_cat_fuel]
             arr_scoe_emissions_n2o += arr_scoe_endem_cur_fuel.transpose()*arr_scoe_ef_by_fuel_n2o[:, index_cat_fuel]
             # add electricity demand and total energy demand
-            if (cat_fuel == self.enfu_fuel_electricity):
+            if (cat_fuel == self.cat_enfu_electricity):
+                arr_scoe_demand_by_fuel[:, index_cat_fuel] += np.sum(arr_scoe_demand_electricity, axis = 1)*scalar_scoe_to_enfu_var_units
                 arr_scoe_demand_electricity += arr_scoe_endem_cur_fuel
             else:
                 arr_scoe_demand_non_electric += arr_scoe_endem_cur_fuel
-
-            # add to output dataframe
-            modvar_energdem = self.modvar_dict_scoe_fuel_fractions_to_energy_demand.get(var_ener_frac)
-            if modvar_energdem is not None:
-                df_out += [self.model_attributes.array_to_df(np.sum(arr_scoe_endem_cur_fuel, axis = 1), modvar_energdem, False, False)]
 
         # transpose outputs
         arr_scoe_emissions_ch4 = arr_scoe_emissions_ch4.transpose()
@@ -827,6 +934,7 @@ class NonElectricEnergy:
             self.model_attributes.array_to_df(arr_scoe_emissions_ch4, self.modvar_scoe_emissions_ch4),
             self.model_attributes.array_to_df(arr_scoe_emissions_co2, self.modvar_scoe_emissions_co2),
             self.model_attributes.array_to_df(arr_scoe_emissions_n2o, self.modvar_scoe_emissions_n2o),
+            self.model_attributes.array_to_df(arr_scoe_demand_by_fuel, self.modvar_enfu_energy_demand_by_fuel_scoe),
             self.model_attributes.array_to_df(arr_scoe_demand_electricity, self.modvar_scoe_energy_demand_electricity),
             self.model_attributes.array_to_df(arr_scoe_demand_electricity_total, self.modvar_scoe_energy_demand_electricity_agg),
             self.model_attributes.array_to_df(arr_scoe_demand_non_electric, self.modvar_scoe_energy_demand_heat),
@@ -992,16 +1100,25 @@ class NonElectricEnergy:
         arr_trns_energy_density_fuel = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_enfu_volumetric_energy_density, return_type = "array_units_corrected", expand_to_all_cats = True)
 
         # initialize electrical demand to pass and output emission arrays
+        arr_trns_demand_by_fuel = np.zeros((n_projection_time_periods, len(attr_enfu.key_values)))
         arr_trns_demand_electricity = 0.0
         arr_trns_demand_electricity_total = 0.0
         arr_trns_emissions_ch4 = 0.0
         arr_trns_emissions_co2 = 0.0
         arr_trns_emissions_n2o = 0.0
+        # get conversion scalar
+        scalar_trns_ved_to_enfu_var_units = self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_enfu_volumetric_energy_density,
+            self.modvar_enfu_energy_demand_by_fuel_trns,
+            "energy"
+        )
 
         # loop over fuels to calculate emissions and demand associated with each fuel
         fuels_loop = sorted(list(self.dict_trns_fuel_categories_to_fuel_variables.keys()))
         for cat_fuel in fuels_loop:
 
+            # get the index of the current category
+            index_cat_fuel = attr_enfu.get_key_value_index(cat_fuel)
             # initialize the fuel demand
             vec_fuel_demand = 0
 
@@ -1011,7 +1128,6 @@ class NonElectricEnergy:
             modvar_trns_ef_n2o_cur = dict_tfc_to_fv_cur.get("ef_n2o")
             modvar_trns_fuel_efficiency_cur = dict_tfc_to_fv_cur.get("fuel_efficiency")
             modvar_trns_fuel_fraction_cur = dict_tfc_to_fv_cur.get("fuel_fraction")
-            modvar_trns_total_volumetric_fuel_dem_cur = dict_tfc_to_fv_cur.get("total_fuel_demand")
 
             # set some scalars for use in the calculations
             scalar_trns_fuel_efficiency_to_demand = self.model_attributes.get_variable_unit_conversion_factor(
@@ -1072,6 +1188,7 @@ class NonElectricEnergy:
                 arr_emissions_co2_cur_fuel = (arr_trns_fuel_energydem_cur_fuel_co2.transpose()*vec_trns_ef_by_fuel_co2_cur).transpose()
                 arr_trns_emissions_co2 += arr_emissions_co2_cur_fuel
 
+
                 ##  N2O EMISSIONS
 
                 # n2o scalar
@@ -1084,7 +1201,12 @@ class NonElectricEnergy:
                 arr_emissions_n2o_cur_fuel = arr_trns_ef_n2o_cur*arr_trns_fuel_energydem_cur_fuel_n2o
                 arr_trns_emissions_n2o += arr_emissions_n2o_cur_fuel
 
-            elif cat_fuel == self.enfu_fuel_electricity:
+
+                ##  ENERGY DEMAND BY FUEL
+
+                arr_trns_demand_by_fuel[:, index_cat_fuel] = np.sum(arr_trns_energydem_cur_fuel, axis = 1)*scalar_trns_ved_to_enfu_var_units
+
+            elif cat_fuel == self.cat_enfu_electricity:
 
                 # get scalar for energy
                 scalar_electric_eff_to_distance_equiv = self.model_attributes.get_variable_unit_conversion_factor(
@@ -1100,20 +1222,19 @@ class NonElectricEnergy:
                 arr_trns_energydem_elec *= self.model_attributes.get_scalar(self.modvar_trns_electrical_efficiency, "energy")
                 arr_trns_energydem_elec = np.nan_to_num(arr_trns_energydem_elec, posinf = 0, neginf = 0)
 
-            # add total fuel volumetric fuel demand
-            if modvar_trns_fuel_efficiency_cur is not None:
-                vec_fuel_demand *= self.model_attributes.get_scalar(modvar_trns_fuel_efficiency_cur, "volume")
-                df_out.append(
-                    self.model_attributes.array_to_df(vec_fuel_demand, modvar_trns_total_volumetric_fuel_dem_cur, False, False),
-                )
+
+                ##  ENERGY DEMAND BY FUEL
+
+                arr_trns_demand_by_fuel[:, index_cat_fuel] = np.sum(arr_trns_energydem_elec, axis = 1)/self.model_attributes.get_scalar(self.modvar_enfu_energy_demand_by_fuel_trns, "energy")
+
 
         # add aggregate emissions
         df_out += [
             self.model_attributes.array_to_df(arr_trns_emissions_ch4, self.modvar_trns_emissions_ch4, False),
             self.model_attributes.array_to_df(arr_trns_emissions_co2, self.modvar_trns_emissions_co2, False),
             self.model_attributes.array_to_df(arr_trns_emissions_n2o, self.modvar_trns_emissions_n2o, False),
-            self.model_attributes.array_to_df(arr_trns_energydem_elec, self.modvar_tnrs_energy_demand_electricity, False, True),
-            self.model_attributes.array_to_df(np.sum(arr_trns_energydem_elec, axis = 1), self.modvar_tnrs_energy_demand_electricity_agg, False)
+            self.model_attributes.array_to_df(arr_trns_demand_by_fuel, self.modvar_enfu_energy_demand_by_fuel_trns),
+            self.model_attributes.array_to_df(arr_trns_energydem_elec, self.modvar_tnrs_energy_demand_electricity, False, True)
         ]
 
 
@@ -1290,8 +1411,8 @@ class NonElectricEnergy:
         # concatenate and add subsector emission totals
         df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")
 
-        #return df_out
-        return self.project_ccsq(df_neenergy_trajectories, dict_dims, n_projection_time_periods, projection_time_periods)
+        return df_out
+        #return self.project_ccsq(df_neenergy_trajectories, dict_dims, n_projection_time_periods, projection_time_periods)
 
 
 
@@ -1375,7 +1496,7 @@ class NonElectricEnergy:
         arr_ccsq_frac_energy_elec = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_ccsq_frac_en_electricity, True, "array_base", expand_to_all_cats = True)
         arr_ccsq_frac_energy_heat = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_ccsq_frac_en_heat, True, "array_base", expand_to_all_cats = True)
         # next, use fuel mix + efficiencies to determine demands from final fuel consumption for heat energy_to_match (this will return the fractions of sequestration by consumption)
-        dict_ccsq_demands_by_fuel_heat = self.project_energy_demands_by_fuel(
+        dict_ccsq_demands_by_fuel_heat = self.project_energy_consumption_by_fuel_from_effvars(
             df_neenergy_trajectories,
             self.modvar_ccsq_total_sequestration,
             None, None, None,
@@ -1406,30 +1527,33 @@ class NonElectricEnergy:
         ##  CALCULATE EMISSIONS AND ELECTRICITY DEMAND
 
         # initialize electrical demand to pass and output emission arrays
+        arr_ccsq_demand_by_fuel = np.zeros((n_projection_time_periods, len(attr_enfu.key_values)))
         arr_ccsq_demand_non_electric = 0.0
         arr_ccsq_demand_non_electric_total = 0.0
         arr_ccsq_emissions_ch4 = 0.0
-        arr_ccsq_emissions_co2 = 0.0
+        arr_ccsq_emissions_co2 = -1*arr_ccsq_demand_sequestration.transpose()
         arr_ccsq_emissions_n2o = 0.0
+        # get the scalar to convert to correct output units
+        scalar_ccsq_to_enfu_var_units = 1/self.model_attributes.get_scalar(self.modvar_enfu_energy_demand_by_fuel_ccsq, "energy")
         # loop over fuels to calculate demand totals
         for var_ener_frac in list(self.modvar_dict_ccsq_fuel_fractions_to_efficiency_factors.keys()):
-            # retrive the fuel category
+            # retrive the fuel category and index
             cat_fuel = ds.clean_schema(self.model_attributes.get_variable_attribute(var_ener_frac, pycat_enfu))
+            index_cat_fuel = attr_enfu.get_key_value_index(cat_fuel)
             # get the demand for the current fuel
             arr_ccsq_endem_cur_fuel = dict_ccsq_demands_by_fuel_heat[var_ener_frac]
-            # get the category value index and
-            index_cat_fuel = attr_enfu.get_key_value_index(cat_fuel)
+            arr_ccsq_demand_by_fuel[:, index_cat_fuel] = np.sum(arr_ccsq_endem_cur_fuel, axis = 1)*scalar_ccsq_to_enfu_var_units
+            # get emissions
             arr_ccsq_emissions_ch4 += arr_ccsq_endem_cur_fuel.transpose()*arr_ccsq_ef_by_fuel_ch4[:, index_cat_fuel]
             arr_ccsq_emissions_co2 += arr_ccsq_endem_cur_fuel.transpose()*arr_ccsq_ef_by_fuel_co2[:, index_cat_fuel]
             arr_ccsq_emissions_n2o += arr_ccsq_endem_cur_fuel.transpose()*arr_ccsq_ef_by_fuel_n2o[:, index_cat_fuel]
             # add total energy demand
-            if (cat_fuel != self.enfu_fuel_electricity):
+            if (cat_fuel != self.cat_enfu_electricity):
                 arr_ccsq_demand_non_electric += arr_ccsq_endem_cur_fuel
-
-            # add to output dataframe
-            modvar_energdem = self.modvar_dict_ccsq_fuel_fractions_to_energy_demand.get(var_ener_frac)
-            if modvar_energdem is not None:
-                df_out += [self.model_attributes.array_to_df(np.sum(arr_ccsq_endem_cur_fuel, axis = 1), modvar_energdem, False, False)]
+            else:
+                # add in total electricity demand from non-heat electric demand, then update
+                arr_ccsq_demand_by_fuel[:, index_cat_fuel] += np.sum(arr_ccsq_demand_electricity, axis = 1)*scalar_ccsq_to_enfu_var_units
+                arr_ccsq_demand_electricity += arr_ccsq_endem_cur_fuel
 
         # transpose outputs and prepare for output
         arr_ccsq_emissions_ch4 = arr_ccsq_emissions_ch4.transpose()
@@ -1442,7 +1566,8 @@ class NonElectricEnergy:
             self.model_attributes.array_to_df(arr_ccsq_emissions_ch4, self.modvar_ccsq_emissions_ch4),
             self.model_attributes.array_to_df(arr_ccsq_emissions_co2, self.modvar_ccsq_emissions_co2),
             self.model_attributes.array_to_df(arr_ccsq_emissions_n2o, self.modvar_ccsq_emissions_n2o),
-            self.model_attributes.array_to_df(arr_ccsq_demand_electricity, self.modvar_ccsq_energy_demand_electricity),
+            self.model_attributes.array_to_df(arr_ccsq_demand_by_fuel, self.modvar_enfu_energy_demand_by_fuel_ccsq),
+            self.model_attributes.array_to_df(arr_ccsq_demand_electricity, self.modvar_ccsq_energy_demand_elec),
             self.model_attributes.array_to_df(arr_ccsq_demand_non_electric, self.modvar_ccsq_energy_demand_heat),
             self.model_attributes.array_to_df(arr_ccsq_demand_non_electric_total, self.modvar_ccsq_energy_demand_heat_agg)
         ]
@@ -1450,4 +1575,4 @@ class NonElectricEnergy:
         df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")
         self.model_attributes.add_subsector_emissions_aggregates(df_out, [self.subsec_name_scoe], False)
 
-        return dict_ccsq_demands_by_fuel_heat#df_out
+        return df_out

@@ -1,22 +1,13 @@
-﻿Variable Type,Variable,Information,Variable Schema,Dashboard,Categories,Notes,Data Link,Reference,Internal Model Variable,Default LHS Scalar Minimum at Final Time Period,Default LHS Scalar Maximum at Final Time Period,``$CAT-FUEL$``,Energy Demand Variable by Fuel
-Input,SCOE Elasticity of Per Household Electrical Applicance Demand to GDP Per Capita,,``elasticity_scoe_enerdem_per_hh_$CAT-SCOE$_elec_appliances_to_gdppc``,,``residential``,,,,0,1,1,none,0
-Input,SCOE Elasticity of Per Household Heat Energy Demand to GDP Per Capita,,``elasticity_scoe_enerdem_per_hh_$CAT-SCOE$_heat_energy_to_gdppc``,,``residential``,,,,0,1,1,none,0
-Input,SCOE Elasticity of Per GDP Electrical Applicance Demand to GDP Per Capita,,``elasticity_scoe_enerdem_per_mmmgdp_$CAT-SCOE$_elec_appliances_to_gdppc``,,``commercial_municipal``,,,,0,1,1,none,0
-Input,SCOE Elasticity of Per GDP Heat Energy Demand to GDP Per Capita,,``elasticity_scoe_enerdem_per_mmmgdp_$CAT-SCOE$_heat_energy_to_gdppc``,,``commercial_municipal``|``other_se``,,,,0,1,1,none,0
-Input,SCOE Initial Per Household Electric Appliances Energy Consumption,,``consumpinit_scoe_$UNIT-ENERGY$_per_hh_$CAT-SCOE$_elec_appliances`` (``$UNIT-ENERGY$ = gj``),,``residential``,,,,0,1,1,none,0
-Input,SCOE Initial Per Household Heat Energy Consumption,,``consumpinit_scoe_$UNIT-ENERGY$_per_hh_$CAT-SCOE$_heat_energy`` (``$UNIT-ENERGY$ = gj``),,``residential``,,,,0,1,1,none,0
-Input,SCOE Initial Per GDP Electric Appliances Energy Consumption,,``consumpinit_scoe_$UNIT-ENERGY$_per_mmmgdp_$CAT-SCOE$_elec_appliances`` (``$UNIT-ENERGY$ = tj``),,``commercial_municipal``|``other_se``,,,,0,1,1,none,0
+﻿Variable Type,Variable,Information,Variable Schema,Dashboard,Categories,Notes,Data Link,Reference,Internal Model Variable,Default LHS Scalar Minimum at Final Time Period,Default LHS Scalar Maximum at Final Time Period,``$CAT-FUEL$``
+Input,SCOE Elasticity of Per Household Electrical Applicance Demand to GDP Per Capita,,``elasticity_scoe_enerdem_per_hh_$CAT-SCOE$_elec_appliances_to_gdppc``,,``residential``,,,,0,1,1,none
+Input,SCOE Elasticity of Per Household Heat Energy Demand to GDP Per Capita,,``elasticity_scoe_enerdem_per_hh_$CAT-SCOE$_heat_energy_to_gdppc``,,``residential``,,,,0,1,1,none
+Input,SCOE Elasticity of Per GDP Electrical Applicance Demand to GDP Per Capita,,``elasticity_scoe_enerdem_per_mmmgdp_$CAT-SCOE$_elec_appliances_to_gdppc``,,``commercial_municipal``,,,,0,1,1,none
+Input,SCOE Elasticity of Per GDP Heat Energy Demand to GDP Per Capita,,``elasticity_scoe_enerdem_per_mmmgdp_$CAT-SCOE$_heat_energy_to_gdppc``,,``commercial_municipal``|``other_se``,,,,0,1,1,none
+Input,SCOE Initial Per Household Electric Appliances Energy Consumption,,``consumpinit_scoe_$UNIT-ENERGY$_per_hh_$CAT-SCOE$_elec_appliances`` (``$UNIT-ENERGY$ = gj``),,``residential``,,,,0,1,1,none
+Input,SCOE Initial Per Household Heat Energy Consumption,,``consumpinit_scoe_$UNIT-ENERGY$_per_hh_$CAT-SCOE$_heat_energy`` (``$UNIT-ENERGY$ = gj``),,``residential``,,,,0,1,1,none
+Input,SCOE Initial Per GDP Electric Appliances Energy Consumption,,``consumpinit_scoe_$UNIT-ENERGY$_per_mmmgdp_$CAT-SCOE$_elec_appliances`` (``$UNIT-ENERGY$ = tj``),,``commercial_municipal``|``other_se``,,,,0,1,1,none
 Input,SCOE Initial Per GDP Heat Energy Consumption," | SCOE energy demands that are specified exogenously (no elasticity) for each time period. 
  | 
- | **NOTE:** Demands by fuel type are specified under the *SCOE Fraction Heat Energy Demand $CAT-FUEL$* variables for this variable. Elecitrification can be specified as fraction of heat energy from electricity. ",``consumpinit_scoe_$UNIT-ENERGY$_per_mmmgdp_$CAT-SCOE$_heat_energy`` (``$UNIT-ENERGY$ = tj``),,``commercial_municipal``|``other_se``,,,,0,1,1,none,0
-Output,Total Electrical Energy Demand from SCOE,,``energy_demand_scoe_electricity_total``,,none,,,,1,1,1,none,0
-Output,Total Non-Electrical Heat Energy Demand from SCOE,,``energy_demand_scoe_non_electric_heat_total``,,none,,,,1,1,1,none,0
-Output,SCOE Heat Energy Demand Coal,,``energy_demand_scoe_coal``,,none,,,,1,1,1,``fuel_coal``,1
-Output,SCOE Heat Energy Demand Diesel,,``energy_demand_scoe_diesel``,,none,,,,1,1,1,``fuel_diesel``,1
-Output,SCOE Heat Energy Demand Electricity,,``energy_demand_scoe_electricity``,,none,,,,1,1,1,``fuel_electricity``,1
-Output,SCOE Heat Energy Demand Gasoline,,``energy_demand_scoe_gasoline``,,none,,,,1,1,1,``fuel_gasoline``,1
-Output,SCOE Heat Energy Demand Hydrogen,,``energy_demand_scoe_hydrogen``,,none,,,,1,1,1,``fuel_hydrogen``,1
-Output,SCOE Heat Energy Demand Kerosene,,``energy_demand_scoe_kerosene``,,none,,,,1,1,1,``fuel_kerosene``,1
-Output,SCOE Heat Energy Demand Natural Gas,,``energy_demand_scoe_natural_gas``,,none,,,,1,1,1,``fuel_natural_gas``,1
-Output,SCOE Heat Energy Demand Petroleum Liquid Gas,,``energy_demand_scoe_gas_petroleum_liquid``,,none,,,,1,1,1,``fuel_gas_petroleum_liquid``,1
-Output,SCOE Heat Energy Demand Solid Biomass,,``energy_demand_scoe_solid_biomass``,,none,,,,1,1,1,``fuel_solid_biomass``,1
+ | **NOTE:** Demands by fuel type are specified under the *SCOE Fraction Heat Energy Demand $CAT-FUEL$* variables for this variable. Elecitrification can be specified as fraction of heat energy from electricity. ",``consumpinit_scoe_$UNIT-ENERGY$_per_mmmgdp_$CAT-SCOE$_heat_energy`` (``$UNIT-ENERGY$ = tj``),,``commercial_municipal``|``other_se``,,,,0,1,1,none
+Output,Total Electrical Energy Demand from SCOE,,``energy_demand_scoe_electricity_total``,,none,,,,1,1,1,none
+Output,Total Non-Electrical Heat Energy Demand from SCOE,,``energy_demand_scoe_non_electric_heat_total``,,none,,,,1,1,1,none

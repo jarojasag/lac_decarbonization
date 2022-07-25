@@ -13,13 +13,21 @@ Fuels and Heat Energy
 
 In general, energy is produced by stationary or mobile combustion of different fuels. The combustion of fuels releases :math:`\text{CO}_2`, :math:`\text{CH}_4`, and :math:`\text{N}_2\text{O}` (and other gasses, which may not be captured). These fuels are utilized by different technologies, which may use fuels at different efficiencies. Energy can also be stored (specifically electricity). The term **fuel** is explicitly used in all energy subsectors, while **technology** and **storage** are used in the NemoMod electricity model.
 
-The combination of fuel and efficiency is an important concept for entering input data. Energy use in SCOE and CCSQ both use a fraction of energy *demand at point-of-use* to project future changes in fuel mixtures. However, many empirical data that are used rely on energy *consumption*. In general, where :math:`D_t` is the demand at time :math:`t`, :math:`C_t` is consumption at time :math:`t`, :math:`\alpha_t \in \mathbb{R}^n` is the vector of fuel mix fractions of *demand* at time :math:`t` for :math:`n` fuels, and :math:`\e_t \in \mathbb{R}^n` is the vector of fuel-technology average efficiencies at time :math:`t` for :math:`n` fuels, the demand is
+The combination of fuel and efficiency is an important concept for entering input data. Energy use in SCOE and CCSQ both use a fraction of energy *demand at point of use* to project future changes in fuel mixtures. However, many empirical data that are used rely on energy *consumption*, and both SCOE and CCSQ take initial consumption as inputs to SISEPUEDE.
 
-:math:`D_t = C_t(\alpha_t \cdot e_t)`.
+Let
 
-Therefore, where :math:`\hat{\alpha}_t \in \mathbb{R}^n` is the vector of fuel mix fractions of *consumption* at time :math:`t` for :math:`n` fuels, the fraction at point-of-use demand for fuel :math:`i` should be entered as
+* :math:`D_t` be the total energy demand at time :math:`t`
+* :math:`C_t` be the total energy consumption at time :math:`t` in question (**input to model**)
+* :math:`\alpha^{(C)}_t \in \mathbb{R}^n` be the vector of fuel mix fractions of *consumption* at time :math:`t` for :math:`n` fuels
+* :math:`\alpha^{(D)}_t \in \mathbb{R}^n` be the vector of fuel mix fractions of *demand* at time :math:`t` for :math:`n` fuels (**input to model**)
+* :math:`e_t \in \mathbb{R}^n` be the vector of fuel-technology average efficiencies at time :math:`t` for :math:`n` fuels, the demand is
 
-:math:`\alpha_{ti} = \frac{\alpha_{ti}\e_{ti}}{\alpha_t \cdot e_t}`,
+:math:`D_t = C_t\left(\alpha^{(C)}_t \cdot e_t\right)`.
+
+The fraction at point-of-use demand :math:`\alpha^{(D)}_{ti}` for fuel :math:`i` is then calculated as
+
+:math:`\alpha^{(D)}_{ti} = \frac{\alpha^{(C)}_{ti}e_{ti}}{\alpha^{(C)}_t \cdot e_t}`,
 
 i.e., the point-of-use demand is the efficiency-weighted fraction of consumption. For more information on the energy models' mathematical specification, see the `Mathematical Documentation of Energy Models <./mathdoc_energy.html>`_.
 

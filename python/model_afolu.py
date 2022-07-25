@@ -20,6 +20,7 @@ class AFOLU:
         # some subector reference variables
         self.subsec_name_agrc = "Agriculture"
         self.subsec_name_econ = "Economy"
+        self.subsec_name_enfu = "Energy Fuels"
         self.subsec_name_frst = "Forest"
         self.subsec_name_gnrl = "General"
         self.subsec_name_ippu = "IPPU"
@@ -50,7 +51,8 @@ class AFOLU:
         self.modvar_agrc_elas_crop_demand_income = "Crop Demand Income Elasticity"
         self.modvar_agrc_emissions_ch4_rice = ":math:\\text{CH}_4 Emissions from Rice"
         self.modvar_agrc_emissions_co2_biomass = ":math:\\text{CO}_2 Emissions from Biomass Carbon Stock Changes"
-        self.modvar_agrc_emissions_co2_soil_carbon = ":math:\\text{CO}_2 Emissions from Soil Carbon"
+        self.modvar_agrc_emissions_co2_soil_carbon_mineral = ":math:\\text{CO}_2 Emissions from Soil Carbon in Mineral Soils"
+        self.modvar_agrc_emissions_co2_soil_carbon_organic = ":math:\\text{CO}_2 Emissions from Soil Carbon in Organic Soils"
         self.modvar_agrc_emissions_n2o_biomass_burning = ":math:\\text{N}_2\\text{O} Emissions from Biomass Burning"
         self.modvar_agrc_emissions_n2o_crop_residues = ":math:\\text{N}_2\\text{O} Emissions from Crop Residues"
         self.modvar_agrc_frac_animal_feed = "Crop Fraction Animal Feed"
@@ -249,6 +251,7 @@ class AFOLU:
         self.model_ippu = IPPU(self.model_attributes)
 
         # key categories
+        self.cat_enfu_biomass = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_enfu, {"biomass_demand_category": 1})[0]
         self.cat_ippu_paper = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_ippu, {"virgin_paper_category": 1})[0]
         self.cat_ippu_wood = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_ippu, {"virgin_wood_category": 1})[0]
         # variable required for integration
@@ -325,22 +328,6 @@ class AFOLU:
                 self.model_energy.modvar_scoe_elasticity_hh_energy_demand_heat_to_gdppc,
                 self.model_energy.modvar_scoe_elasticity_mmmgdp_energy_demand_elec_to_gdppc,
                 self.model_energy.modvar_scoe_elasticity_mmmgdp_energy_demand_heat_to_gdppc,
-                self.model_energy.modvar_scoe_emissions_ch4,
-                self.model_energy.modvar_scoe_emissions_co2,
-                self.model_energy.modvar_scoe_emissions_n2o,
-                self.model_energy.modvar_scoe_energy_demand_electricity,
-                self.model_energy.modvar_scoe_energy_demand_electricity_agg,
-                self.model_energy.modvar_scoe_energy_demand_heat,
-                self.model_energy.modvar_scoe_energy_demand_heat_agg,
-                self.model_energy.modvar_scoe_energy_demand_heat_biomass,
-                self.model_energy.modvar_scoe_energy_demand_heat_coal,
-                self.model_energy.modvar_scoe_energy_demand_heat_diesel,
-                self.model_energy.modvar_scoe_energy_demand_heat_electricity,
-                self.model_energy.modvar_scoe_energy_demand_heat_gasoline,
-                self.model_energy.modvar_scoe_energy_demand_heat_hydrogen,
-                self.model_energy.modvar_scoe_energy_demand_heat_kerosene,
-                self.model_energy.modvar_scoe_energy_demand_heat_natural_gas,
-                self.model_energy.modvar_scoe_energy_demand_heat_pliq_gas,
                 self.model_energy.modvar_scoe_frac_heat_en_coal,
                 self.model_energy.modvar_scoe_frac_heat_en_diesel,
                 self.model_energy.modvar_scoe_frac_heat_en_electricity,
@@ -815,7 +802,12 @@ class AFOLU:
                 n_projection_time_periods,
                 projection_time_periods
             )
-            vec_scoe_biomass_fuel_demand = self.model_attributes.get_standard_variables(df_scoe, self.model_energy.modvar_scoe_energy_demand_heat_biomass, False, "array_base")
+            # get the enfu attrbute table and use it to retrieve the biomass fuel demand
+            attr_enfu = self.model_attributes.get_attribute_table(self.subsec_name_enfu)
+            ind_biomass = attr_enfu.get_key_value_index(self.cat_enfu_biomass)
+            vec_scoe_biomass_fuel_demand = self.model_attributes.get_standard_variables(df_scoe, self.model_energy.modvar_enfu_energy_demand_by_fuel_scoe, False, "array_base")
+            vec_scoe_biomass_fuel_demand = vec_scoe_biomass_fuel_demand[:, ind_biomass]
+            # calculate the change and growth rate
             vec_scoe_biomass_fuel_demand_change = np.nan_to_num(vec_scoe_biomass_fuel_demand[1:]/vec_scoe_biomass_fuel_demand[0:-1], 1.0, posinf = 1.0)
             vec_scoe_biomass_fuel_demand_growth_rate = np.cumprod(np.insert(vec_scoe_biomass_fuel_demand_change, 0, 1.0))
             df_scoe = 0
@@ -1319,7 +1311,6 @@ class AFOLU:
         df_out += [
             self.model_attributes.array_to_df(arr_agrc_crop_area*scalar_lndu_input_area_to_output_area, self.modvar_agrc_area_crop),
             self.model_attributes.array_to_df(arr_agrc_ef_ch4*arr_agrc_crop_area, self.modvar_agrc_emissions_ch4_rice, reduce_from_all_cats_to_specified_cats = True),
-            #self.model_attributes.array_to_df(arr_agrc_ef_co2_soil_carbon*arr_agrc_crop_area, self.modvar_agrc_emissions_co2_soil_carbon),
             self.model_attributes.array_to_df(arr_agrc_ef_co2_biomass*arr_agrc_crop_area, self.modvar_agrc_emissions_co2_biomass, reduce_from_all_cats_to_specified_cats = True)
         ]
 
@@ -1823,7 +1814,7 @@ class AFOLU:
         vec_soil_soc_lost_in_cropland = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_soil_frac_soc_lost, False, "array_base", var_bounds = (0, 1))
 
         # initialize SOC totals
-        vec_soil_emissions_co2_organic_cultivated = 0.0
+        vec_soil_emission_co2_soil_carbon_organic = 0.0
         vec_soil_soc_total = 0.0
         vec_soil_soc_total_mineral = 0.0
         vec_soil_ef1_soc_est = 0.0
@@ -1850,7 +1841,7 @@ class AFOLU:
             arr_soil_soc_crop_temptrop_cur = (arr_agrc_crop_area*dict_arrs_agrc_frac_temptrop[modvar]).transpose()
             arr_soil_soc_crop_temptrop_cur *= arr_lndu_frac_organic_soils[:, ind_crop]
             # get SOC totals and integrate land-use specific mineral fractions
-            vec_soil_emissions_co2_organic_cultivated += np.sum(arr_soil_soc_crop_temptrop_cur*arr_soil_ef_c_organic_cultivated_soils[:, ind_soil], axis = 0)
+            vec_soil_emission_co2_soil_carbon_organic += np.sum(arr_soil_soc_crop_temptrop_cur*arr_soil_ef_c_organic_cultivated_soils[:, ind_soil], axis = 0)
 
         # loop over dry/wet to estimate carbon stocks in grassland
         for modvar in self.modvar_list_lndu_frac_drywet:
@@ -1886,10 +1877,12 @@ class AFOLU:
         vec_soil_delta_soc_mineral = np.insert(vec_soil_delta_soc_mineral, 0, vec_soil_delta_soc_mineral[0])
         # calculate FSOM from fraction mineral
         vec_soil_n2odirectn_fsom = -(vec_soil_delta_soc_mineral/vec_soil_ratio_c_to_n_soil_organic_matter)*vec_soil_ef1_soc_est
-        vec_soil_emission_co2_soil_carbon = -self.factor_c_to_co2*vec_soil_delta_soc_mineral
-        vec_soil_emission_co2_soil_carbon *= self.model_attributes.get_scalar(self.modvar_lsmm_n_to_fertilizer_agg_dung, "mass")
-        vec_soil_emission_co2_soil_carbon += vec_soil_emissions_co2_organic_cultivated*self.factor_c_to_co2
-        vec_soil_emission_co2_soil_carbon *= self.model_attributes.get_gwp("co2")
+        vec_soil_emission_co2_soil_carbon_mineral = -self.factor_c_to_co2*vec_soil_delta_soc_mineral
+        vec_soil_emission_co2_soil_carbon_mineral *= self.model_attributes.get_scalar(self.modvar_lsmm_n_to_fertilizer_agg_dung, "mass")
+        vec_soil_emission_co2_soil_carbon_mineral *= self.model_attributes.get_gwp("co2")
+        # get soil carbon from organic drained soils
+        vec_soil_emission_co2_soil_carbon_organic *= self.factor_c_to_co2*self.model_attributes.get_gwp("co2")
+
 
 
 
@@ -2055,7 +2048,8 @@ class AFOLU:
         # build emissions outputs
         df_out += [
             self.model_attributes.array_to_df(vec_soil_emission_n2o_crop_residue*scalar_n2on_to_emission_out, self.modvar_agrc_emissions_n2o_crop_residues),
-            self.model_attributes.array_to_df(vec_soil_emission_co2_soil_carbon, self.modvar_agrc_emissions_co2_soil_carbon),
+            self.model_attributes.array_to_df(vec_soil_emission_co2_soil_carbon_mineral, self.modvar_agrc_emissions_co2_soil_carbon_mineral),
+            self.model_attributes.array_to_df(vec_soil_emission_co2_soil_carbon_organic, self.modvar_agrc_emissions_co2_soil_carbon_organic),
             self.model_attributes.array_to_df(vec_soil_emission_n2o_fertilizer*scalar_n2on_to_emission_out, self.modvar_soil_emissions_n2o_fertilizer),
             self.model_attributes.array_to_df(vec_soil_emission_n2o_mineral_soils*scalar_n2on_to_emission_out, self.modvar_soil_emissions_n2o_mineral_soils),
             self.model_attributes.array_to_df(vec_soil_emission_n2o_organic_soils*scalar_n2on_to_emission_out, self.modvar_soil_emissions_n2o_organic_soils),

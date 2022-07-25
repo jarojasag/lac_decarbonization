@@ -12,6 +12,7 @@ Energy,Carbon Capture and Sequestration,``ccsq``,``$CAT-CCSQ$``,Carbon capture a
 Energy,Energy Fuels,``enfu``,``$CAT-FUEL$``,Fuel used in electricity generation.,Julia/Python
 Energy,Energy Storage,``enst``,``$CAT-STORAGE$``,Storage technologies used in n energy system. ,Julia/Python
 Energy,Energy Technology,``entc``,``$CAT-TECHNOLOGY$``,"Technology associated with the generation of electricity--in particular, power plants.",Julia/Python
+Energy,Fugitive Emissions,``fgtv``,``$CAT-FUEL$``,"Activity (demand and emission) associated with fugitive emissions from coal, natural gas, and crude/oil production and transportation.",Python
 Energy,Industrial Energy,``inen``,``$CAT-INDUSTRY$``,Activity (demand and emission) associated with the energy generation and use in industry,Python
 Energy,Stationary Combustion and Other Energy,``scoe``,``$CAT-SCOE$``,"Emissions from stationary combustion due to residential, commercial and municipal activities, and agricultural fuel combustion.",Python
 Energy,Transportation,``trns``,``$CAT-TRANSPORTATION$``,Activity (demand and emission) associated with the generation of electricity ....,Python
