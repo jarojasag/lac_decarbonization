@@ -21,6 +21,7 @@ class NonElectricEnergy:
         self.subsec_name_ccsq = "Carbon Capture and Sequestration"
         self.subsec_name_econ = "Economy"
         self.subsec_name_enfu = "Energy Fuels"
+        self.subsec_name_fgtv = "Fugitive Emissions"
         self.subsec_name_gnrl = "General"
         self.subsec_name_inen = "Industrial Energy"
         self.subsec_name_ippu = "IPPU"
@@ -77,12 +78,15 @@ class NonElectricEnergy:
         self.modvar_enfu_energy_demand_by_fuel_total = "Total Energy Demand by Fuel"
         self.modvar_enfu_energy_demand_by_fuel_trns = "Energy Demand by Fuel in Transportation"
         self.modvar_enfu_volumetric_energy_density = "Volumetric Energy Density"
+        # key categories
+        self.cat_enfu_electricity = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_enfu, {self.model_attributes.field_enfu_electricity_demand_category: 1})[0]
 
         # Industrial Energy model variables
         self.modvar_inen_demscalar = "Industrial Energy Demand Scalar"
         self.modvar_inen_emissions_ch4 = ":math:\\text{CH}_4 Emissions from Industrial Energy"
         self.modvar_inen_emissions_co2 = ":math:\\text{CO}_2 Emissions from Industrial Energy"
         self.modvar_inen_emissions_n2o = ":math:\\text{N}_2\\text{O} Emissions from Industrial Energy"
+        self.modvar_inen_energy_conumption_agrc_init = "Initial Energy Consumption in Agriculture and Livestock"
         self.modvar_inen_energy_demand_electricity = "Electrical Energy Demand from Industrial Energy"
         self.modvar_inen_energy_demand_electricity_agg = "Total Electrical Energy Demand from Industrial Energy"
         self.modvar_inen_energy_demand_total = "Energy Demand from Industrial Energy"
@@ -104,11 +108,12 @@ class NonElectricEnergy:
         self.modvar_inen_frac_en_solid_biomass = "Industrial Energy Fuel Fraction Solid Biomass"
         # get some dictionaries implied by the inen attribute tables
         self.dict_inen_fuel_categories_to_fuel_variables, self.dict_inen_fuel_categories_to_unassigned_fuel_variables = self.get_dict_inen_fuel_categories_to_fuel_variables()
-        # some derivate lists of variables
         self.modvars_inen_list_fuel_fraction = self.model_attributes.get_vars_by_assigned_class_from_akaf(
             self.dict_inen_fuel_categories_to_fuel_variables,
             "fuel_fraction"
         )
+        # key categories
+        self.cat_inen_agricultural = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_inen, {"agricultural_category": 1})[0]
 
         # Stationary Combustion and Other Energy variables
         self.modvar_scoe_consumpinit_energy_per_hh_elec = "SCOE Initial Per Household Electric Appliances Energy Consumption"
@@ -210,10 +215,11 @@ class NonElectricEnergy:
         self.modvar_trde_demand_mtkm = "Megatonne-Kilometer Demand"
         self.modvar_trde_demand_pkm = "Passenger-Kilometer Demand"
 
-        # variables from other sectors
-        self.modvar_ippu_qty_total_production = "Industrial Production"
+        # variables from other sectors (NOTE: AFOLU INTEGRATION VARIABLES MUST BE SET HERE, CANNOT INITIALIZE AFOLU CLASS)
+        self.modvar_agrc_yield = "Crop Yield"
+        self.modvar_lvst_total_animal_mass = "Total Domestic Animal Mass"
 
-        # add other model classes
+        # add other model classes (NOTE: CANNOT INITIALIZE AFOLU CLASS BECAUSE IT REQUIRES ACCESS TO THE ENERGY CLASS)
         self.model_socioeconomic = Socioeconomic(self.model_attributes)
         self.model_ippu = IPPU(self.model_attributes)
 
@@ -223,7 +229,8 @@ class NonElectricEnergy:
 
         ##  MISCELLANEOUS VARIABLES
         self.time_periods, self.n_time_periods = self.model_attributes.get_time_periods()
-        self.cat_enfu_electricity = self.get_electricity_fuel()
+
+
 
 
 
@@ -248,9 +255,6 @@ class NonElectricEnergy:
                 raise ValueError(f"Invalid var_type '{var_type}' in check_df_fields: valid types are 'input', 'output'")
             msg_prepend = msg_prepend if (msg_prepend is not None) else subsector
         sf.check_fields(df_neenergy_trajectories, check_fields, f"{msg_prepend} projection cannot proceed: fields ")
-
-    def get_electricity_fuel(self):
-        return self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_enfu, {self.model_attributes.field_enfu_electricity_demand_category: 1})[0]
 
     def get_required_subsectors(self):
         ## TEMPORARY
@@ -304,7 +308,9 @@ class NonElectricEnergy:
     def set_integrated_variables(self):
         # set the integration variables
         list_vars_required_for_integration = [
-            self.modvar_ippu_qty_total_production
+            self.modvar_agrc_yield,
+            self.model_ippu.modvar_ippu_qty_total_production,
+            self.modvar_lvst_total_animal_mass
         ]
 
         # in Energy, update required variables
@@ -325,6 +331,63 @@ class NonElectricEnergy:
     ######################################
     #    SUBSECTOR SPECIFIC FUNCTIONS    #
     ######################################
+
+    ##
+    def get_agrc_lvst_prod_and_intensity(self,
+        df_neenergy_trajectories: pd.DataFrame
+    ):
+        """
+            Retrieve agriculture and livstock production (total mass) and initial energy consumption, then calculate energy intensity (in terms of self.modvar_inen_en_prod_intensity_factor) and return production (in terms of self.model_ippu.modvar_ippu_qty_total_production)
+
+            - df_neenergy_trajectories: model input dataframe
+        """
+
+        attr_inen = self.model_attributes.get_attribute_table(self.subsec_name_inen)
+
+        # add agricultural and livestock production to scale initial energy consumption
+        modvar_inen_agrc_prod, arr_inen_agrc_prod = self.model_attributes.get_optional_or_integrated_standard_variable(
+            df_neenergy_trajectories, self.modvar_agrc_yield, None, True, "array_base"
+        )
+        modvar_inen_lvst_prod, arr_inen_lvst_prod = self.model_attributes.get_optional_or_integrated_standard_variable(
+            df_neenergy_trajectories, self.modvar_lvst_total_animal_mass, None, True, "array_base"
+        )
+        # get initial energy consumption for agrc/lvst and then ensure unit are set
+        arr_inen_init_energy_consumption_agrc = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_inen_energy_conumption_agrc_init, True, "array_base", expand_to_all_cats = True)
+        arr_inen_init_energy_consumption_agrc *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_inen_energy_conumption_agrc_init,
+            self.modvar_inen_en_prod_intensity_factor,
+            "energy"
+        )
+
+        # build production total mass, which is estimated as the driver of changes to initial demand
+        vec_inen_prod_agrc_lvst = 0.0
+        if modvar_inen_agrc_prod is not None:
+            # if agricultural production is defined, convert to industrial production units and add to total output mass
+            arr_inen_agrc_prod *= self.model_attributes.get_variable_unit_conversion_factor(
+                self.modvar_agrc_yield,
+                self.model_ippu.modvar_ippu_qty_total_production,
+                "mass"
+            )
+            vec_inen_prod_agrc_lvst += arr_inen_agrc_prod
+        if (modvar_inen_lvst_prod is not None):
+            # if livestock production is defined, convert to industrial production units and add
+            arr_inen_lvst_prod *= self.model_attributes.get_variable_unit_conversion_factor(
+                self.modvar_lvst_total_animal_mass,
+                self.model_ippu.modvar_ippu_qty_total_production,
+                "mass"
+            )
+            vec_inen_prod_agrc_lvst += arr_inen_lvst_prod
+        # collapse to vector
+        vec_inen_prod_agrc_lvst = np.sum(vec_inen_prod_agrc_lvst, axis = 1)
+
+        # get energy intensity
+        index_inen_agrc = attr_inen.get_key_value_index(self.cat_inen_agricultural)
+        vec_inen_energy_intensity_agrc_lvst = arr_inen_init_energy_consumption_agrc[:, index_inen_agrc].copy()
+        vec_inen_energy_intensity_agrc_lvst = np.nan_to_num(vec_inen_energy_intensity_agrc_lvst/vec_inen_prod_agrc_lvst, 0.0, posinf = 0.0)
+
+        # return index + vectors
+        return index_inen_agrc, vec_inen_energy_intensity_agrc_lvst, vec_inen_prod_agrc_lvst
+
 
     ##  industrial energy variables from fuel categories as specified by a matchstring
     def get_dict_inen_fuel_categories_to_fuel_variables(self):
@@ -545,6 +608,7 @@ class NonElectricEnergy:
             index_enfu_fuel = attr_enfu.get_key_value_index(cat_fuel)
             # get efficiency, then fuel fractions
             vec_efficiency = arr_enfu_efficiency[:, index_enfu_fuel]
+            arr_frac = dict_fuel_fracs.get(modvar_fuel_frac)
             # use consumption by fuel type and efficiency to get output demand for each fuel (in output energy units specified in config)
             arr_consumption_fuel = np.nan_to_num((arr_demand*arr_frac).transpose()/vec_efficiency, 0.0).transpose()
             dict_consumption_by_fuel_out.update({modvar_fuel_frac: arr_consumption_fuel})
@@ -560,6 +624,70 @@ class NonElectricEnergy:
     ###    PRIMARY PROJECTION METHODS    ###
     ###                                  ###
     ########################################
+
+    ##  fugitive emissions model
+    def project_fugitive_emissions(
+        self,
+        df_neenergy_trajectories: pd.DataFrame,
+        vec_gdp: np.ndarray,
+        dict_dims: dict = None,
+        n_projection_time_periods: int = None,
+        projection_time_periods: list = None
+    ) -> pd.DataFrame:
+
+        """
+            project_fugitive_emissions can be called from other sectors to simplify calculation of fugitive emissions. This is the final model projected in the SISEPUEDE modeling chain as it depends on all other energy models to determine mining production.
+
+            Function Arguments
+            ------------------
+            df_neenergy_trajectories: pd.DataFrame of input variables
+
+            vec_gdp: np.ndarray vector of gdp (requires len(vec_gdp) == len(df_neenergy_trajectories))
+
+            dict_dims: dict of dimensions (returned from check_projection_input_df). Default is None.
+
+            n_projection_time_periods: int giving number of time periods (returned from check_projection_input_df). Default is None.
+
+            projection_time_periods: list of time periods (returned from check_projection_input_df). Default is None.
+
+
+            Notes
+            -----
+            If any of dict_dims, n_projection_time_periods, or projection_time_periods are unspecified (expected if ran outside of Energy.project()), self.model_attributes.check_projection_input_df wil be run
+
+        """
+
+        # allows production to be run outside of the project method
+        if type(None) in set([type(x) for x in [dict_dims, n_projection_time_periods, projection_time_periods]]):
+            dict_dims, df_neenergy_trajectories, n_projection_time_periods, projection_time_periods = self.model_attributes.check_projection_input_df(df_neenergy_trajectories, True, True, True)
+
+
+        ##  CATEGORY AND ATTRIBUTE INITIALIZATION
+        pycat_enfu = self.model_attributes.get_subsector_attribute(self.subsec_name_enfu, "pycategory_primary")
+        pycat_fgtv = self.model_attributes.get_subsector_attribute(self.subsec_name_fgtv, "pycategory_primary")
+        pycat_inen = self.model_attributes.get_subsector_attribute(self.subsec_name_inen, "pycategory_primary")
+        pycat_ippu = self.model_attributes.get_subsector_attribute(self.subsec_name_ippu, "pycategory_primary")
+        # attribute tables
+        attr_enfu = self.model_attributes.dict_attributes[pycat_enfu]
+        attr_fgtv = self.model_attributes.dict_attributes[pycat_fgtv]
+        attr_inen = self.model_attributes.dict_attributes[pycat_inen]
+        attr_ippu = self.model_attributes.dict_attributes[pycat_ippu]
+
+
+        ##  OUTPUT INITIALIZATION
+
+        df_out = [df_neenergy_trajectories[self.required_dimensions].copy()]
+
+
+        ############################
+        #    MODEL CALCULATIONS    #
+        ############################
+
+
+
+
+
+
 
     ##  industrial energy model
     def project_industrial_energy(
@@ -629,9 +757,12 @@ class NonElectricEnergy:
 
         ##  GET ENERGY INTENSITIES
 
-        # get production-based emissions - start with production, energy demand
-        arr_inen_prod = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_ippu_qty_total_production, True, "array_base", expand_to_all_cats = True)
+        # get production-based emissions - start with industrial production, energy demand
+        arr_inen_prod = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.model_ippu.modvar_ippu_qty_total_production, True, "array_base", expand_to_all_cats = True)
         arr_inen_prod_energy_intensity = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_inen_en_prod_intensity_factor, True, "array_base", expand_to_all_cats = True)
+        # get agricultural and livestock production + intensities (in terms of self.model_ippu.modvar_ippu_qty_total_production (mass) and self.modvar_inen_en_prod_intensity_factor (energy), respectively)
+        index_inen_agrc, vec_inen_energy_intensity_agrc_lvst, vec_inen_prod_agrc_lvst = self.get_agrc_lvst_prod_and_intensity(df_neenergy_trajectories)
+        arr_inen_prod[:, index_inen_agrc] += vec_inen_prod_agrc_lvst
         # build dictionary for projection
         dict_inen_fuel_frac_to_eff_cat = self.dict_inen_fuel_categories_to_fuel_variables.copy()
         for k in dict_inen_fuel_frac_to_eff_cat.keys():
@@ -641,9 +772,14 @@ class NonElectricEnergy:
         # energy consumption at time 0 due to production in terms of units modvar_ippu_qty_total_production
         arr_inen_energy_consumption_intensity_prod = arr_inen_prod_energy_intensity*self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_inen_en_prod_intensity_factor,
-            self.modvar_ippu_qty_total_production,
+            self.model_ippu.modvar_ippu_qty_total_production,
             "mass"
         )
+        #
+        # NOTE: add vec_inen_energy_intensity_agrc_lvst here because its mass is already in terms of self.model_ippu.modvar_ippu_qty_total_production
+        #
+        arr_inen_energy_consumption_intensity_prod[:, index_inen_agrc] += vec_inen_energy_intensity_agrc_lvst
+        # project future consumption
         dict_inen_energy_consumption_prod = self.project_energy_consumption_by_fuel_from_fuel_cats(
             df_neenergy_trajectories,
             arr_inen_energy_consumption_intensity_prod[0],
@@ -652,7 +788,6 @@ class NonElectricEnergy:
             dict_arrs_inen_frac_energy,
             dict_inen_fuel_frac_to_eff_cat
         )
-        #HEREHERE
         # gdp-based emissions - get intensity, multiply by gdp, and scale to match energy units of production
         arr_inen_energy_consumption_intensity_gdp = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_inen_en_gdp_intensity_factor, True, "array_base", expand_to_all_cats = True)
         arr_inen_energy_consumption_intensity_gdp *= self.model_attributes.get_variable_unit_conversion_factor(

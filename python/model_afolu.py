@@ -59,6 +59,7 @@ class AFOLU:
         self.modvar_agrc_frac_dry = "Agriculture Fraction Dry"
         self.modvar_agrc_frac_dry_matter_in_crop = "Dry Matter Fraction of Harvested Crop"
         self.modvar_agrc_frac_production_lost = "Fraction of Food Produced Lost Before Consumption"
+        self.modvar_agrc_frac_production_loss_to_landfill = "Fraction of Food Loss Sent to Landfill"
         self.modvar_agrc_frac_residues_removed = "Fraction of Residues Removed"
         self.modvar_agrc_frac_residues_burned = "Fraction of Residues Burned"
         self.modvar_agrc_frac_temperate = "Agriculture Fraction Temperate"
@@ -72,6 +73,7 @@ class AFOLU:
         self.modvar_agrc_regression_m_above_ground_residue = "Above Ground Residue Dry Matter Slope"
         self.modvar_agrc_regression_b_above_ground_residue = "Above Ground Residue Dry Matter Intercept"
         self.modvar_agrc_total_food_lost_in_ag = "Total Food Produced Lost Before Consumption"
+        self.modvar_agrc_total_food_lost_in_ag_to_landfills = "Total Food Loss Sent to Landfills"
         self.modvar_agrc_yf = "Crop Yield Factor"
         self.modvar_agrc_yield = "Crop Yield"
         # additional lists
@@ -263,6 +265,8 @@ class AFOLU:
         self.time_periods, self.n_time_periods = self.model_attributes.get_time_periods()
         self.factor_c_to_co2 = float(11/3)
         self.factor_n2on_to_n2o = float(11/7)
+        # see IPCC 2006/2019R GNGHGI V4 CH2 FOR D = 20
+        self.time_dependence_stock_change = 20
 
 
 
@@ -495,6 +499,16 @@ class AFOLU:
         return arr_pr, arr_ef
 
 
+    ##  calcualte the annual change in soil carbon using Approach 1 (even though we have a transition matrix)
+    def ipcc_approach_one_soc_deltas(self,
+        vec_soc: np.ndarray
+    ):
+        vec_soc_delta = vec_soc.copy()
+        vec_soc_delta = np.concatenate([np.ones(self.time_dependence_stock_change)*vec_soc_delta[0], vec_soc_delta])
+        vec_soc_delta = (vec_soc_delta[self.time_dependence_stock_change:] - vec_soc_delta[0:(len(vec_soc_delta) - self.time_dependence_stock_change)])/self.time_dependence_stock_change
+
+        return vec_soc_delta
+
     ##  project demand for ag/livestock
     def project_per_capita_demand(self,
         dem_0: np.ndarray, # initial demand (e.g., total yield/livestock produced per acre) ()
@@ -610,7 +624,7 @@ class AFOLU:
 
             # calculate required increase in transition probabilities
             area_lndu_pstr_increase = sum(np.nan_to_num(vec_lvst_reallocation/vec_lvst_cc_proj, 0, posinf = 0.0))
-            scalar_lndu_pstr = (area_pstr_cur + area_lndu_pstr_increase)/np.dot(x, arrs_transitions[i_tr][:, ind_pstr])
+            scalar_lndu_pstr = (area_pstr_proj + area_lndu_pstr_increase)/np.dot(x, arrs_transitions[i_tr][:, ind_pstr])
 
             # AGRICULTURE - calculate demand increase in crops, which is a function of gdp/capita (exogenous) and livestock demand (used for feed)
             vec_agrc_feed_dem_yield = sum((arr_lndu_yield_by_lvst*arr_lvst_dem_gr[i + 1]).transpose())
@@ -619,6 +633,7 @@ class AFOLU:
             vec_agrc_net_surplus_cropland_area_cur = vec_agrc_dem_cropareas - vec_agrc_cropland_area_proj
             vec_agrc_reallocation = vec_agrc_net_surplus_cropland_area_cur*vec_lndu_yrf[i + 1]
 
+            #print(vec_agrc_net_surplus_cropland_area_cur)
             # get surplus yield (increase to net imports)
             vec_agrc_net_imports_increase_yield = (vec_agrc_net_surplus_cropland_area_cur - vec_agrc_reallocation)*arr_agrc_yield_factors[i + 1]
             vec_agrc_cropareas_adj = vec_agrc_cropland_area_proj + vec_agrc_reallocation
@@ -626,10 +641,11 @@ class AFOLU:
 
             # adjust the transition matrix
             trans_adj = self.adjust_transition_matrix(arrs_transitions[i_tr], {(ind_pstr, ): scalar_lndu_pstr, (ind_crop, ): scalar_lndu_crop})
+            self.trans_adj = trans_adj if i == 0 else self.trans_adj
             # calculate final land conversion and emissions
             arr_land_conv = (trans_adj.transpose()*x.transpose()).transpose()
             vec_emissions_conv = sum((trans_adj*arrs_efs[i_ef]).transpose()*x.transpose())
-
+            self.arr_land_conv = arr_land_conv if i == 0 else self.arr_land_conv
             if i + 1 < n_tp:
                 # update arrays
                 rng_agrc = list(range((i + 1)*attr_agrc.n_key_values, (i + 2)*attr_agrc.n_key_values))
@@ -1090,6 +1106,14 @@ class AFOLU:
             self.modvar_agrc_total_food_lost_in_ag,
             "mass"
         )
+        # get total production that is wasted or lost that ends up in landfilles
+        vec_agrc_frac_production_loss_to_landfilles = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_frac_production_loss_to_landfill, False, "array_base", var_bounds = (0, 1))
+        vec_agrc_food_wasted_to_landfills = vec_agrc_food_produced_wasted_before_consumption*vec_agrc_frac_production_loss_to_landfilles
+        vec_agrc_food_wasted_to_landfills *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_agrc_total_food_lost_in_ag,
+            self.modvar_agrc_total_food_lost_in_ag_to_landfills,
+            "mass"
+        )
         # convert yield out units
         arr_agrc_yield_out = arr_agrc_yield*self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_agrc_yf,
@@ -1101,6 +1125,7 @@ class AFOLU:
             df_agrc_frac_cropland,
             self.model_attributes.array_to_df(arr_agrc_net_import_increase, self.modvar_agrc_net_imports),
             self.model_attributes.array_to_df(vec_agrc_food_produced_wasted_before_consumption, self.modvar_agrc_total_food_lost_in_ag),
+            self.model_attributes.array_to_df(vec_agrc_food_wasted_to_landfills, self.modvar_agrc_total_food_lost_in_ag_to_landfills),
             self.model_attributes.array_to_df(arr_agrc_yield_out, self.modvar_agrc_yield),
             self.model_attributes.array_to_df(arr_land_use*scalar_lndu_input_area_to_output_area, self.modvar_lndu_area_by_cat),
             self.model_attributes.array_to_df(arrs_lndu_conv_from*scalar_lndu_input_area_to_output_area, self.modvar_lndu_area_converted_from_type),
@@ -1239,7 +1264,6 @@ class AFOLU:
             self.model_socioeconomic.modvar_gnrl_area,
             "area"
         )
-
         # setup biomass arrays as a dictionary
         dict_frst_modvar_to_array_forest_fires = {
             self.modvar_frst_frac_temperate_nutrient_poor: arr_frst_biomass_consumed_temperate,
@@ -1298,6 +1322,7 @@ class AFOLU:
             self.modvar_agrc_ef_ch4,
             "area"
         )
+
         # biomass
         arr_agrc_ef_co2_biomass = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_co2_biomass, True, "array_units_corrected", expand_to_all_cats = True)
         arr_agrc_ef_co2_biomass *= self.model_attributes.get_variable_unit_conversion_factor(
@@ -1715,7 +1740,8 @@ class AFOLU:
         )
         # get crop dry matter
         arr_agrc_crop_frac_dry_matter = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_frac_dry_matter_in_crop, True, "array_base", expand_to_all_cats = True, var_bounds = (0, 1))
-        arr_agrc_crop_drymatter_per_unit = arr_agrc_regression_m*(arr_soil_yield/arr_soil_crop_area) + arr_agrc_regression_b
+        arr_agrc_crop_drymatter_per_unit = np.nan_to_num(arr_soil_yield/arr_soil_crop_area, 0.0, posinf = 0.0)
+        arr_agrc_crop_drymatter_per_unit = arr_agrc_regression_m*arr_agrc_crop_drymatter_per_unit + arr_agrc_regression_b
         arr_agrc_crop_drymatter_above_ground = arr_agrc_crop_drymatter_per_unit*arr_soil_crop_area
         # get fraction removed/burned
         dict_agrc_frac_residues_removed_burned = self.model_attributes.get_multivariables_with_bounded_sum_by_category(
@@ -1826,7 +1852,7 @@ class AFOLU:
             arr_soil_soc_crop_drywet_cur = (arr_agrc_crop_area*dict_arrs_agrc_frac_drywet[modvar]).transpose()
             # add component to EF1 estimate for F_SOM
             vec_soil_ef1_soc_est += np.sum(arr_soil_soc_crop_drywet_cur, axis = 0)*arr_soil_ef1_organic[:, ind_soil]/vec_soil_area_crop_pasture
-            # then, modify the soc array and estimate contribution to SOC
+            # then, modify the soc array and estimate contribution to w
             arr_soil_soc_crop_drywet_cur *= arr_soil_organic_c_stocks[:, ind_soil]*arr_lndu_factor_soil_carbon[:, ind_crop]*(1 - vec_soil_soc_lost_in_cropland)
             vec_soil_soc_total_cur = np.sum(arr_soil_soc_crop_drywet_cur, axis = 0)
             vec_soil_soc_total += vec_soil_soc_total_cur
@@ -1871,10 +1897,13 @@ class AFOLU:
             vec_soil_soc_total_mineral += np.sum(arr_soil_soc_frst_temptrop_cur.transpose()*arr_lndu_frac_mineral_soils[:, inds_lndu], axis = 1)
 
         # calculate the change in soil carbon year over year for all and for mineral
-        vec_soil_delta_soc = vec_soil_soc_total[1:] - vec_soil_soc_total[0:-1]
-        vec_soil_delta_soc = np.insert(vec_soil_delta_soc, 0, vec_soil_delta_soc[0])
-        vec_soil_delta_soc_mineral = vec_soil_soc_total_mineral[1:] - vec_soil_soc_total_mineral[0:-1]
-        vec_soil_delta_soc_mineral = np.insert(vec_soil_delta_soc_mineral, 0, vec_soil_delta_soc_mineral[0])
+        #vec_soil_delta_soc = vec_soil_soc_total[1:] - vec_soil_soc_total[0:-1]
+        #vec_soil_delta_soc = np.insert(vec_soil_delta_soc, 0, vec_soil_delta_soc[0])
+        #vec_soil_delta_soc_mineral = vec_soil_soc_total_mineral[1:] - vec_soil_soc_total_mineral[0:-1]
+        #vec_soil_delta_soc_mineral = np.insert(vec_soil_delta_soc_mineral, 0, vec_soil_delta_soc_mineral[0])
+        vec_soil_delta_soc = self.ipcc_approach_one_soc_deltas(vec_soil_soc_total)
+        vec_soil_delta_soc_mineral = self.ipcc_approach_one_soc_deltas(vec_soil_soc_total_mineral)
+        #print(vec_soil_soc_total_mineral)
         # calculate FSOM from fraction mineral
         vec_soil_n2odirectn_fsom = -(vec_soil_delta_soc_mineral/vec_soil_ratio_c_to_n_soil_organic_matter)*vec_soil_ef1_soc_est
         vec_soil_emission_co2_soil_carbon_mineral = -self.factor_c_to_co2*vec_soil_delta_soc_mineral

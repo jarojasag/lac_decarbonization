@@ -441,7 +441,6 @@ class IPPU:
             modvar_scalar_prod
         )
 
-
         # perform adjustments to production if recycling is denoted
         if array_ippu_recycled is not None:
             # if recycling totals are passed from the waste model, convert to ippu categories

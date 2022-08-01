@@ -214,6 +214,22 @@ def format_print_list(list_in, delim = ","):
 
 
 
+##  get growth rates associated with a numpy array
+def get_vector_growth_rates_from_first_element(arr: np.ndarray) -> np.ndarray:
+    """
+        Using a 1- or 2-dimentionsal Numpy array, get growth scalars (columnar) relative to the first element
+
+        - arr: input array
+    """
+    arr = np.nan_to_num(arr[1:]/arr[0:-1], 0.0, posinf = 0.0)
+    elem_concat = np.ones((1, )) if (len(arr.shape) == 1) else np.ones((1, arr.shape[1]))
+    arr = np.concatenate([elem_concat, arr], axis = 0)
+    arr = np.cumprod(arr, axis = 0)
+
+    return arr
+
+
+
 ##  use to merge data frames together into a single output when they share ordered dimensions of analysis (from ModelAttribute class)
 def merge_output_df_list(
     dfs_output_data: list,
