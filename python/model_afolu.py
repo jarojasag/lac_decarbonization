@@ -500,14 +500,22 @@ class AFOLU:
 
 
     ##  calcualte the annual change in soil carbon using Approach 1 (even though we have a transition matrix)
-    def ipcc_approach_one_soc_deltas(self,
-        vec_soc: np.ndarray
+    def calculate_ipcc_soc_deltas(self,
+        vec_soc: np.ndarray,
+        approach: int = 1
     ):
-        vec_soc_delta = vec_soc.copy()
-        vec_soc_delta = np.concatenate([np.ones(self.time_dependence_stock_change)*vec_soc_delta[0], vec_soc_delta])
-        vec_soc_delta = (vec_soc_delta[self.time_dependence_stock_change:] - vec_soc_delta[0:(len(vec_soc_delta) - self.time_dependence_stock_change)])/self.time_dependence_stock_change
+        if approach not in [1, 2]:
+            warnings.warn(f"Warning in 'calculate_ipcc_soc_deltas': apprach '{approach}' not found--please enter 1 or 2. Default will be set to 1.")
+            approach = 1
 
+        if approach == 1:
+            vec_soc_delta = np.concatenate([np.ones(self.time_dependence_stock_change)*vec_soc[0], vec_soc])
+            vec_soc_delta = (vec_soc_delta[self.time_dependence_stock_change:] - vec_soc_delta[0:(len(vec_soc_delta) - self.time_dependence_stock_change)])/self.time_dependence_stock_change
+        elif approach == 2:
+            vec_soc_delta = vec_soc[1:] - vec_soc[0:-1]
+            vec_soc_delta = np.insert(vec_soc_delta, 0, vec_soc_delta[0])
         return vec_soc_delta
+
 
     ##  project demand for ag/livestock
     def project_per_capita_demand(self,
@@ -645,7 +653,7 @@ class AFOLU:
             # calculate final land conversion and emissions
             arr_land_conv = (trans_adj.transpose()*x.transpose()).transpose()
             vec_emissions_conv = sum((trans_adj*arrs_efs[i_ef]).transpose()*x.transpose())
-            self.arr_land_conv = arr_land_conv if i == 0 else self.arr_land_conv
+
             if i + 1 < n_tp:
                 # update arrays
                 rng_agrc = list(range((i + 1)*attr_agrc.n_key_values, (i + 2)*attr_agrc.n_key_values))
@@ -1901,8 +1909,8 @@ class AFOLU:
         #vec_soil_delta_soc = np.insert(vec_soil_delta_soc, 0, vec_soil_delta_soc[0])
         #vec_soil_delta_soc_mineral = vec_soil_soc_total_mineral[1:] - vec_soil_soc_total_mineral[0:-1]
         #vec_soil_delta_soc_mineral = np.insert(vec_soil_delta_soc_mineral, 0, vec_soil_delta_soc_mineral[0])
-        vec_soil_delta_soc = self.ipcc_approach_one_soc_deltas(vec_soil_soc_total)
-        vec_soil_delta_soc_mineral = self.ipcc_approach_one_soc_deltas(vec_soil_soc_total_mineral)
+        vec_soil_delta_soc = self.calculate_ipcc_soc_deltas(vec_soil_soc_total, 2)
+        vec_soil_delta_soc_mineral = self.calculate_ipcc_soc_deltas(vec_soil_soc_total_mineral, 2)
         #print(vec_soil_soc_total_mineral)
         # calculate FSOM from fraction mineral
         vec_soil_n2odirectn_fsom = -(vec_soil_delta_soc_mineral/vec_soil_ratio_c_to_n_soil_organic_matter)*vec_soil_ef1_soc_est
