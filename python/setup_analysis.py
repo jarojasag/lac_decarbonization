@@ -38,6 +38,9 @@ dir_parameters_uncalibrated = sf.check_path(os.path.join(dir_ingestion, "paramet
 ##  RELEVANT FILE PATHS
 
 fp_csv_default_single_run_out = os.path.join(dir_out, "single_run_output.csv")
+fp_csv_transition_probability_estimation_annual = os.path.join(dir_ref, "baseline_transition_probability_estimates", "transition_probs_by_region_and_year.csv")
+fp_csv_transition_probability_estimation_mean = os.path.join(dir_ref, "baseline_transition_probability_estimates", "transition_probs_by_region_mean.csv")
+
 
 def excel_template_path(sector: str, region: str, type_db: str, create_export_dir: bool = True) -> str:
     """
