@@ -448,7 +448,7 @@ class AFOLU:
         sums_row_mask = sum((mat_mask_response_nodes*mat_mask*mat).transpose())
         # get shift and positive scalar to apply to valid masked elements
         mask_shift_total = sums_row - 1
-        mask_scalar = sf.vec_bounds((sums_row_mask - mask_shift_total)/sums_row_mask, (0, np.inf))
+        mask_scalar = np.nan_to_num(sf.vec_bounds((sums_row_mask - mask_shift_total)/sums_row_mask, (0, np.inf)), 1.0, posinf = 1.0)
         # get the masked nodes, multiply by the response scalar (at applicable columns, denoted by mat_mask_response_nodes), then add to
         mat_out = ((mat_mask_response_nodes*mat_mask*mat).transpose() * mask_scalar).transpose()
         mat_out += sf.vec_bounds(mat_mask*(1 - mat_mask_response_nodes), (0, 1))*mat
@@ -663,7 +663,6 @@ class AFOLU:
             area_crop_proj = np.dot(x, arrs_transitions[i_tr][:, ind_crop])
             area_pstr_cur = x[ind_pstr]
             area_pstr_proj = np.dot(x, arrs_transitions[i_tr][:, ind_pstr])
-
             vec_agrc_cropland_area_proj = area_crop_proj*arr_agrc_frac_cropland[i]
 
             # LIVESTOCK - calculate carrying capacities, demand used for pasture reallocation, and net surplus
@@ -989,7 +988,7 @@ class AFOLU:
     ###                              ###
     ####################################
 
-    def project(self, df_afolu_trajectories: pd.DataFrame) -> pd.DataFrame:
+    def project(self, df_afolu_trajectories: pd.DataFrame, passthrough_tmp: str = None) -> pd.DataFrame:
 
         """
             The project() method takes a data frame of input variables (ordered by time series) and returns a data frame of output variables (model projections for agriculture and livestock, forestry, and land use) the same order.
@@ -1119,6 +1118,7 @@ class AFOLU:
         vec_agrc_frac_production_lost_scalar = np.nan_to_num((1 - vec_agrc_frac_production_lost[0])/(1 - vec_agrc_frac_production_lost), posinf = 0.0)
         arr_agrc_demscale = (arr_agrc_demscale.transpose()*vec_agrc_frac_production_lost_scalar).transpose()
         arr_agrc_nonfeeddem_yield = self.project_per_capita_demand(vec_agrc_yield_init_nonlvstfeed, vec_pop, vec_rates_gdp_per_capita, arr_agrc_elas_crop_demand, arr_agrc_demscale, float)
+        self.arr_tmp = arr_agrc_nonfeeddem_yield
         # array gives the total yield of crop type i allocated to livestock type j at time 0
         arr_lndu_yield_i_reqd_lvst_j_init = np.outer(vec_agrc_yield_init_lvstfeed, vec_lvst_feed_allocation_weights)
 
@@ -2193,4 +2193,7 @@ class AFOLU:
         df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
         self.model_attributes.add_subsector_emissions_aggregates(df_out, self.required_base_subsectors, False)
 
-        return df_out
+        if passthrough_tmp is None:
+            return df_out
+        else:
+            return df_out, passthrough_tmp
