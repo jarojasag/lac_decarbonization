@@ -458,6 +458,24 @@ class AFOLU:
         return sf.vec_bounds(mat_out, (0, 1))
 
 
+    ##  calcualte the annual change in soil carbon using Approach 1 (even though we have a transition matrix)
+    def calculate_ipcc_soc_deltas(self,
+        vec_soc: np.ndarray,
+        approach: int = 1
+    ):
+        if approach not in [1, 2]:
+            warnings.warn(f"Warning in 'calculate_ipcc_soc_deltas': apprach '{approach}' not found--please enter 1 or 2. Default will be set to 1.")
+            approach = 1
+
+        if approach == 1:
+            vec_soc_delta = np.concatenate([np.ones(self.time_dependence_stock_change)*vec_soc[0], vec_soc])
+            vec_soc_delta = (vec_soc_delta[self.time_dependence_stock_change:] - vec_soc_delta[0:(len(vec_soc_delta) - self.time_dependence_stock_change)])/self.time_dependence_stock_change
+        elif approach == 2:
+            vec_soc_delta = vec_soc[1:] - vec_soc[0:-1]
+            vec_soc_delta = np.insert(vec_soc_delta, 0, vec_soc_delta[0])
+        return vec_soc_delta
+
+
     ##  check the shape of transition/emission factor matrices sent to project_land_use
     def check_markov_shapes(self, arrs: np.ndarray, function_var_name:str):
             # get land use info
@@ -499,22 +517,47 @@ class AFOLU:
         return arr_pr, arr_ef
 
 
-    ##  calcualte the annual change in soil carbon using Approach 1 (even though we have a transition matrix)
-    def calculate_ipcc_soc_deltas(self,
-        vec_soc: np.ndarray,
-        approach: int = 1
-    ):
-        if approach not in [1, 2]:
-            warnings.warn(f"Warning in 'calculate_ipcc_soc_deltas': apprach '{approach}' not found--please enter 1 or 2. Default will be set to 1.")
-            approach = 1
+    # if any transition probabilities are 1 w/scalar > 1 (or 0 with scalar < 0), the scalar becomes inadequate; iterative function will search
+    def get_matrix_column_scalar(self,
+        mat_column: np.ndarray,
+        target_scalar: np.ndarray,
+        vec_x: np.ndarray,
+        max_iter: int = 100
+    ) -> float:
 
-        if approach == 1:
-            vec_soc_delta = np.concatenate([np.ones(self.time_dependence_stock_change)*vec_soc[0], vec_soc])
-            vec_soc_delta = (vec_soc_delta[self.time_dependence_stock_change:] - vec_soc_delta[0:(len(vec_soc_delta) - self.time_dependence_stock_change)])/self.time_dependence_stock_change
-        elif approach == 2:
-            vec_soc_delta = vec_soc[1:] - vec_soc[0:-1]
-            vec_soc_delta = np.insert(vec_soc_delta, 0, vec_soc_delta[0])
-        return vec_soc_delta
+        """
+            Some transition matrices may have 0s or 1s in column entries, meaning that scalars are inadequate. This function finds the true scalar that needs to be applied to acheieve a scaled change in area *target_scalar*.
+
+            - mat_column: column in transition matrix (assuming row-stochastic) representing probabilities of entry into a state
+            - target_scalar: the target change in output area to achieve
+            - vec_x: current state of areas. Target area is sum(vec_x)*target_scalar
+            - max_iter: maximum number of iterations. Default is 100.
+        """
+        # get the target scalar
+        scalar_adj = target_scalar
+        q_j = sf.vec_bounds(mat_column*scalar_adj, (0, 1))
+        # true area and target area
+        area = np.dot(vec_x, q_j)
+        area_target = target_scalar*np.dot(vec_x, mat_column)
+        # index of probabilities that are scalable
+        w_scalable = np.where((q_j < 1) & (q_j > 0))[0]
+        w_unscalable = np.where((q_j == 1) | (q_j == 0))[0]
+        i = 0
+        n = len(vec_x)
+        # prevent iterating if every entry is a 1/0
+        while (area != area_target) and (len(w_unscalable) < n) and (i < max_iter):
+            # scalar is capped at one, so we are effectively applying this to only scalable indices
+            area_unscalable = np.dot(vec_x[w_unscalable], q_j[w_unscalable])
+            scalar_adj *= (area_target - area_unscalable)/(area - area_unscalable)
+            # recalculate vector + implied area
+            q_j = sf.vec_bounds(mat_column*scalar_adj, (0, 1))
+            area = np.dot(vec_x, q_j)
+            # probabilities that are scalable
+            w_scalable = np.where((q_j < 1) & (q_j > 0))[0]
+            w_unscalable = np.where((q_j == 1) | (q_j == 0))[0]
+            i += 1
+
+        return scalar_adj
 
 
     ##  project demand for ag/livestock
@@ -633,20 +676,21 @@ class AFOLU:
             # calculate required increase in transition probabilities
             area_lndu_pstr_increase = sum(np.nan_to_num(vec_lvst_reallocation/vec_lvst_cc_proj, 0, posinf = 0.0))
             scalar_lndu_pstr = (area_pstr_proj + area_lndu_pstr_increase)/np.dot(x, arrs_transitions[i_tr][:, ind_pstr])
+            scalar_lndu_pstr = self.get_matrix_column_scalar(arrs_transitions[i_tr][:, ind_pstr], scalar_lndu_pstr, x)
 
             # AGRICULTURE - calculate demand increase in crops, which is a function of gdp/capita (exogenous) and livestock demand (used for feed)
             vec_agrc_feed_dem_yield = sum((arr_lndu_yield_by_lvst*arr_lvst_dem_gr[i + 1]).transpose())
             vec_agrc_total_dem_yield = (arr_agrc_nonfeeddem_yield[i + 1] + vec_agrc_feed_dem_yield)
             vec_agrc_dem_cropareas = np.nan_to_num(vec_agrc_total_dem_yield/arr_agrc_yield_factors[i + 1], posinf = 0.0)
-            vec_agrc_net_surplus_cropland_area_cur = vec_agrc_dem_cropareas - vec_agrc_cropland_area_proj
-            vec_agrc_reallocation = vec_agrc_net_surplus_cropland_area_cur*vec_lndu_yrf[i + 1]
-
-            #print(vec_agrc_net_surplus_cropland_area_cur)
+            vec_agrc_net_deficit_cropland_area_cur = vec_agrc_dem_cropareas - vec_agrc_cropland_area_proj
+            vec_agrc_reallocation = vec_agrc_net_deficit_cropland_area_cur*vec_lndu_yrf[i + 1]
             # get surplus yield (increase to net imports)
-            vec_agrc_net_imports_increase_yield = (vec_agrc_net_surplus_cropland_area_cur - vec_agrc_reallocation)*arr_agrc_yield_factors[i + 1]
+            vec_agrc_net_imports_increase = (vec_agrc_net_deficit_cropland_area_cur - vec_agrc_reallocation)*arr_agrc_yield_factors[i + 1]
             vec_agrc_cropareas_adj = vec_agrc_cropland_area_proj + vec_agrc_reallocation
+            vec_agrc_yield_adj = vec_agrc_total_dem_yield - vec_agrc_net_imports_increase
+            # get the true scalar
             scalar_lndu_crop = sum(vec_agrc_cropareas_adj)/np.dot(x, arrs_transitions[i_tr][:, ind_crop])
-
+            scalar_lndu_crop = self.get_matrix_column_scalar(arrs_transitions[i_tr][:, ind_crop], scalar_lndu_crop, x)
             # adjust the transition matrix
             trans_adj = self.adjust_transition_matrix(arrs_transitions[i_tr], {(ind_pstr, ): scalar_lndu_pstr, (ind_crop, ): scalar_lndu_crop})
             self.trans_adj = trans_adj if i == 0 else self.trans_adj
@@ -657,9 +701,9 @@ class AFOLU:
             if i + 1 < n_tp:
                 # update arrays
                 rng_agrc = list(range((i + 1)*attr_agrc.n_key_values, (i + 2)*attr_agrc.n_key_values))
-                np.put(arr_agrc_net_import_increase, rng_agrc, np.round(vec_agrc_net_imports_increase_yield), 2)
+                np.put(arr_agrc_net_import_increase, rng_agrc, np.round(vec_agrc_net_imports_increase), 2)
                 np.put(arr_agrc_frac_cropland, rng_agrc, vec_agrc_cropareas_adj/sum(vec_agrc_cropareas_adj))
-                np.put(arr_agrc_yield, rng_agrc, vec_agrc_total_dem_yield)
+                np.put(arr_agrc_yield, rng_agrc, vec_agrc_yield_adj)
                 arr_lvst_net_import_increase[i + 1] = np.round(vec_lvst_net_import_increase).astype(int)
 
             # non-ag arrays
