@@ -44,8 +44,11 @@ Input,Liming Demand Scalar,,``demscalar_soil_liming_per_area``,,none,,,,0,1,1
 Input,Volatilisation Fraction from Non-Urea Synthetic Fertilizers," | See :math:`FRAC_{GASF}` from Table 11.3 in V4, C11 IPCC GNGHGI 2019R",``frac_soil_gasf_n_volatilisation_synthetic_fertilizer_non_urea``,,none,,,,0,1,1
 Input,Volatilisation Fraction from Organic Amendments and Fertilizers," | See :math:`FRAC_{GASM}` from Table 11.3 in V4, C11 IPCC GNGHGI 2019R",``frac_soil_gasm_n_volatilisation_organic_amendments_fertilizer``,,none,,,,0,1,1
 Input,Volatilisation Fraction from Urea Synthetic Fertilizers," | See :math:`FRAC_{GASF}` from Table 11.3 in V4, C11 IPCC GNGHGI 2019R",``frac_soil_gasf_n_volatilisation_synthetic_fertilizer_urea``,,none,,,,0,1,1
-Output,:math:`\text{CO}_2` Emissions from Lime and Urea,,``emission_co2e_$EMISSION-GAS$_soil_lime_and_urea_use`` (``$EMISSION-GAS$ = co2``),,none,,,,0,1,1
-Output,:math:`\text{N}_2\text{O}` Emissions from Fertilizer Use,,``emission_co2e_$EMISSION-GAS$_soil_fertilizer`` (``$EMISSION-GAS$ = n2o``),,none,,,,0,1,1
-Output,:math:`\text{N}_2\text{O}` Emissions from Mineral Soils,,``emission_co2e_$EMISSION-GAS$_soil_mineral_soils`` (``$EMISSION-GAS$ = n2o``),,none,,,,0,1,1
-Output,:math:`\text{N}_2\text{O}` Emissions from Organic Soils,,``emission_co2e_$EMISSION-GAS$_soil_organic_soils`` (``$EMISSION-GAS$ = n2o``),,none,,,,0,1,1
-Output,:math:`\text{N}_2\text{O}` Emissions from Paddock Pasture and Range,,``emission_co2e_$EMISSION-GAS$_soil_paddock_pasture_range`` (``$EMISSION-GAS$ = n2o``),,none,,,,0,1,1
+Output,:math:`\text{CO}_2` Emissions from Lime and Urea,,``emission_co2e_$EMISSION-GAS$_soil_lime_and_urea_use`` (``$EMISSION-GAS$ = co2``),,none,,,,1,1,1
+Output,:math:`\text{N}_2\text{O}` Emissions from Fertilizer Use,,``emission_co2e_$EMISSION-GAS$_soil_fertilizer`` (``$EMISSION-GAS$ = n2o``),,none,,,,1,1,1
+Output,:math:`\text{N}_2\text{O}` Emissions from Mineral Soils,,``emission_co2e_$EMISSION-GAS$_soil_mineral_soils`` (``$EMISSION-GAS$ = n2o``),,none,,,,1,1,1
+Output,:math:`\text{N}_2\text{O}` Emissions from Organic Soils,,``emission_co2e_$EMISSION-GAS$_soil_organic_soils`` (``$EMISSION-GAS$ = n2o``),,none,,,,1,1,1
+Output,:math:`\text{N}_2\text{O}` Emissions from Paddock Pasture and Range,,``emission_co2e_$EMISSION-GAS$_soil_paddock_pasture_range`` (``$EMISSION-GAS$ = n2o``),,none,,,,1,1,1
+Output,Organic Fertilizer N Use,,``demand_soil_organic_fertilizer_n_$UNIT-MASS$`` (``$UNIT-MASS$ = kt``),,none,,,,1,1,1
+Output,Synthetic Fertilizer N Use,,``demand_soil_synthetic_fertilizer_n_$UNIT-MASS$`` (``$UNIT-MASS$ = kt``),,none,,,,1,1,1
+Output,Total Fertilizer N Use,,``demand_soil_fertilizer_n_$UNIT-MASS$`` (``$UNIT-MASS$ = kt``),,none,,,,1,1,1

@@ -17,5 +17,6 @@ Input,Crop Yield Factor,Yield (metric tons) per hectare of crops planted,"``yf_a
 Input,Initial Cropland Area Proportion,"Proportion of total **crop** area (%/100), where crop area is calculated as the product of the country's area (``area_country_ha``) and the fraction of land use that is devoted to crop land (``frac_lu_cropland``)",``frac_agrc_initial_area_cropland_$CAT-AGRICULTURE$``,,,,,0,1,1,none
 Output,Change to Net Imports of Crops,Difference between crops demanded and those that can be produced locally. Assumption is that demand is met and they will be imported.,``net_imports_agrc_$CAT-AGRICULTURE$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,,,,1,1,1,none
 Output,Crop Area,Total area of each crop given in terms of the value specified in the configuration parameter ``area_units``.,``area_agrc_crops_$CAT-AGRICULTURE$``,,,,,1,1,1,none
+Output,Crop Demand,Total tonnage of crops demanded,``demand_agrc_$CAT-AGRICULTURE$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,,,,1,1,1,none
 Output,Crop Yield,Total tonnage of crops yielded,``yield_agrc_$CAT-AGRICULTURE$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,,,,1,1,1,none
 Output,Cropland Area Proportion,Proportion of cropland represented by each crop,``frac_area_cropland_calculated_$CAT-AGRICULTURE$``,,,,,1,1,1,none

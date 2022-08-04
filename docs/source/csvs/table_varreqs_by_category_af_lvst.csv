@@ -67,4 +67,5 @@ Input,Livestock Manure Management Fraction Solid Storage,,``frac_lvst_mm_$CAT-LI
 Input,Maximum Manure :math:`\text{CH}_4` Generation Capacity,,"``physparam_lvst_bo_$CAT-LIVESTOCK$_$UNIT-MASS$_$EMISSION-GAS$_$UNIT-MASS$_manure`` (``$EMISSION-GAS$ = ch4``, ``$UNIT-MASS$ = kg``)",,,, | Default values taken from IPCC GNGHGI V4 Table 10A.16,0,1,1,none,0
 Output,:math:`\text{CH}_4` Emissions from Livestock Enteric Fermentation,Methane emissions from enteric fermentation,``emission_co2e_$EMISSION-GAS$_lvst_entferm_$CAT-LIVESTOCK$`` (``$EMISSION-GAS$ = ch4``),,,,,1,1,1,none,0
 Output,Change to Net Imports of Livestock,Difference between livestock demanded and those that can be produced locally. ,``net_imports_change_lvst_$CAT-LIVESTOCK$``,,,,,1,1,1,none,0
+Output,Livestock Demand,Total production demand for heads of livestock,``demand_lvst_$CAT-LIVESTOCK$``,,,,,1,1,1,none,0
 Output,Livestock Head Count,"Estimated as a function of land use, carrying capacity, and the **Carrying Capacity Scalar**. ",``pop_lvst_$CAT-LIVESTOCK$``,,,,,1,1,1,none,0
