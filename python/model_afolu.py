@@ -1949,13 +1949,8 @@ class AFOLU:
             vec_soil_soc_total_mineral += np.sum(arr_soil_soc_frst_temptrop_cur.transpose()*arr_lndu_frac_mineral_soils[:, inds_lndu], axis = 1)
 
         # calculate the change in soil carbon year over year for all and for mineral
-        #vec_soil_delta_soc = vec_soil_soc_total[1:] - vec_soil_soc_total[0:-1]
-        #vec_soil_delta_soc = np.insert(vec_soil_delta_soc, 0, vec_soil_delta_soc[0])
-        #vec_soil_delta_soc_mineral = vec_soil_soc_total_mineral[1:] - vec_soil_soc_total_mineral[0:-1]
-        #vec_soil_delta_soc_mineral = np.insert(vec_soil_delta_soc_mineral, 0, vec_soil_delta_soc_mineral[0])
         vec_soil_delta_soc = self.calculate_ipcc_soc_deltas(vec_soil_soc_total, 2)
         vec_soil_delta_soc_mineral = self.calculate_ipcc_soc_deltas(vec_soil_soc_total_mineral, 2)
-        #print(vec_soil_soc_total_mineral)
         # calculate FSOM from fraction mineral
         vec_soil_n2odirectn_fsom = -(vec_soil_delta_soc_mineral/vec_soil_ratio_c_to_n_soil_organic_matter)*vec_soil_ef1_soc_est
         vec_soil_emission_co2_soil_carbon_mineral = -self.factor_c_to_co2*vec_soil_delta_soc_mineral
