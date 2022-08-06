@@ -66,7 +66,7 @@ def build_dict(df_in, dims = None):
 
 
 # check that the data frame contains required information
-def check_fields(df, fields, msg_prepend: str = "Required fields: "):
+def check_fields(df, fields: list, msg_prepend: str = "Required fields: "):
     s_fields_df = set(df.columns)
     s_fields_check = set(fields)
     if s_fields_check.issubset(s_fields_df):

@@ -455,3 +455,109 @@ class ElectricEnergy:
         """
 
         return None
+
+
+    ##  format StorageStartLevel for NemoMod
+    def format_nemomod_table_storage_start_level(self,
+        df_elec_trajectories: pd.DataFrame
+    ) -> pd.DataFrame:
+        """
+            Format the StorageStartLevel input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+            - df_elec_trajectories: data frame of model variable input trajectories
+        """
+
+        return None
+
+
+    ##  format TechnologyFromStorage for NemoMod
+    def format_nemomod_table_technology_from_storage(self,
+        attribute_technology: ds.AttributeTable
+    ) -> pd.DataFrame:
+        """
+            Format the TechnologyFromStorage input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+            - attribute_technology: AttributeTable for technology, used to identify whether or not a technology can receive energy from storage
+        """
+
+        return None
+
+
+    ##  format TechnologyToStorage for NemoMod
+    def format_nemomod_table_technology_to_storage(self,
+        attribute_technology: ds.AttributeTable
+    ) -> pd.DataFrame:
+        """
+            Format the TechnologyToStorage input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+            - attribute_technology: AttributeTable for technology, used to identify whether or not a technology can charge a storage
+        """
+
+        return None
+
+
+    ##  format LTsGroup for NemoMod
+    def format_nemomod_table_ltsgroup(self,
+        attribute_time_slice: ds.AttributeTable = None
+    ) -> pd.DataFrame:
+        """
+            Format the LTsGroup input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+            - attribute_time_slice: AttributeTable for time slice, used to identify the maximum discharge rate
+        """
+        # retrieve the attribute and check fields
+        fields_req = ["time_slice", "tg1", "tg2", "lorder"]
+        attribute_time_slice = self.model_attributes.dict_attributes["time_slice"] if (attribute_time_slice is None) else attribute_time_slice
+        sf.check_fields(attribute_time_slice.table, fields_req, msg_prepend = "Missing fields in table 'LTsGroup': ")
+
+        # format the output dataframe
+        df_out = attribute_time_slice.table.copy().drop_duplicates().reset_index(drop = True)
+        df_out["id"] = range(1, len(df_out) + 1)
+        df_out.rename(columns = {"time_slice": "l"}, inplace = True)
+        df_out = df_out[["id", "l", "tg1", "tg2", "lorder"]]
+
+        return df_out
+
+
+    ##  format TotalAnnualMaxCapacity for NemoMod
+    def format_nemomod_table_total_annual_max_capacity(self,
+        df_elec_trajectories: pd.DataFrame
+    ) -> pd.DataFrame:
+        """
+            Format the TotalAnnualMaxCapacity input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+            - df_elec_trajectories: data frame of model variable input trajectories
+        """
+
+        return None
+
+
+    ##  format TotalAnnualMaxCapacityInvestment for NemoMod
+    def format_nemomod_table_total_annual_max_capacity_investment(self,
+        df_elec_trajectories: pd.DataFrame
+    ) -> pd.DataFrame:
+        """
+            Format the TotalAnnualMaxCapacityInvestment input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+            - df_elec_trajectories: data frame of model variable input trajectories
+        """
+
+        return None
+
+
+    ##  format TotalAnnualMinCapacity for NemoMod
+    def format_nemomod_table_total_annual_min_capacity(self,
+        df_elec_trajectories: pd.DataFrame
+    ) -> pd.DataFrame:
+        """
+            Format the TotalAnnualMinCapacity input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+            - df_elec_trajectories: data frame of model variable input trajectories
+        """
+
+        return None
+
+
+    ##  format TotalAnnualMinCapacityInvestment for NemoMod
+    def format_nemomod_table_total_annual_min_capacity_investment(self,
+        df_elec_trajectories: pd.DataFrame
+    ) -> pd.DataFrame:
+        """
+            Format the TotalAnnualMinCapacityInvestment input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+            - df_elec_trajectories: data frame of model variable input trajectories
+        """
+
+        return None

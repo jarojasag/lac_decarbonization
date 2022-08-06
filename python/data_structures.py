@@ -85,6 +85,7 @@ class Configuration:
         attr_gas: AttributeTable,
         attr_length: AttributeTable,
         attr_mass: AttributeTable,
+        attr_region: AttributeTable,
         attr_volume: AttributeTable,
         attr_required_parameters: AttributeTable = None
     ):
@@ -97,6 +98,7 @@ class Configuration:
         self.attr_gas = attr_gas
         self.attr_length = attr_length
         self.attr_mass = attr_mass
+        self.attr_region = attr_region
         self.attr_volume = attr_volume
 
         # set required parametrs by type
@@ -106,6 +108,7 @@ class Configuration:
             "emissions_mass",
             "historical_solid_waste_method",
             "length_units",
+            "region",
             "volume_units"
         ]
         self.params_float = ["days_per_year"]
@@ -118,32 +121,41 @@ class Configuration:
             attr_gas,
             attr_length,
             attr_mass,
+            attr_region,
             attr_volume,
-            attr_required_parameters
+            attr_required_parameters,
+            delim = "|"
         )
 
 
     # some restrictions on the config values
     def check_config_defaults(self,
         param,
-        val,
-        dict_valid_values: dict = dict({})
+        vals,
+        dict_valid_values: dict = dict({}),
+        set_as_literal_q: bool = False
     ):
-        if param in self.params_int:
-            val = int(val)
-        elif param in self.params_float:
-            val = float(val)
-        elif param in self.params_float_fracs:
-            val = min(max(float(val), 0), 1)
-        elif param in self.params_string:
-            val = str(val)
 
-        if param in dict_valid_values.keys():
-            if val not in dict_valid_values[param]:
-                valid_vals = sf.format_print_list(dict_valid_values[param])
-                raise ValueError(f"Invalid specification of configuration parameter '{param}': valid values are {valid_vals}")
+        val_list = [vals] if ((not isinstance(vals, list)) or set_as_literal_q) else vals
 
-        return val
+        # loop over all values to check
+        for val in val_list:
+            if param in self.params_int:
+                val = int(val)
+            elif param in self.params_float:
+                val = float(val)
+            elif param in self.params_float_fracs:
+                val = min(max(float(val), 0), 1)
+            elif param in self.params_string:
+                val = str(val)
+
+            if param in dict_valid_values.keys():
+                if val not in dict_valid_values[param]:
+                    valid_vals = sf.format_print_list(dict_valid_values[param])
+                    raise ValueError(f"Invalid specification of configuration parameter '{param}': {param} '{val}' not found. Valid values are {valid_vals}")
+
+        return vals
+
 
     # function to retrieve a configuration value
     def get(self, key: str):
@@ -152,6 +164,7 @@ class Configuration:
         else:
             raise KeyError(f"Configuration parameter '{key}' not found.")
 
+
     # function for retrieving a configuration file and population missing values with defaults
     def get_config_information(self,
         attr_area: AttributeTable = None,
@@ -159,10 +172,12 @@ class Configuration:
         attr_gas: AttributeTable = None,
         attr_length: AttributeTable = None,
         attr_mass: AttributeTable = None,
+        attr_region: AttributeTable = None,
         attr_volume: AttributeTable = None,
         attr_parameters_required: AttributeTable = None,
         field_req_param: str = "configuration_file_parameter",
-        field_default_val: str = "default_value"
+        field_default_val: str = "default_value",
+        delim: str = ","
     ) -> dict:
 
         # set some variables from defaults
@@ -171,13 +186,14 @@ class Configuration:
         attr_gas = attr_gas if (attr_gas is not None) else self.attr_gas
         attr_length = attr_length if (attr_length is not None) else self.attr_length
         attr_mass = attr_mass if (attr_mass is not None) else self.attr_mass
+        attr_region = attr_region if (attr_region is not None) else self.attr_region
         attr_volume = attr_volume if (attr_volume is not None) else self.attr_volume
 
         # check path and parse the config if it exists
         dict_conf = {}
         if self.fp_config != None:
             if os.path.exists(self.fp_config):
-                dict_conf = self.parse_config(self.fp_config)
+                dict_conf = self.parse_config(self.fp_config, delim = delim)
 
         # update with defaults if a value is missing in the specified configuration
         if attr_parameters_required != None:
@@ -197,6 +213,7 @@ class Configuration:
         valid_historical_solid_waste_method = ["back_project", "historical"]
         valid_length = self.get_valid_values_from_attribute_column(attr_length, "length_equivalent_", str, "unit_length_to_length")
         valid_mass = self.get_valid_values_from_attribute_column(attr_mass, "mass_equivalent_", str, "unit_mass_to_mass")
+        valid_region = attr_region.key_values
         valid_volume = self.get_valid_values_from_attribute_column(attr_volume, "volume_equivalent_", str)
 
         dict_checks = {
@@ -207,6 +224,7 @@ class Configuration:
             "historicall_harvested_wood_products_method": valid_historical_hwp_method,
             "historical_solid_waste_method": valid_historical_solid_waste_method,
             "length_units": valid_length,
+            "region": valid_region,
             "volume_units": valid_volume
         }
         keys_check = list(dict_conf.keys())
@@ -225,9 +243,11 @@ class Configuration:
         self.valid_historical_solid_waste_method = valid_historical_solid_waste_method
         self.valid_length = valid_length
         self.valid_mass = valid_mass
+        self.valid_region = valid_region
         self.valid_volume = valid_volume
 
         return dict_conf
+
 
     # function to retrieve available emission mass specifications
     def get_valid_values_from_attribute_column(self,
@@ -248,6 +268,7 @@ class Configuration:
 
         return cols
 
+
     # guess the input type for a configuration file
     def infer_type(self, val):
         if val != None:
@@ -257,6 +278,7 @@ class Configuration:
                 val = int(num) if (num == int(num)) else float(num)
         return val
 
+
     # apply to a list if necessary
     def infer_types(self, val_in, delim = ","):
         if val_in != None:
@@ -264,8 +286,9 @@ class Configuration:
         else:
             return None
 
+
     # function for parsing a configuration file into a dictionary
-    def parse_config(self, fp_config: str) -> dict:
+    def parse_config(self, fp_config: str, delim: str = ",") -> dict:
         """
             parse_config returns a dictionary of configuration values
         """
@@ -284,7 +307,7 @@ class Configuration:
             if (":" in ln_new):
                 ln_new = ln_new.split(":")
                 key = str(ln_new[0])
-                val = self.infer_types(str(ln_new[1]).strip())
+                val = self.infer_types(str(ln_new[1]).strip(), delim = delim)
                 dict_out.update({key: val})
 
         return dict_out
@@ -380,6 +403,7 @@ class ModelAttributes:
             self.dict_attributes["emission_gas"],
             self.dict_attributes["unit_length"],
             self.dict_attributes["unit_mass"],
+            self.dict_attributes["region"],
             self.dict_attributes["unit_volume"],
             self.configuration_requirements
         )
