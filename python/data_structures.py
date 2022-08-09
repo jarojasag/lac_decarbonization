@@ -205,6 +205,12 @@ class Configuration:
                         val_default = self.infer_types(attr_parameters_required.field_maps[f"{attr_parameters_required.key}_to_{field_default_val}"][k])
                         dict_conf.update({param_config: val_default})
 
+        # set parameters to return as a list and ensure type return is list
+        params_list = ["region"]
+        for p in params_list:
+            if not isinstance(dict_conf[p], list):
+                dict_conf.update({p: [dict_conf[p]]})
+
         # check valid configuration values and update where appropriate
         valid_area = self.get_valid_values_from_attribute_column(attr_area, "area_equivalent_", str, "unit_area_to_area")
         valid_energy = self.get_valid_values_from_attribute_column(attr_energy, "energy_equivalent_", str, "unit_energy_to_energy")
@@ -215,7 +221,7 @@ class Configuration:
         valid_mass = self.get_valid_values_from_attribute_column(attr_mass, "mass_equivalent_", str, "unit_mass_to_mass")
         valid_region = attr_region.key_values
         valid_volume = self.get_valid_values_from_attribute_column(attr_volume, "volume_equivalent_", str)
-
+        # map parameters to valid values
         dict_checks = {
             "area_units": valid_area,
             "energy_units": valid_energy,
@@ -227,6 +233,13 @@ class Configuration:
             "region": valid_region,
             "volume_units": valid_volume
         }
+
+        # allow some parameter switch values to valid values
+        dict_params_switch = {"region": ["all"]}
+        for p in dict_params_switch.keys():
+            if dict_conf[p] == dict_params_switch[p]:
+                dict_conf.update({p: dict_checks[p].copy()})
+
         keys_check = list(dict_conf.keys())
         for k in keys_check:
             dict_conf.update({k: self.check_config_defaults(k, dict_conf[k], dict_checks)})
@@ -320,16 +333,22 @@ class ModelAttributes:
     def __init__(self, dir_attributes: str, fp_config: str = None):
 
         # initialize dimensions of analysis - later, check for presence
-        self.dim_time_period = "time_period"
         self.dim_design_id = "design_id"
         self.dim_future_id = "future_id"
+        self.dim_mode = "mode"
+        self.dim_region = "region"
         self.dim_strategy_id = "strategy_id"
+        self.dim_time_period = "time_period"
         self.dim_primary_id = "primary_id"
         # ordered by sort hierarchy
         self.sort_ordered_dimensions_of_analysis = [self.dim_primary_id, self.dim_design_id, self.dim_strategy_id, self.dim_future_id, self.dim_time_period]
 
+        # some common shared fields
+        self.field_dim_year = "year"
+
         # set some basic properties
         self.attribute_file_extension = ".csv"
+        self.delim_multicats = "|"
         self.matchstring_landuse_to_forests = "forests_"
         self.substr_analytical_parameters = "analytical_parameters"
         self.substr_dimensions = "attribute_dim_"
@@ -385,6 +404,8 @@ class ModelAttributes:
         # run checks and raise errors if invalid data are found in the attribute tables
         self.check_agrc_attribute_tables()
         self.check_enfu_attribute_table()
+        self.check_enst_attribute_table()
+        self.check_entc_attribute_table()
         self.check_inen_attribute_tables()
         self.check_lndu_attribute_tables()
         self.check_lsmm_attribute_table()
@@ -562,13 +583,25 @@ class ModelAttributes:
     def get_categories_from_attribute_characteristic(self,
         subsector: str,
         dict_subset: dict,
-        attribute_type: str = "pycategory_primary"
+        attribute_type: str = "pycategory_primary",
+        subsector_extract_key: str = None
     ) -> list:
         #
-        pycat = self.get_subsector_attribute(subsector, attribute_type)
-        attr = self.dict_attributes[pycat] if (attribute_type == "pycategory_primary") else self.dict_varreqs[pycat]
+        auto_select_attr_q = (self.check_subsector(subsector, throw_error_q = False) == subsector)
+
+        if auto_select_attr_q:
+            pycat = self.get_subsector_attribute(subsector, attribute_type)
+            attr = self.dict_attributes[pycat] if (attribute_type == "pycategory_primary") else self.dict_varreqs[pycat]
+        else:
+            attr = self.dict_attributes.get(subsector)
+            extract_key = subsector_extract_key if (subsector_extract_key is not None) else (attr.key if (attr is not None) else "")
+            pycat = extract_key if (attr is not None) else ""
+
         #
-        return list(sf.subset_df(attr.table, dict_subset)[pycat])
+        if attr is not None:
+            return list(sf.subset_df(attr.table, dict_subset)[pycat])
+        else:
+            return None
 
 
     ##  function for dimensional attributes
@@ -604,13 +637,6 @@ class ModelAttributes:
         all_subsector_abvs.sort()
 
         return (all_sectors, all_sectors_abvs, all_subsectors, all_subsector_abvs)
-
-
-    ##  function to retrieve time periods
-    def get_time_periods(self):
-        pydim_time_period = self.get_dimensional_attribute("time_period", "pydim")
-        time_periods = self.dict_attributes[pydim_time_period].key_values
-        return time_periods, len(time_periods)
 
 
     ##  function for grabbing an attribute column from an attribute table ordered the same as key values
@@ -744,6 +770,38 @@ class ModelAttributes:
             # warn user, but still allow a return
             warnings.warn(f"Invalid subsector attribute '{return_type}'. Valid return type values are:{valid_rts}")
             return None
+
+
+    ##  retrieve time periods
+    def get_time_periods(self) -> tuple:
+        """
+            Get all time periods defined in SISEPUEDE. Returns a tuple of the form (time_periods, n), where:
+            - time_periods is a list of all time periods
+            - n is the number of defined time periods
+
+        """
+        pydim_time_period = self.get_dimensional_attribute("time_period", "pydim")
+        time_periods = self.dict_attributes[pydim_time_period].key_values
+        return time_periods, len(time_periods)
+
+
+    ##  get all years associated with time periods
+    def get_time_period_years(self,
+        field_year: str = "year"
+    ) -> list:
+        """
+            Get a list of all years (as integers) associated with time periods in SISEPUEDE. Returns None if no years are defined.
+        """
+        pydim_time_period = self.get_dimensional_attribute("time_period", "pydim")
+        attr_tp = self.dict_attributes[pydim_time_period]
+
+        # initialize output years
+        all_years = None
+        if field_year in attr_tp.table.columns:
+            all_years = sorted(list(set(attr_tp.table[field_year])))
+            all_years = [int(x) for x in all_years]
+
+        return all_years
 
 
     ##  retrieve a dictionary that maps variables to each other based on shared categories within a subsector
@@ -1188,59 +1246,47 @@ class ModelAttributes:
         return out
 
 
-    ####################################################
-    #    SECTOR-SPECIFIC AND CROSS SECTORIAL CHECKS    #
-    ####################################################
+    ###############################################
+    #    SHARED FUNCTIONS FOR SECTORIAL CHECKS    #
+    ###############################################
 
-    def check_agrc_attribute_tables(self):
-
-        # check the crosswalk for correct specification of soil management categories
-        self.check_subsector_attribute_table_crosswalk(
-            self.subsec_name_agrc,
-            self.subsec_name_soil,
-            type_primary = "varreqs_all",
-            type_target = "categories",
-            injection_q = True
-        )
-
-        # next, check for category specifications in attribute table
-        attr = self.get_attribute_table(self.subsec_name_agrc)
-        fields_req = ["apply_vegetarian_exchange_scalar", "rice_category"]
-        sf.check_fields(attr.table, fields_req, f"Error in fields in {self.subsec_name_agrc} attribute table at {attr.fp_table} ")
-
-        # check the vegetarian scalar
-        if not set(attr.table["apply_vegetarian_exchange_scalar"]).issubset(set({0, 1})):
-            raise ValueError(f"Invalid values found in field 'apply_vegetarian_exchange_scalar' in {self.subsec_name_agrc} attribute table: only 0 and 1 should be specified.")
-        # check rice
-        if not set(attr.table["rice_category"]).issubset(set({0, 1})):
-            raise ValueError(f"Invalid values found in field 'rice_category' in {self.subsec_name_agrc} attribute table: only 0 and 1 should be specified.")
-        elif sum(attr.table["rice_category"]) != 1:
-            raise ValueError(f"Invalid specification of Rice found in {self.subsec_name_agrc} attribute table: exactly 1 category should be specfied as the Rice category.\n\nUse 1 to flag the category; all other values should be 0.")
+    ##  check binary fields
+    def check_binary_fields(self,
+        attr: AttributeTable,
+        subsec: str,
+        fields: str,
+        force_sum_to_1: bool = False
+    ):
+        # loop over fields to do checks
+        for fld in fields:
+            valid_sum = (sum(attr.table[fld]) == 1) if force_sum_to_1 else True
+            if fld not in attr.table.columns:
+                raise ValueError(f"Error in subsector {subsec}: required field '{fld}' not found in the table at '{attr.fp_table}'.")
+            elif not set(attr.table[fld].astype(int)).issubset(set([1 , 0])):
+                raise ValueError(f"Error in subsector {subsec}:  invalid values found in field '{fld}' in the table at '{attr.fp_table}'. Only 0 or 1 should be specified.")
+            elif not valid_sum:
+                raise ValueError(f"Invalid specification of field '{fld}' found in {subsec} attribute table: exactly 1 category or variable should be specfied in the field '{fld}'.\n\nUse 1 to flag the category; all other values should be 0.")
 
 
     ##  function to check attribute crosswalks (e.g., one attribute table specifies another category as an element; this function verifies that they are valid)
-    def check_subsector_attribute_table_crosswalk(self,
+    def _check_subsector_attribute_table_crosswalk(self,
         dict_subsector_primary: dict,
         subsector_target: str,
         type_primary: str = "categories",
         type_target: str = "categories",
-        injection_q: bool = True
+        injection_q: bool = True,
+        allow_multiple_cats_q: bool = False
     ):
         """
             Checks the validity of categories specified as an attribute (subsector_target) of a primary subsctor category (subsector_primary)
 
-            Function Arguments
-            ------------------
-            dict_subsector_primary: dictionary of form {subsector_primary: field_attribute_target}. The key gives the primary subsector, and 'field_attribute_target' is the field in the attribute table associated with the categories to check.
+            - dict_subsector_primary: dictionary of form {subsector_primary: field_attribute_target}. The key gives the primary subsector, and 'field_attribute_target' is the field in the attribute table associated with the categories to check.
                 NOTE: dict_subsector_primary can also be specified only as a string (subsector_primary) -- if dict_subsector_primary is a string, then field_attribute_target is assumed to be the primary python category of subsector_target (e.g., $CAT-TARGET$)
-
-            subsector_target: target subsector to check values against
-
-            type_primary: default = "categories". Represents the type of attribute table for the primary table; valid values are 'categories', 'varreqs_all', and 'varreqs_partial'
-
-            type_target: default = "categories". Type of the target table. Valid values are the same as those for type_primary.
-
-            injection_q: default = True. If injection_q, then target categories should be associated with a unique primary category (exclding those are specified as 'none').
+            - subsector_target: target subsector to check values against
+            - type_primary: default = "categories". Represents the type of attribute table for the primary table; valid values are 'categories', 'varreqs_all', and 'varreqs_partial'
+            - type_target: default = "categories". Type of the target table. Valid values are the same as those for type_primary.
+            - injection_q: default = True. If injection_q, then target categories should be associated with a unique primary category (exclding those are specified as 'none').
+            - allow_multiple_cats_q: allow the target field to specify multiple categories using the default delimiter (|)?
         """
 
         ##  RUN CHECKS ON INPUT SPECIFICATIONS
@@ -1290,14 +1336,18 @@ class ModelAttributes:
         # check that the field is properly specified in the primary table
         field_subsector_primary = str(dict_subsector_primary[subsector_primary]) if (type(dict_subsector_primary) == dict) else key_target
         if field_subsector_primary not in attr_prim.table.columns:
-            raise ValueError(f"Error in check_subsector_attribute_table_crosswalk: field '{field_subsector_primary}' not found in the '{subsector_primary}' attribute table. Check the file at '{attr_prim.fp_table}'.")
+            raise ValueError(f"Error in _check_subsector_attribute_table_crosswalk: field '{field_subsector_primary}' not found in the '{subsector_primary}' attribute table. Check the file at '{attr_prim.fp_table}'.")
 
 
         ##  CHECK ATTRIBUTE TABLE CROSSWALKS
 
         # get categories specified in the
         primary_cats_defined = list(attr_prim.table[field_subsector_primary])
-        primary_cats_defined = [clean_schema(x) for x in primary_cats_defined if (x != "none")] if (key_target == key_target_pycat) else [x for x in primary_cats_defined if (x != "none")]
+        if allow_multiple_cats_q:
+            primary_cats_defined = sum([[clean_schema(y) for y in x.split(self.delim_multicats)] for x in primary_cats_defined if (x != "none")], []) if (key_target == key_target_pycat) else [x for x in primary_cats_defined if (x != "none")]
+        else:
+            #HEREHERE
+            primary_cats_defined = [clean_schema(x) for x in primary_cats_defined if (x != "none")] if (key_target == key_target_pycat) else [x for x in primary_cats_defined if (x != "none")]
 
         # ensure that all population categories properly specified
         if not set(primary_cats_defined).issubset(set(attr_targ.key_values)):
@@ -1312,16 +1362,82 @@ class ModelAttributes:
                 raise ValueError(f"Error in {subsector_primary} attribute table at '{attr_prim.fp_table}': duplicate specifications of target categories {duplicate_vals}. There map of {subsector_primary} categories to {subsector_target} categories should be an injection map.")
 
 
+
+    ####################################################
+    #    SECTOR-SPECIFIC AND CROSS SECTORIAL CHECKS    #
+    ####################################################
+
+    ##  check agricultural attribute tables (category and variables)
+    def check_agrc_attribute_tables(self):
+
+        # check for proper specifications in attribute table
+        attr = self.get_attribute_table(self.subsec_name_agrc)
+        fields_req = ["apply_vegetarian_exchange_scalar", "rice_category"]
+        self.check_binary_fields(attr, self.subsec_name_agrc, ["apply_vegetarian_exchange_scalar"])
+        self.check_binary_fields(attr, self.subsec_name_agrc, ["rice_category"], force_sum_to_1 = True)
+
+        # next, check the crosswalk for correct specification of soil management categories
+        self._check_subsector_attribute_table_crosswalk(
+            self.subsec_name_agrc,
+            self.subsec_name_soil,
+            type_primary = "varreqs_all",
+            type_target = "categories",
+            injection_q = True
+        )
+
+
+
+
     ##  function to check the energy fuels table to ensure that an electricity category is specified
     def check_enfu_attribute_table(self):
-        # some shared values
+        # share values
         subsec = self.subsec_name_enfu
         attr = self.get_attribute_table(subsec)
+        # check binary variables
+        fields_req_bin = [self.field_enfu_biofuels_demand_category, self.field_enfu_electricity_demand_category]
+        self.check_binary_fields(attr, self.subsec_name_agrc, fields_req_bin, force_sum_to_1 = True)
 
-        for fld in [self.field_enfu_biofuels_demand_category, self.field_enfu_electricity_demand_category]:
-            if not (set(attr.table[fld].astype(int)) == set([1 , 0]) and (sum(attr.table[fld]) == 1)):
-                fld_disp = fld.replace("_demand_category", "")
-                raise ValueError(f"Error in subsector {subsec}: there must be a unique {fld_disp} category specified in fuels. Check the field '{fld}' in the table at '{attr.fp_table}'.")
+
+    ##  function to check the energy storage table to ensure that an electricity category is specified
+    def check_enst_attribute_table(self):
+        # some shared values
+        subsec = self.subsec_name_enst
+        attr = self.get_attribute_table(subsec)
+
+        # check required binary fields
+        fields_req_bin = ["netzeroyear", "netzerotg1", "netzerotg2"]
+        self.check_binary_fields(attr, subsec, fields_req_bin)
+
+        # check storage/technology crosswalk
+        self._check_subsector_attribute_table_crosswalk(self.subsec_name_enst, self.subsec_name_entc, type_primary = "categories", injection_q = False)
+
+
+    ##  function to check the energy storage table to ensure that an electricity category is specified
+    def check_entc_attribute_table(self):
+        # some shared values
+        subsec = self.subsec_name_entc
+        attr = self.get_attribute_table(subsec)
+
+        # check required fields - binary
+        fields_req_bin = ["renewable_source"]
+        self.check_binary_fields(attr, subsec, fields_req_bin)
+
+        # check storage/technology crosswalks
+        self._check_subsector_attribute_table_crosswalk(self.subsec_name_entc, self.subsec_name_enst, type_primary = "categories", injection_q = False)
+        # check specifications of storage in technology from storage
+        self._check_subsector_attribute_table_crosswalk(
+            {self.subsec_name_entc: "technology_from_storage"},
+            self.subsec_name_enst,
+            injection_q = False,
+            allow_multiple_cats_q = True
+        )
+        # check specifications of storage in technology to storage
+        self._check_subsector_attribute_table_crosswalk(
+            {self.subsec_name_entc: "technology_to_storage"},
+            self.subsec_name_enst,
+            injection_q = False,
+            allow_multiple_cats_q = True
+        )
 
 
     ##  function to check the industrial energy/fuels cw in industrial energy
@@ -1331,26 +1447,19 @@ class ModelAttributes:
         subsec = self.subsec_name_inen
         attr = self.get_attribute_table(subsec, "key_varreqs_partial")
 
-        # check
-        for fld in ["fuel_fraction_variable_by_fuel"]:
-
-            if fld not in attr.table.columns:
-                raise ValueError(f"Error in {subsec} attribute table: field {fld} not found in table at path '{attr.fp_table}'.")
-
-            elif not (set(attr.table[fld].astype(int)) == set([1 , 0])):
-                fld_disp = fld.replace("_demand_category", "")
-                raise ValueError(f"Error in subsector {subsec}: there must be a unique {fld_disp} category specified in fuels. Check the field '{fld}' in the table at '{attr.fp_table}'.")
+        # check required fields - binary
+        fields_req_bin = ["fuel_fraction_variable_by_fuel"]
+        self.check_binary_fields(attr, subsec, fields_req_bin)
 
         # function to check the industrial energy/fuels cw in industrial energy
-        self.check_subsector_attribute_table_crosswalk(self.subsec_name_inen, self.subsec_name_enfu, type_primary = "varreqs_partial", injection_q = False)
-
+        self._check_subsector_attribute_table_crosswalk(self.subsec_name_inen, self.subsec_name_enfu, type_primary = "varreqs_partial", injection_q = False)
 
 
     ##  function to check that the land use attribute tables are specified
     def check_lndu_attribute_tables(self):
         # specify some generic variables
-        catstr_forest = self.get_subsector_attribute(self.subsec_name_frst, "pycategory_primary")#self.dict_attributes["abbreviation_subsector"].field_maps["subsector_to_primary_category_py"]["Forest"]
-        catstr_landuse = self.get_subsector_attribute(self.subsec_name_lndu, "pycategory_primary")#self.dict_attributes["abbreviation_subsector"].field_maps["subsector_to_primary_category_py"]["Land Use"]
+        catstr_forest = self.get_subsector_attribute(self.subsec_name_frst, "pycategory_primary")
+        catstr_landuse = self.get_subsector_attribute(self.subsec_name_lndu, "pycategory_primary")
         attribute_forest = self.dict_attributes[catstr_forest]
         attribute_landuse = self.dict_attributes[catstr_landuse]
         cats_forest = attribute_forest.key_values
@@ -1385,14 +1494,14 @@ class ModelAttributes:
             raise ValueError(f"Invalid specification of field '{field_mnrl}' in {self.subsec_name_lndu} attribute located at {attribute_landuse.fp_table}. Category '{cats_crop[0]}' cannot be specified as a target category.")
 
         # check that land use/soil and forest/soil crosswalks are properly specified
-        self.check_subsector_attribute_table_crosswalk(
+        self._check_subsector_attribute_table_crosswalk(
             self.subsec_name_frst,
             self.subsec_name_soil,
             type_primary = "varreqs_all",
             type_target = "categories",
             injection_q = True
         )
-        self.check_subsector_attribute_table_crosswalk(
+        self._check_subsector_attribute_table_crosswalk(
             self.subsec_name_lndu,
             self.subsec_name_soil,
             type_primary = "varreqs_partial",
@@ -1400,7 +1509,7 @@ class ModelAttributes:
             injection_q = True
         )
         # check that forest/land use crosswalk is set properly
-        self.check_subsector_attribute_table_crosswalk(
+        self._check_subsector_attribute_table_crosswalk(
             self.subsec_name_frst,
             self.subsec_name_lndu,
             type_primary = "categories",
@@ -1430,7 +1539,7 @@ class ModelAttributes:
 
     ##  function to check the variables specified in the Transportation Demand attribute table
     def check_trde_category_variable_crosswalk(self):
-        self.check_subsector_attribute_table_crosswalk(
+        self._check_subsector_attribute_table_crosswalk(
             "Transportation Demand",
             "Transportation Demand",
             type_primary = "categories",
@@ -1441,18 +1550,18 @@ class ModelAttributes:
 
     ##  function to check the transportation/transportation demand crosswalk in both the attribute table and the varreqs table
     def check_trns_trde_crosswalks(self):
-        self.check_subsector_attribute_table_crosswalk("Transportation", "Transportation Demand", type_primary = "varreqs_partial", injection_q = True)
-        self.check_subsector_attribute_table_crosswalk("Transportation", "Transportation Demand", injection_q = False)
+        self._check_subsector_attribute_table_crosswalk("Transportation", "Transportation Demand", type_primary = "varreqs_partial", injection_q = True)
+        self._check_subsector_attribute_table_crosswalk("Transportation", "Transportation Demand", injection_q = False)
 
 
     ##  function to check the liquid waste/population crosswalk in liquid waste
     def check_wali_gnrl_crosswalk(self):
-        self.check_subsector_attribute_table_crosswalk("Liquid Waste", "General", injection_q = True)
+        self._check_subsector_attribute_table_crosswalk("Liquid Waste", "General", injection_q = True)
 
 
     ##  liquid waste/wastewater crosswalk
     def check_wali_trww_crosswalk(self):
-        self.check_subsector_attribute_table_crosswalk("Liquid Waste", "Wastewater Treatment", type_primary = "varreqs_all")
+        self._check_subsector_attribute_table_crosswalk("Liquid Waste", "Wastewater Treatment", type_primary = "varreqs_all")
 
 
     ##  function to check if the solid waste attribute table is properly defined
@@ -1806,6 +1915,7 @@ class ModelAttributes:
 
         return pd.concat(df_out, axis = 0).reset_index(drop = True)
 
+
     ##  function for bulding a basic variable list from the (no complexitiies)
     def build_vars_basic(self, dict_vr_varschema: dict, dict_vars_to_cats: dict, category_to_replace: str) -> list:
         # dict_vars_to_loop has keys that are variables to loop over that map to category values
@@ -1958,7 +2068,14 @@ class ModelAttributes:
 
 
     ##  clean a partial category dictionary to return either none (no categorization) or a list of applicable cateogries
-    def clean_partial_category_dictionary(self, dict_in: dict, all_category_values, delim: str = "|") -> dict:
+    def clean_partial_category_dictionary(self,
+        dict_in: dict,
+        all_category_values: list,
+        delim: str = None
+    ) -> dict:
+
+        delim = self.delim_multicats if (delim is None) else delim
+
         for k in dict_in.keys():
             if "none" == dict_in[k].lower().replace(" ", ""):
                 dict_in.update({k: "none"})

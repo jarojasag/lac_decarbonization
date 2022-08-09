@@ -17,6 +17,7 @@ fp_config = os.path.join(dir_proj, "models.config")
 dir_jl = sf.check_path(os.path.join(dir_proj, "julia"), False)
 dir_out = sf.check_path(os.path.join(dir_proj, "out"), True)
 dir_ref = sf.check_path(os.path.join(dir_proj, "ref"), False)
+dir_ref_nemo = sf.check_path(os.path.join(dir_ref, "nemo_mod"), False)
 # attribute tables and readthedocs
 dir_docs = sf.check_path(os.path.join(os.path.dirname(dir_py), "docs", "source"), False)
 dir_attribute_tables = sf.check_path(os.path.join(dir_docs, "csvs"), False)
@@ -35,14 +36,17 @@ dir_parameters_demo = sf.check_path(os.path.join(dir_ingestion, "parameters_demo
 dir_parameters_uncalibrated = sf.check_path(os.path.join(dir_ingestion, "parameters_uncalibrated"), True)
 
 
-##  RELEVANT FILE PATHS
+##  DEVELOP SOME FILE PATHS
 
+# key outputs for analysis run
 fp_csv_default_single_run_out = os.path.join(dir_out, "single_run_output.csv")
+# outputs for batch data estimation
 fp_csv_transition_probability_estimation_annual = os.path.join(dir_ref, "baseline_transition_probability_estimates", "transition_probs_by_region_and_year.csv")
 fp_csv_transition_probability_estimation_mean = os.path.join(dir_ref, "baseline_transition_probability_estimates", "transition_probs_by_region_mean.csv")
 fpt_csv_transition_probability_estimation_mean_with_growth = os.path.join(dir_ref, "baseline_transition_probability_estimates", "transition_probs_by_region_mean_with_target_growth-%s.csv")
 fpt_pkl_transition_probability_estimation_mean_with_growth_assumptions = os.path.join(dir_ref, "baseline_transition_probability_estimates", "transition_probs_by_region_mean_with_target_growth-%s_assumptions.pkl")
-
+# nemo mod input files - some are required
+fp_csv_nemomod_input_specified_demand_profile = os.path.join(dir_ref_nemo, "specified_demand_profile.csv")
 
 def excel_template_path(sector: str, region: str, type_db: str, create_export_dir: bool = True) -> str:
     """
