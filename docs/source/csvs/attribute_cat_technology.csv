@@ -1,11 +1,15 @@
-﻿Category Name,``$CAT-TECHNOLOGY$``,Description,Data Source,Hyperlink,Notes
-Biomass,``pp_biomass``,Biomass power plants,,,
-Coal,``pp_coal``,Coal fired power plants,,,
-Gas,``pp_gas``,Natural gas power plants,,,
-Geothermal,``pp_geothermal``,Geotherml power plants,,,
-Hydropower,``pp_hydropower``,Hydropower power plants,,,
-Nuclear,``pp_nuclear``,Nuclear (fission) power plants,,,
-Oil,``pp_oil``,Oil power plants,,,
-Other,``pp_other``,"Other power plants not listed here, including petcoke, waste to energy, and others",,,
-Solar,``pp_solar``,Solar (photovoltaic) power plants,,,
-Wind,``pp_wind``,"Wind power plants, both on- and off-shore",,,
+﻿Category Name,``$CAT-TECHNOLOGY$``,Description,Data Source,Hyperlink,Notes,Operational Life,Power Plant,Renewable Source,Technology from Storage,Technology to Storage,``$CAT-FUEL$``,``$CAT-STORAGE$``
+Biomass,``pp_biomass``,Biomass power plants,,,,40,1,0,none,none,``fuel_solid_biomass``,none
+Coal,``pp_coal``,Coal fired power plants,,,,40,1,0,none,none,``fuel_coal``,none
+Gas,``pp_gas``,Natural gas power plants,,,,40,1,0,none,none,``fuel_natural_gas``,none
+Geothermal,``pp_geothermal``,Geotherml power plants,,,,40,1,1,none,``st_batteries``|``st_compressed_air``|``st_flywheels``,``fuel_geothermal``,none
+Hydropower,``pp_hydropower``,Hydropower power plants,,,,40,1,1,none,``st_batteries``|``st_compressed_air``|``st_flywheels``,``fuel_hydropower``,none
+Nuclear,``pp_nuclear``,Nuclear (fission) power plants,,,,40,1,0,none,none,``fuel_nuclear``,none
+Ocean,``pp_ocean``,Energy derived from thermal and kinetic energy in ocean waters.,,,,40,1,1,none,``st_batteries``|``st_compressed_air``|``st_flywheels``,``fuel_ocean``,none
+Oil,``pp_oil``,Oil power plants,,,,40,1,0,none,none,``fuel_oil``,none
+Other,``pp_other``,"Other power plants not listed here, including petcoke, waste to energy, and others",,,,40,1,0,none,none,``fuel_other``,none
+Solar,``pp_solar``,Solar (photovoltaic) power plants,,,,40,1,1,none,``st_batteries``|``st_compressed_air``|``st_flywheels``,``fuel_solar``,none
+Storage - Batteries,``st_batteries``,Battery storage,,,,40,0,0,``st_batteries``,``st_batteries``,none,``st_batteries``
+Storage - Compressed Air,``st_compressed_air``,Compressed air storage,,,,40,0,0,``st_compressed_air``,``st_compressed_air``,none,``st_compressed_air``
+Storage - Flywheels,``st_flywheels``,Storage in flywheels,,,,40,0,0,``st_flywheels``,``st_flywheels``,none,``st_flywheels``
+Wind,``pp_wind``,"Wind power plants, both on- and off-shore",,,,40,1,1,none,``st_batteries``|``st_compressed_air``|``st_flywheels``,``fuel_wind``,none

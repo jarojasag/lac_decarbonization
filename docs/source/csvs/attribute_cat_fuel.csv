@@ -15,6 +15,7 @@ Liquefied Petroleum Gases,``fuel_gas_petroleum_liquid``,Liquified petroleoum gas
 Liquid Biofuels,``fuel_biofuels``,"Biodiesel, ethanol, and biogasoline",,,,0,0,0
 Natural Gas,``fuel_natural_gas``,Natural gas,,,,0,0,0
 Nuclear,``fuel_nuclear``,Nuclear fuel,,,,0,0,1
+Ocean,``fuel_ocean``,Ocean energy,,,,0,0,1
 Oil,``fuel_oil``,"Oil, including crude oil, shale oil, residuel fuel oil, and waste oil",,,,0,0,0
 Other,``fuel_other``,Other fuel sources,,,,0,0,0
 Solar,``fuel_solar``,Solar energy,,,,0,0,1

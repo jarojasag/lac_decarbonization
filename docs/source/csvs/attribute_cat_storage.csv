@@ -1,2 +1,4 @@
-﻿Category Name,``$CAT-STORAGE$``,Description,Data Source,Hyperlink,Notes
-Storage 1,``storage_1``,Unspecified storage type 1 (placeholder),,,
+﻿Category Name,``$CAT-STORAGE$``,Description,Data Source,Hyperlink,Notes,netzeroyear,netzerotg1,netzerotg2,``$CAT-TECHNOLOGY$``
+Batteries,``st_batteries``,,,,,0,0,0,``st_batteries``
+Compressed Air,``st_compressed_air``,,,,,0,0,0,``st_compressed_air``
+Flywheels,``st_flywheels``,,,,,0,0,0,``st_flywheels``

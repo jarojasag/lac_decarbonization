@@ -13,4 +13,5 @@ Historical Solid Waste Method,historical_solid_waste_method,back_project," | The
  | 
  | Historical data are read from tables (**NOTE: Historical is currently not supported.**).",
 Length Units,length_units,km,Default units for length. Used in reporting quantities useful to costs and benefits in the Transportation Demand sector.,
+Region,region,first,"Region to run when running DAG (does not affect .project() methods for individual models). Options include ""first"" (run the first defined region), ""all"" (run all regions), the name of a region (a valid region defined in attribute_cat_region.csv), or a pipe-delimited list of regions (e.g., region_1|region_2|…|region_n).",
 Volume Units,volume_units,m3,Default units for volumes. Used in reporting quantities useful to costs and benefits in the Wastewater Treatment sector.,

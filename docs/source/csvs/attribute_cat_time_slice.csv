@@ -1,3 +1,0 @@
-﻿Category Name,``$CAT-TIME-SLICE$``,Description,Data Source,Hyperlink,Notes
-Peak Hours,``peak_hours``,Represents the fraction of time that represent peak (on-grid) electricity consumption hours. This time-slice is important for demand management in the NemoMod Model,,,
-Off-Peak Hours,``off_peak_hours``,Represents the fraction of time that represent off-peak (on-grid) electricity consumption hours ,,,
