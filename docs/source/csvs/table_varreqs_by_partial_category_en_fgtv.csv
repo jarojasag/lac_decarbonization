@@ -1,17 +1,17 @@
-﻿Variable Type,Variable,Information,Variable Schema,Dashboard,Categories,Notes,Data Link,Reference,Internal Model Variable,Default LHS Scalar Minimum at Final Time Period,Default LHS Scalar Maximum at Final Time Period
-Input,:math:`\text{CH}_4` Fugitive Emissions Emission Factor,,``ef_fgtv_$EMISSION-GAS$_futgitive_emissions_$CAT-FUEL$`` (``$EMISSION-GAS$ = ch4``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,0,1,1
-Input,:math:`\text{CH}_4` Fugitive Emissions Emission Factor With Total Capture,,``ef_fgtv_$EMISSION-GAS$_futgitive_emissions_with_full_capture_$CAT-FUEL$`` (``$EMISSION-GAS$ = ch4``),,``fuel_oil``,,,,0,1,1
-Input,:math:`\text{CO}_2` Fugitive Emissions Emission Factor,,``ef_fgtv_$EMISSION-GAS$_futgitive_emissions_$CAT-FUEL$`` (``$EMISSION-GAS$ = co2``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,0,1,1
-Input,:math:`\text{N}_2\text{O}` Fugitive Emissions Emission Factor,,``ef_fgtv_$EMISSION-GAS$_futgitive_emissions_$CAT-FUEL$`` (``$EMISSION-GAS$ = n2o``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,0,1,1
-Input,Fraction Capturable :math:`\text{CH}_4` Captured for Energy,,``frac_fgtv_fugitive_capturable_$EMISSION-GAS$_captured_$CAT-FUEL$`` (``$EMISSION-GAS$ = ch4``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,0,1,1
-Input,Fraction Fugitive :math:`\text{CH}_4` Flared,,``frac_fgtv_fugitive_$EMISSION-GAS$_flared_$CAT-FUEL$``  (``$EMISSION-GAS$ = ch4``),,``fuel_coal``,,,,0,1,1
-Input,Fuel Change to Import Export Ratio,Used to adjust ratio of imports to exports and ,``ratio_fgtv_fuel_imports_to_exports_$CAT-FUEL$``,,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,0,1,1
-Input,Initial Fuel Exports,,``exportsinit_fgtv_$CAT-FUEL$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,0,1,1
-Input,Initial Fuel Imports,,``importsinit_fgtv_$CAT-FUEL$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,0,1,1
-Input,Initial Fuel Production,,``prodinit_fgtv_$CAT-FUEL$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,0,1,1
-Output,:math:`\text{CH}_4` Fugitive Emissions,,``emission_co2e_$EMISSION-GAS$_fgtv_$CAT-FUEL$`` (``$EMISSION-GAS$ = ch4``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,1,1,1
-Output,:math:`\text{CO}_2` Fugitive Emissions,,``emission_co2e_$EMISSION-GAS$_fgtv_$CAT-FUEL$`` (``$EMISSION-GAS$ = co2``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,1,1,1
-Output,:math:`\text{N}_2\text{O}` Fugitive Emissions,,``emission_co2e_$EMISSION-GAS$_fgtv_$CAT-FUEL$`` (``$EMISSION-GAS$ = n2o``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,1,1,1
-Output,Fuel Export,,``exports_fgtv_$CAT-FUEL$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,1,1,1
-Output,Fuel Imports,,``imports_fgtv_$CAT-FUEL$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,1,1,1
-Output,Fuel Production,,``prod_fgtv_$CAT-FUEL$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,1,1,1
+﻿Variable Type,Variable,Information,Variable Schema,Dashboard,Categories,Notes,Data Link,Reference,Internal Model Variable,Default LHS Scalar Minimum at Final Time Period,Default LHS Scalar Maximum at Final Time Period,Emissions Total by Gas Component
+Input,:math:`\text{CH}_4` Fugitive Emissions Emission Factor,,``ef_fgtv_$EMISSION-GAS$_futgitive_emissions_$CAT-FUEL$`` (``$EMISSION-GAS$ = ch4``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,0,1,1,0
+Input,:math:`\text{CH}_4` Fugitive Emissions Emission Factor With Total Capture,,``ef_fgtv_$EMISSION-GAS$_futgitive_emissions_with_full_capture_$CAT-FUEL$`` (``$EMISSION-GAS$ = ch4``),,``fuel_oil``,,,,0,1,1,0
+Input,:math:`\text{CO}_2` Fugitive Emissions Emission Factor,,``ef_fgtv_$EMISSION-GAS$_futgitive_emissions_$CAT-FUEL$`` (``$EMISSION-GAS$ = co2``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,0,1,1,0
+Input,:math:`\text{N}_2\text{O}` Fugitive Emissions Emission Factor,,``ef_fgtv_$EMISSION-GAS$_futgitive_emissions_$CAT-FUEL$`` (``$EMISSION-GAS$ = n2o``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,0,1,1,0
+Input,Fraction Capturable :math:`\text{CH}_4` Captured for Energy,,``frac_fgtv_fugitive_capturable_$EMISSION-GAS$_captured_$CAT-FUEL$`` (``$EMISSION-GAS$ = ch4``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,0,1,1,0
+Input,Fraction Fugitive :math:`\text{CH}_4` Flared,,``frac_fgtv_fugitive_$EMISSION-GAS$_flared_$CAT-FUEL$``  (``$EMISSION-GAS$ = ch4``),,``fuel_coal``,,,,0,1,1,0
+Input,Fuel Change to Import Export Ratio,Used to adjust ratio of imports to exports and ,``ratio_fgtv_fuel_imports_to_exports_$CAT-FUEL$``,,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,0,1,1,0
+Input,Initial Fuel Exports,,``exportsinit_fgtv_$CAT-FUEL$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,0,1,1,0
+Input,Initial Fuel Imports,,``importsinit_fgtv_$CAT-FUEL$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,0,1,1,0
+Input,Initial Fuel Production,,``prodinit_fgtv_$CAT-FUEL$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,0,1,1,0
+Output,:math:`\text{CH}_4` Fugitive Emissions,,``emission_co2e_$EMISSION-GAS$_fgtv_$CAT-FUEL$`` (``$EMISSION-GAS$ = ch4``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,1,1,1,1
+Output,:math:`\text{CO}_2` Fugitive Emissions,,``emission_co2e_$EMISSION-GAS$_fgtv_$CAT-FUEL$`` (``$EMISSION-GAS$ = co2``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,1,1,1,1
+Output,:math:`\text{N}_2\text{O}` Fugitive Emissions,,``emission_co2e_$EMISSION-GAS$_fgtv_$CAT-FUEL$`` (``$EMISSION-GAS$ = n2o``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,1,1,1,1
+Output,Fuel Export,,``exports_fgtv_$CAT-FUEL$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,1,1,1,0
+Output,Fuel Imports,,``imports_fgtv_$CAT-FUEL$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,1,1,1,0
+Output,Fuel Production,,``prod_fgtv_$CAT-FUEL$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,``fuel_coal``|``fuel_natural_gas``|``fuel_oil``,,,,1,1,1,0

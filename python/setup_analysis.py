@@ -3,9 +3,7 @@ import pandas as pd
 import numpy as np
 import support_functions as sf
 import data_structures as ds
-
 import importlib
-#importlib.reload(ds)
 
 ##  SETUP DIRECTORIES AND KEY FILES
 
@@ -17,7 +15,9 @@ fp_config = os.path.join(dir_proj, "models.config")
 dir_jl = sf.check_path(os.path.join(dir_proj, "julia"), False)
 dir_out = sf.check_path(os.path.join(dir_proj, "out"), True)
 dir_ref = sf.check_path(os.path.join(dir_proj, "ref"), False)
+dir_ref_batch_data = sf.check_path(os.path.join(dir_ref, "batch_data_generation"), False)
 dir_ref_nemo = sf.check_path(os.path.join(dir_ref, "nemo_mod"), False)
+dir_tmp = sf.check_path(os.path.join(dir_proj, "tmp"), True)
 # attribute tables and readthedocs
 dir_docs = sf.check_path(os.path.join(os.path.dirname(dir_py), "docs", "source"), False)
 dir_attribute_tables = sf.check_path(os.path.join(dir_docs, "csvs"), False)
@@ -40,13 +40,34 @@ dir_parameters_uncalibrated = sf.check_path(os.path.join(dir_ingestion, "paramet
 
 # key outputs for analysis run
 fp_csv_default_single_run_out = os.path.join(dir_out, "single_run_output.csv")
-# outputs for batch data estimation
-fp_csv_transition_probability_estimation_annual = os.path.join(dir_ref, "baseline_transition_probability_estimates", "transition_probs_by_region_and_year.csv")
-fp_csv_transition_probability_estimation_mean = os.path.join(dir_ref, "baseline_transition_probability_estimates", "transition_probs_by_region_mean.csv")
-fpt_csv_transition_probability_estimation_mean_with_growth = os.path.join(dir_ref, "baseline_transition_probability_estimates", "transition_probs_by_region_mean_with_target_growth-%s.csv")
-fpt_pkl_transition_probability_estimation_mean_with_growth_assumptions = os.path.join(dir_ref, "baseline_transition_probability_estimates", "transition_probs_by_region_mean_with_target_growth-%s_assumptions.pkl")
-# nemo mod input files - some are required
-fp_csv_nemomod_input_specified_demand_profile = os.path.join(dir_ref_nemo, "specified_demand_profile.csv")
+# nemo mod input files - specify required, run checks
+required_tables_nemomod = [
+    model_attributes.table_nemomod_capacity_factor,
+    model_attributes.table_nemomod_specified_demand_profile
+]
+dict_fp_csv_nemomod = {}
+for table in required_tables_nemomod:
+    fp_out = sf.check_path(os.path.join(dir_ref_nemo, f"{table}.csv"), False)
+    dict_fp_csv_nemomod.update({table: fp_out})
+# SQLite Database location
+fp_sqlite_nemomod_db_tmp = os.path.join(dir_tmp, "nemomod_intermediate_database.sqlite")
+
+
+##  BATCH DATA GENERATION DIRECTORIES
+
+dir_rbd_baseline_transition_probs = os.path.join(dir_ref_batch_data, "baseline_transition_probability_estimates")
+dir_rbd_nemomod_energy_inputs = os.path.join(dir_ref_batch_data, "nemomod_energy_inputs")
+for dir in [dir_rbd_baseline_transition_probs, dir_rbd_nemomod_energy_inputs]:
+    os.makedirs(dir, exist_ok = True) if (not os.path.exists(dir)) else None
+# files for batch data generation
+fp_csv_nemomod_residual_capacity_inputs = os.path.join(dir_rbd_nemomod_energy_inputs, "inputs_by_country_modvar_entc_nemomod_residual_capacity.csv")
+fp_csv_transition_probability_estimation_annual = os.path.join(dir_rbd_baseline_transition_probs, "transition_probs_by_region_and_year.csv")
+fp_csv_transition_probability_estimation_mean = os.path.join(dir_rbd_baseline_transition_probs, "transition_probs_by_region_mean.csv")
+fpt_csv_transition_probability_estimation_mean_with_growth = os.path.join(dir_rbd_baseline_transition_probs, "transition_probs_by_region_mean_with_target_growth-%s.csv")
+fpt_pkl_transition_probability_estimation_mean_with_growth_assumptions = os.path.join(dir_rbd_baseline_transition_probs, "transition_probs_by_region_mean_with_target_growth-%s_assumptions.pkl")
+
+
+##  FILE-PATH DEPENDENT FUNCTIONS
 
 def excel_template_path(sector: str, region: str, type_db: str, create_export_dir: bool = True) -> str:
     """

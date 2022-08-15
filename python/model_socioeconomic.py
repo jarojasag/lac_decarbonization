@@ -20,12 +20,16 @@ class Socioeconomic:
         self.modvar_econ_va = "Value Added"
         self.modvar_gnrl_area = "Area of Country"
         self.modvar_gnrl_elasticity_occrate_to_gdppc = "Elasticity National Occupation Rate to GDP Per Capita"
+        self.modvar_gnrl_emission_limit_ch4 = ":math:\\text{CH}_4 Annual Emission Limit"
+        self.modvar_gnrl_emission_limit_co2 = ":math:\\text{CO}_2 Annual Emission Limit"
+        self.modvar_gnrl_emission_limit_n2o = ":math:\\text{N}_2\\text{O} Annual Emission Limit"
         self.modvar_gnrl_frac_eating_red_meat = "Fraction Eating Red Meat"
         self.modvar_gnrl_init_occ_rate = "Initial National Occupancy Rate"
         self.modvar_grnl_num_hh = "Number of Households"
         self.modvar_gnrl_occ_rate = "National Occupancy Rate"
         self.modvar_gnrl_subpop = "Population"
         self.modvar_gnrl_pop_total = "Total Population"
+
 
         ##  MISCELLANEOUS VARIABLES
 

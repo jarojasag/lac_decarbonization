@@ -1,193 +1,33 @@
-``$TIME-SLICE$``,tg1,tg2,lorder,weight
-summerwd0,summer,weekday,1,0.007440476
-summerwd1,summer,weekday,2,0.007440476
-summerwd2,summer,weekday,3,0.007440476
-summerwd3,summer,weekday,4,0.007440476
-summerwd4,summer,weekday,5,0.007440476
-summerwd5,summer,weekday,6,0.007440476
-summerwd6,summer,weekday,7,0.007440476
-summerwd7,summer,weekday,8,0.007440476
-summerwd8,summer,weekday,9,0.007440476
-summerwd9,summer,weekday,10,0.007440476
-summerwd10,summer,weekday,11,0.007440476
-summerwd11,summer,weekday,12,0.007440476
-summerwd12,summer,weekday,13,0.007440476
-summerwd13,summer,weekday,14,0.007440476
-summerwd14,summer,weekday,15,0.007440476
-summerwd15,summer,weekday,16,0.007440476
-summerwd16,summer,weekday,17,0.007440476
-summerwd17,summer,weekday,18,0.007440476
-summerwd18,summer,weekday,19,0.007440476
-summerwd19,summer,weekday,20,0.007440476
-summerwd20,summer,weekday,21,0.007440476
-summerwd21,summer,weekday,22,0.007440476
-summerwd22,summer,weekday,23,0.007440476
-summerwd23,summer,weekday,24,0.007440476
-fallwd0,fall,weekday,1,0.007440476
-fallwd1,fall,weekday,2,0.007440476
-fallwd2,fall,weekday,3,0.007440476
-fallwd3,fall,weekday,4,0.007440476
-fallwd4,fall,weekday,5,0.007440476
-fallwd5,fall,weekday,6,0.007440476
-fallwd6,fall,weekday,7,0.007440476
-fallwd7,fall,weekday,8,0.007440476
-fallwd8,fall,weekday,9,0.007440476
-fallwd9,fall,weekday,10,0.007440476
-fallwd10,fall,weekday,11,0.007440476
-fallwd11,fall,weekday,12,0.007440476
-fallwd12,fall,weekday,13,0.007440476
-fallwd13,fall,weekday,14,0.007440476
-fallwd14,fall,weekday,15,0.007440476
-fallwd15,fall,weekday,16,0.007440476
-fallwd16,fall,weekday,17,0.007440476
-fallwd17,fall,weekday,18,0.007440476
-fallwd18,fall,weekday,19,0.007440476
-fallwd19,fall,weekday,20,0.007440476
-fallwd20,fall,weekday,21,0.007440476
-fallwd21,fall,weekday,22,0.007440476
-fallwd22,fall,weekday,23,0.007440476
-fallwd23,fall,weekday,24,0.007440476
-winterwd0,winter,weekday,1,0.007440476
-winterwd1,winter,weekday,2,0.007440476
-winterwd2,winter,weekday,3,0.007440476
-winterwd3,winter,weekday,4,0.007440476
-winterwd4,winter,weekday,5,0.007440476
-winterwd5,winter,weekday,6,0.007440476
-winterwd6,winter,weekday,7,0.007440476
-winterwd7,winter,weekday,8,0.007440476
-winterwd8,winter,weekday,9,0.007440476
-winterwd9,winter,weekday,10,0.007440476
-winterwd10,winter,weekday,11,0.007440476
-winterwd11,winter,weekday,12,0.007440476
-winterwd12,winter,weekday,13,0.007440476
-winterwd13,winter,weekday,14,0.007440476
-winterwd14,winter,weekday,15,0.007440476
-winterwd15,winter,weekday,16,0.007440476
-winterwd16,winter,weekday,17,0.007440476
-winterwd17,winter,weekday,18,0.007440476
-winterwd18,winter,weekday,19,0.007440476
-winterwd19,winter,weekday,20,0.007440476
-winterwd20,winter,weekday,21,0.007440476
-winterwd21,winter,weekday,22,0.007440476
-winterwd22,winter,weekday,23,0.007440476
-winterwd23,winter,weekday,24,0.007440476
-springwd0,spring,weekday,1,0.007440476
-springwd1,spring,weekday,2,0.007440476
-springwd2,spring,weekday,3,0.007440476
-springwd3,spring,weekday,4,0.007440476
-springwd4,spring,weekday,5,0.007440476
-springwd5,spring,weekday,6,0.007440476
-springwd6,spring,weekday,7,0.007440476
-springwd7,spring,weekday,8,0.007440476
-springwd8,spring,weekday,9,0.007440476
-springwd9,spring,weekday,10,0.007440476
-springwd10,spring,weekday,11,0.007440476
-springwd11,spring,weekday,12,0.007440476
-springwd12,spring,weekday,13,0.007440476
-springwd13,spring,weekday,14,0.007440476
-springwd14,spring,weekday,15,0.007440476
-springwd15,spring,weekday,16,0.007440476
-springwd16,spring,weekday,17,0.007440476
-springwd17,spring,weekday,18,0.007440476
-springwd18,spring,weekday,19,0.007440476
-springwd19,spring,weekday,20,0.007440476
-springwd20,spring,weekday,21,0.007440476
-springwd21,spring,weekday,22,0.007440476
-springwd22,spring,weekday,23,0.007440476
-springwd23,spring,weekday,24,0.007440476
-summerwe0,summer,weekend,1,0.00297619
-summerwe1,summer,weekend,2,0.00297619
-summerwe2,summer,weekend,3,0.00297619
-summerwe3,summer,weekend,4,0.00297619
-summerwe4,summer,weekend,5,0.00297619
-summerwe5,summer,weekend,6,0.00297619
-summerwe6,summer,weekend,7,0.00297619
-summerwe7,summer,weekend,8,0.00297619
-summerwe8,summer,weekend,9,0.00297619
-summerwe9,summer,weekend,10,0.00297619
-summerwe10,summer,weekend,11,0.00297619
-summerwe11,summer,weekend,12,0.00297619
-summerwe12,summer,weekend,13,0.00297619
-summerwe13,summer,weekend,14,0.00297619
-summerwe14,summer,weekend,15,0.00297619
-summerwe15,summer,weekend,16,0.00297619
-summerwe16,summer,weekend,17,0.00297619
-summerwe17,summer,weekend,18,0.00297619
-summerwe18,summer,weekend,19,0.00297619
-summerwe19,summer,weekend,20,0.00297619
-summerwe20,summer,weekend,21,0.00297619
-summerwe21,summer,weekend,22,0.00297619
-summerwe22,summer,weekend,23,0.00297619
-summerwe23,summer,weekend,24,0.00297619
-fallwe0,fall,weekend,1,0.00297619
-fallwe1,fall,weekend,2,0.00297619
-fallwe2,fall,weekend,3,0.00297619
-fallwe3,fall,weekend,4,0.00297619
-fallwe4,fall,weekend,5,0.00297619
-fallwe5,fall,weekend,6,0.00297619
-fallwe6,fall,weekend,7,0.00297619
-fallwe7,fall,weekend,8,0.00297619
-fallwe8,fall,weekend,9,0.00297619
-fallwe9,fall,weekend,10,0.00297619
-fallwe10,fall,weekend,11,0.00297619
-fallwe11,fall,weekend,12,0.00297619
-fallwe12,fall,weekend,13,0.00297619
-fallwe13,fall,weekend,14,0.00297619
-fallwe14,fall,weekend,15,0.00297619
-fallwe15,fall,weekend,16,0.00297619
-fallwe16,fall,weekend,17,0.00297619
-fallwe17,fall,weekend,18,0.00297619
-fallwe18,fall,weekend,19,0.00297619
-fallwe19,fall,weekend,20,0.00297619
-fallwe20,fall,weekend,21,0.00297619
-fallwe21,fall,weekend,22,0.00297619
-fallwe22,fall,weekend,23,0.00297619
-fallwe23,fall,weekend,24,0.00297619
-winterwe0,winter,weekend,1,0.00297619
-winterwe1,winter,weekend,2,0.00297619
-winterwe2,winter,weekend,3,0.00297619
-winterwe3,winter,weekend,4,0.00297619
-winterwe4,winter,weekend,5,0.00297619
-winterwe5,winter,weekend,6,0.00297619
-winterwe6,winter,weekend,7,0.00297619
-winterwe7,winter,weekend,8,0.00297619
-winterwe8,winter,weekend,9,0.00297619
-winterwe9,winter,weekend,10,0.00297619
-winterwe10,winter,weekend,11,0.00297619
-winterwe11,winter,weekend,12,0.00297619
-winterwe12,winter,weekend,13,0.00297619
-winterwe13,winter,weekend,14,0.00297619
-winterwe14,winter,weekend,15,0.00297619
-winterwe15,winter,weekend,16,0.00297619
-winterwe16,winter,weekend,17,0.00297619
-winterwe17,winter,weekend,18,0.00297619
-winterwe18,winter,weekend,19,0.00297619
-winterwe19,winter,weekend,20,0.00297619
-winterwe20,winter,weekend,21,0.00297619
-winterwe21,winter,weekend,22,0.00297619
-winterwe22,winter,weekend,23,0.00297619
-winterwe23,winter,weekend,24,0.00297619
-springwe0,spring,weekend,1,0.00297619
-springwe1,spring,weekend,2,0.00297619
-springwe2,spring,weekend,3,0.00297619
-springwe3,spring,weekend,4,0.00297619
-springwe4,spring,weekend,5,0.00297619
-springwe5,spring,weekend,6,0.00297619
-springwe6,spring,weekend,7,0.00297619
-springwe7,spring,weekend,8,0.00297619
-springwe8,spring,weekend,9,0.00297619
-springwe9,spring,weekend,10,0.00297619
-springwe10,spring,weekend,11,0.00297619
-springwe11,spring,weekend,12,0.00297619
-springwe12,spring,weekend,13,0.00297619
-springwe13,spring,weekend,14,0.00297619
-springwe14,spring,weekend,15,0.00297619
-springwe15,spring,weekend,16,0.00297619
-springwe16,spring,weekend,17,0.00297619
-springwe17,spring,weekend,18,0.00297619
-springwe18,spring,weekend,19,0.00297619
-springwe19,spring,weekend,20,0.00297619
-springwe20,spring,weekend,21,0.00297619
-springwe21,spring,weekend,22,0.00297619
-springwe22,spring,weekend,23,0.00297619
-springwe23,spring,weekend,24,0.00297619
+``$TIME-SLICE$``,description,tg1,tg2,lorder,weight
+summerwd0,summer weekdays from 22:00 to 04:00,summer,weekday,1,0.044642856
+summerwd6,summer weekdays from 04:00 to 10:00,summer,weekday,2,0.044642856
+summerwd12,summer weekdays from 10:00 to 16:00,summer,weekday,3,0.044642856
+summerwd18,summer weekdays from 16:00 to 22:00,summer,weekday,4,0.044642856
+fallwd0,fall weekdays from 22:00 to 04:00,fall,weekday,1,0.044642856
+fallwd6,fall weekdays from 04:00 to 10:00,fall,weekday,2,0.044642856
+fallwd12,fall weekdays from 10:00 to 16:00,fall,weekday,3,0.044642856
+fallwd18,fall weekdays from 16:00 to 22:00,fall,weekday,4,0.044642856
+winterwd0,winter weekdays from 22:00 to 04:00,winter,weekday,1,0.044642856
+winterwd6,winter weekdays from 04:00 to 10:00,winter,weekday,2,0.044642856
+winterwd12,winter weekdays from 10:00 to 16:00,winter,weekday,3,0.044642856
+winterwd18,winter weekdays from 16:00 to 22:00,winter,weekday,4,0.044642856
+springwd0,spring weekdays from 22:00 to 04:00,spring,weekday,1,0.044642856
+springwd6,spring weekdays from 04:00 to 10:00,spring,weekday,2,0.044642856
+springwd12,spring weekdays from 10:00 to 16:00,spring,weekday,3,0.044642856
+springwd18,spring weekdays from 16:00 to 22:00,spring,weekday,4,0.044642856
+summerwe0,summer weekends from 22:00 to 04:00,summer,weekend,1,0.01785714
+summerwe6,summer weekends from 04:00 to 10:00,summer,weekend,2,0.01785714
+summerwe12,summer weekends from 10:00 to 16:00,summer,weekend,3,0.01785714
+summerwe18,summer weekends from 16:00 to 22:00,summer,weekend,4,0.01785714
+fallwe0,fall weekends from 22:00 to 04:00,fall,weekend,1,0.01785714
+fallwe6,fall weekends from 04:00 to 10:00,fall,weekend,2,0.01785714
+fallwe12,fall weekends from 10:00 to 16:00,fall,weekend,3,0.01785714
+fallwe18,fall weekends from 16:00 to 22:00,fall,weekend,4,0.01785714
+winterwe0,winter weekends from 22:00 to 04:00,winter,weekend,1,0.01785714
+winterwe6,winter weekends from 04:00 to 10:00,winter,weekend,2,0.01785714
+winterwe12,winter weekends from 10:00 to 16:00,winter,weekend,3,0.01785714
+winterwe18,winter weekends from 16:00 to 22:00,winter,weekend,4,0.01785714
+springwe0,spring weekends from 22:00 to 04:00,spring,weekend,1,0.01785714
+springwe6,spring weekends from 04:00 to 10:00,spring,weekend,2,0.01785714
+springwe12,spring weekends from 10:00 to 16:00,spring,weekend,3,0.01785714
+springwe18,spring weekends from 16:00 to 22:00,spring,weekend,4,0.01785714

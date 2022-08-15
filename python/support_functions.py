@@ -349,6 +349,43 @@ def repl_array_val_twodim(array, val_repl, val_new):
     return None
 
 
+##  perform a merge to overwrite some values for a new sub-df
+def replace_numerical_column_from_merge(
+    df_target: pd.DataFrame,
+    df_source: pd.DataFrame,
+    field_to_replace: str,
+    field_temporary: str = "NEWFIELDTMP"
+):
+    """
+    Replace values in field_to_replace in df_source associated with values in df_replacement and shared index fields
+    - df_target: target data frame, which will have values replaced with values in df_source
+    - df_source: source data to use to replace
+    - field_to_replace: field to replace in merge
+    - field_temporary: temporary field used in reassignment
+
+    * Note: all fields in df_source must be contained in df_target. Only works for numerical methods at the moment.
+    """
+    check_fields(df_target, list(df_source.columns))
+    check_fields(df_source, [field_to_replace])
+
+    # merge in
+    fields_merge = list((set(df_target.columns) & set(df_source.columns)) - set([field_to_replace]))
+    df_source_new = df_source.copy().rename(columns = {field_to_replace: field_temporary})
+    df_out = df_target.copy()
+    df_out = pd.merge(df_out, df_source_new, on = fields_merge, how = "left")
+    # find rows where there are new values
+    w = np.where(~np.isnan(np.array(df_out[field_temporary])))[0]
+    df_out[field_temporary].fillna(0.0, inplace = True)
+
+    if len(w) > 0:
+        df_out.loc[w, field_to_replace] = 0.0
+        df_out[field_to_replace] = np.array(df_out[field_to_replace]) + np.array(df_out[field_temporary])
+    # drop temporary field, sort by index
+    df_out = df_out[df_target.columns].sort_index()
+
+    return df_out
+
+
 ##  quick function to reverse dictionaries
 def reverse_dict(dict_in: dict) -> dict:
     # check keys

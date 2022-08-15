@@ -423,8 +423,8 @@ class IPPU:
             df_ippu_trajectories,
             modvar_waste_total_recycled,
             None,
-            True,
-            "array_base"
+            override_vector_for_single_mv_q = True,
+            return_type = "array_base"
         )
 
         # initialize production + initialize change to net imports as 0 (reduce categories later)

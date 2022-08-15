@@ -65,6 +65,7 @@ class NonElectricEnergy:
         self.modvar_dict_ccsq_fuel_fractions_to_efficiency_factors = self.modvar_dicts_ccsq_fuel_vars["fuel_fraction_variable_by_fuel_to_energy_efficiency_variable_by_fuel"]
 
         # Energy Fuel model variables
+        self.modvar_enfu_energy_density_volumetric = "Volumetric Energy Density"
         self.modvar_enfu_ef_combustion_co2 = ":math:\\text{CO}_2 Combustion Emission Factor"
         self.modvar_enfu_ef_combustion_mobile_ch4 = ":math:\\text{CH}_4 Mobile Combustion Emission Factor"
         self.modvar_enfu_ef_combustion_mobile_n2o = ":math:\\text{N}_2\\text{O} Mobile Combustion Emission Factor"
@@ -77,7 +78,11 @@ class NonElectricEnergy:
         self.modvar_enfu_energy_demand_by_fuel_scoe = "Energy Demand by Fuel in SCOE"
         self.modvar_enfu_energy_demand_by_fuel_total = "Total Energy Demand by Fuel"
         self.modvar_enfu_energy_demand_by_fuel_trns = "Energy Demand by Fuel in Transportation"
-        self.modvar_enfu_volumetric_energy_density = "Volumetric Energy Density"
+        self.modvar_enfu_energy_density_gravimetric = "Gravimetric Energy Density"
+        self.modvar_enfu_energy_density_volumetric = "Volumetric Energy Density"
+        self.modvar_enfu_exports_fuel = "Fuel Exports"
+        self.modvar_enfu_frac_fuel_demand_imported = "Fraction of Fuel Demand Imported"
+        self.modvar_enfu_transmission_loss_electricity = "Electrical Transmission Loss"
         # key categories
         self.cat_enfu_electricity = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_enfu, {self.model_attributes.field_enfu_electricity_demand_category: 1})[0]
 
@@ -258,7 +263,7 @@ class NonElectricEnergy:
 
     def get_required_subsectors(self):
         ## TEMPORARY
-        subsectors = [self.subsec_name_inen, self.subsec_name_enfu, self.subsec_name_trns, self.subsec_name_trde, self.subsec_name_scoe]#self.model_attributes.get_setor_subsectors("Energy")
+        subsectors = [self.subsec_name_enfu, self.subsec_name_inen, self.subsec_name_trns, self.subsec_name_trde, self.subsec_name_scoe]#self.subsec_name_enfu,#self.model_attributes.get_setor_subsectors("Energy")
         subsectors_base = subsectors.copy()
         subsectors += [self.subsec_name_econ, self.subsec_name_gnrl]
         return subsectors, subsectors_base
@@ -346,10 +351,18 @@ class NonElectricEnergy:
 
         # add agricultural and livestock production to scale initial energy consumption
         modvar_inen_agrc_prod, arr_inen_agrc_prod = self.model_attributes.get_optional_or_integrated_standard_variable(
-            df_neenergy_trajectories, self.modvar_agrc_yield, None, True, "array_base"
+            df_neenergy_trajectories,
+            self.modvar_agrc_yield,
+            None,
+            override_vector_for_single_mv_q = True,
+            return_type = "array_base"
         )
         modvar_inen_lvst_prod, arr_inen_lvst_prod = self.model_attributes.get_optional_or_integrated_standard_variable(
-            df_neenergy_trajectories, self.modvar_lvst_total_animal_mass, None, True, "array_base"
+            df_neenergy_trajectories,
+            self.modvar_lvst_total_animal_mass,
+            None,
+            override_vector_for_single_mv_q = True,
+            return_type = "array_base"
         )
         # get initial energy consumption for agrc/lvst and then ensure unit are set
         arr_inen_init_energy_consumption_agrc = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_inen_energy_conumption_agrc_init, True, "array_base", expand_to_all_cats = True)
@@ -1232,7 +1245,7 @@ class NonElectricEnergy:
         )
         # get carbon dioxide combustion factors (corrected to output units)
         arr_trns_ef_by_fuel_co2 = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_enfu_ef_combustion_co2, return_type = "array_units_corrected", expand_to_all_cats = True)
-        arr_trns_energy_density_fuel = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_enfu_volumetric_energy_density, return_type = "array_units_corrected", expand_to_all_cats = True)
+        arr_trns_energy_density_fuel = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_enfu_energy_density_volumetric, return_type = "array_units_corrected", expand_to_all_cats = True)
 
         # initialize electrical demand to pass and output emission arrays
         arr_trns_demand_by_fuel = np.zeros((n_projection_time_periods, len(attr_enfu.key_values)))
@@ -1243,7 +1256,7 @@ class NonElectricEnergy:
         arr_trns_emissions_n2o = 0.0
         # get conversion scalar
         scalar_trns_ved_to_enfu_var_units = self.model_attributes.get_variable_unit_conversion_factor(
-            self.modvar_enfu_volumetric_energy_density,
+            self.modvar_enfu_energy_density_volumetric,
             self.modvar_enfu_energy_demand_by_fuel_trns,
             "energy"
         )
@@ -1291,7 +1304,7 @@ class NonElectricEnergy:
                 arr_trns_energydem_cur_fuel = (arr_trns_fueldem_cur_fuel.transpose()*vec_trns_volumetric_enerdensity_by_fuel).transpose()
                 arr_trns_energydem_cur_fuel *= self.model_attributes.get_variable_unit_conversion_factor(
                     modvar_trns_fuel_efficiency_cur,
-                    self.modvar_enfu_volumetric_energy_density,
+                    self.modvar_enfu_energy_density_volumetric,
                     "volume"
                 )
                 # add total fuel to output variable
@@ -1302,7 +1315,7 @@ class NonElectricEnergy:
 
                 # get scalar to prepare fuel energies for the emission factor
                 scalar_fuel_energy_to_ef_ch4 = self.model_attributes.get_variable_unit_conversion_factor(
-                    self.modvar_enfu_volumetric_energy_density,
+                    self.modvar_enfu_energy_density_volumetric,
                     modvar_trns_ef_ch4_cur,
                     "energy"
                 ) if (modvar_trns_ef_ch4_cur is not None) else 0
@@ -1315,7 +1328,7 @@ class NonElectricEnergy:
 
                 # get scalar to prepare fuel energies for the emission factor
                 scalar_fuel_energy_to_ef_co2 = self.model_attributes.get_variable_unit_conversion_factor(
-                    self.modvar_enfu_volumetric_energy_density,
+                    self.modvar_enfu_energy_density_volumetric,
                     self.modvar_enfu_ef_combustion_co2,
                     "energy"
                 )
@@ -1328,7 +1341,7 @@ class NonElectricEnergy:
 
                 # n2o scalar
                 scalar_fuel_energy_to_ef_n2o = self.model_attributes.get_variable_unit_conversion_factor(
-                    self.modvar_enfu_volumetric_energy_density,
+                    self.modvar_enfu_energy_density_volumetric,
                     modvar_trns_ef_n2o_cur,
                     "energy"
                 ) if (modvar_trns_ef_n2o_cur is not None) else 0
@@ -1542,12 +1555,12 @@ class NonElectricEnergy:
         df_out.append(self.project_industrial_energy(df_neenergy_trajectories, vec_gdp, dict_dims, n_projection_time_periods, projection_time_periods))
         df_out.append(self.project_transportation(df_neenergy_trajectories, vec_pop, vec_rates_gdp, vec_rates_gdp_per_capita, dict_dims, n_projection_time_periods, projection_time_periods))
         df_out.append(self.project_scoe(df_neenergy_trajectories, vec_hh, vec_gdp, vec_rates_gdp_per_capita, dict_dims, n_projection_time_periods, projection_time_periods))
+        df_out.append(self.project_ccsq(df_neenergy_trajectories, dict_dims, n_projection_time_periods, projection_time_periods))
 
         # concatenate and add subsector emission totals
         df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")
 
         return df_out
-        #return self.project_ccsq(df_neenergy_trajectories, dict_dims, n_projection_time_periods, projection_time_periods)
 
 
 
@@ -1708,6 +1721,6 @@ class NonElectricEnergy:
         ]
 
         df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")
-        self.model_attributes.add_subsector_emissions_aggregates(df_out, [self.subsec_name_scoe], False)
+        self.model_attributes.add_subsector_emissions_aggregates(df_out, [self.subsec_name_ccsq], False)
 
         return df_out

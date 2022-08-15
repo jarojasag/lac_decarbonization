@@ -11,7 +11,12 @@ class AttributeTable:
     def __init__(self, fp_table: str, key: str, fields_to_dict: list, clean_table_fields: bool = True):
 
         # verify table exists and check keys
-        table = pd.read_csv(sf.check_path(fp_table, False), skipinitialspace = True)
+        if isinstance(fp_table, str):
+            table = pd.read_csv(sf.check_path(fp_table, False), skipinitialspace = True)
+        elif isinstance(fp_table, pd.DataFrame):
+            table = fp_table.copy()
+            fp_table = None
+
         fields_to_dict = [x for x in fields_to_dict if x != key]
 
         # clean the fields in the attribute table?
@@ -85,6 +90,8 @@ class Configuration:
         attr_gas: AttributeTable,
         attr_length: AttributeTable,
         attr_mass: AttributeTable,
+        attr_monetary: AttributeTable,
+        attr_power: AttributeTable,
         attr_region: AttributeTable,
         attr_volume: AttributeTable,
         attr_required_parameters: AttributeTable = None
@@ -98,6 +105,8 @@ class Configuration:
         self.attr_gas = attr_gas
         self.attr_length = attr_length
         self.attr_mass = attr_mass
+        self.attr_monetary = attr_monetary
+        self.attr_power = attr_power
         self.attr_region = attr_region
         self.attr_volume = attr_volume
 
@@ -105,9 +114,12 @@ class Configuration:
         self.params_string = [
             "area_units",
             "energy_units",
+            "energy_units_nemomod",
             "emissions_mass",
             "historical_solid_waste_method",
             "length_units",
+            "monetary_units",
+            "power_units",
             "region",
             "volume_units"
         ]
@@ -121,6 +133,8 @@ class Configuration:
             attr_gas,
             attr_length,
             attr_mass,
+            attr_monetary,
+            attr_power,
             attr_region,
             attr_volume,
             attr_required_parameters,
@@ -172,6 +186,8 @@ class Configuration:
         attr_gas: AttributeTable = None,
         attr_length: AttributeTable = None,
         attr_mass: AttributeTable = None,
+        attr_monetary: AttributeTable = None,
+        attr_power: AttributeTable = None,
         attr_region: AttributeTable = None,
         attr_volume: AttributeTable = None,
         attr_parameters_required: AttributeTable = None,
@@ -186,6 +202,8 @@ class Configuration:
         attr_gas = attr_gas if (attr_gas is not None) else self.attr_gas
         attr_length = attr_length if (attr_length is not None) else self.attr_length
         attr_mass = attr_mass if (attr_mass is not None) else self.attr_mass
+        attr_monetary = attr_monetary if (attr_monetary is not None) else self.attr_monetary
+        attr_power = attr_power if (attr_power is not None) else self.attr_power
         attr_region = attr_region if (attr_region is not None) else self.attr_region
         attr_volume = attr_volume if (attr_volume is not None) else self.attr_volume
 
@@ -219,17 +237,22 @@ class Configuration:
         valid_historical_solid_waste_method = ["back_project", "historical"]
         valid_length = self.get_valid_values_from_attribute_column(attr_length, "length_equivalent_", str, "unit_length_to_length")
         valid_mass = self.get_valid_values_from_attribute_column(attr_mass, "mass_equivalent_", str, "unit_mass_to_mass")
+        valid_monetary = self.get_valid_values_from_attribute_column(attr_monetary, "monetary_equivalent_", str, "unit_monetary_to_monetary")
+        valid_power = self.get_valid_values_from_attribute_column(attr_power, "power_equivalent_", str, "unit_power_to_power")
         valid_region = attr_region.key_values
         valid_volume = self.get_valid_values_from_attribute_column(attr_volume, "volume_equivalent_", str)
         # map parameters to valid values
         dict_checks = {
             "area_units": valid_area,
             "energy_units": valid_energy,
+            "energy_units_nemomod": valid_energy,
             "emissions_mass": valid_mass,
             "global_warming_potential": valid_gwp,
             "historicall_harvested_wood_products_method": valid_historical_hwp_method,
             "historical_solid_waste_method": valid_historical_solid_waste_method,
             "length_units": valid_length,
+            "monetary_units": valid_monetary,
+            "power_units": valid_power,
             "region": valid_region,
             "volume_units": valid_volume
         }
@@ -256,6 +279,8 @@ class Configuration:
         self.valid_historical_solid_waste_method = valid_historical_solid_waste_method
         self.valid_length = valid_length
         self.valid_mass = valid_mass
+        self.valid_monetary = valid_monetary
+        self.valid_power = valid_power
         self.valid_region = valid_region
         self.valid_volume = valid_volume
 
@@ -332,6 +357,10 @@ class ModelAttributes:
 
     def __init__(self, dir_attributes: str, fp_config: str = None):
 
+        ############################################
+        #    INITIALIZE SHARED CLASS PROPERTIES    #
+        ############################################
+
         # initialize dimensions of analysis - later, check for presence
         self.dim_design_id = "design_id"
         self.dim_future_id = "future_id"
@@ -345,6 +374,7 @@ class ModelAttributes:
 
         # some common shared fields
         self.field_dim_year = "year"
+        self.field_emissions_total_flag = "emissions_total_by_gas_component"
 
         # set some basic properties
         self.attribute_file_extension = ".csv"
@@ -356,14 +386,6 @@ class ModelAttributes:
         self.substr_varreqs = "table_varreqs_by_"
         self.substr_varreqs_allcats = f"{self.substr_varreqs}category_"
         self.substr_varreqs_partialcats = f"{self.substr_varreqs}partial_category_"
-
-        # temporary - but read from table at some point
-        self.varchar_str_emission_gas = "$EMISSION-GAS$"
-        self.varchar_str_unit_area = "$UNIT-AREA$"
-        self.varchar_str_unit_energy = "$UNIT-ENERGY$"
-        self.varchar_str_unit_length = "$UNIT-LENGTH$"
-        self.varchar_str_unit_mass = "$UNIT-MASS$"
-        self.varchar_str_unit_volume = "$UNIT-VOLUME$"
 
         # set some subsector names
         self.subsec_name_agrc = "Agriculture"
@@ -388,6 +410,69 @@ class ModelAttributes:
         self.subsec_name_econ = "Economy"
         self.subsec_name_gnrl = "General"
 
+        # nemomod shared tables - dimensions
+        self.table_nemomod_emission = "EMISSION"
+        self.table_nemomod_fuel = "FUEL"
+        self.table_nemomod_mode_of_operation = "MODE_OF_OPERATION"
+        self.table_nemomod_node = "NODE"
+        self.table_nemomod_region = "REGION"
+        self.table_nemomod_storage = "STORAGE"
+        self.table_nemomod_technology = "TECHNOLOGY"
+        self.table_nemomod_time_slice = "TIMESLICE"
+        self.table_nemomod_ts_group_1 = "TSGROUP1"
+        self.table_nemomod_ts_group_2 = "TSGROUP2"
+        self.table_nemomod_year = "YEAR"
+        # nemomod shared tables - parameters
+        self.table_nemomod_annual_emission_limit = "AnnualEmissionLimit"
+        self.table_nemomod_capacity_factor = "CapacityFactor"
+        self.table_nemomod_capacity_to_activity_unit = "CapacityToActivityUnit"
+        self.table_nemomod_capital_cost = "CapitalCost"
+        self.table_nemomod_capital_cost_storage = "CapitalCostStorage"
+        self.table_nemomod_default_params = "DefaultParams"
+        self.table_nemomod_discount_rate = "DiscountRate"
+        self.table_nemomod_emissions_activity_ratio = "EmissionActivityRatio"
+        self.table_nemomod_fixed_cost = "FixedCost"
+        self.table_nemomod_input_activity_ratio = "InputActivityRatio"
+        self.table_nemomod_min_storage_charge = "MinStorageCharge"
+        self.table_nemomod_model_period_emission_limit = "ModelPeriodEmissionLimit"
+        self.table_nemomod_model_period_exogenous_emission = "ModelPeriodExogenousEmission"
+        self.table_nemomod_operational_life = "OperationalLife"
+        self.table_nemomod_operational_life_storage = "OperationalLifeStorage"
+        self.table_nemomod_output_activity_ratio = "OutputActivityRatio"
+        self.table_nemomod_residual_capacity = "ResidualCapacity"
+        self.table_nemomod_residual_storage_capacity = "ResidualStorageCapacity"
+        self.table_nemomod_re_tag_technology = "RETagTechnology"
+        self.table_nemomod_reserve_margin = "ReserveMargin"
+        self.table_nemomod_reserve_margin_tag_fuel = "ReserveMarginTagFuel"
+        self.table_nemomod_reserve_margin_tag_technology = "ReserveMarginTagTechnology"
+        self.table_nemomod_specified_demand_profile = "SpecifiedDemandProfile"
+        self.table_nemomod_specified_annual_demand = "SpecifiedAnnualDemand"
+        self.table_nemomod_storage_level_start = "StorageLevelStart"
+        self.table_nemomod_technology_from_storage = "TechnologyFromStorage"
+        self.table_nemomod_technology_to_storage = "TechnologyToStorage"
+        self.table_nemomod_time_slice_group_assignment = "LTsGroup"
+        self.table_nemomod_total_annual_max_capacity = "TotalAnnualMaxCapacity"
+        self.table_nemomod_total_annual_max_capacity_investment = "TotalAnnualMaxCapacityInvestment"
+        self.table_nemomod_total_annual_max_capacity_storage = "TotalAnnualMaxCapacityStorage"
+        self.table_nemomod_total_annual_max_capacity_investment_storage = "TotalAnnualMaxCapacityInvestmentStorage"
+        self.table_nemomod_total_annual_min_capacity = "TotalAnnualMinCapacity"
+        self.table_nemomod_total_annual_min_capacity_investment = "TotalAnnualMinCapacityInvestment"
+        self.table_nemomod_total_annual_min_capacity_storage = "TotalAnnualMinCapacityStorage"
+        self.table_nemomod_total_annual_min_capacity_investment_storage = "TotalAnnualMinCapacityInvestmentStorage"
+        self.table_nemomod_specified_annual_demand = "SpecifiedAnnualDemand"
+        self.table_nemomod_variable_cost = "VariableCost"
+        self.table_nemomod_year_split = "YearSplit"
+
+        # temporary - but read from table at some point
+        self.varchar_str_emission_gas = "$EMISSION-GAS$"
+        self.varchar_str_unit_area = "$UNIT-AREA$"
+        self.varchar_str_unit_energy = "$UNIT-ENERGY$"
+        self.varchar_str_unit_length = "$UNIT-LENGTH$"
+        self.varchar_str_unit_mass = "$UNIT-MASS$"
+        self.varchar_str_unit_monetary = "$UNIT-MONETARY$"
+        self.varchar_str_unit_power = "$UNIT-POWER$"
+        self.varchar_str_unit_volume = "$UNIT-VOLUME$"
+
         # add attributes and dimensional information
         self.attribute_directory = dir_attributes
         self.all_pycategories, self.all_dims, self.all_attributes, self.configuration_requirements, self.dict_attributes, self.dict_varreqs = self.load_attribute_tables(dir_attributes)
@@ -396,10 +481,13 @@ class ModelAttributes:
         self.dict_model_variables_by_subsector, self.dict_model_variable_to_subsector, self.dict_model_variable_to_category_restriction = self.get_variables_by_subsector()
         self.all_model_variables, self.dict_variables_to_model_variables, self.dict_model_variables_to_variables = self.get_variable_fields_by_variable()
         self.all_primary_category_flags = self.get_all_primary_category_flags()
+        self.dict_gas_to_total_emission_fields, self.dict_gas_to_total_emission_modvars = self.get_emission_modvars_by_gas()
 
         # miscellaneous parameters that need to be checked before running
         self.field_enfu_biofuels_demand_category = "biomass_demand_category"
         self.field_enfu_electricity_demand_category = "electricity_demand_category"
+        self.field_enfu_natural_gas_fuel_category = "natural_gas_fuel_category"
+        self.field_enfu_waste_fuel_category = "waste_fuel_category"
 
         # run checks and raise errors if invalid data are found in the attribute tables
         self.check_agrc_attribute_tables()
@@ -424,6 +512,8 @@ class ModelAttributes:
             self.dict_attributes["emission_gas"],
             self.dict_attributes["unit_length"],
             self.dict_attributes["unit_mass"],
+            self.dict_attributes["unit_monetary"],
+            self.dict_attributes["unit_power"],
             self.dict_attributes["region"],
             self.dict_attributes["unit_volume"],
             self.configuration_requirements
@@ -511,7 +601,7 @@ class ModelAttributes:
             vrts = sf.format_print_list(valid_values)
             raise ValueError(f"Invalid {func_arg} in {func_name}: valid values are {vrts}.")
 
-    ##  get subsectors that have a primary cateogry; these sectors can leverage the functions below effectively
+    ##  get subsectors that have a primary category; these sectors can leverage the functions below effectively
     def get_all_subsectors_with_primary_category(self):
         l_with = list(self.dict_attributes["abbreviation_subsector"].field_maps["subsector_to_primary_category_py"].keys())
         l_with.sort()
@@ -621,6 +711,45 @@ class ModelAttributes:
             # warn user, but still allow a return
             warnings.warn(f"Invalid dimensional attribute '{return_type}'. Valid return type values are:{valid_rts}")
             return None
+
+
+    def get_emission_modvars_by_gas(self
+    ) -> tuple:
+        """
+            Get dictionaries that gives all total emission component variables by gas
+        """
+        # get tables and initialize dictionary out
+        all_tabs = self.dict_varreqs.keys()
+        dict_fields_by_gas = {}
+        dict_modvar_by_gas = {}
+        for tab in all_tabs:
+            tab = self.dict_varreqs.get(tab).table
+            modvars = list(
+                tab[
+                    tab[self.field_emissions_total_flag] == 1
+                ]["variable"]
+            )
+
+            for modvar in modvars:
+                # build the variable list
+                subsec = self.get_variable_subsector(modvar)
+                varlist = self.build_varlist(subsec, modvar)
+                # get emission and add to dictionary
+                emission = self.get_variable_characteristic(modvar, self.varchar_str_emission_gas)
+                if emission is not None:
+                    # add to fields by gas
+                    if emission in dict_fields_by_gas.keys():
+                        dict_fields_by_gas[emission] += varlist
+                    else:
+                        dict_fields_by_gas.update({emission: varlist})
+
+                    # add to modvars by gas
+                    if emission in dict_modvar_by_gas.keys():
+                        dict_modvar_by_gas[emission].append(modvar)
+                    else:
+                        dict_modvar_by_gas.update({emission: [modvar]})
+
+        return dict_fields_by_gas, dict_modvar_by_gas
 
 
     ##  function to get different dimensions
@@ -875,13 +1004,9 @@ class ModelAttributes:
             Reformat a partial category array (with partical categories along columns) to place columns appropriately for a full category array. Useful for simplifying matrix operations between variables.
 
             - array_vals: input array of data with column categories
-
             - modvar: the variable associated with the *input* array. This is used to identify which categories are represented in the array's columns. If None, then output_cats and output_subsec must be specified.
-
             - missing_vals: values to set for categories not in array_vals. Default is 0.0.
-
             - output_cats: vector of categories associated with the output variable. Only used if modvar == None. The combination of output_cats + output_subsec provide a manual override to the modvar option.
-
             - output_subsec: output subsector. Default is None. Only used if modvar == None. The combination of output_cats + output_subsec provide a manual override to the modvar option.
         """
 
@@ -969,7 +1094,7 @@ class ModelAttributes:
                 dict_attributes.update({k: att_table})
                 all_dims.append(nm)
             elif self.substr_categories in att:
-                nm = sf.clean_field_names([x for x in pd.read_csv(fp, nrows = 0).columns if "$" in x])[0]
+                nm = sf.clean_field_names([x for x in pd.read_csv(fp, nrows = 0).columns if ("$" in x) and (" " not in x.strip())])[0]
                 att_table = AttributeTable(fp, nm, [])
                 dict_attributes.update({nm: att_table})
                 all_pycategories.append(nm)
@@ -1015,8 +1140,60 @@ class ModelAttributes:
     #    QUICK RETRIEVAL OF FUNDAMENTAL TRANSFORMATIONS (GWP, MASS, ETC)    #
     #########################################################################
 
+    ##  internal function to get the unit equivalent scalar
+    def get_unit_equivalent(self,
+        unit: str,
+        config_str: str,
+        unit_dim_str: str,
+        unit_type_str: str,
+        valid_units: list,
+        unit_to_match: str = None
+    ) -> float:
+        """
+            for a given mass unit, get the scalar to convert to units unit_to_match
+
+            ------------------
+            - unit: a unit from a specified unit dimension (e.g., mass)
+            = config_str: the configuration parameter associated with the defualt unit
+            - unit_dim_str: name of the dimensional id, either cleaned (e.g., "unit_mass") or uncleaned ("``$UNIT-MASS$``")
+            - unit_type_str: type of unit (e.g., mass)--used in attribute lookup
+            - valid_units: valid values for the unit. Generally available in self.configuration
+            = unit_to_match: Default is None. A unit value to match unit to. The scalar a that is returned is multiplied by unit, i.e., unit*a = unit_to_match. If None (default), return the configuration default.
+        """
+
+        # get the attribute table
+        unit_dim_str_clean = sf.clean_field_names([unit_dim_str])[0]
+        attr_cur = self.dict_attributes.get(unit_dim_str_clean)
+        unit_to_match = self.configuration.get(config_str) if (unit_to_match is None) else unit_to_match
+        unit_to_match = sf.clean_field_names([unit_to_match])[0]
+        key_dict = f"{unit_dim_str_clean}_to_{unit_type_str}_equivalent_{unit_to_match}"
+
+        # check units specification
+        if unit not in attr_cur.key_values:
+            # attempt conversion (e.g., PJ to pj)
+            if unit_type_str in attr_cur.table.columns:
+                attr_key_check = f"{unit_type_str}_to_{attr_cur.key}"
+                dict_convert_unit = attr_cur.field_maps.get(attr_key_check)
+                unit = dict_convert_unit.get(unit) if (dict_convert_unit is not None) else None
+        if unit is None:
+            return None
+
+        # check that the target mass unit is defined
+        if not key_dict in attr_cur.field_maps.keys():
+            valid_units_to_match = sf.format_print_list(valid_units).lower()
+            raise KeyError(f"Invalid {unit_type_str} to match '{unit_to_match}': defined {unit_type_str} units to match are {valid_units_to_match}.")
+
+        # check unit and return if valid
+        out = attr_cur.field_maps[key_dict].get(unit)
+        if out is None:
+            valid_vals = sf.format_print_list(attr_cur.key_values)
+            raise KeyError(f"Invalid {unit_type_str} '{unit}': defined {unit_type_str} units are {valid_vals}.")
+
+        return out
+
+
     ##  get the area equivalent scalar
-    def get_area_equivalent(self, area: str, area_to_match: str = None):
+    def get_area_equivalent(self, area: str, area_to_match: str = None) -> float:
         """
             for a given area unit *area*, get the scalar to convert to units *area_to_match*
 
@@ -1026,29 +1203,20 @@ class ModelAttributes:
 
             area_to_match: Default is None. A unit of area to match. The scalar a that is returned is multiplied by area, i.e., area*a = area_to_match. If None (default), return the configuration default.
         """
-        # none checks
-        if area is None:
-            return None
+        out = self.get_unit_equivalent(
+            area,
+            "area_units",
+            self.varchar_str_unit_area,
+            "area",
+            self.configuration.valid_area,
+            unit_to_match = area_to_match
+        )
 
-        if area_to_match is None:
-            area_to_match = str(self.configuration.get("area_units")).lower()
-        key_dict = f"unit_area_to_area_equivalent_{area_to_match}"
-
-        # check that the target area unit is defined
-        if not key_dict in self.dict_attributes["unit_area"].field_maps.keys():
-            valid_areas_to_match = sf.format_print_list(self.configuration.valid_area).lower()
-            raise KeyError(f"Invalid area to match '{area_to_match}': defined area units to match are {valid_areas_to_match}.")
-
-        # check area and return if valid
-        if area in self.dict_attributes["unit_area"].field_maps[key_dict].keys():
-            return self.dict_attributes["unit_area"].field_maps[key_dict][area]
-        else:
-            valid_vals = sf.format_print_list(self.dict_attributes["unit_area"].key_values)
-            raise KeyError(f"Invalid area '{area}': defined areas are {valid_vals}.")
+        return out
 
 
     ##  function to get energy equivalent scalar
-    def get_energy_equivalent(self, energy: str, energy_to_match: str = None):
+    def get_energy_equivalent(self, energy: str, energy_to_match: str = None) -> float:
 
         """
             for a given energy unit *energy*, get the scalar to convert to units *energy_to_match*
@@ -1056,35 +1224,65 @@ class ModelAttributes:
 
             - energy_to_match: Default is None. A unit of energy to match. The scalar a that is returned is multiplied by energy, i.e., energy*a = energy_to_match. If None (default), return the configuration default.
         """
-        # none checks
-        if energy is None:
+        out = self.get_unit_equivalent(
+            energy,
+            "energy_units",
+            self.varchar_str_unit_energy,
+            "energy",
+            self.configuration.valid_energy,
+            unit_to_match = energy_to_match
+        )
+
+        return out
+
+
+    ##  swap an energy unit for an associated power unit--used to define conversions between energy and power
+    def get_energy_power_swap(self, input_unit: str) -> str:
+
+        """
+            Enter an energy unit E to retrieve the equivalent unit of power P so that P*year = E
+            OR
+            Enter a power unit P to retrieve the equivalent energy unit E so that E/year = P
+
+            - input_unit: input unit to enter. Must be a valid power or energy unit
+        """
+        if input_unit is None:
             return None
 
-        # get the valid values
-        valid_vals = sf.format_print_list(self.dict_attributes["unit_energy"].key_values)
+        # setup some strings
+        unit_energy_str_clean = sf.clean_field_names([self.varchar_str_unit_energy])[0]
+        unit_power_str_clean = sf.clean_field_names([self.varchar_str_unit_power])[0]
+        field_retrieve_energy = f"annualized_{unit_power_str_clean}_equivalent"
+        field_retrieve_power = f"annualized_{unit_energy_str_clean}_equivalent"
+        attr_ener = self.dict_attributes.get(unit_energy_str_clean)
+        attr_powr = self.dict_attributes.get(unit_power_str_clean)
 
-        if energy_to_match is None:
-            energy_to_match = str(self.configuration.get("energy_units")).lower()
-        key_dict = f"unit_energy_to_energy_equivalent_{energy_to_match}"
-
-        # check that the target energy unit is defined
-        if not key_dict in self.dict_attributes["unit_energy"].field_maps.keys():
-            raise KeyError(f"Invalid energy target '{energy_to_match}': defined energy units are {valid_vals}.")
-
-        # check that the target energy unit is defined
-        if energy in self.dict_attributes["unit_energy"].field_maps[key_dict].keys():
-            return self.dict_attributes["unit_energy"].field_maps[key_dict][energy]
+        # check units
+        if input_unit in attr_ener.key_values:
+            key_dict = f"{unit_energy_str_clean}_to_{field_retrieve_energy}"
+            output_unit = attr_ener.field_maps[key_dict].get(input_unit)
+            output_unit = clean_schema(output_unit)
+        elif input_unit in attr_powr.key_values:
+            key_dict = f"{unit_power_str_clean}_to_{field_retrieve_power}"
+            output_unit = attr_powr.field_maps[key_dict].get(input_unit)
+            output_unit = clean_schema(output_unit)
         else:
-            raise KeyError(f"Invalid energy '{energy}': defined energy units are {valid_vals}.")
+            valid_energy = sf.format_print_list(self.configuration.valid_energy).lower()
+            valid_power = sf.format_print_list(self.configuration.valid_power).lower()
+            raise KeyError(f"Invalid input unit '{input_unit}' entered in get_energy_power_swap:\n\tDefined energy units include {valid_energy}\n\tDefined power units include {valid_power}")
+
+        output_unit = None if (output_unit == "none") else output_unit
+
+        return output_unit
 
 
     ##  function to get gwp multiplier associated with a gas
-    def get_gwp(self, gas: str, gwp: int = None):
+    def get_gwp(self, gas: str, gwp: int = None) -> float:
         """
             for a given gas, get the scalar to convert to CO2e using the specified global warming potential *gwp*
             - gas: a gas defined in the emission_gas attribute table
 
-            - gwp: Default is None. A unit of energy to match. The scalar a that is returned is multiplied by energy, i.e., energy*a = energy_to_match. If None (default), return the configuration default.
+            - gwp: Default is None. Global warming potential of "gas" over "gwp" time period (gwp is a number of years, e.g., 20, 100, 500).
         """
         # none checks
         if gas is None:
@@ -1107,7 +1305,7 @@ class ModelAttributes:
 
 
     ##  function to get the length equivalent scalar
-    def get_length_equivalent(self, length: str, length_to_match: str = None):
+    def get_length_equivalent(self, length: str, length_to_match: str = None) -> float:
         """
             for a given length unit *length*, get the scalar to convert to units *length_to_match*
 
@@ -1117,29 +1315,20 @@ class ModelAttributes:
 
             length_to_match: Default is None. A unit of length to match. The scalar a that is returned is multiplied by length, i.e., length*a = length_to_match. If None (default), return the configuration default.
         """
-        # none checks
-        if length is None:
-            return None
+        out = self.get_unit_equivalent(
+            length,
+            "length_units",
+            self.varchar_str_unit_length,
+            "length",
+            self.configuration.valid_length,
+            unit_to_match = length_to_match
+        )
 
-        if length_to_match is None:
-            length_to_match = str(self.configuration.get("length_units")).lower()
-        key_dict = f"unit_length_to_length_equivalent_{length_to_match}"
-
-        # check that the target length unit is defined
-        if not key_dict in self.dict_attributes["unit_length"].field_maps.keys():
-            valid_lengths_to_match = sf.format_print_list(self.configuration.valid_length).lower()
-            raise KeyError(f"Invalid length to match '{length_to_match}': defined length units to match are {valid_lengths_to_match}.")
-
-        # check length and return if valid
-        if length in self.dict_attributes["unit_length"].field_maps[key_dict].keys():
-            return self.dict_attributes["unit_length"].field_maps[key_dict][length]
-        else:
-            valid_vals = sf.format_print_list(self.dict_attributes["unit_length"].key_values)
-            raise KeyError(f"Invalid length '{length}': defined lengths are {valid_vals}.")
+        return out
 
 
     ##  function to get the mass equivalent scalar
-    def get_mass_equivalent(self, mass: str, mass_to_match: str = None):
+    def get_mass_equivalent(self, mass: str, mass_to_match: str = None) -> float:
         """
             for a given mass unit *mass*, get the scalar to convert to units *mass_to_match*
 
@@ -1149,59 +1338,88 @@ class ModelAttributes:
 
             mass_to_match: Default is None. A unit of mass to match. The scalar a that is returned is multiplied by mass, i.e., mass*a = mass_to_match. If None (default), return the configuration default.
         """
+        out = self.get_unit_equivalent(
+            mass,
+            "emissions_mass",
+            self.varchar_str_unit_mass,
+            "mass",
+            self.configuration.valid_mass,
+            unit_to_match = mass_to_match
+        )
 
-        # none checks
-        if mass is None:
-            return None
+        return out
 
-        if mass_to_match is None:
-            mass_to_match = str(self.configuration.get("emissions_mass")).lower()
-        key_dict = f"unit_mass_to_mass_equivalent_{mass_to_match}"
 
-        # check that the target mass unit is defined
-        if not key_dict in self.dict_attributes["unit_mass"].field_maps.keys():
-            valid_masses_to_match = sf.format_print_list(self.configuration.valid_mass).lower()
-            raise KeyError(f"Invalid mass to match '{mass_to_match}': defined mass units to match are {valid_masses_to_match}.")
+    ##  get the monetary equivalent scalar
+    def get_monetary_equivalent(self, monetary: str, monetary_to_match: str = None) -> float:
+        """
+            for a given monetary unit *monetary*, get the scalar to convert to units *monetary_to_match*
 
-        # check mass and return if valid
-        if mass in self.dict_attributes["unit_mass"].field_maps[key_dict].keys():
-            return self.dict_attributes["unit_mass"].field_maps[key_dict][mass]
-        else:
-            valid_vals = sf.format_print_list(self.dict_attributes["unit_mass"].key_values)
-            raise KeyError(f"Invalid mass '{mass}': defined masses are {valid_vals}.")
+            Function Arguments
+            ------------------
+            monetary: a unit of monetary defined in the unit_monetary attribute table
+
+            monetary_to_match: Default is None. A unit of monetary to match. The scalar a that is returned is multiplied by monetary, i.e., monetary*a = monetary_to_match. If None (default), return the configuration default.
+        """
+        out = self.get_unit_equivalent(
+            monetary,
+            "monetary_units",
+            self.varchar_str_unit_monetary,
+            "monetary",
+            self.configuration.valid_monetary,
+            unit_to_match = monetary_to_match
+        )
+
+        return out
+
+
+    ##  get the power equivalent scalar
+    def get_power_equivalent(self, power: str, power_to_match: str = None) -> float:
+        """
+            for a given power unit *power*, get the scalar to convert to units *power_to_match*
+
+            Function Arguments
+            ------------------
+            power: a unit of power defined in the unit_power attribute table
+
+            power_to_match: Default is None. A unit of power to match. The scalar a that is returned is multiplied by power, i.e., power*a = power_to_match. If None (default), return the configuration default.
+        """
+        out = self.get_unit_equivalent(
+            power,
+            "power_units",
+            self.varchar_str_unit_power,
+            "power",
+            self.configuration.valid_power,
+            unit_to_match = power_to_match
+        )
+
+        return out
 
 
     ##  function to get a volume equivalent scalar
-    def get_volume_equivalent(self, volume: str, volume_to_match: str = None):
+    def get_volume_equivalent(self, volume: str, volume_to_match: str = None) -> float:
         """
             for a given volume unit *volume*, get the scalar to convert to units *volume_to_match*
             - volume: a unit of volume defined in the unit_volume attribute table
 
             - volume_to_match: Default is None. A unit of volume to match. The scalar a that is returned is multiplied by volume, i.e., volume*a = volume_to_match. If None (default), return the configuration default.
         """
-        # none checks
-        if volume is None:
-            return None
+        out = self.get_unit_equivalent(
+            volume,
+            "volume_units",
+            self.varchar_str_unit_volume,
+            "volume",
+            self.configuration.valid_volume,
+            unit_to_match = volume_to_match
+        )
 
-        if volume_to_match is None:
-            volume_to_match = str(self.configuration.get("volume_units")).lower()
-        key_dict = f"unit_volume_to_volume_equivalent_{volume_to_match}"
+        return out
 
-        # check that the target mass unit is defined
-        if not key_dict in self.dict_attributes["unit_volume"].field_maps.keys():
-            valid_volume_to_match = sf.format_print_list(self.configuration.valid_volume).lower()
-            raise KeyError(f"Invalid volume to match '{volume_to_match}': defined volume units to match are {valid_volume_to_match}.")
-
-        if volume in self.dict_attributes["unit_volume"].field_maps[key_dict].keys():
-            return self.dict_attributes["unit_volume"].field_maps[key_dict][volume]
-        else:
-            valid_vols = sf.format_print_list(self.dict_attributes["unit_volume"].key_values)
-            raise KeyError(f"Invalid volume '{volume}': defined volumes are {valid_vols}.")
 
     # get scalar
-    def get_scalar(self, modvar: str, return_type: str = "total"):
+    def get_scalar(self, modvar: str, return_type: str = "total") -> float:
 
-        valid_rts = ["total", "area", "gas", "length", "mass", "energy", "volume"]
+        valid_rts = ["total", "area", "gas", "length", "mass", "monetary", "power", "energy", "volume"]
         if return_type not in valid_rts:
             tps = sf.format_print_list(valid_rts)
             raise ValueError(f"Invalid return type '{return_type}' in get_scalar: valid types are {tps}.")
@@ -1223,6 +1441,12 @@ class ModelAttributes:
         mass = self.get_variable_characteristic(modvar, self.varchar_str_unit_mass)
         scalar_mass = 1 if not mass else self.get_mass_equivalent(mass.lower())
         #
+        monetary = self.get_variable_characteristic(modvar, self.varchar_str_unit_monetary)
+        scalar_monetary = 1 if not monetary else self.get_monetary_equivalent(monetary.lower())
+        #
+        power = self.get_variable_characteristic(modvar, self.varchar_str_unit_power)
+        scalar_power = 1 if not power else self.get_power_equivalent(power.lower())
+        #
         volume = self.get_variable_characteristic(modvar, self.varchar_str_unit_volume)
         scalar_volume = 1 if not volume else self.get_volume_equivalent(volume.lower())
 
@@ -1237,6 +1461,10 @@ class ModelAttributes:
             out = scalar_length
         elif return_type == "mass":
             out = scalar_mass
+        elif return_type == "monetary":
+            out = scalar_monetary
+        elif return_type == "power":
+            out = scalar_power
         elif return_type == "volume":
             out = scalar_volume
         elif return_type == "total":
@@ -1251,7 +1479,7 @@ class ModelAttributes:
     ###############################################
 
     ##  check binary fields
-    def check_binary_fields(self,
+    def _check_binary_fields(self,
         attr: AttributeTable,
         subsec: str,
         fields: str,
@@ -1266,6 +1494,39 @@ class ModelAttributes:
                 raise ValueError(f"Error in subsector {subsec}:  invalid values found in field '{fld}' in the table at '{attr.fp_table}'. Only 0 or 1 should be specified.")
             elif not valid_sum:
                 raise ValueError(f"Invalid specification of field '{fld}' found in {subsec} attribute table: exactly 1 category or variable should be specfied in the field '{fld}'.\n\nUse 1 to flag the category; all other values should be 0.")
+
+
+    ##  check numeric fields
+    def _check_numeric_fields(self,
+        attr: AttributeTable,
+        subsec: str,
+        fields: str,
+        integer_q: bool = False,
+        nonnegative_q: bool = True,
+        check_bounds: tuple = None
+    ):
+        # loop over fields to do checks
+        for fld in fields:
+            if fld not in attr.table.columns:
+                raise ValueError(f"Error in subsector {subsec}: required field '{fld}' not found in the table at '{attr.fp_table}'.")
+            else:
+                try:
+                    vals = list(attr.table[fld].astype(float))
+                except:
+                    raise ValueError(f"Error in subsector {subsec}: Non-numeric values found in field '{fld}'. Check the table at '{attr.fp_table}'.")
+
+                # check additional restrictions
+                if check_bounds is not None:
+                    if (min(vals) < check_bounds[0]) or (max(vals) > check_bounds[1]):
+                        raise ValueError(f"Error in subsector {subsec}: values in field '{fld}' outside of bounds ({check_bounds[0]}, {check_bounds[1]}) specified. Check the attribute table at '{attr.fp_table}'.")
+                elif nonnegative_q and (min(vals) < 0):
+                        raise ValueError(f"Error in subsector {subsec}: Negative values found in field '{fld}'. The field should only have non-negative numbers. Check the table at '{attr.fp_table}'.")
+
+                if integer_q:
+                    vals_check = [int(x) == x for x in vals]
+                    if not all(vals_check):
+                        raise ValueError(f"Error in subsector {subsec}: Non-integer equivalent values found in the field {fld}. Entries in '{fld}' should be integers or float equivalents. Check the table at '{attr.fp_table}'.")
+
 
 
     ##  function to check attribute crosswalks (e.g., one attribute table specifies another category as an element; this function verifies that they are valid)
@@ -1346,7 +1607,6 @@ class ModelAttributes:
         if allow_multiple_cats_q:
             primary_cats_defined = sum([[clean_schema(y) for y in x.split(self.delim_multicats)] for x in primary_cats_defined if (x != "none")], []) if (key_target == key_target_pycat) else [x for x in primary_cats_defined if (x != "none")]
         else:
-            #HEREHERE
             primary_cats_defined = [clean_schema(x) for x in primary_cats_defined if (x != "none")] if (key_target == key_target_pycat) else [x for x in primary_cats_defined if (x != "none")]
 
         # ensure that all population categories properly specified
@@ -1373,8 +1633,8 @@ class ModelAttributes:
         # check for proper specifications in attribute table
         attr = self.get_attribute_table(self.subsec_name_agrc)
         fields_req = ["apply_vegetarian_exchange_scalar", "rice_category"]
-        self.check_binary_fields(attr, self.subsec_name_agrc, ["apply_vegetarian_exchange_scalar"])
-        self.check_binary_fields(attr, self.subsec_name_agrc, ["rice_category"], force_sum_to_1 = True)
+        self._check_binary_fields(attr, self.subsec_name_agrc, ["apply_vegetarian_exchange_scalar"])
+        self._check_binary_fields(attr, self.subsec_name_agrc, ["rice_category"], force_sum_to_1 = True)
 
         # next, check the crosswalk for correct specification of soil management categories
         self._check_subsector_attribute_table_crosswalk(
@@ -1394,8 +1654,13 @@ class ModelAttributes:
         subsec = self.subsec_name_enfu
         attr = self.get_attribute_table(subsec)
         # check binary variables
-        fields_req_bin = [self.field_enfu_biofuels_demand_category, self.field_enfu_electricity_demand_category]
-        self.check_binary_fields(attr, self.subsec_name_agrc, fields_req_bin, force_sum_to_1 = True)
+        fields_req_bin = [
+            self.field_enfu_biofuels_demand_category,
+            self.field_enfu_electricity_demand_category,
+            self.field_enfu_natural_gas_fuel_category,
+            self.field_enfu_waste_fuel_category
+        ]
+        self._check_binary_fields(attr, self.subsec_name_agrc, fields_req_bin, force_sum_to_1 = True)
 
 
     ##  function to check the energy storage table to ensure that an electricity category is specified
@@ -1406,7 +1671,10 @@ class ModelAttributes:
 
         # check required binary fields
         fields_req_bin = ["netzeroyear", "netzerotg1", "netzerotg2"]
-        self.check_binary_fields(attr, subsec, fields_req_bin)
+        self._check_binary_fields(attr, subsec, fields_req_bin)
+
+        # check numeric field
+        self._check_numeric_fields(attr, subsec, ["minimum_charge_fraction"], check_bounds = (0, 1))
 
         # check storage/technology crosswalk
         self._check_subsector_attribute_table_crosswalk(self.subsec_name_enst, self.subsec_name_entc, type_primary = "categories", injection_q = False)
@@ -1419,11 +1687,27 @@ class ModelAttributes:
         attr = self.get_attribute_table(subsec)
 
         # check required fields - binary
-        fields_req_bin = ["renewable_source"]
-        self.check_binary_fields(attr, subsec, fields_req_bin)
+        fields_req_bin = ["renewable_energy_technology"]
+        self._check_binary_fields(attr, subsec, fields_req_bin)
 
-        # check storage/technology crosswalks
-        self._check_subsector_attribute_table_crosswalk(self.subsec_name_entc, self.subsec_name_enst, type_primary = "categories", injection_q = False)
+        # check required fields - numeric
+        fields_req_num = ["operational_life"]
+        self._check_numeric_fields(attr, subsec, fields_req_num, integer_q = False, nonnegative_q = True)
+
+        # check technology/fuel crosswalks
+        self._check_subsector_attribute_table_crosswalk(
+            self.subsec_name_entc,
+            self.subsec_name_enfu,
+            type_primary = "categories",
+            injection_q = False
+        )
+        # check technology/storage crosswalks
+        self._check_subsector_attribute_table_crosswalk(
+            self.subsec_name_entc,
+            self.subsec_name_enst,
+            type_primary = "categories",
+            injection_q = False
+        )
         # check specifications of storage in technology from storage
         self._check_subsector_attribute_table_crosswalk(
             {self.subsec_name_entc: "technology_from_storage"},
@@ -1449,7 +1733,7 @@ class ModelAttributes:
 
         # check required fields - binary
         fields_req_bin = ["fuel_fraction_variable_by_fuel"]
-        self.check_binary_fields(attr, subsec, fields_req_bin)
+        self._check_binary_fields(attr, subsec, fields_req_bin)
 
         # function to check the industrial energy/fuels cw in industrial energy
         self._check_subsector_attribute_table_crosswalk(self.subsec_name_inen, self.subsec_name_enfu, type_primary = "varreqs_partial", injection_q = False)
@@ -1712,13 +1996,9 @@ class ModelAttributes:
         """
             Add a total of all emission fields (across those output variables specified with $EMISSION-GAS$). Inline function (does not return).
 
-            Function Arguments
-            ------------------
-            df_in: Data frame with emission outputs to be aggregated
-
-            list_subsectors: subsectors to apply totals to
-
-            stop_on_missing_fields_q: default = False. If True, will stop if any component emission variables are missing.
+            - df_in: Data frame with emission outputs to be aggregated
+            - list_subsectors: subsectors to apply totals to
+            - stop_on_missing_fields_q: default = False. If True, will stop if any component emission variables are missing.
         """
         # loop over base subsectors
         for subsector in list_subsectors:#self.required_base_subsectors:
@@ -1750,6 +2030,33 @@ class ModelAttributes:
         return fld_nam
 
 
+    ##  add a year from a time period field
+    def add_year_from_time_period(self,
+        df_in: pd.DataFrame,
+        field_year_new: str,
+        series_time_period: pd.core.series.Series,
+        attribute_time_period: AttributeTable = None,
+        field_year_in_attribute: str = "year"
+    ):
+        """
+            Add year field to a data frame if missing.
+
+            - df_in: input dataframe to add column to
+            - field_year: year
+            - series_time_period: pandas series of time periods
+            - attribute_time_period: AttributeTable mapping ModelAttributes.dim_time_period to year field
+            - field_year_in_attribute: field in attribute_time_period containing the year
+        """
+
+        key_attr = self.get_dimensional_attribute(self.dim_time_period, return_type = "pydim")
+        attribute_time_period = self.dict_attributes[key_attr]
+        df_in[field_year_new] = series_time_period.replace(
+            attribute_time_period.field_maps[f"{attribute_time_period.key}_to_{field_year_in_attribute}"]
+        )
+
+        return df_in
+
+
     ##  function for converting an array to a variable out dataframe (used in sector models)
     def array_to_df(self,
         arr_in: np.ndarray,
@@ -1760,15 +2067,10 @@ class ModelAttributes:
         """
             Convert an input np.ndarray into a data frame that has the proper variable labels (ordered by category for the appropriate subsector)
 
-            Function Arguments
-            ------------------
-            arr_in: np.ndarray to convert to data frame. If entered as a vector, it will be converted to a (n x 1) array, where n = len(arr_in)
-
-            modvar: the name of the model variable to use to name the dataframe
-
-            include_scalars: default = False. If True, will rescale to reflect emissions mass correction.
-
-            reduce_from_all_cats_to_specified_cats: default = False. If True, the input data frame is given across all categories and needs to be reduced to the set of categories associated with the model variable (selects subset of columns).
+            - arr_in: np.ndarray to convert to data frame. If entered as a vector, it will be converted to a (n x 1) array, where n = len(arr_in)
+            - modvar: the name of the model variable to use to name the dataframe
+            - include_scalars: default = False. If True, will rescale to reflect emissions mass correction.
+            - reduce_from_all_cats_to_specified_cats: default = False. If True, the input data frame is given across all categories and needs to be reduced to the set of categories associated with the model variable (selects subset of columns).
 
         """
 
@@ -1813,27 +2115,18 @@ class ModelAttributes:
         clean_attr_key: bool = False,
     ) -> tuple:
         """
-            use assign_keys_from_categories() to assign key_values that are associated with a secondary category. Use matchstrings defined in dict_assignment to create an output dictionary
+            Assign key_values that are associated with a secondary category. Use matchstrings defined in dict_assignment to create an output dictionary
 
-            Output Format
-            -------------
-            tuple: (dict_out, vars_unassigned)
-            dict_out -> {key_value: {assigned_dictionary_key: variable_name, ...}}
+            Returns a tuple of following structure:
+            * tuple: (dict_out, vars_unassigned)
+            * dict_out -> {key_value: {assigned_dictionary_key: variable_name, ...}}
 
-
-            Function Arguments
-            ------------------
-            subsector: the subsector to pull the attribute table from
-
-            field_attribute: field in the attribute table to use to split elements
-
-            dict_assignment: dict. {match_str: assigned_dictionary_key} map a variable match string to an assignment
-
-            type_table: default = "categories". Represents the type of attribute table; valid values are 'categories', 'varreqs_all', and 'varreqs_partial'
-
-            clean_field_vals: default = True. Apply clean_schema() to the values found in attr_subsector[field_attribute]?
-
-            clean_attr_key: default is False. Apply clean_schema() to the keys that are assigned to the output dictionary (e.g., clean_schema(variable_name))
+            - subsector: the subsector to pull the attribute table from
+            - field_attribute: field in the attribute table to use to split elements
+            - dict_assignment: dict. {match_str: assigned_dictionary_key} map a variable match string to an assignment
+            - type_table: default = "categories". Represents the type of attribute table; valid values are 'categories', 'varreqs_all', and 'varreqs_partial'
+            - clean_field_vals: default = True. Apply clean_schema() to the values found in attr_subsector[field_attribute]?
+            - clean_attr_key: default is False. Apply clean_schema() to the keys that are assigned to the output dictionary (e.g., clean_schema(variable_name))
 
         """
 
@@ -2067,7 +2360,7 @@ class ModelAttributes:
         return vars_out
 
 
-    ##  clean a partial category dictionary to return either none (no categorization) or a list of applicable cateogries
+    ##  clean a partial category dictionary to return either none (no categorization) or a list of applicable categories
     def clean_partial_category_dictionary(self,
         dict_in: dict,
         all_category_values: list,
@@ -2201,20 +2494,17 @@ class ModelAttributes:
         df_in: pd.DataFrame,
         var_integrated: str,
         var_optional: str,
-        override_vector_for_single_mv_q: bool = False,
-        return_type: str = "data_frame",
-        var_bounds = None,
-        force_boundary_restriction: bool = True
+        **kwargs
     ) -> tuple:
         # get fields needed
         subsector_integrated = self.get_variable_subsector(var_integrated)
         fields_check = self.build_varlist(subsector_integrated, var_integrated)
         # check and return the output variable + which variable was selected
         if set(fields_check).issubset(set(df_in.columns)):
-            out = self.get_standard_variables(df_in, var_integrated, override_vector_for_single_mv_q, return_type, var_bounds, force_boundary_restriction)
+            out = self.get_standard_variables(df_in, var_integrated, **kwargs)
             return var_integrated, out
         elif type(var_optional) != type(None):
-            out = self.get_standard_variables(df_in, var_optional, override_vector_for_single_mv_q, return_type, var_bounds, force_boundary_restriction)
+            out = self.get_standard_variables(df_in, var_optional, **kwargs)
             return var_optional, out
         else:
             return None
@@ -2674,7 +2964,7 @@ class ModelAttributes:
             return array_in
 
 
-    # returns ordered variable (by attribute key) with cateogries replaced
+    # returns ordered variable (by attribute key) with categories replaced
     def switch_variable_category(self, source_subsector: str, target_variable: str, attribute_field: str, cats_to_switch = None, dict_force_override = None) -> list:
         """
             attribute_field is the field in the primary category attriubte table to use for the switch;

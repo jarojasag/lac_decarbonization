@@ -350,8 +350,20 @@ class CircularEconomy:
         # get protein consumed per person in kg/year
         vec_wali_protein_per_capita = self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_wali_protein_per_capita, False, return_type = "array_base")*self.model_attributes.configuration.get("days_per_year")
         # get livestock population (a) and net imports (b) if available; otherwise, default to an elasticity
-        modvar_proj_protein_driver_a, array_project_protein_driver_a = self.model_attributes.get_optional_or_integrated_standard_variable(df_ce_trajectories, self.modvar_lvst_pop, self.modvar_wali_optional_elasticity_protein_to_gdppc, True, "array_base")
-        modvar_proj_protein_driver_b, array_project_protein_driver_b = self.model_attributes.get_optional_or_integrated_standard_variable(df_ce_trajectories, self.modvar_lvst_net_imports, self.modvar_wali_optional_elasticity_protein_to_gdppc, True, "array_base")
+        modvar_proj_protein_driver_a, array_project_protein_driver_a = self.model_attributes.get_optional_or_integrated_standard_variable(
+            df_ce_trajectories,
+            self.modvar_lvst_pop,
+            self.modvar_wali_optional_elasticity_protein_to_gdppc,
+            override_vector_for_single_mv_q = True,
+            return_type = "array_base"
+        )
+        modvar_proj_protein_driver_b, array_project_protein_driver_b = self.model_attributes.get_optional_or_integrated_standard_variable(
+            df_ce_trajectories,
+            self.modvar_lvst_net_imports,
+            self.modvar_wali_optional_elasticity_protein_to_gdppc,
+            override_vector_for_single_mv_q = True,
+            return_type = "array_base"
+        )
 
         # project depending on availability
         if modvar_proj_protein_driver_a == self.modvar_lvst_pop:
@@ -748,7 +760,13 @@ class CircularEconomy:
         array_waso_msw_total_by_category = np.outer(factor_waso_init_pc_waste*vec_pop, vec_waso_init_msw_composition)
         array_waso_msw_total_by_category *= array_waso_growth_msw_by_cat*array_waso_scale_msw
         # then, check for sludge in input dataframe
-        array_waso_sludge = self.model_attributes.get_optional_or_integrated_standard_variable(df_ce_trajectories, self.modvar_trww_sludge_produced, None, True, "array_base")
+        array_waso_sludge = self.model_attributes.get_optional_or_integrated_standard_variable(
+            df_ce_trajectories,
+            self.modvar_trww_sludge_produced,
+            None,
+            override_vector_for_single_mv_q = True,
+            return_type = "array_base"
+        )
         if array_waso_sludge:
             # convert to total sludge, then get the correct cateogry and add (should be a unique sludge category)
             array_waso_sludge = np.sum(array_waso_sludge[1], axis = 1)
@@ -1004,7 +1022,13 @@ class CircularEconomy:
 
         # initialize by running waste, then build input data frame for solid waste, which includes sludge totals that are reported from liquid waste
         df_out = [self.project_waste_liquid(df_ce_trajectories, df_se_internal_shared_variables, dict_dims, n_projection_time_periods, projection_time_periods)]
-        df_waso_sludge = self.model_attributes.get_optional_or_integrated_standard_variable(df_out[0], self.modvar_trww_sludge_produced, None, True, "data_frame")
+        df_waso_sludge = self.model_attributes.get_optional_or_integrated_standard_variable(
+            df_out[0],
+            self.modvar_trww_sludge_produced,
+            None,
+            override_vector_for_single_mv_q = True,
+            return_type = "data_frame"
+        )
         df_in = pd.concat([df_ce_trajectories, df_waso_sludge[1]], axis = 1) if df_waso_sludge else df_ce_trajectories
         # project solid waste
         df_out += [self.project_waste_solid(df_in, df_se_internal_shared_variables, dict_dims, n_projection_time_periods, projection_time_periods)]

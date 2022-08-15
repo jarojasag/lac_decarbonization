@@ -1,8 +1,8 @@
-======
-Energy
-======
+===================
+Non-Electric Energy
+===================
 
-Energy includes a range of variables and categories. Given the integrated nature of the energy sector, there are several "cross-subsector" categories required to construct the NemoMod energy model. These categories include Fuels and Technologies. The dimensions required for the NemoMod framework are available from the `NemoMod Categories Documentation <https://sei-international.github.io/NemoMod.jl/stable/dimensions/>`_.
+Energy includes a range of variables and categories. Given the integrated nature of the energy sector, there are several "cross-subsector" categories required to construct the NemoMod energy model. These categories include Fuels and Technologies, which . The dimensions required for the NemoMod framework are available from the `NemoMod Categories Documentation <https://sei-international.github.io/NemoMod.jl/stable/dimensions/>`_.
 
 
 Modeling Concepts and Important Notes
@@ -12,6 +12,8 @@ Fuels and Heat Energy
 ---------------------
 
 In general, energy is produced by stationary or mobile combustion of different fuels. The combustion of fuels releases :math:`\text{CO}_2`, :math:`\text{CH}_4`, and :math:`\text{N}_2\text{O}` (and other gasses, which may not be captured). These fuels are utilized by different technologies, which may use fuels at different efficiencies. Energy can also be stored (specifically electricity). The term **fuel** is explicitly used in all energy subsectors, while **technology** and **storage** are used in the NemoMod electricity model.
+
+.. note:: Fuels are used in both non-electric energy and electric energy. However, since they are a required component of the NemoMod electricity model, variables and attributes associated with fuel are available in the `Energy - Electricity <./energy_electric.html>`_ section.
 
 The combination of fuel and efficiency is an important concept for entering input data. Energy use in SCOE and CCSQ both use a fraction of energy *demand at point of use* to project future changes in fuel mixtures. However, many empirical data that are used rely on energy *consumption*, and both SCOE and CCSQ take initial consumption as inputs to SISEPUEDE.
 
@@ -34,73 +36,38 @@ i.e., the point-of-use demand is the efficiency-weighted fraction of consumption
 ----
 
 
-Electricity Generation
-======================
 
-The electricity sector is represented one of the most complex modeling approaches include in the SISEPUEDE framework. It is modeled using `NemoMod <https://sei-international.github.io/NemoMod.jl/stable/>`_ (`access the Julia GitHub repository here <https://github.com/sei-international/NemoMod.jl/>`_), an energy framework developed by the `Stockholm Environmental Institute <https://www.sei.org>`_. However, the SISEPUEDE model introduces a basic model, guided by simple assumptions, that can be built and improved upon by countries with deeper systemic knowledge at a later date.
 
-NemoMod requires several dimensions of data; these data include FUEL, TECHNOLOGY, EMISSIONS, YEARS, STORAGE, TIMESLICE. These dimensions are treated as subsectors in SISEPUEDE in scripts and attribute table structure.
+Industrial Energy
+=================
 
-.. note::
-   Most of the variables that are required by category are explained in further detail in the `NemoMod Parameter Documentation <https://sei-international.github.io/NemoMod.jl/stable/parameters/>`_. For example, if it is unclear what the *Capacity Factor* is (see Categories - TECHNOLOGY below), the NemoMod parameter documentation can provide additional information.
+Industrial energy includes emission from **DESCRIPTION**
 
-Categories - FUEL
------------------
+Variables by Category
+---------------------
 
-.. csv-table:: The following FUEL dimensions are specified for the SISEPUEDE NemoMod model.
-   :file: ./csvs/attribute_cat_fuel.csv
+For each industrial category ``$CAT-INDUSTRY$``, the following variables are required.
+
+.. csv-table:: For different SCOE categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
+   :file: ./csvs/table_varreqs_by_category_en_inen.csv
    :header-rows: 1
 
-Variables by Categories - FUEL
-------------------------------
 
-The following variables are required for each category ``$CAT-FUEL$``.
+Variables by Partial Category
+-----------------------------
+
+
+.. csv-table:: For different Industrial categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
+   :file: ./csvs/table_varreqs_by_partial_category_en_inen.csv
+   :header-rows: 1
+
+
+Categories
+----------
+Industrial categories are described in `Industial Processes and Product Use (IPPU) <../ippu.html>`_.
 
 ----
 
-
-Categories - REGION
------------------------
-
-NemoMod allows users to specify regions, and policies can be modeled that represent cross-regional power transfers, storage, etc. In the SISEPUEDE NemoMod implementation, each country is treated as a region.
-
-
-
-Variables by Categories - REGION
-------------------------------------
-
-here
-
-----
-
-
-Categories - STORAGE
------------------------
-
-.. csv-table:: The following STORAGE dimensions are specified for the SISEPUEDE NemoMod model.
-   :file: ./csvs/attribute_cat_storage.csv
-   :header-rows: 1
-
-Variables by Categories - STORAGE
-------------------------------------
-
-
-
-Categories - TECHNOLOGY
------------------------
-
-The SISEPUEDE model (v1.0) uses NemoMod *only* to model the electricity sector. Therefore, technologies are limited to power generation (power plants) and storage.
-
-.. csv-table:: The following TECHNOLOGY dimensions are specified for the SISEPUEDE NemoMod model.
-   :file: ./csvs/attribute_cat_technology.csv
-   :header-rows: 1
-
-Variables by Categories - TECHNOLOGY
-------------------------------------
-
-The following variables are required for each category ``$CAT-TECHNOLOGY$``. Note that these technologies represent consumers of fuel (which includes electricity) and are generally power plants and storage.
-
-----
 
 
 
@@ -147,37 +114,6 @@ SCOE is divided into the following categories, which
 
 
 
-Industrial Energy
-=================
-
-Industrial energy includes emission from **DESCRIPTION**
-
-Variables by Category
----------------------
-
-For each industrial category ``$CAT-INDUSTRY$``, the following variables are required.
-
-.. csv-table:: For different SCOE categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
-   :file: ./csvs/table_varreqs_by_category_en_inen.csv
-   :header-rows: 1
-
-
-Variables by Partial Category
------------------------------
-
-
-.. csv-table:: For different Industrial categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
-   :file: ./csvs/table_varreqs_by_partial_category_en_inen.csv
-   :header-rows: 1
-
-
-Categories
-----------
-Industrial categories are described in `Industial Processes and Product Use (IPPU) <../ippu.html>`_.
-
-----
-
-
 
 Transportation
 ==============
@@ -221,6 +157,7 @@ Transportation is divided into the following categories. These categories are as
    :header-rows: 1
 
 ----
+
 
 
 

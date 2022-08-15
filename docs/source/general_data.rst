@@ -15,9 +15,20 @@ See `Chapter 7, Section 6.1 of the IPCC Sixth Assessment Report (AR6) <https://w
    :header-rows: 1
 
 
-Units - ENERGY
-------------
+Units - Area
+--------------
+The standard reporting output for area (e.g., energy demand) can be set in the configuration file (see the in the `Analytical Parameters <../analytical_parameters.html>`_ section for more information about configuration parameters). The default unit of area for reporting is ha (hectares).
+
+   .. csv-table:: Area units defined in the model and relationships between them.
+      :file: ./csvs/attribute_area.csv
+      :header-rows: 1
+
+
+Units - Energy
+--------------
 The standard reporting output for energy (e.g., energy demand) can be set in the configuration file (see the in the `Analytical Parameters <../analytical_parameters.html>`_ section for more information about configuration parameters). The default unit of energy for reporting is PJ (Petajoule).
+
+.. note:: Units of power, such as GWy (Gigawatt-years) or KWh (Kilowatt-hours), are also included in the energy table.
 
    .. csv-table:: Energy units defined in the model and relationships between them.
       :file: ./csvs/attribute_energy.csv
@@ -25,7 +36,7 @@ The standard reporting output for energy (e.g., energy demand) can be set in the
 
 
 Units - Length
-------------
+--------------
 The standard reporting output for any output lengths can be set in the configuration file (see the in the `Analytical Parameters <../analytical_parameters.html>`_ section for more information about configuration parameters). The default unit of length for reporting length-relevant information (e.g., transportation demand) is km (kilometers).
 
    .. csv-table:: Length units defined in the model and relationships between them.
