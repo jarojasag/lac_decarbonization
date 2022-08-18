@@ -3,6 +3,7 @@ import numpy as np
 import os, os.path
 import pandas as pd
 import support_functions as sf
+from typing import Union
 import warnings
 
 ##  the AttributeTable class checks existence, keys, key values, and generates field maps
@@ -93,6 +94,7 @@ class Configuration:
         attr_monetary: AttributeTable,
         attr_power: AttributeTable,
         attr_region: AttributeTable,
+        attr_time_period: AttributeTable,
         attr_volume: AttributeTable,
         attr_required_parameters: AttributeTable = None
     ):
@@ -119,13 +121,14 @@ class Configuration:
             "historical_solid_waste_method",
             "length_units",
             "monetary_units",
+            "nemomod_solver",
             "power_units",
             "region",
             "volume_units"
         ]
         self.params_float = ["days_per_year"]
         self.params_float_fracs = ["discount_rate"]
-        self.params_int = ["global_warming_potential", "historical_back_proj_n_periods"]
+        self.params_int = ["global_warming_potential", "historical_back_proj_n_periods", "nemo_mod_time_periods"]
 
         self.dict_config = self.get_config_information(
             attr_area,
@@ -136,6 +139,7 @@ class Configuration:
             attr_monetary,
             attr_power,
             attr_region,
+            attr_time_period,
             attr_volume,
             attr_required_parameters,
             delim = "|"
@@ -189,6 +193,7 @@ class Configuration:
         attr_monetary: AttributeTable = None,
         attr_power: AttributeTable = None,
         attr_region: AttributeTable = None,
+        attr_time_period: AttributeTable = None,
         attr_volume: AttributeTable = None,
         attr_parameters_required: AttributeTable = None,
         field_req_param: str = "configuration_file_parameter",
@@ -205,6 +210,7 @@ class Configuration:
         attr_monetary = attr_monetary if (attr_monetary is not None) else self.attr_monetary
         attr_power = attr_power if (attr_power is not None) else self.attr_power
         attr_region = attr_region if (attr_region is not None) else self.attr_region
+        attr_time_period = attr_time_period if (attr_time_period is not None) else self.attr_time_period
         attr_volume = attr_volume if (attr_volume is not None) else self.attr_volume
 
         # check path and parse the config if it exists
@@ -224,7 +230,7 @@ class Configuration:
                         dict_conf.update({param_config: val_default})
 
         # set parameters to return as a list and ensure type return is list
-        params_list = ["region"]
+        params_list = ["region", "nemo_mod_time_periods"]
         for p in params_list:
             if not isinstance(dict_conf[p], list):
                 dict_conf.update({p: [dict_conf[p]]})
@@ -240,6 +246,8 @@ class Configuration:
         valid_monetary = self.get_valid_values_from_attribute_column(attr_monetary, "monetary_equivalent_", str, "unit_monetary_to_monetary")
         valid_power = self.get_valid_values_from_attribute_column(attr_power, "power_equivalent_", str, "unit_power_to_power")
         valid_region = attr_region.key_values
+        valid_solvers = ["cbc", "clp", "cplex", "glpk", "gurobi"]
+        valid_time_period = attr_time_period.key_values
         valid_volume = self.get_valid_values_from_attribute_column(attr_volume, "volume_equivalent_", str)
         # map parameters to valid values
         dict_checks = {
@@ -252,13 +260,15 @@ class Configuration:
             "historical_solid_waste_method": valid_historical_solid_waste_method,
             "length_units": valid_length,
             "monetary_units": valid_monetary,
+            "nemo_mod_solver": valid_solvers,
+            "nemo_mod_time_periods": valid_time_period,
             "power_units": valid_power,
             "region": valid_region,
             "volume_units": valid_volume
         }
 
         # allow some parameter switch values to valid values
-        dict_params_switch = {"region": ["all"]}
+        dict_params_switch = {"region": ["all"], "nemo_mod_time_periods": ["all"]}
         for p in dict_params_switch.keys():
             if dict_conf[p] == dict_params_switch[p]:
                 dict_conf.update({p: dict_checks[p].copy()})
@@ -282,6 +292,8 @@ class Configuration:
         self.valid_monetary = valid_monetary
         self.valid_power = valid_power
         self.valid_region = valid_region
+        self.valid_solver = valid_solvers
+        self.valid_time_period = valid_time_period
         self.valid_volume = valid_volume
 
         return dict_conf
@@ -462,6 +474,17 @@ class ModelAttributes:
         self.table_nemomod_specified_annual_demand = "SpecifiedAnnualDemand"
         self.table_nemomod_variable_cost = "VariableCost"
         self.table_nemomod_year_split = "YearSplit"
+        # nemomod shared tables - output variables
+        self.table_nemomod_annual_emissions_by_technology = "vannualtechnologyemission"
+        self.table_nemomod_capital_investment = "vcapitalinvestment"
+        self.table_nemomod_capital_investment_discounted = "vdiscountedcapitalinvestment"
+        self.table_nemomod_capital_investment_storage = "vcapitalinvestmentstorage"
+        self.table_nemomod_capital_investment_storage_discounted = "vdiscountedcapitalinvestmentstorage"
+        self.table_nemomod_new_capacity = "vnewcapacity"
+        self.table_nemomod_operating_cost = "voperatingcost"
+        self.table_nemomod_operating_cost_discounted = "vdiscountedoperatingcost"
+        self.table_nemomod_total_annual_capacity = "vtotalcapacityannual"
+        self.table_nemomod_production_by_technology = "vproductionbytechnologyannual"
 
         # temporary - but read from table at some point
         self.varchar_str_emission_gas = "$EMISSION-GAS$"
@@ -515,6 +538,7 @@ class ModelAttributes:
             self.dict_attributes["unit_monetary"],
             self.dict_attributes["unit_power"],
             self.dict_attributes["region"],
+            self.dict_attributes["dim_time_period"],
             self.dict_attributes["unit_volume"],
             self.configuration_requirements
         )
@@ -2031,30 +2055,46 @@ class ModelAttributes:
 
 
     ##  add a year from a time period field
-    def add_year_from_time_period(self,
+    def exchange_year_time_period(self,
         df_in: pd.DataFrame,
         field_year_new: str,
-        series_time_period: pd.core.series.Series,
+        series_time_domain: pd.core.series.Series,
         attribute_time_period: AttributeTable = None,
-        field_year_in_attribute: str = "year"
+        field_year_in_attribute: str = "year",
+        direction: str = "time_period_to_year"
     ):
         """
             Add year field to a data frame if missing.
 
             - df_in: input dataframe to add column to
-            - field_year: year
-            - series_time_period: pandas series of time periods
+            - field_year_new: field name to store year
+            - series_time_domain: pandas series of time periods
             - attribute_time_period: AttributeTable mapping ModelAttributes.dim_time_period to year field
             - field_year_in_attribute: field in attribute_time_period containing the year
+            - direction: which direction to map; acceptable values include:
+                * time_period_to_year: convert a time period in the series to year under field field_year_new (default)
+                * time_period_as_year: enter the time period in the year field field_year_new (used for NemoMod)
+                * year_to_time_period: convert a year back to time period if there is an injection
         """
+
+        sf.check_set_values([direction], ["time_period_as_year", "time_period_to_year", "year_to_time_period"], " in exchange_year_time_period.")
 
         key_attr = self.get_dimensional_attribute(self.dim_time_period, return_type = "pydim")
         attribute_time_period = self.dict_attributes[key_attr]
-        df_in[field_year_new] = series_time_period.replace(
-            attribute_time_period.field_maps[f"{attribute_time_period.key}_to_{field_year_in_attribute}"]
-        )
 
-        return df_in
+        df_out = df_in.copy()
+        if (direction in ["time_period_as_year"]):
+            df_out[field_year_new] = np.array(series_time_domain.copy())
+        elif (direction in ["time_period_to_year", "year_to_time_period"]):
+            key_fm = f"{attribute_time_period.key}_to_{field_year_in_attribute}" if (direction == "time_period_to_year") else f"{field_year_in_attribute}_to_{attribute_time_period.key}"
+            dict_repl = attribute_time_period.field_maps.get(key_fm)
+            if dict_repl is not None:
+                df_out[field_year_new] = series_time_domain.replace(dict_repl)
+
+        else:
+            raise ValueError(f"Invalid direction '{direction}' in exchange_year_time_period: specify 'time_period_to_year' or 'year_to_time_period'.")
+
+        return df_out
 
 
     ##  function for converting an array to a variable out dataframe (used in sector models)
@@ -2269,23 +2309,6 @@ class ModelAttributes:
 
         return vars_out
 
-    # function to check category subsets that are specified
-    def check_category_restrictions(self, categories_to_restrict_to, attribute_table: AttributeTable, stop_process_on_error: bool = True) -> list:
-        if categories_to_restrict_to != None:
-            if type(categories_to_restrict_to) != list:
-                raise TypeError(f"Invalid type of categories_to_restrict_to: valid types are 'None' and 'list'.")
-            valid_cats = [x for x in categories_to_restrict_to if x in attribute_table.key_values]
-            invalid_cats = [x for x in categories_to_restrict_to if (x not in attribute_table.key_values)]
-            if len(invalid_cats) > 0:
-                missing_cats = sf.format_print_list(invalid_cats)
-                msg_err = f"Invalid categories {invalid_cats} found."
-                if stop_process_on_error:
-                    raise ValueError(msg_err)
-                else:
-                    warnings.warn(msg_err + " They will be dropped.")
-            return valid_cats
-        else:
-            return attribute_table.key_values
 
 
     # function to build a variable using an ordered set of categories associated with another variable
@@ -2297,6 +2320,7 @@ class ModelAttributes:
         vars_target = self.build_varlist(subsector_target, variable_subsec = modvar_target, restrict_to_category_values = cats_source)
 
         return vars_target
+
 
 
     ##  function for building a list of variables (fields) for data tables
@@ -2360,6 +2384,27 @@ class ModelAttributes:
         return vars_out
 
 
+
+    # function to check category subsets that are specified
+    def check_category_restrictions(self, categories_to_restrict_to, attribute_table: AttributeTable, stop_process_on_error: bool = True) -> list:
+        if categories_to_restrict_to != None:
+            if type(categories_to_restrict_to) != list:
+                raise TypeError(f"Invalid type of categories_to_restrict_to: valid types are 'None' and 'list'.")
+            valid_cats = [x for x in categories_to_restrict_to if x in attribute_table.key_values]
+            invalid_cats = [x for x in categories_to_restrict_to if (x not in attribute_table.key_values)]
+            if len(invalid_cats) > 0:
+                missing_cats = sf.format_print_list(invalid_cats)
+                msg_err = f"Invalid categories {invalid_cats} found."
+                if stop_process_on_error:
+                    raise ValueError(msg_err)
+                else:
+                    warnings.warn(msg_err + " They will be dropped.")
+            return valid_cats
+        else:
+            return attribute_table.key_values
+
+
+
     ##  clean a partial category dictionary to return either none (no categorization) or a list of applicable categories
     def clean_partial_category_dictionary(self,
         dict_in: dict,
@@ -2382,12 +2427,22 @@ class ModelAttributes:
         return dict_in
 
 
+
+    # use this to avoid changing function in multiple places
+    def format_category_for_outer(self, category_to_replace, appendstr_i = "-I", appendstr_j = "-J"):
+        cat_i = category_to_replace.replace("$", f"{appendstr_i}$")[len(appendstr_i):]
+        cat_j = category_to_replace.replace("$", f"{appendstr_j}$")[len(appendstr_j):]
+        return (cat_i, cat_j)
+
+
+
     ##  specify the aggregate emission field added to each subsector output dataframe
     def get_subsector_emission_total_field(self, subsector):
         # add subsector abbreviation
         fld_nam = self.get_subsector_attribute(subsector, "abv_subsector")
         fld_nam = f"emission_co2e_subsector_total_{fld_nam}"
         return fld_nam
+
 
 
     ##  function for getting input/output fields for a list of subsectors
@@ -2412,6 +2467,7 @@ class ModelAttributes:
             vars_out = pd.DataFrame({"subsector": subsectors_out, "variable": vars_out}).sort_values(by = ["subsector", "variable"]).reset_index(drop = True)
 
         return vars_in, vars_out
+
 
 
     ##  function to retrive multiple variables that, across categories, must sum to some value. Gives a correction threshold to allow for small errors
@@ -2489,6 +2545,7 @@ class ModelAttributes:
         return dict_arrs
 
 
+
     ##  function to return an optional variable if another (integrated) variable is not passed
     def get_optional_or_integrated_standard_variable(self,
         df_in: pd.DataFrame,
@@ -2508,6 +2565,7 @@ class ModelAttributes:
             return var_optional, out
         else:
             return None
+
 
 
     ##  function to build a dictionary of categories applicable to a give variable; split by unidim/outer
@@ -2534,6 +2592,7 @@ class ModelAttributes:
             return {}, {}
 
 
+
     ##  function for retrieving the variable schema associated with a variable
     def get_variable_attribute(self, variable: str, attribute: str) -> str:
         """
@@ -2552,6 +2611,7 @@ class ModelAttributes:
         var_attr = self.dict_varreqs[key_varreqs].field_maps[key_fm][variable]
 
         return var_attr
+
 
 
     ##  function to retrieve an (ordered) list of categories for a variable
@@ -2573,6 +2633,7 @@ class ModelAttributes:
         return cats
 
 
+
     ##  function for mapping variable to default characteristic (e.g., gas, units, etc.)
     def get_variable_characteristic(self, variable: str, characteristic: str) -> str:
         """
@@ -2581,6 +2642,7 @@ class ModelAttributes:
         var_schema = self.get_variable_attribute(variable, "variable_schema")
         dict_out = clean_schema(var_schema, return_default_dict_q = True)
         return dict_out.get(characteristic)
+
 
 
     ##  function to retrieve a variable that is associated with a category in a file (see Transportation Demand for an example)
@@ -2605,6 +2667,7 @@ class ModelAttributes:
             return None
 
 
+
     ##  easy function for getting a variable subsector
     def get_variable_subsector(self, modvar: str, throw_error_q: bool = True):
         dict_check = self.dict_model_variable_to_subsector
@@ -2615,6 +2678,7 @@ class ModelAttributes:
                 return None
         else:
             return dict_check[modvar]
+
 
 
     ##  function to convert units
@@ -2671,6 +2735,7 @@ class ModelAttributes:
         return val_return
 
 
+
     ##  function to extract a variable (with applicable categories from an input data frame)
     def get_standard_variables(self,
         df_in: pd.DataFrame,
@@ -2682,7 +2747,7 @@ class ModelAttributes:
         expand_to_all_cats: bool = False,
         all_cats_missing_val: float = 0.0,
         return_num_type: type = np.float64
-    ):
+    ) -> pd.DataFrame:
 
         """
             use get_standard_variables() to retrieve an array or data frame of input variables. If return_type == "array_units_corrected", then the ModelAttributes will re-scale emissions factors to reflect the desired output emissions mass (as defined in the configuration).
@@ -2778,6 +2843,7 @@ class ModelAttributes:
         return out
 
 
+
     ##  function to get all variables associated with a subsector (will not function if there is no primary category)
     def get_subsector_variables(self, subsector: str, var_type = None) -> list:
         # get some information used
@@ -2794,6 +2860,8 @@ class ModelAttributes:
                 dict_var_type.update(dict(zip(l_vars, [key_type.replace("key_varreqs_", "") for x in l_vars])))
 
         return dict_var_type, vars_by_subsector
+
+
 
     # return a list of variables by sector
     def get_variables_by_sector(self, sector: str, return_var_type: str = "input") -> list:
@@ -2814,6 +2882,7 @@ class ModelAttributes:
             raise ValueError(f"Invalid return_var_type specification '{return_var_type}' in get_variables_by_sector: valid values are 'input', 'output', and 'both'.")
 
 
+
     # list variables by all valid subsectors (excludes those without a primary category)
     def get_variables_by_subsector(self) -> dict:
         dict_vars_out = {}
@@ -2828,11 +2897,26 @@ class ModelAttributes:
         return dict_vars_out, dict_vars_to_subsector, dict_vartypes_out
 
 
-    # use this to avoid changing function in multiple places
-    def format_category_for_outer(self, category_to_replace, appendstr_i = "-I", appendstr_j = "-J"):
-        cat_i = category_to_replace.replace("$", f"{appendstr_i}$")[len(appendstr_i):]
-        cat_j = category_to_replace.replace("$", f"{appendstr_j}$")[len(appendstr_j):]
-        return (cat_i, cat_j)
+
+    ##  generate a blank data frame of length n with varlist on columns
+    def instantiate_blank_modvar_df_by_categories(self,
+        modvar: str,
+        n: int,
+        blank_val: Union[int, float] = 0.0
+    ) -> pd.DataFrame:
+
+        """
+            Create a blank data frame, filled with blank_val, with properly ordered variable names.
+            - modvar: the model variable to build the dataframe for
+            - n: the length of the data frame
+            - blank_val: the value to use to fill the frame
+        """
+        subsec = self.get_variable_subsector(modvar)
+        cols = self.build_varlist(subsec, modvar)
+        df_out = pd.DataFrame(np.ones((n, len(cols)))*blank_val, columns = cols)
+
+        return df_out
+
 
 
     # separate a variable requirement dictionary into those associated with simple vars and those with outer
@@ -3017,6 +3101,7 @@ class ModelAttributes:
         else:
             raise ValueError(f"Invalid return_type '{return_type}'. Please specify 'fields' or 'category_values'.")
 
+
     ##  useful function for calculating simple driver*emission factor emissions
     def get_simple_input_to_output_emission_arrays(
         self,
@@ -3054,12 +3139,14 @@ class ModelAttributes:
                     scalar_units = scale_factor if (scale_factor is not None) else self.get_variable_unit_conversion_factor(variable_driver, var, driver_unit_type)
                 except:
                     scalar_units = scale_factor if (scale_factor is not None) else 1
-                print(scalar_units)
+
                 # get the emissions driver array (driver must h)
                 arr_driver = np.array(df_driver[self.build_target_varlist_from_source_varcats(var, variable_driver)])*scalar_units
 
                 df_out.append(self.array_to_df(arr_driver*arr_ef, dict_vars[var]))
+
         return df_out
+
 
     ##  function to add a variable based on components
     def manage_internal_variable_to_df(self,

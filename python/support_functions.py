@@ -1,7 +1,7 @@
 import os, os.path
 import numpy as np
 import pandas as pd
-
+from typing import Union
 
 ##  function to "projct" backwards waste that was deposited (used only in the absence of historical data)
 def back_project_array(
@@ -114,7 +114,7 @@ def check_row_sums(
 
 
 ##  print a set difference; sorts to ensure easy reading for user
-def check_set_values(subset: set, superset: set, str_append: str) -> str:
+def check_set_values(subset: set, superset: set, str_append: str = "") -> str:
     if not set(subset).issubset(set(superset)):
         invalid_vals = list(set(subset) - set(superset))
         invalid_vals.sort()
@@ -230,6 +230,47 @@ def get_vector_growth_rates_from_first_element(arr: np.ndarray) -> np.ndarray:
 
 
 
+##  perform a merge to overwrite some values for a new sub-df
+def match_df_to_target_df(
+    df_target: pd.DataFrame,
+    df_source: pd.DataFrame,
+    fields_index: list,
+    fields_to_replace: str = None,
+    fillna_value: Union[int, float, str] = 0.0
+) -> pd.DataFrame:
+    """
+        Merge df_source to df_target, overwriting data fields in df_target with those in df_source
+        - df_target: target data frame, which will have values replaced with values in df_source
+        - df_source: source data to use to replace
+        - fields_to_replace: fields to replace in merge. If None, defaults to all available.
+        - fields_index: list of index fields
+        - fillna_value: value to use to fill nas in data frame
+    """
+
+    # get some fields
+    check_fields(df_target, fields_index)
+    check_fields(df_source, fields_index)
+    # get fields to replace
+    fields_dat_source = [x for x in df_source.columns if (x not in fields_index) and (x in df_target.columns)]
+    fields_dat_source = [x for x in fields_dat_source if x in fields_to_replace] if (fields_to_replace is not None) else fields_dat_source
+    # target fields to drop
+    fields_dat_target = [x for x in df_target.columns if (x not in fields_index)]
+    fields_dat_target_drop = [x for x in fields_dat_target if (x in fields_dat_source)]
+
+    # make a copy and rename
+    df_out = pd.merge(
+        df_target.drop(fields_dat_target_drop, axis = 1),
+        df_source[fields_index + fields_dat_source],
+        how = "left",
+        on = fields_index
+    )
+    df_out.fillna(fillna_value, inplace = True)
+    df_out = df_out[df_target.columns]
+
+    return df_out
+
+
+
 ##  use to merge data frames together into a single output when they share ordered dimensions of analysis (from ModelAttribute class)
 def merge_output_df_list(
     dfs_output_data: list,
@@ -278,9 +319,46 @@ def merge_output_df_list(
         return df_out[fields_dim + fields_dat]
 
 
+
+##  order a data frame by values in vector_reference
+def orient_df_by_reference_vector(
+    df_in: pd.DataFrame,
+    vector_reference: Union[list, np.ndarray],
+    field_compare: str,
+    field_merge_tmp: str = "ID_SORT_",
+    drop_field_compare: bool = False
+) -> pd.DataFrame:
+    """
+        Ensure that a data frame's field is ordered properly (in the same ordering as df_in[field_compare]). Returns adata frame with the correct ordering.
+        - df_in: data frame to check
+        - vector_reference: reference vector used to order df_in[field_compare].
+        - field_compare: field to order df_in by
+        - field_merge_tmp: temporary field to use for sorting. Should not be in df_in.columns
+        - drop_field_compare: drop the comparison field after orienting
+
+        Note
+        ----
+        * Should only be used if field_compare is the only field in df_in to be sorted on. Additional sorting is not supported.
+    """
+
+    # check reference
+    if (list(df_in[field_compare]) == list(vector_reference)):
+        df_out = df_in
+    else:
+        df_tmp = pd.DataFrame({field_merge_tmp: range(len(vector_reference)), field_compare: vector_reference})
+        df_out = pd.merge(df_out, df_tmp).sort_values(by = [field_merge_tmp]).reset_index(drop = True)
+        df_out = df_out[df_in.columns]
+
+    # drop the sort field if needed
+    df_out.drop([field_compare], axis = 1, inplace = True) if drop_field_compare else None
+
+    return df_out
+
+
+
 ##  print a set difference; sorts to ensure easy reading for user
-def print_setdiff(superset: set, subset: set) -> str:
-    missing_vals = list(superset - subset)
+def print_setdiff(set_required: set, set_check: set) -> str:
+    missing_vals = list(set_required - set_check)
     missing_vals.sort()
     return format_print_list(missing_vals)
 

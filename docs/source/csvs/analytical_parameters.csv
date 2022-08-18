@@ -8,15 +8,19 @@ Energy Units NemoMod,energy_units_nemomod,PJ," | Units of energy to use in calcu
  | 
  | **Note**: A separate parameter for energy units in NemoMod is included to allow for reasonable comparisons between energy and power in NemoMod, enabling reasonable solutions from the solver. Defaults of PJ and GW, for example, enable this comparison. ",
 Global Warming Potential,global_warming_potential,100,More information on Global Warming Potential (GWP) can be found from the `EPA <https://www.epa.gov/ghgemissions/understanding-global-warming-potentials>`_.,"Default is 100. Acceptable values are 20, 100, and 500. See `IPCC AR6 WG1 Chapter 7 - Table 7.SM.7 <https://www.ipcc.ch/report/ar6/wg1/downloads/report/IPCC_AR6_WGI_Chapter_07_Supplementary_Material.pdf>`_ for the source of GWP conversion values. "
-Historical Solid Waste Back Projection Number of Back Projection Periods,historical_back_proj_n_periods,10,"Number of periods to back-project when estimating components based on first order decay modeling, including solid waste disposed and wood products harvested before time :math:`t = 0`.",
 Historical Harvested Wood Products Method,historical_harveted_wood_products_method,back_project," | The first order decay (FOD) model used to estimate emissions from harvested wood products requires an estimate of carbon sequested in wood products before time :math:`t = 0`. Two methods are supported: 'back_project' and 'historical'. 
  | 
  | Historical data are read from tables (**NOTE: Historical is currently not supported.**).",
+Historical Solid Waste Back Projection Number of Back Projection Periods,historical_back_proj_n_periods,10,"Number of periods to back-project when estimating components based on first order decay modeling, including solid waste disposed and wood products harvested before time :math:`t = 0`.",
 Historical Solid Waste Method,historical_solid_waste_method,back_project," | The first order decay (FOD) model used to estimate emissions from solid waste disposal requires an estimate of waste before time :math:`t = 0`. Two methods are supported: 'back_project' and 'historical'. 
  | 
  | Historical data are read from tables (**NOTE: Historical is currently not supported.**).",
 Length Units,length_units,km,Default units for length. Used in reporting quantities useful to costs and benefits in the Transportation Demand sector.,
 Monetary Units,monetary_units,mm_usd,"Default reporting units for costs and benefits, including NemoMod reports.",
+NemoMod Solver,nemo_mod_solver,clp," | Solver to use to run NemoMod. Default allowable values are: cbc, clp, cplex, glpk, gurobi.
+ | 
+ | **Note**: If using cplex or gurobi, ensure that Julia has access to these solvers in the environment (in directory ./julia) and that proper licenses are available.",
+NemoMod Time Periods,nemo_mod_time_periods,all,"Set of time periods to run. Acceptable values are ""all"" (entered without quotes) or pipe-delimitted time periods, e.g., 0|1|2|…",
 Power Units,power_units,GW," | Default power units (defined in attribute_power.csv with an associted power*year value in attribute_energy.csv) for NemoMod
  | 
  |  **Note**:  Units of energy and power in NemoMod should be of (reasonably) the same order of magnitude to enable reliable solutions from the solver. Defaults of PJ and GW, for example, enable this comparison. ",

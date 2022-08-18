@@ -2,10 +2,25 @@ import support_functions as sf
 import data_structures as ds
 from model_socioeconomic import Socioeconomic
 from model_circular_economy import CircularEconomy
+import os, os.path
 import pandas as pd
 import numpy as np
+import setup_analysis as sa
+import sqlalchemy
+import sql_utilities as sqlutil
 import time
 from typing import Union
+
+##  import Julia modules and initialize the environment
+from julia import Base
+from julia import Pkg
+Pkg.activate(sa.dir_jl)
+from julia import NemoMod
+from julia import Cbc
+from julia import Clp
+from julia import JuMP
+
+
 
 
 ###########################
@@ -15,8 +30,32 @@ from typing import Union
 ###########################
 
 class ElectricEnergy:
+    """
+        About
+        -----
+        Use ElectricEnergy to calculate emissions from electricity generation using NemoMod. Integrates with the SISEPUEDE integrated modeling framework.
 
-    def __init__(self, attributes: ds.ModelAttributes):
+        Intialization Arguments
+        -----------------------
+        - attributes: ModelAttributes object used in SISEPUEDE
+        - nemomod_reference_files: dictionary of input reference dataframes OR directory containing required CSVs
+            * Required keys or CSVs (without extension):
+                (1) CapacityFactor
+                (2) SpecifiedDemandProfile
+
+        Requirements
+        ------------
+        - Julia 1.7+
+        - Python PyJulia package
+        - NemoMod (see https://sei-international.github.io/NemoMod.jl/stable/ for the latest stable release)
+        - Cbc, Clp, GPLK, CPLEX, Gurobi (at least one)
+
+    """
+
+    def __init__(self,
+        attributes: ds.ModelAttributes,
+        nemomod_reference_files: Union[str, dict]
+    ):
 
         # some subector reference variables
         self.subsec_name_ccsq = "Carbon Capture and Sequestration"
@@ -69,7 +108,6 @@ class ElectricEnergy:
             self.field_nemomod_tg1: str,
             self.field_nemomod_tg2: str,
             self.field_nemomod_time_slice: str,
-            #self.field_nemomod_value: float,
             self.field_nemomod_year: str
         }
 
@@ -95,6 +133,21 @@ class ElectricEnergy:
         self.required_dimensions = self.get_required_dimensions()
         self.required_subsectors, self.required_base_subsectors = self.get_required_subsectors()
         self.required_variables, self.output_variables = self.get_elec_input_output_fields()
+        self.dict_nemomod_reference_tables = self.get_nemomod_reference_dict(nemomod_reference_files)
+
+
+        # load class-specific packages
+        """
+        from julia import Base
+        from julia import Pkg
+        Pkg.activate(sa.dir_jl) # MAYBE MOVE ENVIRONMENT HERE?
+        from julia import NemoMod
+        if self.model_attributes.configuration.get("nemo_mod_solver") == "cbc":
+            from julia import Cbc
+        elif self.model_attributes.configuration.get("nemo_mod_solver") == "clp":
+            from julia import Clp
+        from julia import JuMP
+        """
 
 
         ##  SET MODEL FIELDS
@@ -142,7 +195,14 @@ class ElectricEnergy:
         self.modvar_entc_ef_scalar_co2 = ":math:\\text{CO}_2 NemoMod EmissionsActivityRatio Scalar"
         self.modvar_entc_ef_scalar_n2o = ":math:\\text{N}_2\\text{O} NemoMod EmissionsActivityRatio Scalar"
         self.modvar_entc_efficiency_factor_technology = "Technology Efficiency of Fuel Use"
+        self.modvar_entc_nemomod_discounted_capital_investment = "NemoMod Discounted Capital Investment"
+        self.modvar_entc_nemomod_discounted_operating_costs = "NemoMod Discounted Operating Costs"
+        self.modvar_entc_nemomod_emissions_ch4 = "NemoMod :math:\\text{CH}_4 Emissions from Electricity Generation"
+        self.modvar_entc_nemomod_emissions_co2 = "NemoMod :math:\\text{CO}_2 Emissions from Electricity Generation"
+        self.modvar_entc_nemomod_emissions_n2o = "NemoMod :math:\\text{N}_2\\text{O} Emissions from Electricity Generation"
         self.modvar_entc_nemomod_fixed_cost = "NemoMod FixedCost"
+        self.modvar_entc_nemomod_generation_capacity = "NemoMod Generation Capacity"
+        self.modvar_entc_nemomod_production_by_technology = "NemoMod Production by Technology"
         self.modvar_entc_nemomod_reserve_margin = "NemoMod ReserveMargin"
         self.modvar_entc_nemomod_reserve_margin_tag_technology = "NemoMod ReserveMarginTagTechnology"
         self.modvar_entc_nemomod_residual_capacity = "NemoMod ResidualCapacity"
@@ -156,21 +216,36 @@ class ElectricEnergy:
 
         # Energy (Electricity) Storage Variables
         self.modvar_enst_nemomod_capital_cost_storage = "NemoMod CapitalCostStorage"
+        self.modvar_enst_nemomod_discounted_capital_investment_storage = "NemoMod Discounted Capital Investment Storage"
+        self.modvar_enst_nemomod_discounted_operating_costs_storage = "NemoMod Discounted Operating Costs Storage"
         self.modvar_enst_nemomod_residual_capacity = "NemoMod ResidualStorageCapacity"
         self.modvar_enst_nemomod_storage_start_level = "NemoMod StorageStartLevel"
         self.modvar_enst_nemomod_total_annual_max_capacity_storage = "NemoMod TotalAnnualMaxCapacityStorage"
         self.modvar_enst_nemomod_total_annual_max_capacity_investment_storage = "NemoMod TotalAnnualMaxCapacityInvestmentStorage"
         self.modvar_enst_nemomod_total_annual_min_capacity_storage = "NemoMod TotalAnnualMinCapacityStorage"
         self.modvar_enst_nemomod_total_annual_min_capacity_investment_storage = "NemoMod TotalAnnualMinCapacityInvestmentStorage"
+
         # Additional Miscellaneous variables and functions (to clean up repetition)
+        self.nemomod_time_period_as_year = True # use time periods as years in NemoMod?
+        self.direction_exchange_year_time_period = self.get_exchange_year_time_period_direction()
         self.units_energy_nemomod = self.model_attributes.configuration.get("energy_units_nemomod")
+        # NemoMod tables that must be run to extract output for SISEPUEDE
+        self.required_nemomod_output_tables = [
+            self.model_attributes.table_nemomod_annual_emissions_by_technology,
+            self.model_attributes.table_nemomod_capital_investment_discounted,
+            self.model_attributes.table_nemomod_capital_investment_storage_discounted,
+            self.model_attributes.table_nemomod_operating_cost_discounted,
+            self.model_attributes.table_nemomod_total_annual_capacity,
+            self.model_attributes.table_nemomod_production_by_technology
+        ]
 
         # instantiate a CircularEconomy class for access to variables
         self.model_circecon = CircularEconomy(self.model_attributes)
         self.model_socioeconomic = Socioeconomic(self.model_attributes)
 
 
-    ##  FUNCTIONS FOR MODEL ATTRIBUTE DIMENSIONS
+
+    ##  FUNCTIONS FOR MODEL ATTRIBUTE DIMENSIONS AND NEMOMOD FIELD FORMATTING
 
     def check_df_fields(self,
         df_elec_trajectories: pd.DataFrame,
@@ -192,17 +267,6 @@ class ElectricEnergy:
             msg_prepend = msg_prepend if (msg_prepend is not None) else subsector
         sf.check_fields(df_elec_trajectories, check_fields, f"{msg_prepend} projection cannot proceed: fields ")
 
-    def get_required_subsectors(self):
-        ## TEMPORARY
-        subsectors = [self.subsec_name_enfu, self.subsec_name_enst, self.subsec_name_entc]#self.model_attributes.get_setor_subsectors("Energy")
-        subsectors_base = subsectors.copy()
-        subsectors += [self.subsec_name_econ, self.subsec_name_gnrl]
-        return subsectors, subsectors_base
-
-    def get_required_dimensions(self):
-        ## TEMPORARY - derive from attributes later
-        required_doa = [self.model_attributes.dim_time_period]
-        return required_doa
 
     def get_elec_input_output_fields(self):
         required_doa = [self.model_attributes.dim_time_period]
@@ -210,6 +274,141 @@ class ElectricEnergy:
 
         return required_vars + self.get_required_dimensions(), output_vars
 
+
+
+    ##  load the reference dictionary
+    def get_nemomod_reference_dict(self,
+        nemomod_reference_files: Union[str, dict],
+        filter_regions: bool = True
+    ) -> dict:
+        """
+            Initialize the dictionary of reference files for NemoMod required to populate the database.
+            - nemomod_reference_files: file path of reference CSV files *OR* dictionary. Required keys/files (without .csv extension):
+                * CapacityFactor
+                * SpecifiedDemandProfile
+            - filter_regions: filter regions to correspond with ModelAttributes region attribute table
+        """
+
+        # some initialization
+        attr_region = self.model_attributes.dict_attributes.get(self.model_attributes.dim_region)
+        attr_technology = self.model_attributes.get_attribute_table(self.subsec_name_entc)
+        attr_time_slice = self.model_attributes.dict_attributes.get("time_slice")
+        dict_out = {}
+        dict_tables_required_to_required_fields = {
+            "CapacityFactor": [
+                self.field_nemomod_region,
+                self.field_nemomod_time_slice
+            ],
+            "SpecifiedDemandProfile": [
+                self.field_nemomod_region,
+                self.field_nemomod_time_slice,
+                self.field_nemomod_value
+            ]
+        }
+        set_tables_required = set(dict_tables_required_to_required_fields.keys())
+
+        # if file path, check tables and read in
+        if isinstance(nemomod_reference_files, str):
+            # check the directory
+            dir_nemomod_ref = sf.check_path(nemomod_reference_files, False)
+            set_tables_available = set([x.replace(".csv", "") for x in os.listdir(dir_nemomod_ref) if x.endswith(".csv")])
+            set_tables_available = set_tables_required & set_tables_available
+            if not set_tables_required.issubset(set_tables_available):
+                set_missing = sf.print_setdiff(set_tables_required, set_tables_available)
+                raise RuntimeError(f"Initialization error in ElectricEnergy: required reference tables {set_missing} not found in {dir_nemomod_ref}.")
+            # read in files
+            for fbn in list(set_tables_required):
+                # ADD LOGGING HERE
+                df_tmp = pd.read_csv(os.path.join(dir_nemomod_ref, f"{fbn}.csv"))
+                dict_out.update({fbn: df_tmp})
+
+        # if dictionary, simply copy into output dictionary
+        elif isinstance(nemomod_reference_files, dict):
+            sf.check_keys(nemomod_reference_files, required_tables)
+            for k in required_tables:
+                dict_out.update({k: nemomod_reference_files[k]})
+
+        # check tables
+        for k in dict_out.keys():
+            # check that regions are correctly implemented
+            if self.field_nemomod_region in dict_out[k]:
+                df_filt = dict_out[k][dict_out[k][self.field_nemomod_region].isin(attr_region.key_values)]
+                regions_config = self.model_attributes.configuration.get("region")
+                sf.check_set_values(regions_config, df_filt[self.field_nemomod_region])
+                if filter_regions:
+                    df_filt = df_filt[df_filt[self.field_nemomod_region].isin(regions_config)]
+                # conditions needed for the regions
+                check_regions = (len(set(df_filt[self.field_nemomod_region])) == len(set(regions_config)))
+                if not check_regions:
+                    missing_vals = sf.print_setdiff(set(regions_config), set(df_filt[self.field_nemomod_region]))
+                    raise RuntimeError(f"Initialization error in ElectricEnergy: field {self.field_nemomod_region} in table {k} is missing regions {missing_vals}.")
+
+                dict_out.update({k: df_filt})
+
+            # check that time slices are correctly implemented
+            if self.field_nemomod_time_slice in dict_out[k]:
+                n = len(dict_out[k])
+                df_filt = dict_out[k][dict_out[k][self.field_nemomod_time_slice].isin(attr_time_slice.key_values)]
+                if len(set(df_filt[self.field_nemomod_time_slice])) != len(attr_time_slice.key_values):
+                    missing_vals = sf.print_setdiff(set(attr_time_slice.key_values), set(df_filt[self.field_nemomod_time_slice]))
+                    raise RuntimeError(f"Initialization error in ElectricEnergy: field {self.field_nemomod_time_slice} in table {k} is missing time_slices {missing_vals} .")
+
+        # check fields in CapacityFactor
+        sf.check_set_values(
+            [x for x in dict_out[self.model_attributes.table_nemomod_capacity_factor].columns if (x not in [self.field_nemomod_region, self.field_nemomod_time_slice])],
+            attr_technology.key_values
+        )
+
+        return dict_out
+
+
+
+    ##  get the required subsectors
+    def get_required_subsectors(self):
+        ## TEMPORARY
+        subsectors = [self.subsec_name_enfu, self.subsec_name_enst, self.subsec_name_entc]#self.model_attributes.get_setor_subsectors("Energy")
+        subsectors_base = subsectors.copy()
+        subsectors += [self.subsec_name_econ, self.subsec_name_gnrl]
+        return subsectors, subsectors_base
+
+
+    def get_required_dimensions(self):
+        ## TEMPORARY - derive from attributes later
+        required_doa = [self.model_attributes.dim_time_period]
+        return required_doa
+
+
+    def get_exchange_year_time_period_direction(self) -> str:
+        if self.nemomod_time_period_as_year:
+            return "time_period_as_year"
+        else:
+            return "time_period_to_year"
+
+
+    ##  nemomod apparently cannot handle years == 0
+    def transform_field_year_nemomod(self,
+        vector: list,
+        time_period_as_year: bool = None,
+        direction: str = "to_nemomod",
+        shift: int = 1000
+    ) -> np.ndarray:
+        """
+            Transform a year field if necessary to ensure that the minimum is greater than 0. Only applied if time_period_as_year = True
+            - vector: input of years
+            - time_period_as_year: treat the time period as year in NemoMod?
+            - direction: "to_nemomod" will transform the field to prepare it for nemomod, while "from_nemomod" will prepapre it for SISEPUEDE
+            - shift: integer shift to apply to field
+                * NOTE: NemoMod apparently has a minimum year requirement. Default of 1000 should protect against issues.
+        """
+
+        sf.check_set_values([direction], ["to_nemomod", "from_nemomod"])
+        time_period_as_year = self.nemomod_time_period_as_year if (time_period_as_year is None) else time_period_as_year
+
+        vector_out = np.array(vector)
+        if time_period_as_year:
+            vector_out = (vector_out + shift) if (direction == "to_nemomod") else (vector_out - shift)
+
+        return vector_out
 
 
     ###############################################################
@@ -263,7 +462,7 @@ class ElectricEnergy:
         field_fuel: str = None,
         outer_prod: bool = True,
         restriction_fuels: list = None
-    ):
+    ) -> pd.DataFrame:
         """
             Add a fuel field (if necessary) to input dataframe if it is missing. Defaults to all defined fuels, and assumes that the input data frame is repeated across all fuels.
 
@@ -288,7 +487,7 @@ class ElectricEnergy:
     def add_index_field_id(self,
         df_input: pd.DataFrame,
         field_id: str = None
-    ):
+    ) -> pd.DataFrame:
         """
             Add a the id field (if necessary) to input dataframe if it is missing.
         """
@@ -312,7 +511,7 @@ class ElectricEnergy:
         outer_prod: bool = True,
         restriction_regions: list = None,
         restrict_to_config_region: bool = True
-    ):
+    ) -> pd.DataFrame:
         """
             Add a region field (if necessary) to input dataframe if it is missing. Defaults to configuration regions, and assumes that the input data frame is repeated across all regions.
 
@@ -367,7 +566,9 @@ class ElectricEnergy:
         df_input: pd.DataFrame,
         field_year: str = None,
         outer_prod: bool = True,
-        restriction_years: list = None
+        restriction_years: list = None,
+        time_period_as_year: bool = None,
+        override_time_period_transformation: bool = False
     ) -> pd.DataFrame:
         """
             Add a year field (if necessary) to input dataframe if it is missing. Defaults to all defined years (if defined in time periods), and assumes that the input data frame is repeated across all years.
@@ -376,15 +577,21 @@ class ElectricEnergy:
             - field_year: the name of the field. Default is set to NemoMod naming convention.
             - outer_prod: product against all years
             - restriction_years: subset of years to restrict addition to
+            - time_period_as_year: If True, enter the time period as the year. If None, default to ElectricEnergy.nemomod_time_period_as_year
+            - override_time_period_transformation: In some cases, time periods transformations can be applied multiple times from default functions. Set override_time_period_transformation = True to remove the application of ElectricEnergy.transform_field_year_nemomod()
         """
+
+        time_period_as_year = self.nemomod_time_period_as_year if (time_period_as_year is None) else time_period_as_year
 
         field_year = self.field_nemomod_year if (field_year is None) else field_year
 
-        # get regions
-        years = self.model_attributes.get_time_period_years()
+        # get time periods that are available
+        years = self.model_attributes.get_time_periods()[0] if time_period_as_year else self.model_attributes.get_time_period_years()
         years = [x for x in years if x in restriction_years] if (restriction_years is not None) else years
-        # add to output using outer product
+        # add to output using outer product, then clean up the years for NemoMod to prevent any values of 0
         df_input = self.add_index_field_from_key_values(df_input, years, field_year, outer_prod = outer_prod)
+        if not override_time_period_transformation:
+            df_input[field_year] = self.transform_field_year_nemomod(df_input[field_year], time_period_as_year = time_period_as_year)
 
         return df_input
 
@@ -392,16 +599,22 @@ class ElectricEnergy:
     ##  batch function to add different fields
     def add_multifields_from_key_values(self,
         df_input_base: pd.DataFrame,
-        fields_to_add: list
+        fields_to_add: list,
+        time_period_as_year: bool = None,
+        override_time_period_transformation: bool = False
     ) -> pd.DataFrame:
         """
             Add a multiple fields, assuming repitition of the data frame across dimensions. Based on NemoMod defaults.
 
             - df_input_base: input data frame to add field to
             - fields_to_add: fields to add. Must be entered as NemoMod defaults.
+            - time_period_as_year: enter values in field ElectricEnergy.field_nemomod_year as time periods? If None, default to ElectricEnergy.nemomod_time_period_as_year
+            - override_time_period_transformation: override the time period transformation step to prevent applying it twice
         """
 
+        time_period_as_year = self.nemomod_time_period_as_year if (time_period_as_year is None) else time_period_as_year
         df_input = df_input_base.copy()
+
         # if id is in the table and we are adding other fields, rename it
         field_id_rnm = f"subtable_{self.field_nemomod_id}"
         if len([x for x in fields_to_add if (x != self.field_nemomod_id)]) > 0:
@@ -410,7 +623,7 @@ class ElectricEnergy:
         df_input = self.add_index_field_technology(df_input) if (self.field_nemomod_technology in fields_to_add) else df_input
         df_input = self.add_index_field_fuel(df_input) if (self.field_nemomod_fuel in fields_to_add) else df_input
         df_input = self.add_index_field_region(df_input) if (self.field_nemomod_region in fields_to_add) else df_input
-        df_input = self.add_index_field_year(df_input) if (self.field_nemomod_year in fields_to_add) else df_input
+        df_input = self.add_index_field_year(df_input, time_period_as_year = time_period_as_year, override_time_period_transformation = override_time_period_transformation) if (self.field_nemomod_year in fields_to_add) else df_input
 
         # set sorting hierarchy, then drop original id field
         fields_sort_hierarchy = [x for x in self.fields_nemomod_sort_hierarchy if (x in fields_to_add) and (x != self.field_nemomod_id)]
@@ -451,6 +664,53 @@ class ElectricEnergy:
         var_energy = self.model_attributes.get_variable_characteristic(modvar, self.model_attributes.varchar_str_unit_energy)
         scalar = self.model_attributes.get_energy_equivalent(var_energy, self.units_energy_nemomod)
         return (scalar if (scalar is not None) else 1)
+
+
+
+    ##  return information relating techs to storage and dummy techs to fuels
+    def get_tech_info_dict(self,
+        attribute_technology: ds.AttributeTable = None
+    ) -> dict:
+        """
+            Retrieve information relating technology to storage, including a map of technologies to storage, storage to associated technology, and classifications of generation techs vs. storage techs.
+            - attribute_technology: AttributeTable containing technologies used to divide techs. If None, uses ModelAttributes default.
+        """
+        # set some defaults
+        attribute_technology = self.model_attributes.get_attribute_table(self.subsec_name_entc) if (attribute_technology is None) else attribute_technology
+        pycat_strg = self.model_attributes.get_subsector_attribute(self.subsec_name_enst, "pycategory_primary")
+        pychat_entc = self.model_attributes.get_subsector_attribute(self.subsec_name_entc, "pycategory_primary")
+
+        # tech to storage dictionary
+        dict_storage_techs_to_storage = self.model_attributes.get_ordered_category_attribute(
+            self.model_attributes.subsec_name_entc,
+            pycat_strg,
+            return_type = dict,
+            skip_none_q = True,
+            clean_attribute_schema_q = True
+        )
+        # storage to tech dictionary
+        dict_storage_to_storage_techs = sf.reverse_dict(dict_storage_techs_to_storage)
+
+        # get generation and storage techs
+        all_techs_gnrt = [x for x in attribute_technology.key_values if (x not in dict_storage_techs_to_storage.keys())]
+        all_techs_strg = [x for x in attribute_technology.key_values if (x not in all_techs_gnrt)]
+        # get dummy techs
+        dict_fuels_to_dummy_techs = self.get_dummy_techs(attribute_technology = attribute_technology)
+        dict_dummy_techs_to_fuels = sf.reverse_dict(dict_fuels_to_dummy_techs)
+        all_techs_dummy = sorted(list(dict_dummy_techs_to_fuels.keys()))
+
+        dict_return = {
+            "all_techs_dummy": all_techs_dummy,
+            "all_techs_gnrt": all_techs_gnrt,
+            "all_techs_strg": all_techs_strg,
+            "dict_storage_techs_to_storage": dict_storage_techs_to_storage,
+            "dict_storage_to_storage_techs": dict_storage_to_storage_techs,
+            "dict_dummy_techs_to_fuels": dict_dummy_techs_to_fuels,
+            "dict_fuels_to_dummy_techs": dict_fuels_to_dummy_techs
+        }
+
+        return dict_return
+
 
 
     ##  get waste outputs needed for inputs as energy
@@ -605,10 +865,11 @@ class ElectricEnergy:
         df_out = pd.DataFrame(df_out, columns = cats_ordered_out)
         # add a year (would not be in data frame)
         if (self.field_nemomod_year in fields_index_nemomod) and (self.model_attributes.dim_time_period in df_elec_trajectories.columns):
-            df_out = self.model_attributes.add_year_from_time_period(
+            df_out = self.model_attributes.exchange_year_time_period(
                 df_out,
                 self.field_nemomod_year,
-                df_elec_trajectories[self.model_attributes.dim_time_period]
+                df_elec_trajectories[self.model_attributes.dim_time_period],
+                direction = self.direction_exchange_year_time_period
             )
         # add any additional fields
         if len(dict_fields_to_pass) > 0:
@@ -926,24 +1187,35 @@ class ElectricEnergy:
 
 
     ##  format TECHNOLOGY for NemoMod
-    def format_nemomod_attribute_table_year(self
+    def format_nemomod_attribute_table_year(self,
+        time_period_as_year: bool = None
     ) -> pd.DataFrame:
         """
             Format the YEAR dimension table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
-            * Based off of years defined in the attribute_time_period.csv attribute table
+            - time_period_as_year: enter years as time periods? If None, default to ElectricEnergy.nemomod_time_period_as_year
+            * Based off of values defined in the attribute_time_period.csv attribute table
         """
-        years = self.model_attributes.get_time_period_years()
+
+        time_period_as_year = self.nemomod_time_period_as_year if (time_period_as_year is None) else time_period_as_year
+        years = self.model_attributes.get_time_periods()[0] if time_period_as_year else self.model_attributes.get_time_period_years()
+        desc_name = "Time Period" if time_period_as_year else "Year"
+
+        # clean the year if necessary
+        years_clean = self.transform_field_year_nemomod(years, time_period_as_year = time_period_as_year)
+
         df_out = pd.DataFrame({
-            self.field_nemomod_value: years,
-            self.field_nemomod_description: [f"Year {y}" for y in years]
+            self.field_nemomod_value: years_clean,
+            self.field_nemomod_description: [f"SISEPUEDE {desc_name} {y}" for y in years]
         })
+
         return {self.model_attributes.table_nemomod_year: df_out}
 
 
 
-    ###############################################################
-    #    DATA TABLE TRANSFORMATION FUNCTIONS TO FORMAT FOR SQL    #
-    ###############################################################
+
+    ###########################################################
+    #    FUNCTIONS TO FORMAT MODEL VARIABLE INPUTS FOR SQL    #
+    ###########################################################
 
     ##  format AnnualEmissionLimit for NemoMod
     def format_nemomod_table_annual_emission_limit(self,
@@ -1000,11 +1272,12 @@ class ElectricEnergy:
                 self.field_nemomod_value: vec_emission_limit_out
             })
             df_lim[self.field_nemomod_emission] = emission
-            df_lim = self.model_attributes.add_year_from_time_period(
+            df_lim = self.model_attributes.exchange_year_time_period(
                 df_lim,
                 self.field_nemomod_year,
                 df_elec_trajectories[self.model_attributes.dim_time_period],
-                attribute_time_period = attribute_time_period
+                attribute_time_period = attribute_time_period,
+                direction = self.direction_exchange_year_time_period
             )
 
             if i == 0:
@@ -1358,11 +1631,12 @@ class ElectricEnergy:
             # add some key fields (emission and year)
             df_entc_tmp[self.field_nemomod_emission] = emission
             df_entc_tmp[self.field_nemomod_mode] = self.cat_enmo_gnrt
-            df_entc_tmp = self.model_attributes.add_year_from_time_period(
+            df_entc_tmp = self.model_attributes.exchange_year_time_period(
                 df_entc_tmp,
                 self.field_nemomod_year,
                 df_elec_trajectories[self.model_attributes.dim_time_period],
-                attribute_time_period = attribute_time_period
+                attribute_time_period = attribute_time_period,
+                direction = self.direction_exchange_year_time_period
             )
 
             # melt into a long form table
@@ -1397,11 +1671,12 @@ class ElectricEnergy:
             df_enfu_efs_waste = pd.DataFrame(dict_efs)
             df_enfu_efs_waste[self.field_nemomod_technology] = dict_fuel_to_techs[self.cat_enfu_wste]
             df_enfu_efs_waste[self.field_nemomod_mode] = self.cat_enmo_gnrt
-            df_enfu_efs_waste = self.model_attributes.add_year_from_time_period(
+            df_enfu_efs_waste = self.model_attributes.exchange_year_time_period(
                 df_enfu_efs_waste,
                 self.field_nemomod_year,
                 df_elec_trajectories[self.model_attributes.dim_time_period],
-                attribute_time_period = attribute_time_period
+                attribute_time_period = attribute_time_period,
+                direction = self.direction_exchange_year_time_period
             )
             # melt into a long form table
             df_enfu_efs_waste = pd.melt(
@@ -1558,7 +1833,9 @@ class ElectricEnergy:
                 self.field_nemomod_region,
                 self.field_nemomod_year,
                 self.field_nemomod_value
-            ]
+            ],
+            # the time period transformation was already applied in format_model_variable_as_nemomod_table, so we override additional transformation
+            override_time_period_transformation = True
         )
         # ensure changes are made to dict
         dict_return.update({self.model_attributes.table_nemomod_input_activity_ratio: df_tmp})
@@ -1678,9 +1955,6 @@ class ElectricEnergy:
             Notes:
             - Validity checks for operational lives are performed on initialization of the ModelAttributes class.
         """
-
-
-
 
         # set some defaults
         attribute_storage = self.model_attributes.get_attribute_table(self.subsec_name_enst) if (attribute_storage is None) else attribute_storage
@@ -2020,9 +2294,10 @@ class ElectricEnergy:
         for modvar in modvars_enfu_extract:
             arr_enfu_tmp = self.model_attributes.get_standard_variables(df_elec_trajectories, modvar, True, "array_base", expand_to_all_cats = True)
             arr_enfu_tmp *= self.get_nemomod_energy_scalar(modvar)
+            arr_total_energy_demand += arr_enfu_tmp
         # get transmission loss and calculate final demand
         vec_transmission_loss = self.model_attributes.get_standard_variables(df_elec_trajectories, self.modvar_enfu_transmission_loss_electricity, False, "array_base", expand_to_all_cats = True, var_bounds = (0, 1))
-        vec_enfu_demand_elec = np.nan_to_num(arr_enfu_tmp[:, self.ind_enfu_elec]/(1 - vec_transmission_loss[:, self.ind_enfu_elec]), 0.0, posinf = 0.0)
+        vec_enfu_demand_elec = np.nan_to_num(arr_total_energy_demand[:, self.ind_enfu_elec]/(1 - vec_transmission_loss[:, self.ind_enfu_elec]), 0.0, posinf = 0.0)
 
 
         ##  FORMAT AS DATA FRAME
@@ -2032,12 +2307,16 @@ class ElectricEnergy:
             self.field_nemomod_value: vec_enfu_demand_elec,
             self.field_nemomod_fuel: [self.cat_enfu_elec for x in vec_enfu_demand_elec]
         })
-        df_out = self.model_attributes.add_year_from_time_period(
+        df_out = self.model_attributes.exchange_year_time_period(
             df_out,
             self.field_nemomod_year,
             df_elec_trajectories[self.model_attributes.dim_time_period],
-            attribute_time_period = attribute_time_period
+            attribute_time_period = attribute_time_period,
+            direction = self.direction_exchange_year_time_period
         )
+
+
+
         # add additional required fields, then sort
         df_out = self.add_multifields_from_key_values(
             df_out,
@@ -2623,14 +2902,423 @@ class ElectricEnergy:
 
 
 
+    ###################################################################
+    #    FUNCTIONS TO FORMAT NEMOMOD OUTPUT FROM SQL FOR SISEPUEDE    #
+    ###################################################################
+
+    ##  format data frames after being retrieved from SQLite DB
+    def format_dataframe_from_retrieval(self,
+        df_in: pd.DataFrame,
+        field_pivot: str,
+        field_index: str = None,
+        field_values: str = None,
+        attribute_time_period: ds.AttributeTable = None,
+        field_year: str = "year",
+        time_period_as_year: bool = None
+    ) -> pd.DataFrame:
+        """
+            Initialize a data frame that has the correct dimensions for SISEPUEDE
+            - df_in: data frame (table from SQL) to be formatted
+            - field_pivot: field to pivot on, i.e., to use to convert from long to wide
+            - field_index: index field to preserve. If None, defaults to ElectricEnergy.field_nemomod_year
+            - field_values: field containing values. If None, defaults to ElectricEnergy.field_nemomod_value
+            - attribute_time_period: AttributeTable containing the time periods. If None, use ModelAttributes default.
+            - field_year: field in attribute_time_period containing the year
+            - time_period_as_year: are years time periods? If None, default to ElectricEnergy.nemomod_time_period_as_year
+        """
+
+        field_index = self.field_nemomod_year if (field_index is None) else field_index
+        field_values = self.field_nemomod_value if (field_values is None) else field_values
+        time_period_as_year = self.nemomod_time_period_as_year if (time_period_as_year is None) else time_period_as_year
+
+        df_out = df_in.copy()
+        df_out[self.field_nemomod_year] = np.array(df_out[self.field_nemomod_year]).astype(int)
+        # does the time period
+        if self.nemomod_time_period_as_year:
+            df_out[self.field_nemomod_year] = self.transform_field_year_nemomod(
+                df_out[self.field_nemomod_year],
+                time_period_as_year = time_period_as_year,
+                direction = "from_nemomod"
+            )
+        else:
+            attribute_time_period = self.dict_attributes.get(self.model_attributes.dim_time_period) if (attribute_time_period is None) else attribute_time_period
+            dict_map = attribute_time_period.field_maps.get(f"{field_year}_to_{attribute_time_period.key}")
+
+        df_out = pd.pivot(
+            df_out,
+            [field_index],
+            field_pivot,
+            field_values
+        ).reset_index(
+            drop = False
+        ).rename(
+            columns = {
+                self.field_nemomod_year: self.model_attributes.dim_time_period
+            }
+        ).rename_axis(None, axis = 1)
+
+        return df_out
 
 
 
-    ######################################################
-    #    SQL FUNCTIONS FOR POPULATION OF THE DATABASE    #
-    ######################################################
+    ##  Get the discounted capital investment for technology
+    def retrieve_nemomod_table_discounted_capital_invesment(self,
+        engine: sqlalchemy.engine.Engine,
+        vector_reference_time_period: Union[list, np.ndarray],
+        table_name: str = None,
+        transform_time_period: bool = True
+    ) -> pd.DataFrame:
+        """
+            Retrieves NemoMod vdiscountedcapitalinvestment output table and reformats for SISEPUEDE (wide format data)
+            - engine: SQLalchemy Engine used to retrieve this table
+            - vector_reference_time_period: reference time periods to use in merge--e.g., df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
+            - table_name: name in the database of the Discounted Capital Investment table. If None, use ModelAttributes deault.
+            - transform_time_period: Does the time period need to be transformed back to SISEPUEDE terms?
+        """
 
-    def retrieve_tables_for_sql(self,
+        # initialize some pieces
+        table_name = self.model_attributes.table_nemomod_capital_investment_discounted if (table_name is None) else table_name
+        subsec = self.model_attributes.get_variable_subsector(self.modvar_entc_nemomod_discounted_capital_investment)
+
+        df_out = self.retrieve_and_pivot_nemomod_table(
+            engine,
+            self.modvar_entc_nemomod_discounted_capital_investment,
+            table_name,
+            vector_reference_time_period
+        )
+
+        return df_out
+
+
+
+    ##  Get the discounted capital investment for technology
+    def retrieve_nemomod_table_discounted_capital_invesment_storage(self,
+        engine: sqlalchemy.engine.Engine,
+        vector_reference_time_period: Union[list, np.ndarray],
+        table_name: str = None,
+        transform_time_period: bool = True
+    ) -> pd.DataFrame:
+        """
+            Retrieves NemoMod vdiscountedcapitalinvestment output table and reformats for SISEPUEDE (wide format data)
+            - engine: SQLalchemy Engine used to retrieve this table
+            - vector_reference_time_period: reference time periods to use in merge--e.g., df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
+            - table_name: name in the database of the Discounted Capital Investment table. If None, use ModelAttributes deault.
+            - transform_time_period: Does the time period need to be transformed back to SISEPUEDE terms?
+        """
+
+        # initialize some pieces
+        table_name = self.model_attributes.table_nemomod_capital_investment_discounted if (table_name is None) else table_name
+
+        df_out = self.retrieve_and_pivot_nemomod_table(
+            engine,
+            self.modvar_enst_nemomod_discounted_capital_investment_storage,
+            self.model_attributes.table_nemomod_capital_investment_storage_discounted,
+            vector_reference_time_period,
+            field_pivot = self.field_nemomod_storage,
+            techs_to_pivot = ["all_techs_strg"]
+        )
+
+        return df_out
+
+
+
+
+    ##  Get the discounted capital investment for technology
+    def retrieve_nemomod_table_discounted_operating_cost(self,
+        engine: sqlalchemy.engine.Engine,
+        vector_reference_time_period: Union[list, np.ndarray],
+        table_name: str = None,
+        transform_time_period: bool = True
+    ) -> pd.DataFrame:
+        """
+            Retrieves NemoMod generation technologies from vdiscountedoperatingcost output table and reformats for SISEPUEDE (wide format data)
+            - engine: SQLalchemy Engine used to retrieve this table
+            - vector_reference_time_period: reference time periods to use in merge--e.g., df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
+            - table_name: name in the database of the Discounted Capital Investment table. If None, use ModelAttributes deault.
+            - transform_time_period: Does the time period need to be transformed back to SISEPUEDE terms?
+        """
+
+        # initialize some pieces
+        table_name = self.model_attributes.table_nemomod_operating_cost_discounted if (table_name is None) else table_name
+
+        df_out = self.retrieve_and_pivot_nemomod_table(
+            engine,
+            self.modvar_entc_nemomod_discounted_operating_costs,
+            table_name,
+            vector_reference_time_period,
+            techs_to_pivot = ["all_techs_gnrt"]
+        )
+
+        return df_out
+
+
+
+    ##  Get the discounted capital investment for technology
+    def retrieve_nemomod_table_discounted_operating_cost_storage(self,
+        engine: sqlalchemy.engine.Engine,
+        vector_reference_time_period: Union[list, np.ndarray],
+        table_name: str = None,
+        transform_time_period: bool = True
+    ) -> pd.DataFrame:
+        """
+            Retrieves NemoMod storage technologies from vdiscountedoperatingcost output table and reformats for SISEPUEDE (wide format data)
+            - engine: SQLalchemy Engine used to retrieve this table
+            - vector_reference_time_period: reference time periods to use in merge--e.g., df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
+            - table_name: name in the database of the Discounted Capital Investment table. If None, use ModelAttributes deault.
+            - transform_time_period: Does the time period need to be transformed back to SISEPUEDE terms?
+        """
+
+        # initialize some pieces
+        table_name = self.model_attributes.table_nemomod_operating_cost_discounted if (table_name is None) else table_name
+
+        df_out = self.retrieve_and_pivot_nemomod_table(
+            engine,
+            self.modvar_enst_nemomod_discounted_operating_costs_storage,
+            table_name,
+            vector_reference_time_period,
+            techs_to_pivot = ["all_techs_strg"]
+        )
+
+        return df_out
+
+
+
+    ##  retrieve emissions by technology
+    def retrieve_nemomod_table_emissions_by_technology(self,
+        engine: sqlalchemy.engine.Engine,
+        vector_reference_time_period: Union[list, np.ndarray],
+        table_name: str = None,
+        transform_time_period: bool = True
+    ) -> pd.DataFrame:
+        """
+            Retrieves NemoMod vannualtechnologyemission output table and reformats for SISEPUEDE (wide format data)
+            - engine: SQLalchemy Engine used to retrieve this table
+            - vector_reference_time_period: reference time periods to use in merge--e.g., df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
+            - table_name: name in the database of the Discounted Capital Investment table. If None, use ModelAttributes deault.
+            - transform_time_period: Does the time period need to be transformed back to SISEPUEDE terms?
+        """
+
+        # initialize some pieces
+        table_name = self.model_attributes.table_nemomod_annual_emissions_by_technology if (table_name is None) else table_name
+
+        modvars_emit = [
+            self.modvar_entc_nemomod_emissions_ch4,
+            self.modvar_entc_nemomod_emissions_co2,
+            self.modvar_entc_nemomod_emissions_n2o
+        ]
+
+        df_out = []
+        for modvar in modvars_emit:
+            # get the gas, global warming potential (to scale output by), and the query
+            gas = self.model_attributes.get_variable_characteristic(modvar, self.model_attributes.varchar_str_emission_gas)
+            gwp = self.model_attributes.get_gwp(gas)
+            query_append = f"where {self.field_nemomod_emission} = '{gas}'"
+
+            # retrieve and scale
+            df_tmp = self.retrieve_and_pivot_nemomod_table(
+                engine,
+                modvar,
+                table_name,
+                vector_reference_time_period,
+                techs_to_pivot = ["all_techs_gnrt"],
+                query_append = query_append
+            )
+            df_tmp *= gwp
+
+            df_out.append(df_tmp)
+
+        df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
+
+        return df_out
+
+
+
+    ##  retrieve demands for fuels
+    def retrieve_nemomod_table_fuel_demands(self,
+        engine: sqlalchemy.engine.Engine,
+        vector_reference_time_period: Union[list, np.ndarray],
+        table_name: str = None,
+        transform_time_period: bool = True
+    ) -> pd.DataFrame:
+        """
+            Retrieves demands for fuels from NemoMod vproductionbytechnologyannual output table and reformats for SISEPUEDE (wide format data)
+            - engine: SQLalchemy Engine used to retrieve this table
+            - vector_reference_time_period: reference time periods to use in merge--e.g., df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
+            - table_name: name in the database of the Discounted Capital Investment table. If None, use ModelAttributes deault.
+            - transform_time_period: Does the time period need to be transformed back to SISEPUEDE terms?
+        """
+
+        # initialize some pieces
+        table_name = self.model_attributes.table_nemomod_production_by_technology if (table_name is None) else table_name
+        scalar_div = self.get_nemomod_energy_scalar(self.modvar_enfu_energy_demand_by_fuel_elec)
+
+        df_out = self.retrieve_and_pivot_nemomod_table(
+            engine,
+            self.modvar_enfu_energy_demand_by_fuel_elec,
+            table_name,
+            vector_reference_time_period,
+            techs_to_pivot = ["all_techs_dummy"]
+        )
+        df_out /= scalar_div
+
+        return df_out
+
+
+
+    ##  Get the total annual capacity by technology
+    def retrieve_nemomod_table_total_capacity(self,
+        engine: sqlalchemy.engine.Engine,
+        vector_reference_time_period: Union[list, np.ndarray],
+        table_name: str = None,
+        transform_time_period: bool = True
+    ) -> pd.DataFrame:
+        """
+            Retrieves NemoMod vtotalcapacityannual output table and reformats for SISEPUEDE (wide format data)
+            - engine: SQLalchemy Engine used to retrieve this table
+            - vector_reference_time_period: reference time periods to use in merge--e.g., df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
+            - table_name: name in the database of the Discounted Capital Investment table. If None, use ModelAttributes deault.
+            - transform_time_period: Does the time period need to be transformed back to SISEPUEDE terms?
+        """
+
+        # initialize some pieces
+        table_name = self.model_attributes.table_nemomod_total_annual_capacity if (table_name is None) else table_name
+
+        df_out = self.retrieve_and_pivot_nemomod_table(
+            engine,
+            self.modvar_entc_nemomod_generation_capacity,
+            table_name,
+            vector_reference_time_period,
+            techs_to_pivot = ["all_techs_gnrt", "all_techs_strg"]
+        )
+
+        return df_out
+
+
+
+    ##  Get the total annual production by technology
+    def retrieve_nemomod_table_total_production(self,
+        engine: sqlalchemy.engine.Engine,
+        vector_reference_time_period: Union[list, np.ndarray],
+        table_name: str = None,
+        transform_time_period: bool = True
+    ) -> pd.DataFrame:
+        """
+            Retrieves NemoMod vproductionbytechnologyannual output table and reformats for SISEPUEDE (wide format data)
+            - engine: SQLalchemy Engine used to retrieve this table
+            - vector_reference_time_period: reference time periods to use in merge--e.g., df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
+            - table_name: name in the database of the Discounted Capital Investment table. If None, use ModelAttributes deault.
+            - transform_time_period: Does the time period need to be transformed back to SISEPUEDE terms?
+        """
+
+        # initialize some pieces
+        table_name = self.model_attributes.table_nemomod_production_by_technology if (table_name is None) else table_name
+
+        df_out = self.retrieve_and_pivot_nemomod_table(
+            engine,
+            self.modvar_entc_nemomod_production_by_technology,
+            table_name,
+            vector_reference_time_period,
+            techs_to_pivot = ["all_techs_gnrt", "all_techs_strg"]
+        )
+
+        return df_out
+
+
+
+    ##  Get the discounted capital investment for technology
+    def retrieve_and_pivot_nemomod_table(self,
+        engine: Union[pd.DataFrame, sqlalchemy.engine.Engine],
+        modvar: str,
+        table_name: str,
+        vector_reference_time_period: Union[list, np.ndarray],
+        field_pivot: str = None,
+        techs_to_pivot: list = ["all_techs_gnrt"],
+        transform_time_period: bool = True,
+        query_append: str = None
+    ) -> pd.DataFrame:
+        """
+            Retrieves NemoMod output table and reformats for SISEPUEDE (wide format data) when pivoting on technology
+            - engine: SQLalchemy Engine used to retrieve this table
+            - modvar: output model variable
+            - table_name: name in the database of the table to retrieve
+            - vector_reference_time_period: reference time periods to use in merge--e.g., df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
+            - field_pivot: field to pivot on. Default is ElecticEnergy.field_nemomod_technology, but ElecticEnergy.field_nemomod_storage can be used to transform storage outputs to technology.
+            - techs_to_pivot: list of keys in ElecticEnergy.get_tech_info_dict() to include in the pivot. Can include "all_techs_gnrt", "all_techs_strg", "all_techs_dummy" (only if output sector is fuel). If None, keeps all values.
+            - transform_time_period: Does the time period need to be transformed back to SISEPUEDE terms?
+            - query_append: appendage to query (e.g., "where X = 0")
+        """
+
+        # initialize some pieces
+        subsec = self.model_attributes.get_variable_subsector(modvar)
+        attr = self.model_attributes.get_attribute_table(subsec)
+        attr_tech = attr if (subsec == self.subsec_name_entc) else self.model_attributes.get_attribute_table(self.subsec_name_entc)
+        dict_tech_info = self.get_tech_info_dict(attribute_technology = attr_tech)
+        field_pivot = self.field_nemomod_technology if (field_pivot is None) else field_pivot
+        # techs to filter on
+        cats_filter = sum([dict_tech_info.get(x) for x in techs_to_pivot], []) if (techs_to_pivot is not None) else None
+        # generate any replacement dictionaries
+        dict_repl = {}
+        if (subsec == self.subsec_name_enfu) and (field_pivot != self.field_nemomod_fuel):
+            dict_repl = dict_tech_info["dict_dummy_techs_to_fuels"]
+        elif (subsec == self.subsec_name_enst) and (field_pivot != self.field_nemomod_storage):
+            dict_repl = dict_tech_info["dict_storage_techs_to_storage"]
+
+        # get data frame
+        if isinstance(engine, sqlalchemy.engine.Engine):
+            df_table_nemomod = sqlutil.sql_table_to_df(engine, table_name, query_append = query_append)
+        else:
+            tp = type(df_table_nemomod)
+            raise ValueError(f"Error in retrieve_and_pivot_nemomod_table: invalid type {tp} found for df_table_nemomod.")
+
+        # reduce data frame to techs (should be trivial)
+        df_source = df_table_nemomod[df_table_nemomod[field_pivot].isin(cats_filter)] if (cats_filter is not None) else df_table_nemomod
+        df_source[field_pivot] = df_source[field_pivot].replace(dict_repl)
+        # build renaming dictionary
+        dict_cats_to_varname = [x for x in attr.key_values if x in list(df_source[field_pivot])]
+        varnames = self.model_attributes.build_varlist(subsec, modvar, restrict_to_category_values = dict_cats_to_varname)
+        dict_cats_to_varname = dict(zip(dict_cats_to_varname, varnames))
+
+        # reformat using pivot
+        df_source = self.format_dataframe_from_retrieval(
+            df_source[[
+                field_pivot,
+                self.field_nemomod_year,
+                self.field_nemomod_value
+            ]],
+            field_pivot
+        ).rename(
+            columns = dict_cats_to_varname
+        )
+
+        # initialize output
+        df_out = self.model_attributes.instantiate_blank_modvar_df_by_categories(modvar, len(vector_reference_time_period))
+        df_out[self.model_attributes.dim_time_period] = vector_reference_time_period
+
+        # match the target
+        df_out = sf.match_df_to_target_df(
+            df_out,
+            df_source,
+            [self.model_attributes.dim_time_period]
+        )
+        # ensure time_period is properly ordered
+        df_out = sf.orient_df_by_reference_vector(
+            df_out,
+            vector_reference_time_period,
+            self.model_attributes.dim_time_period,
+            drop_field_compare = True
+        )
+
+        return df_out
+
+
+
+    ####################################################
+    ###                                              ###
+    ###    SQL FUNCTIONS FOR DATABASE INTERACTIONS   ###
+    ###                                              ###
+    ####################################################
+
+    def generate_input_tables_for_sql(self,
         df_elec_trajectories: pd.DataFrame,
         df_reference_capacity_factor: pd.DataFrame,
         df_reference_specified_demand_profile: pd.DataFrame,
@@ -2766,3 +3454,143 @@ class ElectricEnergy:
             dict_out[table] = dict_out[table].astype(dict_dtype)
 
         return dict_out
+
+
+
+    ##  get the outpt tables from NemoMod
+    def retrieve_output_tables_from_sql(self,
+        engine: sqlalchemy.engine.Engine,
+        df_elec_trajectories: pd.DataFrame
+    ) -> dict:
+        """
+            Retrieve tables from applicable inputs and format as dictionary. Returns a data frame ordered by time period that can be concatenated with df_elec_trajectories.
+            - engine: SQLalchemy engine used to connect to output database
+            - df_elec_trajectories: input of required variabels passed from other SISEPUEDE sectors.
+        """
+
+        vec_time_period = list(df_elec_trajectories[self.model_attributes.dim_time_period])
+
+        df_out = [
+            df_elec_trajectories[[self.model_attributes.dim_time_period]],
+            self.retrieve_nemomod_table_discounted_capital_invesment(engine, vec_time_period),
+            self.retrieve_nemomod_table_discounted_capital_invesment_storage(engine, vec_time_period),
+            self.retrieve_nemomod_table_discounted_operating_cost(engine, vec_time_period),
+            self.retrieve_nemomod_table_discounted_operating_cost_storage(engine, vec_time_period),
+            self.retrieve_nemomod_table_emissions_by_technology(engine, vec_time_period),
+            self.retrieve_nemomod_table_fuel_demands(engine, vec_time_period),
+            self.retrieve_nemomod_table_total_capacity(engine, vec_time_period),
+            self.retrieve_nemomod_table_total_production(engine, vec_time_period)
+        ]
+
+        df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
+
+        return df_out
+
+
+
+    ###############################
+    ###                         ###
+    ###    PROJECTION METHOD    ###
+    ###                         ###
+    ###############################
+
+    ##  primary projection method
+    def project(self,
+        df_elec_trajectories: pd.DataFrame,
+        engine: sqlalchemy.engine.Engine = None,
+        fp_database: str = None,
+        dict_ref_tables: dict = None,
+        solver: str = None,
+        vector_calc_time_periods: list = None
+    ) -> pd.DataFrame:
+
+        """
+            project electricity emissions and costs using NemoMod. Primary method of ElectricEnergy.
+            - df_elec_trajectories: data frame of input trajectories
+            - engine: SQLalchemy database engine used to connect to the database. If None, creates an engine using fp_database.
+            - fp_database: file path to sqlite database to use for NemoMod. If None, calls engine.
+            - dict_ref_tables: dictionary of reference tables required to prepare data for NemoMod. If None, use ElectricEnergy.dict_nemomod_reference_tables (initialization data)
+            - solver: string specifying the solver to use to run NemoMod. If None, default to SISEPUEDE configuration value.
+            - vector_calc_time_periods: list of time periods in NemoMod to run. If None, use configuration defaults.
+
+            Note
+            ----
+            * Either engine or fp_database must be specified to run project. If both are specifed, engine takes precedence.
+        """
+
+        ##  CHECK DICTIONARY
+
+        dict_ref_tables = self.dict_nemomod_reference_tables if (dict_ref_tables is None) else dict_ref_tables
+        sf.check_keys(dict_ref_tables, [
+            self.model_attributes.table_nemomod_capacity_factor,
+            self.model_attributes.table_nemomod_specified_demand_profile
+        ])
+
+
+        ##  PREPARE THE DATABASE
+
+        str_prepend_sqlite = "sqlite:///"
+        # check engine/fp_database
+        if (engine is None) and (fp_database is None):
+            raise RuntimeError(f"Error in ElectricEnergy.project(): either 'engine' or 'fp_database' must be specified.")
+        elif (fp_database is None):
+            fp_database = str(engine.url).replace(str_prepend_sqlite, "")
+        # check path of NemoMod database and create if necessary
+        recreate_engine_q = False
+        if not os.path.exists(fp_database):
+            # ADD LOGGING HERE
+            NemoMod.createnemodb(fp_database)
+            recreate_engine_q = True
+        # check the engine and respecify if the original database, for whatever reason, no longer exists
+        if (engine is None) or recreate_engine_q:
+            engine = sqlalchemy.create_engine(f"{str_prepend_sqlite}{fp_database}")
+
+
+        ##  WRITE DATA TO THE DATABASE
+
+        # get data for the database
+        dict_to_sql = self.generate_input_tables_for_sql(
+            df_elec_trajectories,
+            dict_ref_tables[self.model_attributes.table_nemomod_capacity_factor],
+            dict_ref_tables[self.model_attributes.table_nemomod_specified_demand_profile]
+        )
+        # write the data to the database
+        sqlutil._write_dataframes_to_db(
+            dict_to_sql,
+            engine
+        )
+
+
+        ##  SET UP AND CALL NEMOMOD
+
+        # get calculation time periods
+        attr_time_period = self.model_attributes.dict_attributes[f"dim_{self.model_attributes.dim_time_period}"]
+        vector_calc_time_periods = self.model_attributes.configuration.get("nemo_mod_time_periods") if (vector_calc_time_periods is None) else [x for x in attr_time_period.key_values if x in vector_calc_time_periods]
+        vector_calc_time_periods = self.transform_field_year_nemomod(vector_calc_time_periods)
+        # get the solver
+        solver = self.model_attributes.configuration.get("nemo_mod_solver") if (solver is None) else solver
+        sf.check_set_values([solver], self.model_attributes.configuration.valid_solver)
+        if solver == "cbc":
+            optimizer = JuMP.Model(Cbc.Optimizer)
+        elif solver == "clp":
+            optimizer = JuMP.Model(Clp.Optimizer)
+        elif solver == "glpk":
+            optimizer = JuMP.Model(GLPK.Optimizer)
+        # set up vars to save
+        vars_to_save = ", ".join(self.required_nemomod_output_tables)
+        # call nemo mod
+        NemoMod.calculatescenario(
+            fp_database,
+            jumpmodel = optimizer,
+            numprocs = 1,
+            calcyears = vector_calc_time_periods,
+            reportzeros = False,
+            varstosave = vars_to_save
+        )
+
+
+        ##  FINALLY, RETRIEVE OUTPUT TABLES
+
+        df_out = self.retrieve_output_tables_from_sql(engine, df_elec_trajectories)
+
+        return df_out
