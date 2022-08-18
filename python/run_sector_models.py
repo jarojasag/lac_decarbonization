@@ -1,11 +1,16 @@
+import warnings
+warnings.filterwarnings("ignore")
+import argparse
+import data_structures as ds
 import os, os.path
 import numpy as np
 import pandas as pd
-import data_structures as ds
+import sector_models as sm
 import setup_analysis as sa
 import support_functions as sf
-import sector_models as sm
-import argparse
+import sqlalchemy
+
+
 
 
 
@@ -27,8 +32,8 @@ def parse_arguments() -> dict:
     parser.add_argument(
         "--models",
         type = str,
-        help = "Models to run using the input file. Possible values include 'AFOLU', 'CircularEconomy', 'Electricity', 'IPPU', and 'NonElectricEnergy''",
-        default = "AFOLU"
+        help = "Models to run using the input file. Possible values include 'All' (run all models) or any comma-delimited combination of the following: 'AFOLU', 'CircularEconomy', 'ElectricEnergy', 'IPPU', and 'NonElectricEnergy'",
+        default = "All"
     )
     parser.add_argument(
         "--integrated",
@@ -53,11 +58,12 @@ def parse_arguments() -> dict:
 
 def main(args: dict) -> None:
 
-    print("\n***\n***\n*** Welcome to SISEPUEDE! Hola Edmundo y equipo ITEM—esta mensaje va a cambiar en el futuro, but have fun seeing this message *every time*.\n***\n***\n")
+    print("\n***\n***\n*** Bienvenidos a SISEPUEDE! Hola Edmundo y equipo ITEM—esta mensaje va a cambiar en el futuro, y hoy pasa este dia. Mira, incluye electricidad, que rico. Espero que todavia disfruten esta mensaje *cada vez*.\n***\n***\n")
 
     fp_in = args.get("input")
     fp_out = args.get("output")
     models_run = args.get("models").split(",")
+    models_run = models_run if (models_run[0].lower() != "all") else ["AFOLU", "CircularEconomy", "ElectricEnergy", "IPPU", "NonElectricEnergy"]
 
 
     # load data
@@ -77,6 +83,9 @@ def main(args: dict) -> None:
     init_merge_q = True
     run_integrated_q = bool(args.get("integrated"))
     df_output_data = []
+
+
+    ##  RUN MODELS
 
     # run AFOLU and collect output
     if "AFOLU" in models_run:
@@ -115,13 +124,13 @@ def main(args: dict) -> None:
         df_output_data.append(model_ippu.project(df_input_data))
         df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")] if run_integrated_q else df_output_data
 
+
     # run Non-Electric Energy and collect output
     if "NonElectricEnergy" in models_run:
         print("\n\tRunning NonElectricEnergy")
         model_energy = sm.NonElectricEnergy(sa.model_attributes)
         # integrate IPPU output?
-        if run_integrated_q and set(["IPPU"]).issubset(set(models_run)):
-            print("TRUTH!")
+        if run_integrated_q and set(["IPPU", "AFOLU"]).issubset(set(models_run)):
             df_input_data = sa.model_attributes.transfer_df_variables(
                 df_input_data,
                 df_output_data[0],
@@ -134,8 +143,27 @@ def main(args: dict) -> None:
 
 
     # run Electricity and collect output
-    if "Electricity" in models_run:
-        print("\n\tWARNING: Electricity undefined")
+    if "ElectricEnergy" in models_run:
+
+        print("\n\tRunning ElectricEnergy")
+        model_elecricity = sm.ElectricEnergy(sa.model_attributes, sa.dir_ref_nemo)
+        # integrate energy-related output?
+        if run_integrated_q and set(["CircularEconomy", "AFOLU", "NonElectricEnergy"]).issubset(set(models_run)):
+            df_input_data = sa.model_attributes.transfer_df_variables(
+                df_input_data,
+                df_output_data[0],
+                model_elecricity.integration_variables
+            )
+
+        # create the engine
+        engine = sqlalchemy.create_engine(f"sqlite:///{sa.fp_sqlite_nemomod_db_tmp}")
+        try:
+            df_elec =  model_elecricity.project(df_input_data, engine)
+            df_output_data.append(df_elec)
+            df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")] if run_integrated_q else df_output_data
+        except Exception as e:
+            #LOGGING
+            print(f"Error running ElectricEnergy model: {e}")
 
 
     # build output data frame

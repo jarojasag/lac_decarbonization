@@ -1,7 +1,8 @@
 import support_functions as sf
 import data_structures as ds
-from model_socioeconomic import Socioeconomic
+from model_afolu import AFOLU
 from model_circular_economy import CircularEconomy
+from model_socioeconomic import Socioeconomic
 import os, os.path
 import pandas as pd
 import numpy as np
@@ -12,6 +13,8 @@ import time
 from typing import Union
 
 ##  import Julia modules and initialize the environment
+from julia.api import Julia
+jl = Julia(compiled_modules=False)
 from julia import Base
 from julia import Pkg
 Pkg.activate(sa.dir_jl)
@@ -239,9 +242,13 @@ class ElectricEnergy:
             self.model_attributes.table_nemomod_production_by_technology
         ]
 
-        # instantiate a CircularEconomy class for access to variables
+        # instantiate AFOLU and CircularEconomy class for access to variables
+        self.model_afolu = AFOLU(self.model_attributes)
         self.model_circecon = CircularEconomy(self.model_attributes)
         self.model_socioeconomic = Socioeconomic(self.model_attributes)
+
+        # finally, set integrated variables
+        self.integration_variables = self.set_integrated_variables()
 
 
 
@@ -385,6 +392,41 @@ class ElectricEnergy:
             return "time_period_to_year"
 
 
+    def set_integrated_variables(self):
+        # set the integration variables
+        list_vars_required_for_integration = [
+            # AFOLU variables
+            self.model_afolu.modvar_lsmm_rf_biogas_recovered,
+            # CircularEconomy variables
+            self.model_circecon.modvar_trww_recovered_biogas,
+            self.model_circecon.modvar_waso_emissions_ch4_incineration,
+            self.model_circecon.modvar_waso_emissions_co2_incineration,
+            self.model_circecon.modvar_waso_emissions_n2o_incineration,
+            self.model_circecon.modvar_waso_recovered_biogas,
+            self.model_circecon.modvar_waso_waste_total_for_energy_isw,
+            self.model_circecon.modvar_waso_waste_total_for_energy_msw,
+            self.model_circecon.modvar_waso_waste_total_incineration,
+            # Energy Fuel Demand outputs from other sectors
+            self.modvar_enfu_energy_demand_by_fuel_ccsq,
+            self.modvar_enfu_energy_demand_by_fuel_inen,
+            self.modvar_enfu_energy_demand_by_fuel_scoe,
+            self.modvar_enfu_energy_demand_by_fuel_trns
+        ]
+
+        # in Electricity, update required variables
+        for modvar in list_vars_required_for_integration:
+            subsec = self.model_attributes.get_variable_subsector(modvar)
+            new_vars = self.model_attributes.build_varlist(subsec, modvar)
+            self.required_variables += new_vars
+
+        # set required variables and ensure no double counting
+        self.required_variables = list(set(self.required_variables))
+        self.required_variables.sort()
+
+        return list_vars_required_for_integration
+
+
+
     ##  nemomod apparently cannot handle years == 0
     def transform_field_year_nemomod(self,
         vector: list,
@@ -409,6 +451,9 @@ class ElectricEnergy:
             vector_out = (vector_out + shift) if (direction == "to_nemomod") else (vector_out - shift)
 
         return vector_out
+
+
+
 
 
     ###############################################################
@@ -816,6 +861,7 @@ class ElectricEnergy:
                     dict_efs.update({emission: vec_entc_ear_scalar*vec_waso_emissions_incineration/vec_enfu_total_energy_waste})
 
         return vec_enfu_total_energy_waste, dict_efs
+
 
 
     ##  format model variable from SISEPUEDE as an input table (long) for NemoMod

@@ -1954,16 +1954,41 @@ class ModelAttributes:
         df_target: pd.DataFrame,
         df_source: pd.DataFrame,
         variables_transfer: list,
-        join_type: str = "concatenate"
+        fields_index: list = None,
+        join_type: str = "concatenate",
+        overwrite_targets: bool = False
     ) -> pd.DataFrame:
+        """
+            Transfar SISEPUEDE model variables from source data frame to target data frame.
+            - df_target: data frame to receive variables
+            - df_source: data frame to send variables from
+            - variables_transfer: list of SISEPUEDE model variables to transfer from source to target
+            - fields_index: index fields shared by each data frame
+            - join_type: valid values are "concatenate" and "merge". If index field(s) ordering is the same, concatenation is recommended.
+            - overwrite_targets: overwrite existing model variable fields in df_target if they exist? Default is false.
 
-        vars_extract = [df_target]
+            * Note: assumes that variable schema are unique for each model variable
+        """
+        dfs_extract = [df_target]
+        fields_index = [] if (fields_index is None) else fields_index
+        variables_transfer = list(set(variables_transfer))
+
         for var_int in variables_transfer:
             df_ext = self.get_optional_or_integrated_standard_variable(df_source, var_int, None)
             if type(df_ext) != type(None):
-                vars_extract.append(df_ext[1])
+                #
+                subsec = self.get_variable_subsector(var_int)
+                varlist = self.build_varlist(subsec, var_int)
+                # drop variables that are already in the target df
+                vars_to_drop = list(set(df_ext[1].columns) & set(dfs_extract[0].columns) & set(varlist))
+                if len(vars_to_drop) > 0:
+                    if overwrite_targets:
+                        dfs_extract[0].drop(vars_to_drop, axis = 1, inplace = True)
+                    else:
+                        df_ext[1].drop(vars_to_drop, axis = 1, inplace = True)
+                dfs_extract.append(df_ext[1])
 
-        return sf.merge_output_df_list(vars_extract, self, join_type)
+        return sf.merge_output_df_list(dfs_extract, self, join_type)
 
 
 
