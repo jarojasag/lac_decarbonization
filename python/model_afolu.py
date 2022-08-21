@@ -394,10 +394,60 @@ class AFOLU:
         response_columns = None
     ) -> np.ndarray:
         """
-            dict_tuples_scale has tuples for keys
+            Rescale elements of a row-stochastic transition matrix Q (n x n) to account for scalars applied to columns or entries defined in dict_tuples_scale. The columns that are adjusted in response to these exogenous scalars are said to be to subject to automated rescaling.
+
+            dict_tuples_scale is the mechanism for passing scalars to apply to a transition matrix It accepts two types of tuples for keys
             - to scale an entire column, enter a single tuple (j, )
-            - to scale a point, use (i, j)
-            - no way to scale a row--in a row-stochastic matrix, this wouldn't make sense
+            - to scale a point, use (j, k)
+
+            For example,
+
+                dict_tuples_scale = {(i, ): scalar_1, (j, k): scalar_2}
+
+            will scale:
+                * all transition probabilities in column i using scalar_1
+                * the transition probabilty at (j, k) using scalar_2
+                * all other probabilities in a given row uniformly to ensure summation to 1
+
+            Function Arguments
+            ------------------
+            mat: row-stochastic transition matrix to apply scalars to
+            dict_tuples_scale: dictionary of tuples defining columnar or point-based probabilities to scale
+
+            Keyword Arguments
+            -----------------
+            ignore_diag_on_col_scale: if True, diagonals on the transition matrix are not scaled in response to other changing probabilties. Default is False.
+            mat_bounds: bounds for elements in the matrix (weak inequalities).
+            response_columns: the columns in the matrix that are subject to automated rescaling in response to to exogenous scalars. If None, then, for each row, columns that are not affected by exogenous scalars are subject to automated rescaling.
+
+
+
+            Example and Notes
+            -----------------
+            * The final transition matrix may not reflect the scalars that are passed. For example, considr the matrix
+
+            array([
+                [0.5, 0, 0.5],
+                [0.2, 0.7, 0.1],
+                [0.0, 0.1, 0.9]
+            ])
+
+            if dict_tuples_scale = {(0, ): 2, (0, 2): 1.4}, then, before rescaling probabilities that are not specified in dict_tuples_scale, the matrix becomes
+
+            array([
+                [1.0, 0, 0.7],
+                [0.4, 0.7, 0.1],
+                [0.0, 0.1, 0.9]
+            ])
+
+            Since all of the non-zero elements in the first row are subject to scaling, the normalization to sum to 1 reduces the effect of the specified scalar. The final matrix becomes (approximately)
+
+            array([
+                [0.5883, 0, 0.4117],
+                [0.4, 0.525, 0.075],
+                [0.0, 0.1, 0.9]
+            ])
+
         """
 
         # assume that the matrix is square - get the scalar, then get the mask to use adjust transition probabilities not specified as a scalar
@@ -491,6 +541,8 @@ class AFOLU:
             elif arrs.shape[1:3] != (attr_lndu.n_key_values, attr_lndu.n_key_values):
                 raise ValueError(f"Invalid shape of matrices in {function_var_name}. They must have shape ({attr_lndu.n_key_values}, {attr_lndu.n_key_values}).")
 
+
+
     ##  get the transition and emission factors matrices from the data frame
     def get_markov_matrices(self,
         df_ordered_trajectories: pd.DataFrame,
@@ -498,9 +550,19 @@ class AFOLU:
         thresh_correct: float = 0.0001
     ) -> tuple:
         """
-            - assumes that the input data frame is ordered by time_period
-            - n_tp gives the number of time periods. Default value is None, which implies all time periods
+            Get the transition and emission factors matrices from the data frame df_ordered_trajectories. Assumes that the input data frame is ordered by time_period
+
+            Function Arguments
+            ------------------
+            - df_ordered_trajectories: input data frame containing columnar variables for conversion transition probabilities and emission factors.
+
+            Keyword Arguments
+            -----------------
+            - n_tp: the number of time periods. Default value is None, which implies all time periods
             - thresh_correct is used to decide whether or not to correct the transition matrix (assumed to be row stochastic) to sum to 1; if the abs of the sum is outside this range, an error will be thrown
+
+            Notes
+            -----
             - fields_pij and fields_efc will be properly ordered by categories for this transformation
         """
         n_tp = n_tp if (n_tp != None) else self.n_time_periods
@@ -530,12 +592,31 @@ class AFOLU:
     ) -> float:
 
         """
-            Some transition matrices may have 0s or 1s in column entries, meaning that scalars are inadequate. This function finds the true scalar that needs to be applied to acheieve a scaled change in area *target_scalar*.
 
+            This function finds the true scalar that needs to be applied to acheieve a specified scaled change in state, i.e. finds the true matrix column scalar required to achieve x(1)_i -> x(0)_i*target_scalar
+
+            Function Arguments
+            ------------------
             - mat_column: column in transition matrix (assuming row-stochastic) representing probabilities of entry into a state
             - target_scalar: the target change in output area to achieve
             - vec_x: current state of areas. Target area is sum(vec_x)*target_scalar
+
+            Keyword Arguments
+            -----------------
             - max_iter: maximum number of iterations. Default is 100.
+
+
+            Notes and Expanded Description
+            ------------------------------
+
+            For x(0), x(1) \in \mathbb{R}^(1 x n) and a row-stochastic transition matrix Q in \mathbb{R}^{n x n}, the value
+
+                x(1) = x(0)Q
+
+            transforms the state vector x(0) -> x(1). In some cases, it is desirable to ensure that x(1)_i = \alpha*x(0)_i, i.e., that a transition matrix enforces an observed growth from period 0 -> 1. This can generally be acheived in AFOLU using the .adjust_transition_matrix().
+
+            However, some transition matrices may have 0s or 1s in column entries, meaning that specified input scalar may be unable to acheieve a desired scalar change in input area, so other columnar entries may have to be scaled more to acheive the desired outcome of x(1)_i = \alpha*x(0)_i.
+
         """
         # get the target scalar
         scalar_adj = target_scalar
@@ -573,6 +654,19 @@ class AFOLU:
         dem_pc_scalar_exog = None, # exogenous demand per capita scalar representing other changes in the exogenous per-capita demand (can be used to represent population changes)
         return_type: type = float # return type of array
     ) -> np.ndarray:
+
+        """
+            Project per capita demand for agriculture and/or livestock
+
+            Function Arguments
+            ------------------
+            - dem_0: initial demand (e.g., total yield/livestock produced per acre) ()
+            - pop: population (vec_pop)
+            - gdp_per_capita_rates driver of demand growth: gdp/capita (vec_rates_gdp_per_capita)
+            - elast elasticity of demand per capita to growth in gdp/capita (e.g., arr_lvst_elas_demand)
+            - dem_pc_scalar_exog: exogenous demand per capita scalar representing other changes in the exogenous per-capita demand (can be used to represent population changes)
+            - return_type: return type of array
+        """
 
         # get the demand scalar to apply to per-capita demands
         dem_scale_proj_pc = (gdp_per_capita_rates.transpose()*elast[0:-1].transpose()).transpose()
@@ -613,6 +707,29 @@ class AFOLU:
         vec_lvst_scale_cc: np.ndarray,
         n_tp: int = None
     ) -> tuple:
+        """
+            Project per capita demand for agriculture and/or livestock
+
+            Function Arguments
+            ------------------
+            - vec_initial_area: initial state vector of area
+            - arrs_transitions: array of transition matrices, ordered by time period
+            - arrs_efs: array of emission factor matrices, ordered by time period
+            - arr_agrc_nonfeeddem_yield: array of agricultural non-feed demand yield (human consumption)
+            - arr_agrc_yield_factors: array of agricultural yield factors
+            - arr_lndu_yield_by_lvst: array of lvst yield by land use category (used to project future livestock supply)
+            - arr_lvst_dem: array of livestock demand
+            - vec_agrc_frac_cropland_area: vector of fractions of agricultural area fractions by classes
+            - vec_lndu_yrf: vector of land use reallocation factor
+            - vec_lvst_pop_init: vector, by livestock class, of initial livestock populations
+            - vec_lvst_pstr_weights: vector of weighting of animal classes to determine which changes in animal population affect demand for land
+            - vec_lvst_scale_cc: vector of livestock carrying capacity scalar to apply
+
+            Keyword Arguments
+            ------------------
+            n_tp: number of time periods to run. If None, runs AFOLU.n_time_periods
+        """
+
 
         t0 = time.time()
 
@@ -755,6 +872,13 @@ class AFOLU:
         n_tp: int = None
     ) -> tuple:
 
+        """
+            NEED DOCSTRING
+
+            Function Arguments
+            ------------------
+        """
+
         t0 = time.time()
 
         np.seterr(divide = "ignore", invalid = "ignore")
@@ -819,6 +943,13 @@ class AFOLU:
         projection_time_periods: np.ndarray,
         dict_check_integrated_variables: dict
     ):
+
+        """
+            NEED DOCSTRING
+
+            Function Arguments
+            ------------------
+        """
 
         # IPPU components
         if dict_check_integrated_variables[self.subsec_name_ippu]:
@@ -966,11 +1097,19 @@ class AFOLU:
 
     ##  LIVESTOCK
 
-    def reassign_pops_from_proj_to_carry(self, arr_lu_derived, arr_dem_based):
+    def reassign_pops_from_proj_to_carry(self,
+        arr_lu_derived: np.ndarray,
+        arr_dem_based: np.ndarray
+    ) -> np.ndarray:
         """
             Before assigning net imports, there are many non-grazing animals to consider (note that these animals are generally not emission-intensive animals)
             Due to 0 graze area, their estimated population is infinite, or stored as a negative
-            We assign their population as the demand-estimated population
+            We assign their population as the demand-estimated population.
+
+            Function Arguments
+            ------------------
+            - arr_lu_derived: array of animal populations based on land use
+            - arr_dem_based: array of animal populations based on demand
         """
         if arr_lu_derived.shape != arr_dem_based.shape:
             raise ValueError(f"Error in reassign_pops_from_proj_to_carry: array dimensions do not match: arr_lu_derived = {arr_lu_derived.shape}, arr_dem_based = {arr_dem_based.shape}.")
@@ -992,15 +1131,16 @@ class AFOLU:
     ###                              ###
     ####################################
 
-    def project(self, df_afolu_trajectories: pd.DataFrame, passthrough_tmp: str = None) -> pd.DataFrame:
+    def project(self,
+        df_afolu_trajectories: pd.DataFrame
+    ) -> pd.DataFrame:
 
         """
             The project() method takes a data frame of input variables (ordered by time series) and returns a data frame of output variables (model projections for agriculture and livestock, forestry, and land use) the same order.
 
             Function Arguments
             ------------------
-            df_afolu_trajectories: pd.DataFrame with all required input fields as columns. The model will not run if any required variables are missing, but errors will detail which fields are missing.
-
+            - df_afolu_trajectories: pd.DataFrame with all required input fields as columns. The model will not run if any required variables are missing, but errors will detail which fields are missing.
 
             Notes
             -----
@@ -1083,6 +1223,7 @@ class AFOLU:
         # get the "vegetarian" factor and use to estimate livestock pop
         vec_lvst_demscale = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.model_socioeconomic.modvar_gnrl_frac_eating_red_meat, False, "array_base", var_bounds = (0, np.inf))
         arr_lvst_dem_pop = self.project_per_capita_demand(vec_modvar_lvst_pop_init, vec_pop, vec_rates_gdp_per_capita, arr_lvst_elas_demand, vec_lvst_demscale, int)
+
         # get weights for allocating grazing area and feed requirement to animals - based on first year only
         vec_lvst_base_graze_weights = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_dry_matter_consumption, True, "array_base")[0]
         vec_lvst_feed_allocation_weights = (vec_modvar_lvst_pop_init*vec_lvst_base_graze_weights)/np.dot(vec_modvar_lvst_pop_init, vec_lvst_base_graze_weights)
@@ -2229,7 +2370,4 @@ class AFOLU:
         df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
         self.model_attributes.add_subsector_emissions_aggregates(df_out, self.required_base_subsectors, False)
 
-        if passthrough_tmp is None:
-            return df_out
-        else:
-            return df_out, passthrough_tmp
+        return df_out

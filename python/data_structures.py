@@ -483,8 +483,9 @@ class ModelAttributes:
         self.table_nemomod_new_capacity = "vnewcapacity"
         self.table_nemomod_operating_cost = "voperatingcost"
         self.table_nemomod_operating_cost_discounted = "vdiscountedoperatingcost"
-        self.table_nemomod_total_annual_capacity = "vtotalcapacityannual"
         self.table_nemomod_production_by_technology = "vproductionbytechnologyannual"
+        self.table_nemomod_total_annual_capacity = "vtotalcapacityannual"
+        self.table_nemomod_use_by_technology = "vusebytechnologyannual"
 
         # temporary - but read from table at some point
         self.varchar_str_emission_gas = "$EMISSION-GAS$"
@@ -1956,25 +1957,39 @@ class ModelAttributes:
         variables_transfer: list,
         fields_index: list = None,
         join_type: str = "concatenate",
-        overwrite_targets: bool = False
+        overwrite_targets: bool = False,
+        stop_on_error: bool = True
     ) -> pd.DataFrame:
         """
             Transfar SISEPUEDE model variables from source data frame to target data frame.
+
+            Function Arguments
+            ------------------
             - df_target: data frame to receive variables
             - df_source: data frame to send variables from
             - variables_transfer: list of SISEPUEDE model variables to transfer from source to target
             - fields_index: index fields shared by each data frame
             - join_type: valid values are "concatenate" and "merge". If index field(s) ordering is the same, concatenation is recommended.
             - overwrite_targets: overwrite existing model variable fields in df_target if they exist? Default is false.
+            - stop_on_error: stop the transfer on an error. If False, variables that are not available in df_source will be ignored.
 
-            * Note: assumes that variable schema are unique for each model variable
+            Notes
+            -----
+            * Assumes that variable schema are unique for each model variable
         """
         dfs_extract = [df_target]
         fields_index = [] if (fields_index is None) else fields_index
         variables_transfer = list(set(variables_transfer))
 
         for var_int in variables_transfer:
-            df_ext = self.get_optional_or_integrated_standard_variable(df_source, var_int, None)
+
+            df_ext = None
+            try:
+                df_ext = self.get_optional_or_integrated_standard_variable(df_source, var_int, None)
+            except Exception as e:
+                if stop_on_error:
+                    raise RuntimeError(f"Error in transfer_df_variables: get_optional_or_integrated_standard_variable returned {e}.")
+
             if type(df_ext) != type(None):
                 #
                 subsec = self.get_variable_subsector(var_int)
@@ -2006,9 +2021,8 @@ class ModelAttributes:
 
             Function Arguments
             ------------------
-            df_in: Data frame with emission outputs to be aggregated
-
-            varlist: variables to include in the sum
+            - df_in: Data frame with emission outputs to be aggregated
+            - varlist: variables to include in the sum
         """
         #initialize dictionary
         dict_totals = {}
@@ -2054,14 +2068,13 @@ class ModelAttributes:
             vars_subsec = self.dict_model_variables_by_subsector[subsector]
             # add subsector abbreviation
             fld_nam = self.get_subsector_emission_total_field(subsector)
-
             flds_add = []
             for var in vars_subsec:
                 var_type = self.get_variable_attribute(var, "variable_type").lower()
                 gas = self.get_variable_characteristic(var, self.varchar_str_emission_gas)
                 if (var_type == "output") and gas:
-                    flds_add +=  self.dict_model_variables_to_variables[var]
-
+                    if var in self.dict_gas_to_total_emission_modvars.get(gas):
+                        flds_add += self.dict_model_variables_to_variables[var]
 
             # check for missing fields; notify
             missing_fields = [x for x in flds_add if x not in df_in.columns]
@@ -2719,7 +2732,7 @@ class ModelAttributes:
 
         var_to_match: string of a model variable to match units
 
-        units: valid values are 'energy', 'length', 'mass', 'volume'
+        units: valid values are 'area', 'energy', 'length', 'mass', 'monetary', 'volume'
 
         """
         # return None if no variable passed
@@ -2732,6 +2745,7 @@ class ModelAttributes:
             "energy": self.varchar_str_unit_energy,
             "length": self.varchar_str_unit_length,
             "mass": self.varchar_str_unit_mass,
+            "monetary": self.varchar_str_unit_monetary,
             "volume": self.varchar_str_unit_volume
         }
 
@@ -2754,6 +2768,8 @@ class ModelAttributes:
             val_return = self.get_length_equivalent(*args)
         elif units == "mass":
             val_return = self.get_mass_equivalent(*args)
+        elif units == "monetary":
+            val_return = self.get_monetary_equivalent(*args)
         elif units == "volume":
             val_return = self.get_volume_equivalent(*args)
 
@@ -2775,22 +2791,15 @@ class ModelAttributes:
     ) -> pd.DataFrame:
 
         """
-            use get_standard_variables() to retrieve an array or data frame of input variables. If return_type == "array_units_corrected", then the ModelAttributes will re-scale emissions factors to reflect the desired output emissions mass (as defined in the configuration).
+            Retrieve an array or data frame of input variables. If return_type == "array_units_corrected", then the ModelAttributes will re-scale emissions factors to reflect the desired output emissions mass (as defined in the configuration).
 
             - df_in: data frame containing input variables
-
             - modvar: variable name to retrieve
-
             - override_vector_for_single_mv_q: default is False. Set to True to return an array if the dimension of the variable is 1; otherwise, a vector will be returned (if not a dataframe).
-
             - return_type: valid values are "data_frame", "array_base" (np.ndarray not corrected for configuration emissions), or "array_units_corrected" (emissions corrected for configuration)
-
             - var_bounds: Default is None (no bounds). Otherwise, gives boundaries to enforce variables that are retrieved. For example, some variables may be restricted to the range (0, 1). Use a list-like structure to pass a minimum and maximum bound (np.inf can be used to as no bound).
-
             - force_boundary_restriction: default is True. Set to True to enforce the boundaries on the variable. If False, a variable that is out of bounds will raise an error.
-
             - expand_to_all_cats: default is False. If True, return the variable in the shape of all categories.
-
             - all_cats_missing_val: default is 0. If expand_to_all_cats == True, categories not associated with modvar with be filled with this value.
         """
 

@@ -1,6 +1,6 @@
 ﻿Category Name,``$CAT-FUEL$``,Description,Data Source,Hyperlink,Notes,Biomass Demand Category ,Electricity Demand Category,Natural Gas Fuel Category,Waste Fuel Category
-Biomass,``fuel_solid_biomass``,"Solid biomass, includiing wood, sulphite lyes, charcoal, and other primary solid biomass (as definined in Table 2.2, V2, C2 2006/2019R IPCC GNGHGI)",,,,1,0,0,0
-Biomass Gas,``fuel_gas_biomass``,"Includes landfill gas, sludge gas, and other biomass gasses (integrated from the waste sector and as definined in Table 2.2, V2, C2)",,,,0,0,0,0
+Biomass,``fuel_biomass``,"Solid biomass, includiing wood, sulphite lyes, charcoal, and other primary solid biomass (as definined in Table 2.2, V2, C2 2006/2019R IPCC GNGHGI)",,,,1,0,0,0
+Biogas,``fuel_biogas``,"Includes landfill gas, sludge gas, and other biomass gasses (integrated from the waste sector and as definined in Table 2.2, V2, C2)",,,,0,0,0,0
 Coal,``fuel_coal``,"Coal, including anthracite, coking coal, sub-bituminous coal, and other coals (as definined in Table 2.2, V2, C2)",,,,0,0,0,0
 Coke,``fuel_coke``,"Lignite coke, and gas coke (as definined in Table 2.2, V2, C2--does not include petroleum coke)",,,,0,0,0,0
 Diesel,``fuel_diesel``,"Gas and diesel oil (see fuel ""Gas/Diesel Oil"" in Table 2.2, V2, C2)",,,,0,0,0,0

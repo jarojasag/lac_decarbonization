@@ -12,15 +12,18 @@ def back_project_array(
     n_periods_for_gr: int = 10
 ) -> np.ndarray:
     """
-        array_in: array to use for back projection
+        "Project" backwards data based on near-future trends (used only in the absence of historical data)
 
-        n_periods: number of periods to back project
+        Function Arguments
+        ------------------
+        - array_in: array to use for back projection
 
-        bp_gr: float specifying the average growth rate for row entries during the back projection periods
-
-        use_mean_forward: default is False. If True, use the average empirical growth rate in array_in for the first 'n_periods_for_gr' periods
-
-        n_periods_for_gr: if use_mean_forward == True, number of periods to look forward (rows 1:n_periods_for_gr)
+        Keyword Arguments
+        -----------------
+        - n_periods: number of periods to back project
+        - bp_gr: float specifying the average growth rate for row entries during the back projection periods
+        - use_mean_forward: default is False. If True, use the average empirical growth rate in array_in for the first 'n_periods_for_gr' periods
+        - n_periods_for_gr: if use_mean_forward == True, number of periods to look forward (rows 1:n_periods_for_gr)
     """
 
     if use_mean_forward:
@@ -37,7 +40,7 @@ def back_project_array(
 
 
 ##  build a dictionary from a dataframe
-def build_dict(df_in, dims = None):
+def build_dict(df_in, dims = None) -> dict:
 
     if len(df_in.columns) == 2:
         dict_out = dict([x for x in zip(df_in.iloc[:, 0], df_in.iloc[:, 1])])
@@ -77,7 +80,7 @@ def check_fields(df, fields: list, msg_prepend: str = "Required fields: "):
 
 
 # check that a dictionary contains the required keys
-def check_keys(dict_in, keys):
+def check_keys(dict_in, keys: list):
     s_keys_dict = set(dict_in.keys())
     s_keys_check = set(keys)
     if s_keys_check.issubset(s_keys_dict):
@@ -190,10 +193,17 @@ def do_array_mult(
 ) -> np.ndarray:
     """
         multiply arrays while allowing for different shapes of arr_variable
+
+        Function Arguments
+        ------------------
         - arr_stable: array with base shape
         - arr_variable:
             * if arr_stable is 2d, arr_variable can have shapes arr_stable.shape or (arr_stable[1], )
             * if arr_stable is 1d, arr_variable can have shapes arr_stable.shape OR if allow_outer == True, returns np.outer(arr_stable, arr_variable)
+
+        Keyword Arguments
+        -----------------
+        - allow_outer: if arrays are mismatched in shape, allow an outer product (returns np.outer(arr_stable, arr_variable))
     """
     if (arr_variable.shape == arr_stable.shape):
         return arr_variable*arr_stable
@@ -219,7 +229,9 @@ def get_vector_growth_rates_from_first_element(arr: np.ndarray) -> np.ndarray:
     """
         Using a 1- or 2-dimentionsal Numpy array, get growth scalars (columnar) relative to the first element
 
-        - arr: input array
+        Function Arguments
+        ------------------
+        - arr: input array to use to derive growth rates
     """
     arr = np.nan_to_num(arr[1:]/arr[0:-1], 0.0, posinf = 0.0)
     elem_concat = np.ones((1, )) if (len(arr.shape) == 1) else np.ones((1, arr.shape[1]))
@@ -240,10 +252,16 @@ def match_df_to_target_df(
 ) -> pd.DataFrame:
     """
         Merge df_source to df_target, overwriting data fields in df_target with those in df_source
+
+        Function Arguments
+        ------------------
         - df_target: target data frame, which will have values replaced with values in df_source
         - df_source: source data to use to replace
-        - fields_to_replace: fields to replace in merge. If None, defaults to all available.
         - fields_index: list of index fields
+
+        Keyword Arguments
+        -----------------
+        - fields_to_replace: fields to replace in merge. If None, defaults to all available.
         - fillna_value: value to use to fill nas in data frame
     """
 
@@ -330,9 +348,15 @@ def orient_df_by_reference_vector(
 ) -> pd.DataFrame:
     """
         Ensure that a data frame's field is ordered properly (in the same ordering as df_in[field_compare]). Returns adata frame with the correct ordering.
+
+        Function Arguments
+        ------------------
         - df_in: data frame to check
         - vector_reference: reference vector used to order df_in[field_compare].
         - field_compare: field to order df_in by
+
+        Keyword Arguments
+        -----------------
         - field_merge_tmp: temporary field to use for sorting. Should not be in df_in.columns
         - drop_field_compare: drop the comparison field after orienting
 
@@ -371,17 +395,19 @@ def project_growth_scalar_from_elasticity(
     elasticity_type = "standard"
 ):
     """
-        - vec_rates: a vector of growth rates, where the ith entry is the growth rate of the driver from i to i + 1. If rates_are_factors = False (default), rates are proportions (e.g., 0.02). If rates_are_factors = True, then rates are scalars (e.g., 1.02)
+        Project a vector of growth scalars from a vector of growth rates and elasticities
 
+        Function Arguments
+        ------------------
+        - vec_rates: a vector of growth rates, where the ith entry is the growth rate of the driver from i to i + 1. If rates_are_factors = False (default), rates are proportions (e.g., 0.02). If rates_are_factors = True, then rates are scalars (e.g., 1.02)
         - vec_elasticity: a vector of elasticities.
 
+        Keyword Arguments
+        -----------------
         - rates_are_factors: Default = False. If True, rates are treated as growth factors (e.g., a 2% growth rate is entered as 1.02). If False, rates are growth rates (e.g., 2% growth rate is 0.02).
-
         - elasticity_type: Default = "standard"; acceptable options are "standard" or "log"
-
-            If standard, the growth in the demand is 1 + r*e, where r = is the growth rate of the driver and e is the elasiticity.
-
-            If log, the growth in the demand is (1 + r)^e
+            * If standard, the growth in the demand is 1 + r*e, where r = is the growth rate of the driver and e is the elasiticity.
+            * If log, the growth in the demand is (1 + r)^e
     """
     # CHEKCS
     if vec_rates.shape[0] + 1 != vec_elasticity.shape[0]:
@@ -436,12 +462,20 @@ def replace_numerical_column_from_merge(
 ):
     """
     Replace values in field_to_replace in df_source associated with values in df_replacement and shared index fields
+
+    Function Arguments
+    ------------------
     - df_target: target data frame, which will have values replaced with values in df_source
     - df_source: source data to use to replace
     - field_to_replace: field to replace in merge
+
+    Keyword Arguments
+    -----------------
     - field_temporary: temporary field used in reassignment
 
-    * Note: all fields in df_source must be contained in df_target. Only works for numerical methods at the moment.
+    Notes
+    -----
+    * all fields in df_source must be contained in df_target. Only works for numerical methods at the moment.
     """
     check_fields(df_target, list(df_source.columns))
     check_fields(df_source, [field_to_replace])
@@ -511,11 +545,14 @@ def vec_bounds(
     """
         Bound a vector vec within a range set within 'bounds'.
 
-        vec: list or np.ndarray of values to bound
+        Function Arguments
+        ------------------
+        - vec: list or np.ndarray of values to bound
+        - bounds: tuple (single bound) or list vec specifying element-wise bounds (NOTE: only works if vec.shape = (len(vec), ) == (len(bounds), ))
 
-        bounds: tuple (single bound) or list vec specifying element-wise bounds (NOTE: only works if vec.shape = (len(vec), ) == (len(bounds), ))
-
-        cycle_vector_bounds_q: cycle bounds if there is a mismatch and the bounds are entered as a vector
+        Keyword Arguments
+        -----------------
+        - cycle_vector_bounds_q: cycle bounds if there is a mismatch and the bounds are entered as a vector
     """
     # check on approch--is there a vector of bounds?
     use_bounding_vec = False
@@ -561,9 +598,10 @@ def vector_limiter(vecs:list, var_bounds: tuple) -> list:
     """
         Bound a collection vectors by sum. Must specify at least a lower bound.
 
-        vecs: list of numpy arrays with the same shape
-
-        var_bounds: tuple of
+        Function Arguments
+        ------------------
+        - vecs: list of numpy arrays with the same shape
+        - var_bounds: tuple of
     """
 
     types_valid = [tuple, list, np.ndarray]

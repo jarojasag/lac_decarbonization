@@ -134,7 +134,7 @@ def main(args: dict) -> None:
             df_input_data = sa.model_attributes.transfer_df_variables(
                 df_input_data,
                 df_output_data[0],
-                model_energy.integration_variables
+                model_energy.integration_variables_non_fgtv
             )
         else:
             print("LOG ERROR HERE: CANNOT RUN WITHOUT IPPU")
@@ -144,7 +144,6 @@ def main(args: dict) -> None:
 
     # run Electricity and collect output
     if "ElectricEnergy" in models_run:
-
         print("\n\tRunning ElectricEnergy")
         model_elecricity = sm.ElectricEnergy(sa.model_attributes, sa.dir_ref_nemo)
         # integrate energy-related output?
@@ -164,6 +163,24 @@ def main(args: dict) -> None:
         except Exception as e:
             #LOGGING
             print(f"Error running ElectricEnergy model: {e}")
+
+
+    # finally, add fugitive emissions from Non-Electric Energy and collect output
+    if "NonElectricEnergy" in models_run:
+        print("\n\tRunning NonElectricEnergy - Fugitive Emissions")
+        model_energy = sm.NonElectricEnergy(sa.model_attributes)
+        # integrate IPPU output?
+        if run_integrated_q and set(["IPPU", "AFOLU"]).issubset(set(models_run)):
+            df_input_data = sa.model_attributes.transfer_df_variables(
+                df_input_data,
+                df_output_data[0],
+                model_energy.integration_variables_fgtv
+            )
+        else:
+            print("LOG ERROR HERE: CANNOT RUN WITHOUT IPPU AND AFOLU")
+
+        df_output_data.append(model_energy.project(df_input_data, subsectors_project = sa.model_attributes.subsec_name_fgtv))
+        df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")] if run_integrated_q else df_output_data
 
 
     # build output data frame

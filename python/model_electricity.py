@@ -172,6 +172,9 @@ class ElectricEnergy:
         self.modvar_enfu_energy_density_volumetric = "Volumetric Energy Density"
         self.modvar_enfu_exports_fuel = "Fuel Exports"
         self.modvar_enfu_frac_fuel_demand_imported = "Fraction of Fuel Demand Imported"
+        self.modvar_enfu_price_gravimetric = "Gravimetric Fuel Price"
+        self.modvar_enfu_price_thermal = "Thermal Fuel Price"
+        self.modvar_enfu_price_volumetric = "Volumetric Fuel Price"
         self.modvar_enfu_transmission_loss_electricity = "Electrical Transmission Loss"
         # key categories
         self.cat_enfu_elec = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_enfu, {self.model_attributes.field_enfu_electricity_demand_category: 1})[0]
@@ -238,8 +241,9 @@ class ElectricEnergy:
             self.model_attributes.table_nemomod_capital_investment_discounted,
             self.model_attributes.table_nemomod_capital_investment_storage_discounted,
             self.model_attributes.table_nemomod_operating_cost_discounted,
+            self.model_attributes.table_nemomod_production_by_technology,
             self.model_attributes.table_nemomod_total_annual_capacity,
-            self.model_attributes.table_nemomod_production_by_technology
+            self.model_attributes.table_nemomod_use_by_technology
         ]
 
         # instantiate AFOLU and CircularEconomy class for access to variables
@@ -758,6 +762,173 @@ class ElectricEnergy:
 
 
 
+    ##  get variable cost of fuels (as dummy technologies) with prices based on gravimetric energy density
+    def get_variable_cost_fuels_gravimetric_density(self,
+        df_elec_trajectories: pd.DataFrame,
+        override_time_period_transformation: bool = False
+    ):
+        """
+            Retrieve variable cost of fuels (entered as dummy technologies) with prices based on mass in terms of Configuration energy_units/monetary_units (used in NemoMod)
+            - df_elec_trajectories: data frame containing input variables as columns
+            - override_time_period_transformation: if True, return raw time periods instead of those transformed to fit NemoMod approach.
+        """
+
+        ##  PREPARE SCALARS
+
+        # get scalars to apply to prices - start with energy scalar (scale energy factor to configuration units--divide since energy is the denominator)
+        scalar_energy = self.get_nemomod_energy_scalar(self.modvar_enfu_energy_density_gravimetric)
+        # scaling to get masses (denominators)
+        scalar_mass = self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_enfu_energy_density_gravimetric,
+            self.modvar_enfu_price_gravimetric,
+            "mass"
+        )
+        # scale prices
+        scalar_monetary = self.model_attributes.get_scalar(self.modvar_enfu_price_gravimetric, "monetary")
+        scalar_price = scalar_mass * scalar_monetary
+
+
+        ##  GET PRICES AND DENSITY
+
+        # Fuel costs (enter as supply) - Gravimetric price in configuration Monetary/Mass (mass of modvar_enfu_energy_density_gravimetric)
+        df_price = self.format_model_variable_as_nemomod_table(
+            df_elec_trajectories,
+            self.modvar_enfu_price_gravimetric,
+            self.model_attributes.table_nemomod_variable_cost,
+            [
+                self.field_nemomod_year
+            ],
+            self.field_nemomod_technology,
+            dict_fields_to_pass = {
+                self.field_nemomod_mode: self.cat_enmo_gnrt
+            },
+            scalar_to_nemomod_units = scalar_price,
+            var_bounds = (0, np.inf),
+            override_time_period_transformation = override_time_period_transformation
+        )
+
+        # get the energy density in terms of configuration Energy/Mass (mass of modvar_enfu_energy_density_gravimetric)
+        df_density = self.format_model_variable_as_nemomod_table(
+            df_elec_trajectories,
+            self.modvar_enfu_energy_density_gravimetric,
+            self.model_attributes.table_nemomod_variable_cost,
+            [
+                self.field_nemomod_year
+            ],
+            self.field_nemomod_technology,
+            scalar_to_nemomod_units = scalar_energy,
+            dict_fields_to_pass = {
+                self.field_nemomod_mode: self.cat_enmo_gnrt
+            },
+            var_bounds = (0, np.inf),
+            override_time_period_transformation = override_time_period_transformation
+        )
+
+        ## HEREHERE
+        ##  COMPARE AND GENERATE OUTPUT
+
+        # rename price and density
+        df_price = df_price[self.model_attributes.table_nemomod_variable_cost].rename(
+            columns = {self.field_nemomod_value: "price"}
+        )
+        df_density = df_density[self.model_attributes.table_nemomod_variable_cost].rename(
+            columns = {self.field_nemomod_value: "density"}
+        )
+
+        # merge, calcuate real price, then update tech names
+        df_out = pd.merge(df_price, df_density)
+        df_out[self.field_nemomod_value] = np.array(df_out["price"])*np.array(df_out["density"])
+        df_out[self.field_nemomod_technology] = df_out[self.field_nemomod_technology].apply(self.get_dummy_fuel_tech)
+        df_out.drop(["price", "density"], axis = 1, inplace = True)
+
+        return df_out
+
+
+
+    ##  get variable cost of fuels (as dummy technologies) with prices based on volumetric energy density
+    def get_variable_cost_fuels_volumetric_density(self,
+        df_elec_trajectories: pd.DataFrame
+    ):
+        """
+            Retrieve variable cost of fuels (entered as dummy technologies) with prices based on volume in terms of Configuration energy_units/monetary_units (used in NemoMod)
+
+            Function Arguments
+            ------------------
+            - df_elec_trajectories: data frame containing input variables as columns
+        """
+
+        ##  PREPARE SCALARS
+
+        # get scalars to apply to prices - start with energy scalar (scale energy factor to configuration units--divide since energy is the denominator)
+        scalar_energy = self.get_nemomod_energy_scalar(self.modvar_enfu_energy_density_volumetric)
+        # scaling to get masses (denominators)
+        scalar_volume = self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_enfu_energy_density_volumetric,
+            self.modvar_enfu_price_volumetric,
+            "volume"
+        )
+        # scale prices
+        scalar_monetary = self.model_attributes.get_scalar(self.modvar_enfu_price_volumetric, "monetary")
+        scalar_price = scalar_volume * scalar_monetary
+
+
+        ##  GET PRICES AND DENSITY
+
+        # Fuel costs (enter as supply) - Volumetric price in configuration Monetary/Mass (mass of modvar_enfu_energy_density_gravimetric)
+        df_price = self.format_model_variable_as_nemomod_table(
+            df_elec_trajectories,
+            self.modvar_enfu_price_volumetric,
+            self.model_attributes.table_nemomod_variable_cost,
+            [
+                self.field_nemomod_year
+            ],
+            self.field_nemomod_technology,
+            dict_fields_to_pass = {
+                self.field_nemomod_mode: self.cat_enmo_gnrt
+            },
+            scalar_to_nemomod_units = scalar_price,
+            var_bounds = (0, np.inf)
+        )
+
+        # get the energy density in terms of configuration Energy/Mass (mass of modvar_enfu_energy_density_gravimetric)
+        df_density = self.format_model_variable_as_nemomod_table(
+            df_elec_trajectories,
+            self.modvar_enfu_energy_density_volumetric,
+            self.model_attributes.table_nemomod_variable_cost,
+            [
+                self.field_nemomod_year
+            ],
+            self.field_nemomod_technology,
+            scalar_to_nemomod_units = scalar_energy,
+            dict_fields_to_pass = {
+                self.field_nemomod_mode: self.cat_enmo_gnrt
+            },
+            var_bounds = (0, np.inf)
+        )
+
+
+        ##  COMPARE AND GENERATE OUTPUT
+
+        # rename price and density
+        df_price = df_price[self.model_attributes.table_nemomod_variable_cost].rename(
+            columns = {self.field_nemomod_value: "price"}
+        )
+        df_density = df_density[self.model_attributes.table_nemomod_variable_cost].rename(
+            columns = {self.field_nemomod_value: "density"}
+        )
+
+        # merge, calcuate real price, then update tech names
+        df_out = pd.merge(df_price, df_density)
+        df_out[self.field_nemomod_value] = np.array(df_out["price"])*np.array(df_out["density"])
+        df_out[self.field_nemomod_technology] = df_out[self.field_nemomod_technology].apply(self.get_dummy_fuel_tech)
+        df_out.drop(["price", "density"], axis = 1, inplace = True)
+
+        # exchange year and time period
+        df_out[self.field_nemomod_year] = self.transform_time_period()
+        return df_out
+
+
+
     ##  get waste outputs needed for inputs as energy
     def get_waste_energy_components(self,
         df_elec_trajectories: pd.DataFrame,
@@ -767,6 +938,9 @@ class ElectricEnergy:
 
         """
             Retrieve total energy to be obtained from waste incineration (minimum capacity) and implied annual emission factors derived from incineration inputs in the waste sector (NemoMod emission/energy)
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of input variables, which must include waste sector outputs used to calcualte emission factors
             - attribute_technology: technology attribute table, used to map fuel to tech. If None, use ModelAttributes default.
             - return_emission_factors: bool--calculate emission factors?
@@ -874,10 +1048,15 @@ class ElectricEnergy:
         dict_fields_to_pass: dict = {},
         scalar_to_nemomod_units: float = 1,
         drop_flag: Union[float, int] = None,
+        df_append: pd.DataFrame = None,
+        override_time_period_transformation: bool = False,
         **kwargs
     ) -> pd.DataFrame:
         """
             Format a SISEPUEDE variable as a nemo mod input table.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame containing input variables to be reformatted
             - modvar: SISEPUEDE model variable to extract and reshape
             - table_nemomod: target NemoMod table
@@ -887,6 +1066,9 @@ class ElectricEnergy:
                 * Dictionary takes the form {field_1: new_col, ...}, where new_col = [x_0, ..., x_{n - 1}] or new_col = obj
             - scalar_to_nemomod_units: scalar applied to the values to convert to proper units
             - drop_flag: values that should be dropped from the table
+            - df_append: pass a data frame from another source to append before sorting and the addition of an id
+            - override_time_period_transformation: override the time series transformation? data frames will return raw years instead of transformed years.
+
             **kwargs: passed to ModelAttributes.get_standard_variables()
         """
 
@@ -932,8 +1114,14 @@ class ElectricEnergy:
             var_name = field_melt_nemomod,
             value_name = self.field_nemomod_value
         )
+
         df_out = df_out[~df_out[self.field_nemomod_value].isin([drop_flag])] if (drop_flag is not None) else df_out
-        df_out = self.add_multifields_from_key_values(df_out, fields_index_nemomod)
+        if isinstance(df_append, pd.DataFrame):
+            df_out = pd.concat([df_out, df_append[df_out.columns]], axis = 0).reset_index(drop = True)
+        df_out = self.add_multifields_from_key_values(df_out,
+            fields_index_nemomod,
+            override_time_period_transformation = override_time_period_transformation
+        )
 
         return {table_nemomod: df_out}
 
@@ -955,6 +1143,9 @@ class ElectricEnergy:
     ) -> dict:
         """
             Get a dictionary mapping fuels mapped to powerplant generation to associated dummy techs
+
+            Function Arguments
+            ------------------
             - attribute_technology: AttributeTable for technology, used to identify operational lives of generation and storage technologies. If None, use ModelAttributes default.
         """
         # get some defaults
@@ -991,22 +1182,26 @@ class ElectricEnergy:
         return_passthrough: bool = False
     ) -> Union[None, dict]:
         """
-        Verify that a minimum trajectory is less than or equal (weak) or less than (strong) a maximum trajectory. Data frames must have comparable indices.
-        - df_max: data frame containing the maximum trajectory
-        - df_min: data frame containing the minimum trajectory
-        - field_max: field in df_max to use to compare
-        - field_min: field in df_min to use to compare
-        - conflict_resolution_option: if the minimum trajectory is greater than the maximum trajectory, this parameter is used to define the resolution:
-            * "swap": swap instances where the minimum exceeds the maximum
-            * "max_sup": set the larger value as the minimum and the maximum
-            * "min_sup": set the smaller value as the minimum and the maximum
-            * "mean": use the mean of the two as the minimum and the maximum
-            * "error": stop and return an error
-        - comparison: "weak" allows the minimum <= maximum, while "strong" => minimum < maximum
-            * If comparison == "strong", then cases where maximum == minimum cannot be resolved will be dropped if drop_invalid_comparisons_on_strong == True; otherwise, an error will be returned (independent of conflict_resolution_option)
-        - drop_invalid_comparisons_on_strong: drop cases where minimum == maximum?
-        - field_id: id field contained in both that is used for re-merging
-        - return_passthrough: if no changes are required, return original dataframes?
+            Verify that a minimum trajectory is less than or equal (weak) or less than (strong) a maximum trajectory. Data frames must have comparable indices.
+
+            Function Arguments
+            ------------------
+            - df_max: data frame containing the maximum trajectory
+            - df_min: data frame containing the minimum trajectory
+            - field_max: field in df_max to use to compare
+            - field_min: field in df_min to use to compare
+            - conflict_resolution_option: if the minimum trajectory is greater than the maximum trajectory, this parameter is used to define the resolution:
+                * "swap": swap instances where the minimum exceeds the maximum
+                * "max_sup": set the larger value as the minimum and the maximum
+                * "min_sup": set the smaller value as the minimum and the maximum
+                * "mean": use the mean of the two as the minimum and the maximum
+                * "error": stop and return an error
+            - comparison: "weak" allows the minimum <= maximum, while "strong" => minimum < maximum
+                * If comparison == "strong", then cases where maximum == minimum cannot be resolved will be dropped if drop_invalid_comparisons_on_strong == True; otherwise, an error will be returned (independent of conflict_resolution_option)
+            - drop_invalid_comparisons_on_strong: drop cases where minimum == maximum?
+            - field_id: id field contained in both that is used for re-merging
+            - return_passthrough: if no changes are required, return original dataframes?
+
         """
 
         # check for required field
@@ -1061,6 +1256,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the EMISSION dimension table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Keyword Arguments
+            -----------------
             - attribute_emission: Emission Gas AttributeTable. If None, use ModelAttributes default.
             - dict_rename: dictionary to rename to "val" and "desc" fields for NemoMod
         """
@@ -1085,6 +1283,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the FUEL dimension table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Keyword Arguments
+            -----------------
             - attribute_fuel: Fuel AttributeTable. If None, use ModelAttributes default.
             - dict_rename: dictionary to rename to "val" and "desc" fields for NemoMod
         """
@@ -1110,6 +1311,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the MODE_OF_OPERATION dimension table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Keyword Arguments
+            -----------------
             - attribute_mode: Mode of Operation AttributeTable. If None, use ModelAttributes default.
             - dict_rename: dictionary to rename to "val" and "desc" fields for NemoMod
         """
@@ -1134,6 +1338,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the NODE dimension table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Keyword Arguments
+            -----------------
             - attribute_node: Node AttributeTable. If None, use ModelAttributes default.
             - dict_rename: dictionary to rename to "val" and "desc" fields for NemoMod
 
@@ -1150,6 +1357,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the REGION dimension table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Keyword Arguments
+            -----------------
             - attribute_region: CAT-REGION AttributeTable. If None, use ModelAttributes default.
             - dict_rename: dictionary to rename to "val" and "desc" fields for NemoMod
         """
@@ -1174,6 +1384,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the STORAGE dimension table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Keyword Arguments
+            -----------------
             - attribute_storage: CAT-STORAGE AttributeTable. If None, use ModelAttributes default.
             - dict_rename: dictionary to rename to "val" and "desc" fields for NemoMod
         """
@@ -1199,6 +1412,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the TECHNOLOGY dimension table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Keyword Arguments
+            -----------------
             - attribute_technology: CAT-TECHNOLOGY AttributeTable. If None, use ModelAttributes default.
             - dict_rename: dictionary to rename to "val" and "desc" fields for NemoMod
         """
@@ -1238,6 +1454,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the YEAR dimension table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Keyword Arguments
+            -----------------
             - time_period_as_year: enter years as time periods? If None, default to ElectricEnergy.nemomod_time_period_as_year
             * Based off of values defined in the attribute_time_period.csv attribute table
         """
@@ -1273,7 +1492,13 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the AnnualEmissionLimit input tables for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
+
+            Keyword Arguments
+            -----------------
             - attribute_emission: AttributeTable table with gasses. If None, use ModelAttribute default.
             - attribute_time_period: AttributeTable table with time periods for year identification. If None, use ModelAttribute default.
             - dict_gas_to_emission_fields: dictionary with gasses (in attribute_gas) as keys that map to fields to use to calculate total exogenous emissions
@@ -1359,7 +1584,13 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the CapacityFactor input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_reference_capacity_factor: data frame of regional capacity factors for technologies that vary (others revert to default)
+
+            Keyword Arguments
+            -----------------
             - attribute_technology: AttributeTable for technology, used to separate technologies from storage and identify primary fuels. If None, defaults to ModelAttributes attribute table.
             - attribute_region: AttributeTable for regions. If None, defaults to ModelAttributes attribute table.
         """
@@ -1417,6 +1648,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the CapacityToActivityUnit input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Keyword Arguments
+            -----------------
             - return_type: "table" or "value". If value, returns only the CapacityToActivityUnit value for all techs (used in DefaultParams)
             * Based on configuration parameters
         """
@@ -1446,6 +1680,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the CapitalCost, FixedCost, and VaribleCost input tables for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
         """
 
@@ -1490,6 +1727,10 @@ class ElectricEnergy:
                 var_bounds = (0, np.inf)
             )
         )
+
+        # get fuels as tech to pass to variable cost
+        #df_fuels_as_tech_gravimetric = self.get_variable_cost_fuels_gravimetric_density(df_elec_trajectories, override_time_period_transformation = True)
+        #df_append = pd.concat([df_fuels_as_tech_gravimetric], axis = 0).reset_index(drop = True)
         # VariableCost
         dict_return.update(
             self.format_model_variable_as_nemomod_table(
@@ -1504,7 +1745,8 @@ class ElectricEnergy:
                 self.field_nemomod_technology,
                 dict_fields_to_pass = {self.field_nemomod_mode: self.cat_enmo_gnrt},
                 scalar_to_nemomod_units = scalar_cost_variable,
-                var_bounds = (0, np.inf)
+                var_bounds = (0, np.inf)#,
+                #df_append = df_append
             )
         )
 
@@ -1518,6 +1760,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the CapitalCostStorage input tables for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
         """
 
@@ -1554,7 +1799,11 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the DefaultParameters input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Keyword Arguments
+            -----------------
             - attribute_nemomod_table: NemoMod tables AttributeTable that includes default values stored in the field 'field_default_values'
+            - field_default_values: string giving the name in the attribute_nemomod_table with default values
         """
 
         attribute_nemomod_table = self.model_attributes.dict_attributes.get("nemomod_table") if (attribute_nemomod_table is None) else attribute_nemomod_table
@@ -1582,6 +1831,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the DiscountRate input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Keyword Arguments
+            -----------------
             - return_type: "table" or "value". If value, returns only the DiscountRate
             * Based on configuration specification of discount_rate
         """
@@ -1605,6 +1857,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the EmissionsActivityRatio input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
         """
 
@@ -1764,6 +2019,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the FixedCost input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
         """
 
@@ -1777,6 +2035,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the InterestRateStorage input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
         """
 
@@ -1790,6 +2051,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the InterestRateTechnology input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
         """
 
@@ -1805,7 +2069,13 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the InputActivityRatio input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
+
+            Keyword Arguments
+            -----------------
             - attribute_technology: AttributeTable for technology, used to separate technologies from storage and identify primary fuels.
             - max_ratio: replacement for any input_activity_ratio values derived from efficiencies of 0
         """
@@ -1898,7 +2168,13 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the MinStorageCharge input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
+
+            Keyword Arguments
+            -----------------
             - attribute_storage: AttributeTable used to identify minimum storage charge by storage type. If None, defaults to ModelAttribute cat_storage table
             - field_attribute_min_charge: field in attribute_storage containing the minimum storage charge fraction by storage type
         """
@@ -1939,6 +2215,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the MinimumUtilization input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
         """
 
@@ -1952,6 +2231,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the MinimumUtilization input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
         """
 
@@ -1965,6 +2247,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the ModelPeriodEmissionLimit input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
         """
 
@@ -1978,6 +2263,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the ModelPeriodExogenousEmission input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
         """
 
@@ -1994,6 +2282,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the OperationalLife and OperationalLifeStorage input tables for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Keyword Arguments
+            -----------------
             - attribute_fuel: AttributeTable for fuel, used to set dummy fuel supplies as a technology. If None, use ModelAttributes default.
             - attribute_storage: AttributeTable for storage, used to build OperationalLifeStorage from Technology. If None, use ModelAttributes default.
             - attribute_technology: AttributeTable for technology, used to identify operational lives of generation and storage technologies. If None, use ModelAttributes default.
@@ -2062,7 +2353,13 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the OutputActivityRatio input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
+
+            Keyword Arguments
+            -----------------
             - attribute_technology: AttributeTable for technology, used to separate technologies from storage and identify primary fuels.
         """
 
@@ -2107,6 +2404,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the REMinProductionTarget (renewable energy minimum production target) input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
         """
 
@@ -2120,6 +2420,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the RETagTechnology (renewable energy technology tag) input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Keyword Arguments
+            -----------------
             - attribute_technology: AttributeTable for technology, used to identify tag. If None, use ModelAttributes default.
         """
 
@@ -2164,6 +2467,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the ReserveMargin input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
         """
 
@@ -2225,6 +2531,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the ReserveMarginTagTechnology input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
         """
 
@@ -2255,6 +2564,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the ResidualCapacity input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
         """
 
@@ -2288,6 +2600,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the ResidualStorageCapacity input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
         """
 
@@ -2322,7 +2637,13 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the SpecifiedAnnualDemand input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
+
+            Keyword Arguments
+            -----------------
             - attribute_time_period: AttributeTable mapping ModelAttributes.dim_time_period to year. If None, use ModelAttributes default.
         """
 
@@ -2385,6 +2706,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the SpecifiedDemandProfile input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_reference_demand_profile: data frame of reference demand profile for the region
         """
 
@@ -2424,7 +2748,13 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the StorageMaxChargeRate, StorageMaxDishargeRate, and StorageStartLevel input tables for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
+
+            Keyword Arguments
+            -----------------
             - attribute_storage: AttributeTable used to ensure that start level meets or exceeds the minimum allowable storage charge. If None, use ModelAttributes default.
             - field_attribute_min_charge: field in attribute_storage.table used to identify minimum required storage for each type of storage. If None, use ModelAttributes default.
             - field_tmp: temporary field used in data frame
@@ -2482,6 +2812,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the StorageStartLevel input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
         """
 
@@ -2496,6 +2829,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the TechnologyFromStorage and TechnologyToStorage input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Keyword Arguments
+            -----------------
             - attribute_storage: AttributeTable for storage, used to identify storage characteristics. If None, use ModelAttributes default.
             - attribute_technology: AttributeTable for technology, used to identify whether or not a technology can charge a storage. If None, use ModelAttributes default.
         """
@@ -2582,6 +2918,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the LTsGroup, TIMESLICE, TSGROUP1, TSGROUP2, and YearSplit input tables for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Keyword Arguments
+            -----------------
             - attribute_time_slice: AttributeTable for time slice, used to identify the maximum discharge rate. If None, use ModelAttributes default.
         """
         # retrieve the attribute and check fields
@@ -2713,6 +3052,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the TotalAnnualMaxCapacity, TotalAnnualMaxCapacityInvestment, TotalAnnualMinCapacity, and TotalAnnualMinCapacityInvestment input tables for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
         """
 
@@ -2833,6 +3175,9 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Format the TotalAnnualMaxCapacityStorage, TotalAnnualMaxCapacityInvestmentStorage, TotalAnnualMinCapacityStorage, and TotalAnnualMinCapacityInvestmentStorage input tables for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of model variable input trajectories
         """
 
@@ -2964,8 +3309,14 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Initialize a data frame that has the correct dimensions for SISEPUEDE
+
+            Function Arguments
+            ------------------
             - df_in: data frame (table from SQL) to be formatted
             - field_pivot: field to pivot on, i.e., to use to convert from long to wide
+
+            Keyword Arguments
+            ------------------
             - field_index: index field to preserve. If None, defaults to ElectricEnergy.field_nemomod_year
             - field_values: field containing values. If None, defaults to ElectricEnergy.field_nemomod_value
             - attribute_time_period: AttributeTable containing the time periods. If None, use ModelAttributes default.
@@ -3016,8 +3367,14 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Retrieves NemoMod vdiscountedcapitalinvestment output table and reformats for SISEPUEDE (wide format data)
+
+            Function Arguments
+            ------------------
             - engine: SQLalchemy Engine used to retrieve this table
             - vector_reference_time_period: reference time periods to use in merge--e.g., df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
+
+            Keyword Arguments
+            -----------------
             - table_name: name in the database of the Discounted Capital Investment table. If None, use ModelAttributes deault.
             - transform_time_period: Does the time period need to be transformed back to SISEPUEDE terms?
         """
@@ -3046,8 +3403,14 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Retrieves NemoMod vdiscountedcapitalinvestment output table and reformats for SISEPUEDE (wide format data)
+
+            Function Arguments
+            ------------------
             - engine: SQLalchemy Engine used to retrieve this table
             - vector_reference_time_period: reference time periods to use in merge--e.g., df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
+
+            Keyword Arguments
+            -----------------
             - table_name: name in the database of the Discounted Capital Investment table. If None, use ModelAttributes deault.
             - transform_time_period: Does the time period need to be transformed back to SISEPUEDE terms?
         """
@@ -3078,8 +3441,14 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Retrieves NemoMod generation technologies from vdiscountedoperatingcost output table and reformats for SISEPUEDE (wide format data)
+
+            Function Arguments
+            ------------------
             - engine: SQLalchemy Engine used to retrieve this table
             - vector_reference_time_period: reference time periods to use in merge--e.g., df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
+
+            Keyword Arguments
+            -----------------
             - table_name: name in the database of the Discounted Capital Investment table. If None, use ModelAttributes deault.
             - transform_time_period: Does the time period need to be transformed back to SISEPUEDE terms?
         """
@@ -3108,8 +3477,14 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Retrieves NemoMod storage technologies from vdiscountedoperatingcost output table and reformats for SISEPUEDE (wide format data)
+
+            Function Arguments
+            ------------------
             - engine: SQLalchemy Engine used to retrieve this table
             - vector_reference_time_period: reference time periods to use in merge--e.g., df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
+
+            Keyword Arguments
+            -----------------
             - table_name: name in the database of the Discounted Capital Investment table. If None, use ModelAttributes deault.
             - transform_time_period: Does the time period need to be transformed back to SISEPUEDE terms?
         """
@@ -3138,8 +3513,14 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Retrieves NemoMod vannualtechnologyemission output table and reformats for SISEPUEDE (wide format data)
+
+            Function Arguments
+            ------------------
             - engine: SQLalchemy Engine used to retrieve this table
             - vector_reference_time_period: reference time periods to use in merge--e.g., df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
+
+            Keyword Arguments
+            -----------------
             - table_name: name in the database of the Discounted Capital Investment table. If None, use ModelAttributes deault.
             - transform_time_period: Does the time period need to be transformed back to SISEPUEDE terms?
         """
@@ -3188,22 +3569,32 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Retrieves demands for fuels from NemoMod vproductionbytechnologyannual output table and reformats for SISEPUEDE (wide format data)
+
+            Function Arguments
+            ------------------
             - engine: SQLalchemy Engine used to retrieve this table
             - vector_reference_time_period: reference time periods to use in merge--e.g., df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
+
+            Keyword Arguments
+            -----------------
             - table_name: name in the database of the Discounted Capital Investment table. If None, use ModelAttributes deault.
             - transform_time_period: Does the time period need to be transformed back to SISEPUEDE terms?
         """
 
-        # initialize some pieces
-        table_name = self.model_attributes.table_nemomod_production_by_technology if (table_name is None) else table_name
+        # some key initialization
+        table_name = self.model_attributes.table_nemomod_use_by_technology if (table_name is None) else table_name
         scalar_div = self.get_nemomod_energy_scalar(self.modvar_enfu_energy_demand_by_fuel_elec)
+        dict_tech_info = self.get_tech_info_dict()
 
+        # get the table and pivot on fuel - ignores dummy and storage techs and assumes a 1:1 mapping between fuel and tech
         df_out = self.retrieve_and_pivot_nemomod_table(
             engine,
             self.modvar_enfu_energy_demand_by_fuel_elec,
             table_name,
             vector_reference_time_period,
-            techs_to_pivot = ["all_techs_dummy"]
+            field_pivot = self.field_nemomod_fuel,
+            techs_to_pivot = None,
+            dict_filter_override = {self.field_nemomod_technology: dict_tech_info["all_techs_gnrt"]}
         )
         df_out /= scalar_div
 
@@ -3220,8 +3611,14 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Retrieves NemoMod vtotalcapacityannual output table and reformats for SISEPUEDE (wide format data)
+
+            Function Arguments
+            ------------------
             - engine: SQLalchemy Engine used to retrieve this table
             - vector_reference_time_period: reference time periods to use in merge--e.g., df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
+
+            Keyword Arguments
+            -----------------
             - table_name: name in the database of the Discounted Capital Investment table. If None, use ModelAttributes deault.
             - transform_time_period: Does the time period need to be transformed back to SISEPUEDE terms?
         """
@@ -3250,8 +3647,14 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
             Retrieves NemoMod vproductionbytechnologyannual output table and reformats for SISEPUEDE (wide format data)
+
+            Function Arguments
+            ------------------
             - engine: SQLalchemy Engine used to retrieve this table
             - vector_reference_time_period: reference time periods to use in merge--e.g., df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
+
+            Keyword Arguments
+            -----------------
             - table_name: name in the database of the Discounted Capital Investment table. If None, use ModelAttributes deault.
             - transform_time_period: Does the time period need to be transformed back to SISEPUEDE terms?
         """
@@ -3271,7 +3674,7 @@ class ElectricEnergy:
 
 
 
-    ##  Get the discounted capital investment for technology
+    ##  Get the discounted capital investment for technology - NOTE: Function is messy, need to clean it up
     def retrieve_and_pivot_nemomod_table(self,
         engine: Union[pd.DataFrame, sqlalchemy.engine.Engine],
         modvar: str,
@@ -3280,18 +3683,25 @@ class ElectricEnergy:
         field_pivot: str = None,
         techs_to_pivot: list = ["all_techs_gnrt"],
         transform_time_period: bool = True,
-        query_append: str = None
+        query_append: str = None,
+        dict_filter_override: dict = None
     ) -> pd.DataFrame:
         """
             Retrieves NemoMod output table and reformats for SISEPUEDE (wide format data) when pivoting on technology
+            Function Arguments
+            ------------------
             - engine: SQLalchemy Engine used to retrieve this table
             - modvar: output model variable
             - table_name: name in the database of the table to retrieve
             - vector_reference_time_period: reference time periods to use in merge--e.g., df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
+
+            Keyword Arguments
+            -----------------
             - field_pivot: field to pivot on. Default is ElecticEnergy.field_nemomod_technology, but ElecticEnergy.field_nemomod_storage can be used to transform storage outputs to technology.
             - techs_to_pivot: list of keys in ElecticEnergy.get_tech_info_dict() to include in the pivot. Can include "all_techs_gnrt", "all_techs_strg", "all_techs_dummy" (only if output sector is fuel). If None, keeps all values.
             - transform_time_period: Does the time period need to be transformed back to SISEPUEDE terms?
             - query_append: appendage to query (e.g., "where X = 0")
+            - dict_filter_override: filtering dictionary to apply independently of techs_to_pivot. Filters on top of techs_to_pivot if provided.
         """
 
         # initialize some pieces
@@ -3318,7 +3728,10 @@ class ElectricEnergy:
 
         # reduce data frame to techs (should be trivial)
         df_source = df_table_nemomod[df_table_nemomod[field_pivot].isin(cats_filter)] if (cats_filter is not None) else df_table_nemomod
+        if dict_filter_override is not None:
+            df_source = sf.subset_df(df_source, dict_filter_override)
         df_source[field_pivot] = df_source[field_pivot].replace(dict_repl)
+
         # build renaming dictionary
         dict_cats_to_varname = [x for x in attr.key_values if x in list(df_source[field_pivot])]
         varnames = self.model_attributes.build_varlist(subsec, modvar, restrict_to_category_values = dict_cats_to_varname)
@@ -3346,6 +3759,7 @@ class ElectricEnergy:
             df_source,
             [self.model_attributes.dim_time_period]
         )
+
         # ensure time_period is properly ordered
         df_out = sf.orient_df_by_reference_vector(
             df_out,
@@ -3377,9 +3791,14 @@ class ElectricEnergy:
 
             where NemoModTABLE is an appropriate table.
 
+            Function Arguments
+            ------------------
             - df_elec_trajectories: input of required variabels passed from other SISEPUEDE sectors.
             - df_reference_capacity_factor: reference data frame containing capacity factors
             - df_reference_specified_demand_profile:r eference data frame containing the specified demand profile by region
+
+            Keyword Arguments
+            -----------------
             - dict_attributes: dictionary of attribute tables that can be used to pass attributes to downstream format_nemomod_table_ functions. If passed, the following keys are used to represent attributes:
                 * attribute_emission: EMISSION attribute table
                 * attribute_fuel: FUEL attribute table
@@ -3510,6 +3929,9 @@ class ElectricEnergy:
     ) -> dict:
         """
             Retrieve tables from applicable inputs and format as dictionary. Returns a data frame ordered by time period that can be concatenated with df_elec_trajectories.
+
+            Function Arguments
+            ------------------
             - engine: SQLalchemy engine used to connect to output database
             - df_elec_trajectories: input of required variabels passed from other SISEPUEDE sectors.
         """
@@ -3552,9 +3974,15 @@ class ElectricEnergy:
 
         """
             project electricity emissions and costs using NemoMod. Primary method of ElectricEnergy.
+
+            Function Arguments
+            ------------------
             - df_elec_trajectories: data frame of input trajectories
+
+            Keyword Arguments
+            ------------------
             - engine: SQLalchemy database engine used to connect to the database. If None, creates an engine using fp_database.
-            - fp_database: file path to sqlite database to use for NemoMod. If None, calls engine.
+            - fp_database: file path to sqlite database to use for NemoMod. If None, creates an SQLAlchemy engine (it is recommended that, if running in batch, a single engine is created and called multiple times)
             - dict_ref_tables: dictionary of reference tables required to prepare data for NemoMod. If None, use ElectricEnergy.dict_nemomod_reference_tables (initialization data)
             - solver: string specifying the solver to use to run NemoMod. If None, default to SISEPUEDE configuration value.
             - vector_calc_time_periods: list of time periods in NemoMod to run. If None, use configuration defaults.
