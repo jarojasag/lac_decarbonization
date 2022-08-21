@@ -36,6 +36,63 @@ i.e., the point-of-use demand is the efficiency-weighted fraction of consumption
 ----
 
 
+Energy Fuels
+============
+
+Fuel is cross-cutting, affecting all energy sectors (including `Electricity <../energy_electric.htm>`_). **EXPAND DESCRIPTION**
+
+
+Variables by Category
+---------------------
+
+For each Energy Fuels category ``$CAT-FUEL$``, the following variables are required.
+
+.. csv-table:: For different SCOE categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
+   :file: ./csvs/table_varreqs_by_category_en_scoe.csv
+   :header-rows: 1
+
+
+Variables by Partial Category
+---------------------
+
+The following variables are required for some categories ``$CAT-FUEL$``.
+
+.. csv-table:: For different fuel categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
+   :file: ./csvs/table_varreqs_by_partial_category_en_enfu.csv
+   :header-rows: 1
+
+
+Categories
+----------
+
+Energy Fuels is divided into the following categories.
+
+.. csv-table:: Fuel categories (``$CAT-FUEL$`` attribute table)
+   :file: ./csvs/attribute_cat_enfu.csv
+   :header-rows: 1
+
+----
+
+
+
+Fugitive Emissions
+==================
+
+Fugitive emissions includes emission from coal, natural gas, and oil production, transmission, and distribution.
+
+
+Variables by Partial Category
+-----------------------------
+
+Fugitive emissions relies on the Energy Fuels category as the primary input category. For each fuel category ``$CAT-FUEL$`` included in fugitive emissions (coal, natural gas, and oil), the following variables are required.
+
+.. csv-table:: For different Industrial categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
+   :file: ./csvs/table_varreqs_by_partial_category_en_fgtv.csv
+   :header-rows: 1
+
+
+----
+
 
 
 Industrial Energy
@@ -48,14 +105,13 @@ Variables by Category
 
 For each industrial category ``$CAT-INDUSTRY$``, the following variables are required.
 
-.. csv-table:: For different SCOE categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
+.. csv-table:: For different Industrial Energy categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
    :file: ./csvs/table_varreqs_by_category_en_inen.csv
    :header-rows: 1
 
 
 Variables by Partial Category
 -----------------------------
-
 
 .. csv-table:: For different Industrial categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
    :file: ./csvs/table_varreqs_by_partial_category_en_inen.csv
@@ -64,6 +120,7 @@ Variables by Partial Category
 
 Categories
 ----------
+
 Industrial categories are described in `Industial Processes and Product Use (IPPU) <../ippu.html>`_.
 
 ----
@@ -104,7 +161,7 @@ Variables by Partial Category
 Categories
 ----------
 
-SCOE is divided into the following categories, which
+SCOE is divided into the following categories.
 
 .. csv-table:: Other categories (``$CAT-SCOE$`` attribute table)
    :file: ./csvs/attribute_cat_scoe.csv
