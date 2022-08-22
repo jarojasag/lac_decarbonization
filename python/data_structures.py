@@ -471,6 +471,8 @@ class ModelAttributes:
         self.table_nemomod_total_annual_min_capacity_investment = "TotalAnnualMinCapacityInvestment"
         self.table_nemomod_total_annual_min_capacity_storage = "TotalAnnualMinCapacityStorage"
         self.table_nemomod_total_annual_min_capacity_investment_storage = "TotalAnnualMinCapacityInvestmentStorage"
+        self.table_nemomod_total_technology_annual_activity_lower_limit = "TotalTechnologyAnnualActivityLowerLimit"
+        self.table_nemomod_total_technology_annual_activity_upper_limit = "TotalTechnologyAnnualActivityUpperLimit"
         self.table_nemomod_specified_annual_demand = "SpecifiedAnnualDemand"
         self.table_nemomod_variable_cost = "VariableCost"
         self.table_nemomod_year_split = "YearSplit"
@@ -510,7 +512,7 @@ class ModelAttributes:
         # miscellaneous parameters that need to be checked before running
         self.field_enfu_biofuels_demand_category = "biomass_demand_category"
         self.field_enfu_electricity_demand_category = "electricity_demand_category"
-        self.field_enfu_natural_gas_fuel_category = "natural_gas_fuel_category"
+        self.field_enfu_biogas_fuel_category = "biogas_fuel_category"
         self.field_enfu_waste_fuel_category = "waste_fuel_category"
 
         # run checks and raise errors if invalid data are found in the attribute tables
@@ -1203,7 +1205,7 @@ class ModelAttributes:
         if unit is None:
             return None
 
-        # check that the target mass unit is defined
+        # check that the target unit is defined
         if not key_dict in attr_cur.field_maps.keys():
             valid_units_to_match = sf.format_print_list(valid_units).lower()
             raise KeyError(f"Invalid {unit_type_str} to match '{unit_to_match}': defined {unit_type_str} units to match are {valid_units_to_match}.")
@@ -1274,23 +1276,45 @@ class ModelAttributes:
         if input_unit is None:
             return None
 
-        # setup some strings
+        ##  setup some strings
+
+        # get energy strings and retrieve secondary key set to check against
         unit_energy_str_clean = sf.clean_field_names([self.varchar_str_unit_energy])[0]
+        attr_ener = self.dict_attributes.get(unit_energy_str_clean)
+        name_energy_str_clean = unit_energy_str_clean.replace("unit_", "")
+        secondary_key_values_energy = attr_ener.field_maps.get(f"{attr_ener.key}_to_{name_energy_str_clean}")
+        secondary_key_values_energy = list(secondary_key_values_energy.values()) if (secondary_key_values_energy is not None) else secondary_key_values_energy
+        # get power strings and retrieve secondary key set to check against
         unit_power_str_clean = sf.clean_field_names([self.varchar_str_unit_power])[0]
+        attr_powr = self.dict_attributes.get(unit_power_str_clean)
+        name_power_str_clean = unit_power_str_clean.replace("unit_", "")
+        secondary_key_values_power = attr_powr.field_maps.get(f"{attr_powr.key}_to_{name_power_str_clean}")
+        secondary_key_values_power = list(secondary_key_values_power.values()) if (secondary_key_values_power is not None) else secondary_key_values_power
+        # setup the target fields
         field_retrieve_energy = f"annualized_{unit_power_str_clean}_equivalent"
         field_retrieve_power = f"annualized_{unit_energy_str_clean}_equivalent"
-        attr_ener = self.dict_attributes.get(unit_energy_str_clean)
-        attr_powr = self.dict_attributes.get(unit_power_str_clean)
 
         # check units
-        if input_unit in attr_ener.key_values:
+        if input_unit in (set(attr_ener.key_values) | set(secondary_key_values_energy)):
+            # convert to the key specification
+            if input_unit not in attr_ener.key_values:
+                key_dict = f"{name_energy_str_clean}_to_{unit_energy_str_clean}"
+                input_unit = attr_ener.field_maps[key_dict].get(input_unit)
+            #
             key_dict = f"{unit_energy_str_clean}_to_{field_retrieve_energy}"
             output_unit = attr_ener.field_maps[key_dict].get(input_unit)
             output_unit = clean_schema(output_unit)
-        elif input_unit in attr_powr.key_values:
+
+        elif input_unit in (set(attr_powr.key_values) | set(secondary_key_values_power)):
+            # convert to the key specification
+            if input_unit not in attr_powr.key_values:
+                key_dict = f"{name_power_str_clean}_to_{unit_power_str_clean}"
+                input_unit = attr_powr.field_maps[key_dict].get(input_unit)
+            #
             key_dict = f"{unit_power_str_clean}_to_{field_retrieve_power}"
             output_unit = attr_powr.field_maps[key_dict].get(input_unit)
             output_unit = clean_schema(output_unit)
+
         else:
             valid_energy = sf.format_print_list(self.configuration.valid_energy).lower()
             valid_power = sf.format_print_list(self.configuration.valid_power).lower()
@@ -1682,7 +1706,7 @@ class ModelAttributes:
         fields_req_bin = [
             self.field_enfu_biofuels_demand_category,
             self.field_enfu_electricity_demand_category,
-            self.field_enfu_natural_gas_fuel_category,
+            self.field_enfu_biogas_fuel_category,
             self.field_enfu_waste_fuel_category
         ]
         self._check_binary_fields(attr, self.subsec_name_agrc, fields_req_bin, force_sum_to_1 = True)

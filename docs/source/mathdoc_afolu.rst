@@ -48,14 +48,14 @@ The **MODELNAMEHERE** does not calculate a general equilibrium for land use dema
 
    * The policy-specified unadjusted production capacity of each livestock type *v* is :math:`\tilde{P}_v^{(lvst)}(t) = \tilde{G}_v(t)\chi(t)`
 
-#. **Adjust grassland area to reflect demand changes and livestock import factor** Under uncertain futures, land use area and demand for livestock may conflict. This step resolves the conflict by reallocating land use to serve demand.
+#. **Adjust grassland area to reflect demand changes and livestock import factor** Under uncertain futures, land use area and demand for livestock may conflict. This step resolves the conflict by reallocating land use, using an uncertain parameter, to either (a) completely meet demand (at one extreme, where :math:`\eta = 1`) or (b) produce only what the land allows and adjust net imports (where :math:`\eta = 0`).
 
    * The net surplus demand for livestock of type *v* at time *t* is :math:`S_v^{(lvst)}(t) = D_v^{(lvst)}(t) - \tilde{P}_v^{(lvst)}(t)`
 
-   * In the **MODELNAMEHERE** model, some of this surplus demand can be met endogenously (by adjusting the land use transition), while some can be met from net imports. The quantity used to adjust the land-use transition is found as :math:`\alpha S_v^{(lvst)}`, where :math:`0 \leq \eta \leq 1` is the **Land Use Yield Reallocation Factor**.
-      * If :math:`S_v^{(lvst)}(t) < 0`, the area of grassland will be reapportioned back to cropland, where a second adjustment occurs. Excess cropland is
+   * In the **MODELNAMEHERE** model, some of this surplus demand can be met endogenously (by adjusting the land use transition), while some can be met from net imports. The quantity used to adjust the land-use transition is found as :math:`\eta S_v^{(lvst)}`, where :math:`0 \leq \eta \leq 1` is the **Land Use Yield Reallocation Factor**.
+      * If :math:`S_v^{(lvst)}(t) < 0`, the area of grassland will be reapportioned back to cropland, where a second adjustment occurs.
 
-#. **Estimate cropland demand and unadjusted prudction**
+#. **Estimate cropland demand and unadjusted production**
 
 
 #. **Adjust cropland area to reflect demand changes and crop import factor**

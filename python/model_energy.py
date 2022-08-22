@@ -91,10 +91,15 @@ class NonElectricEnergy:
         self.modvar_enfu_energy_density_volumetric = "Volumetric Energy Density"
         self.modvar_enfu_exports_fuel = "Fuel Exports"
         self.modvar_enfu_frac_fuel_demand_imported = "Fraction of Fuel Demand Imported"
+        self.modvar_enfu_imports_electricity = "Electricity Imports"
+        self.modvar_enfu_imports_fuel = "Fuel Imports"
+        self.modvar_enfu_minimum_frac_fuel_used_for_electricity = "Minimum Fraction of Fuel Used for Electricity Generation"
         self.modvar_enfu_price_gravimetric = "Gravimetric Fuel Price"
         self.modvar_enfu_price_thermal = "Thermal Fuel Price"
         self.modvar_enfu_price_volumetric = "Volumetric Fuel Price"
+        self.modvar_enfu_production_fuel = "Fuel Production"
         self.modvar_enfu_transmission_loss_electricity = "Electrical Transmission Loss"
+        self.modvar_enfu_unused_fuel_exported = "Unused Fuel Exported"
         # list of key variables - total energy demands by fuel
         self.modvars_enfu_energy_demands_total = [
             self.modvar_enfu_energy_demand_by_fuel_ccsq,
@@ -1176,7 +1181,7 @@ class NonElectricEnergy:
                 modvar_emission,
                 self.model_attributes.varchar_str_emission_gas
             )
-            arr_fgtv_emissions_cur *= self.model_attributes.get_scalar(modvar_emission, "mass") if (emission is None) else 1
+            arr_fgtv_emissions_cur *= 1/self.model_attributes.get_scalar(modvar_emission, "mass") if (emission is None) else 1
 
             df_out.append(
                 self.model_attributes.array_to_df(
@@ -1186,6 +1191,22 @@ class NonElectricEnergy:
                     reduce_from_all_cats_to_specified_cats = True
                 )
             )
+
+        # set additional output
+        arr_fgtv_imports /= self.model_attributes.get_scalar(self.modvar_enfu_imports_fuel, "energy")
+        arr_fgtv_production /= self.model_attributes.get_scalar(self.modvar_enfu_imports_fuel, "energy")
+
+        df_out += [
+            self.model_attributes.array_to_df(
+                arr_fgtv_demands, self.modvar_enfu_energy_demand_by_fuel_total, reduce_from_all_cats_to_specified_cats = True
+            ),
+            self.model_attributes.array_to_df(
+                arr_fgtv_imports, self.modvar_enfu_imports_fuel, reduce_from_all_cats_to_specified_cats = True
+            ),
+            self.model_attributes.array_to_df(
+                arr_fgtv_production, self.modvar_enfu_production_fuel, reduce_from_all_cats_to_specified_cats = True
+            )
+        ]
 
         # concatenate and add subsector emission totals
         df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")

@@ -52,19 +52,20 @@ Variables by Categories
 
 The following variables are required for each category ``$CAT-STORAGE$``.
 
-.. csv-table:: For different storage categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
-   :file: ./csvs/table_varreqs_by_partial_category_en_enst.csv
+.. csv-table:: For different Energy Storage categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
+   :file: ./csvs/table_varreqs_by_category_en_enst.csv
    :header-rows: 1
+
 
 Categories
 ----------
 
-Storage
 .. csv-table:: The following STORAGE dimensions are specified for the SISEPUEDE NemoMod model.
    :file: ./csvs/attribute_cat_storage.csv
    :header-rows: 1
 
 ---
+
 
 
 Energy Technology (TECHNOLOGY)
@@ -75,6 +76,7 @@ The SISEPUEDE model (v1.0) uses NemoMod *only* to model the electricity sector. 
 .. csv-table:: The following TECHNOLOGY dimensions are specified for the SISEPUEDE NemoMod model.
    :file: ./csvs/attribute_cat_technology.csv
    :header-rows: 1
+
 
 Variables by Category
 -----------------------

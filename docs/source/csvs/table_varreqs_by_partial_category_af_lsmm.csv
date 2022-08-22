@@ -9,7 +9,7 @@ Input,Nitrogen from Bedding per Animal," | Represents :math:`N_{beddingMS_{(T, S
 Input,Nitrogen from Co-Digestates Factor,Factor applied to mass of dung used in anaerobic digesters to estimate relative mass of nitrogen.,``factor_lsmm_n_from_codigestates_$CAT-MANURE-MANAGEMENT$``,,``anaerobic_digester``,,,,0,1,1,0
 Input,Ratio of :math:`\text{N}_2` to :math:`\text{N}_2\text{O}`,"See :math:`R_{N_2(N_2O)}` in Equation 10.34B, V4,C10 IPCC GNGHGI 2019R",``ratio_lsmm_n2_to_n2o``,,none,,,,0,1,1,0
 Output,Dung Incinerated,,``qty_lsmm_dung_to_incinerate_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,none,,,,0,1,1,0
-Output,LSMM Biogas Recovered from Anaerobic Digesters,,``gasrecovered_lsmm_biogass_$CAT-MANURE-MANAGEMENT$_$UNIT-MASS$`` (``$UNIT-MASS$ = kt``),,``anaerobic_digester``,,,,0,1,1,0
+Output,LSMM Biogas Recovered from Anaerobic Digesters,,``gasrecovered_lsmm_biogass_$CAT-MANURE-MANAGEMENT$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,``anaerobic_digester``,,,,0,1,1,0
 Output,Total Nitrogen Available for Construction/Feed/Other,"Managed manure that is not used for fertilizer can be used for construction, feed, or left at point of use. This gives the amount used for these totals.",``qty_lsmm_total_n_used_for_other_$UNIT-MASS$ (``$UNIT-MASS$ = kt``),,none,,,,0,1,1,0
 Output,Total Nitrogen Available for Fertilizer from Dung,,``qty_lsmm_total_n_to_fertilizer_from_dung_$UNIT-MASS$ (``$UNIT-MASS$ = kt``),,none,,,,0,1,1,0
 Output,Total Nitrogen Available for Fertilizer from Urine,,``qty_lsmm_total_n_to_fertilizer_from_urine_$UNIT-MASS$ (``$UNIT-MASS$ = kt``),,none,,,,0,1,1,0

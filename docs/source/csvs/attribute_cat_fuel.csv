@@ -1,10 +1,10 @@
-﻿Category Name,``$CAT-FUEL$``,Description,Data Source,Hyperlink,Notes,Biomass Demand Category ,Electricity Demand Category,Natural Gas Fuel Category,Waste Fuel Category
-Biomass,``fuel_biomass``,"Solid biomass, includiing wood, sulphite lyes, charcoal, and other primary solid biomass (as definined in Table 2.2, V2, C2 2006/2019R IPCC GNGHGI)",,,,1,0,0,0
-Biogas,``fuel_biogas``,"Includes landfill gas, sludge gas, and other biomass gasses (integrated from the waste sector and as definined in Table 2.2, V2, C2)",,,,0,0,0,0
+﻿Category Name,``$CAT-FUEL$``,Description,Data Source,Hyperlink,Notes,Biogas Fuel Category,Biomass Demand Category ,Electricity Demand Category,Waste Fuel Category
+Biomass,``fuel_biomass``,"Solid biomass, includiing wood, sulphite lyes, charcoal, and other primary solid biomass (as definined in Table 2.2, V2, C2 2006/2019R IPCC GNGHGI)",,,,0,1,0,0
+Biogas,``fuel_biogas``,"Includes landfill gas, sludge gas, and other biomass gasses (integrated from the waste sector and as definined in Table 2.2, V2, C2)",,,,1,0,0,0
 Coal,``fuel_coal``,"Coal, including anthracite, coking coal, sub-bituminous coal, and other coals (as definined in Table 2.2, V2, C2)",,,,0,0,0,0
 Coke,``fuel_coke``,"Lignite coke, and gas coke (as definined in Table 2.2, V2, C2--does not include petroleum coke)",,,,0,0,0,0
 Diesel,``fuel_diesel``,"Gas and diesel oil (see fuel ""Gas/Diesel Oil"" in Table 2.2, V2, C2)",,,,0,0,0,0
-Electricity,``fuel_electricity``,"Electricity--this category represents demands and production of electricity as a fuel. All electricity demands associated with ``fuel_electricity`` from the Industrial Energy, Transportation, and Other Energy: Stationary Emissions and Carbon Capture and Sequestration subsectors are passed to the electricity model. ",,,,0,1,0,0
+Electricity,``fuel_electricity``,"Electricity--this category represents demands and production of electricity as a fuel. All electricity demands associated with ``fuel_electricity`` from the Industrial Energy, Transportation, and Other Energy: Stationary Emissions and Carbon Capture and Sequestration subsectors are passed to the electricity model. ",,,,0,0,1,0
 Furnace Gases,``fuel_gas_furnace``,Blast furnace and oxygen steel furnace gas,,,,0,0,0,0
 Gasoline,``fuel_gasoline``,"Gasoline (including motor, aviation, and jet gasoline as definined in Table 2.2, V2, C2)",,,,0,0,0,0
 Geothermal,``fuel_geothermal``,Geothermal energy production,,,,0,0,0,0
@@ -13,7 +13,7 @@ Hydropower,``fuel_hydropower``,Power available from hydropower,,,,0,0,0,0
 Kerosene,``fuel_kerosene``,"Kerosene, including jet and other (as definined in Table 2.2, V2, C2)",,,,0,0,0,0
 Liquefied Petroleum Gases,``fuel_gas_petroleum_liquid``,Liquified petroleoum gases,,,,0,0,0,0
 Liquid Biofuels,``fuel_biofuels``,"Biodiesel, ethanol, and biogasoline",,,,0,0,0,0
-Natural Gas,``fuel_natural_gas``,Natural gas,,,,0,0,1,0
+Natural Gas,``fuel_natural_gas``,Natural gas,,,,0,0,0,0
 Nuclear,``fuel_nuclear``,Nuclear fuel,,,,0,0,0,0
 Ocean,``fuel_ocean``,Ocean energy,,,,0,0,0,0
 Oil,``fuel_oil``,"Oil, including crude oil, shale oil, residuel fuel oil, and waste oil",,,,0,0,0,0

@@ -48,7 +48,7 @@ Variables by Category
 For each Energy Fuels category ``$CAT-FUEL$``, the following variables are required.
 
 .. csv-table:: For different SCOE categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
-   :file: ./csvs/table_varreqs_by_category_en_scoe.csv
+   :file: ./csvs/table_varreqs_by_category_en_enfu.csv
    :header-rows: 1
 
 

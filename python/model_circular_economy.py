@@ -82,8 +82,8 @@ class CircularEconomy:
         self.modvar_waso_mcf_open_dumping_average = "Average Methane Correction Factor for Open Dumping"
         self.modvar_waso_oxf_landfills = "Average Oxidization Factor at Landfills"
         self.modvar_waso_physparam_k = "K"
-        self.modvar_waso_recovered_biogas = "Biogas Recovered from Anaerobic Facilities"
-        self.modvar_waso_recovered_ch4_landfill_gas = ":math:\\text{CH}_4 Recovered from Landfill Gas"
+        self.modvar_waso_recovered_biogas_anaerobic = "Biogas Recovered from Anaerobic Facilities"
+        self.modvar_waso_recovered_biogas_landfills = "Biogas Recovered from Landfills"
         self.modvar_waso_rf_biogas = "Biogas Recovery Factor"
         self.modvar_waso_rf_landfill_gas_recovered = "Fraction of Landfill Gas Recovered at Landfills"
         self.modvar_waso_rf_landfill_gas_to_ch4 = ":math:\\text{CH}_4 Recovery Factor Landfill Gas"
@@ -836,8 +836,9 @@ class CircularEconomy:
         array_waso_emissions_ch4_biogas = (array_waso_emissions_ch4_biogas.transpose()*(1 - vec_waso_biogas_recovery_factor)).transpose()
         vec_biogas_recovered *= self.model_attributes.get_mass_equivalent(
             self.model_attributes.configuration.get("emissions_mass").lower(),
-            self.model_attributes.get_variable_characteristic(self.modvar_waso_recovered_biogas, "$UNIT-MASS$")
+            self.model_attributes.get_variable_characteristic(self.modvar_waso_recovered_biogas_anaerobic, "$UNIT-MASS$")
         )
+
         # compost emissions
         array_waso_emissions_ch4_compost = self.model_attributes.reduce_all_cats_array_to_partial_cat_array(array_waso_waste_compost, self.modvar_waso_ef_ch4_compost)
         array_waso_emissions_ch4_compost *= ((array_waso_ef_ch4_compost*factor_waso_mass_to_emission_mass).transpose()*(1 - vec_waso_ch4_flared_compost)).transpose()
@@ -848,7 +849,7 @@ class CircularEconomy:
             self.model_attributes.array_to_df(array_waso_emissions_ch4_biogas, self.modvar_waso_emissions_ch4_biogas, False),
             self.model_attributes.array_to_df(array_waso_emissions_ch4_compost, self.modvar_waso_emissions_ch4_compost, False),
             self.model_attributes.array_to_df(array_waso_emissions_n2o_compost, self.modvar_waso_emissions_n2o_compost, False),
-            self.model_attributes.array_to_df(vec_biogas_recovered, self.modvar_waso_recovered_biogas, False)
+            self.model_attributes.array_to_df(vec_biogas_recovered, self.modvar_waso_recovered_biogas_anaerobic, False)
         ]
 
 
@@ -946,15 +947,17 @@ class CircularEconomy:
         array_waso_emissions_ch4_landfill *= factor_waso_mass_to_emission_mass
         vec_waso_landfill_gas_recovered *= self.model_attributes.get_mass_equivalent(
             self.model_attributes.get_variable_characteristic(self.modvar_waso_init_msw_generated_pc, "$UNIT-MASS$"),
-            self.model_attributes.get_variable_characteristic(self.modvar_waso_recovered_ch4_landfill_gas, "$UNIT-MASS$")
+            self.model_attributes.get_variable_characteristic(self.modvar_waso_recovered_biogas_landfills, "$UNIT-MASS$")
 
         )
+
         # eliminate back-projected or historical waste
         array_waso_waste_landfill = array_waso_waste_landfill[rowind_waso_model_periods_landfill]
         array_waso_emissions_ch4_landfill = array_waso_emissions_ch4_landfill[rowind_waso_model_periods_landfill]
         vec_waso_landfill_gas_recovered = vec_waso_landfill_gas_recovered[rowind_waso_model_periods_landfill]
         # recovery can include caputre or flaring: multiply by some fraction that is captured for energy
         vec_waso_landfill_gas_recovered *= self.model_attributes.get_standard_variables(df_ce_trajectories, self.modvar_waso_frac_landfill_gas_ch4_to_energy, False, return_type = "array_base", var_bounds = (0, 1))
+
 
         ##  Open Dumping
 
@@ -974,7 +977,7 @@ class CircularEconomy:
         # get data frames
         df_out += [
             self.model_attributes.array_to_df(array_waso_emissions_ch4_landfill, self.modvar_waso_emissions_ch4_landfill, False),
-            self.model_attributes.array_to_df(vec_waso_landfill_gas_recovered, self.modvar_waso_recovered_ch4_landfill_gas, False),
+            self.model_attributes.array_to_df(vec_waso_landfill_gas_recovered, self.modvar_waso_recovered_biogas_landfills, False),
             self.model_attributes.array_to_df(array_waso_emissions_ch4_open_dump, self.modvar_waso_emissions_ch4_open_dump, False)
         ]
 

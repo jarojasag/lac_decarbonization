@@ -211,8 +211,8 @@ class AFOLU:
         self.modvar_lsmm_n_to_fertilizer_agg_urine = "Total Nitrogen Available for Fertilizer from Urine"
         self.modvar_lsmm_n_to_other_use = "Total Nitrogen Available for Construction/Feed/Other"
         self.modvar_lsmm_ratio_n2_to_n2o = "Ratio of :math:\\text{N}_2 to :math:\\text{N}_2\\text{O}"
+        self.modvar_lsmm_recovered_biogas = "LSMM Biogas Recovered from Anaerobic Digesters"
         self.modvar_lsmm_rf_biogas = "Biogas Recovery Factor at LSMM Anaerobic Digesters"
-        self.modvar_lsmm_rf_biogas_recovered = "LSMM Biogas Recovered from Anaerobic Digesters"
 
         # soil management variables
         self.modvar_soil_demscalar_fertilizer = "Fertilizer N Demand Scalar"
@@ -1747,7 +1747,7 @@ class AFOLU:
         # biogas recovery
         arr_lsmm_biogas_recovered *= self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_lvst_animal_weight,
-            self.modvar_lsmm_rf_biogas_recovered,
+            self.modvar_lsmm_recovered_biogas,
             "mass"
         )
         # total nitrogen available for fertilizer by pathway
@@ -1791,7 +1791,7 @@ class AFOLU:
             self.model_attributes.array_to_df(vec_lsmm_nitrogen_to_other, self.modvar_lsmm_n_to_other_use),
             self.model_attributes.array_to_df(vec_lsmm_nitrogen_to_fertilizer_dung, self.modvar_lsmm_n_to_fertilizer_agg_dung),
             self.model_attributes.array_to_df(vec_lsmm_nitrogen_to_fertilizer_urine, self.modvar_lsmm_n_to_fertilizer_agg_urine),
-            self.model_attributes.array_to_df(arr_lsmm_biogas_recovered, self.modvar_lsmm_rf_biogas_recovered, reduce_from_all_cats_to_specified_cats = True)
+            self.model_attributes.array_to_df(arr_lsmm_biogas_recovered, self.modvar_lsmm_recovered_biogas, reduce_from_all_cats_to_specified_cats = True)
         ]
 
 
