@@ -1799,6 +1799,13 @@ class ModelAttributes:
         cats_landuse = attribute_landuse.key_values
         matchstr_forest = self.matchstring_landuse_to_forests
 
+        # function to check the land use/forestry crosswalk
+        self._check_subsector_attribute_table_crosswalk(
+            self.subsec_name_lndu,
+            self.subsec_name_frst,
+            injection_q = True
+        )
+
         ##  check that all forest categories are in land use and that all categories specified as forest are in the land use table
         set_cats_forest_in_land_use = set([matchstr_forest + x for x in cats_forest])
         set_land_use_forest_cats = set([x.replace(matchstr_forest, "") for x in cats_landuse if (matchstr_forest in x)])
@@ -1813,11 +1820,8 @@ class ModelAttributes:
             raise KeyError(f"Undefined forest categories specified in land use attribute file '{attribute_landuse.fp_table}': did not find forest categories {extra_vals}.")
 
         # check specification of crop category & pasture category
-        fields_check_sum = ["crop_category", "pasture_category"]
-        for field in fields_check_sum:
-            vals = set(attribute_landuse.table[field])
-            if (not vals.issubset(set({0, 1}))) or (sum(attribute_landuse.table[field]) > 1):
-                raise ValueError(f"Invalid specification of field '{field}' in {subsec} attribute located at {attribute_landuse.fp_table}. Check to ensure that at most 1 is specified; all other entries should be 0.")
+        fields_req_bin = ["crop_category", "other_category", "pasture_category", "settlements_category", "wetlands_category"]
+        self._check_binary_fields(attribute_landuse, self.subsec_name_lndu, fields_req_bin, force_sum_to_1 = 1)
 
         # check to ensure that source categories for mineralization in soil management are specified properly
         field_mnrl = "mineralization_in_land_use_conversion_to_managed"
@@ -1849,6 +1853,9 @@ class ModelAttributes:
             type_target = "categories",
             injection_q = True
         )
+        # check required fields - binary
+        fields_req_bin = ["primary_forest_category"]
+        self._check_binary_fields(attribute_forest, self.subsec_name_frst, fields_req_bin, force_sum_to_1 = 1)
 
 
     ##  check the livestock manure management attribute table

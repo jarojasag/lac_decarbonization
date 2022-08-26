@@ -63,6 +63,7 @@ for dir in [dir_rbd_baseline_transition_probs, dir_rbd_nemomod_energy_inputs]:
 fp_csv_nemomod_residual_capacity_inputs = os.path.join(dir_rbd_nemomod_energy_inputs, "inputs_by_country_modvar_entc_nemomod_residual_capacity.csv")
 fp_csv_transition_probability_estimation_annual = os.path.join(dir_rbd_baseline_transition_probs, "transition_probs_by_region_and_year.csv")
 fp_csv_transition_probability_estimation_mean = os.path.join(dir_rbd_baseline_transition_probs, "transition_probs_by_region_mean.csv")
+fp_csv_transition_probability_estimation_mean_recent = os.path.join(dir_rbd_baseline_transition_probs, "transition_probs_by_region_mean_recent_only.csv")
 fpt_csv_transition_probability_estimation_mean_with_growth = os.path.join(dir_rbd_baseline_transition_probs, "transition_probs_by_region_mean_with_target_growth-%s.csv")
 fpt_pkl_transition_probability_estimation_mean_with_growth_assumptions = os.path.join(dir_rbd_baseline_transition_probs, "transition_probs_by_region_mean_with_target_growth-%s_assumptions.pkl")
 
