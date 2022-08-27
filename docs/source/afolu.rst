@@ -84,6 +84,24 @@ Land use projections are driven by a Markov Chain, represented by a transition m
 .. note::
    The entries :math:`Q_{ij}(t)` give the transition probability of land use category :math:`i` to land use category :math:`j`. :math:`Q` is row stochastic, so that :math:`\sum_{j}Q_{ij}(t) = 1` for each land use category :math:`i` and time period :math:`t`. To preserve row stochasticity, it is highly recommended that strategies and uncertainty be represented using the trajectory mixing approach, where bounding trajectories on transitions probabilities are specified and uncertainty exploration gives a mix between them.
 
+The land use transition model includes what is referred to as the *Land Use Reallocation Factor* (LURF). The LURF helps reconcile differences between an exogenous projection of a land use transition matrix and endogenous changes that would be required to adapt to changing demands for production of livestock and crops. The LURF--which is referred to throughout the SISEPUEDE documentation as :math:`\eta`--can be set to any real number in the interval [0, 1], i.e., :math:`\eta \in [0, 1]`.
+
+When running a model with an exogenous specification of land use transition probabilities, the demand (:math:`D`) for production of crops and livestock may exceed (or not meet) the supply (:math:`S`) that is implied by the area of land and the production per area (grazing livestock per area for pastures, yield per area in crops, and livestock feed yield per area of relevant crop classes). If demand is not equal to supply, then there is an imbalance :math:`I = D - S` (also referred to as *surplus demand*). This imbalance can be compensated in any combination of two ways:
+
+#. Changing net imports of the crop or animal (:math:`I > 0 \implies` the change to net imports is positive); and/or
+
+#. Reallocating land use categories away from the exogenous transition matrix to increase or decrease available supply.
+
+The value of :math:`\eta` represents the fraction of unmet demand, in pasture and cropland categories, that is allocated to the second option, i.e., the amount of demand that is used to calculate changes to pasture and cropland areas. If :math:`\eta = 0`, then no land is reallocated to account for the demand/supply imbalance, and surplus demand is added to net imports (surplus demand can be negative). If :math:`\eta = 1`, then **all** imbalance is reconciled by reallocating cropland and pastures so that supply is equal to demand, and :math:`D = S \implies I = 0`. For values of :math:`\eta \in (0, 1)`, some surplus demand is met through changes to net imports, while some is met through land use reallocation.
+
+.. note:: In the ``$CAT-LANDUSE$`` attribute file, categories can be specified as a *Reallocation Transition Probability Exhaustion Category* The configuration file includes the *land_use_reallocation_max_out_directionality* parameter. This parameter can take on three values:
+
+   #. decrease_only (Default): If, during land use reallocation, the demand for cropland and/or pasture **decreases**, then transition probabilities out of land use categories specified in as Reallocation Transition Probability Exhaustion Categories (into cropland or pastures) will be minimized before scaling other inbound transition probabilities (they are bound by 0). If increasing, all inbound transition probabilities to cropland and pastures are scaled uniformly.
+
+   #. increase_only: If, during land use reallocation, the demand for cropland and/or pasture **increases**, then transition probabilities out of land use categories specified as Reallocation Transition Probability Exhaustion Categories (into cropland or pastures) will be maximized before scaling other inbound transition probabilities (they are bound by 1). If decreasing, all inbound transition probabilities to cropland and pastures are scaled uniformly.
+
+   #. decrease_and_increase: If the demand for cropland and/or pasture **decreases** or **increases**, then transition probabilities out of land use categories specified as Reallocation Transition Probability Exhaustion Categories (into cropland or pastures) will be minimized or maximized (respectively) before scaling other inbound transition probabilities (they are bound by 0 and 1, respectively).
+
 
 Variables by Category
 ---------------------

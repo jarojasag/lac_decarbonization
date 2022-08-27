@@ -119,6 +119,7 @@ class Configuration:
             "energy_units_nemomod",
             "emissions_mass",
             "historical_solid_waste_method",
+            "land_use_reallocation_max_out_directionality",
             "length_units",
             "monetary_units",
             "nemomod_solver",
@@ -241,6 +242,7 @@ class Configuration:
         valid_gwp = self.get_valid_values_from_attribute_column(attr_gas, "global_warming_potential_", int)
         valid_historical_hwp_method = ["back_project", "historical"]
         valid_historical_solid_waste_method = ["back_project", "historical"]
+        valid_lurmod = ["decrease_only", "increase_only", "decrease_and_increase"]
         valid_length = self.get_valid_values_from_attribute_column(attr_length, "length_equivalent_", str, "unit_length_to_length")
         valid_mass = self.get_valid_values_from_attribute_column(attr_mass, "mass_equivalent_", str, "unit_mass_to_mass")
         valid_monetary = self.get_valid_values_from_attribute_column(attr_monetary, "monetary_equivalent_", str, "unit_monetary_to_monetary")
@@ -258,6 +260,7 @@ class Configuration:
             "global_warming_potential": valid_gwp,
             "historicall_harvested_wood_products_method": valid_historical_hwp_method,
             "historical_solid_waste_method": valid_historical_solid_waste_method,
+            "land_use_reallocation_max_out_directionality": valid_lurmod,
             "length_units": valid_length,
             "monetary_units": valid_monetary,
             "nemo_mod_solver": valid_solvers,
@@ -287,6 +290,7 @@ class Configuration:
         self.valid_energy = valid_energy
         self.valid_gwp = valid_gwp
         self.valid_historical_solid_waste_method = valid_historical_solid_waste_method
+        self.valid_land_use_reallocation_max_out_directionality = valid_lurmod
         self.valid_length = valid_length
         self.valid_mass = valid_mass
         self.valid_monetary = valid_monetary
@@ -1822,6 +1826,10 @@ class ModelAttributes:
         # check specification of crop category & pasture category
         fields_req_bin = ["crop_category", "other_category", "pasture_category", "settlements_category", "wetlands_category"]
         self._check_binary_fields(attribute_landuse, self.subsec_name_lndu, fields_req_bin, force_sum_to_1 = 1)
+        # check
+        fields_req_bin = ["reallocation_transition_probability_exhaustion_category"]
+        self._check_binary_fields(attribute_landuse, self.subsec_name_lndu, fields_req_bin, force_sum_to_1 = 0)
+
 
         # check to ensure that source categories for mineralization in soil management are specified properly
         field_mnrl = "mineralization_in_land_use_conversion_to_managed"

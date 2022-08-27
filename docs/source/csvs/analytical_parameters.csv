@@ -15,6 +15,7 @@ Historical Solid Waste Back Projection Number of Back Projection Periods,histori
 Historical Solid Waste Method,historical_solid_waste_method,back_project," | The first order decay (FOD) model used to estimate emissions from solid waste disposal requires an estimate of waste before time :math:`t = 0`. Two methods are supported: 'back_project' and 'historical'. 
  | 
  | Historical data are read from tables (**NOTE: Historical is currently not supported.**).",
+Land Use Reallocation Exhaust Transition Probabilities Directionality,land_use_reallocation_max_out_directionality,decrease_only,"Approach to use for ""maxing out"" transition probabilities for land use classes that transition into pasture and cropland states. Acceptable options are ""decrease_only"", ""increase_only"", or ""decrease_and_increase"". See the SISEPUEDE documentation for additional information.",
 Length Units,length_units,km,Default units for length. Used in reporting quantities useful to costs and benefits in the Transportation Demand sector.,
 Monetary Units,monetary_units,mm_usd,"Default reporting units for costs and benefits, including NemoMod reports.",
 NemoMod Solver,nemo_mod_solver,clp," | Solver to use to run NemoMod. Default allowable values are: cbc, clp, cplex, glpk, gurobi.

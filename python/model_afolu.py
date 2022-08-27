@@ -6,6 +6,7 @@ from model_ippu import IPPU
 import pandas as pd
 import numpy as np
 import time
+from typing import Union
 
 ##########################
 ###                    ###
@@ -294,6 +295,13 @@ class AFOLU:
         self.cat_lndu_pstr = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lndu, {"pasture_category": 1})[0]
         self.cat_lndu_stlm = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lndu, {"settlements_category": 1})[0]
         self.cat_lndu_wetl = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lndu, {"wetlands_category": 1})[0]
+        # list of categories to use to "max out" transition probabilities when scaling land use prevelance
+        self.cats_lndu_max_out_transition_probs = self.model_attributes.get_categories_from_attribute_characteristic(
+            self.model_attributes.subsec_name_lndu,
+            {
+                "reallocation_transition_probability_exhaustion_category": 1
+            }
+        )
 
         # assign indices
         self.ind_lndu_crop = attr_lndu.get_key_value_index(self.cat_lndu_crop)
@@ -575,6 +583,43 @@ class AFOLU:
 
 
 
+    ##  get land use scalar max out states
+    def get_lndu_scalar_max_out_states(self,
+        scalar_in: Union[int, float],
+        attribute_land_use: ds.AttributeTable = None
+    ):
+        """
+            Retrieve the vector of scalars to apply to land use based on an input preliminary scalar and configuration parameters for "maxing out" transition probabilities
+
+            Function Arguments
+            ------------------
+            - scalar_in: input scalar
+
+            Keyword Arguments
+            -----------------
+            attribute_land_use: AttributeTable for $CAT-LANDUSE$. If None, use self.model_attributes default.
+
+        """
+
+        attribute_land_use = self.model_attributes.get_attribute_table(self.subsec_name_lndu) if (attribute_land_use is None) else attribute_land_use
+        lmo_approach = self.model_attributes.configuration.get("land_use_reallocation_max_out_directionality")
+        lmo_approach = "decrease_only" if (lmo_approach is None) else lmo_approach
+
+        if (
+            (lmo_approach == "decrease_only") and (scalar_in < 1)
+        ) or (
+            (lmo_approach == "increase_only") and (scalar_in > 1)
+        ) or (
+            (lmo_approach == "decrease_and_increase")
+        ):
+            out = [(1 if (x in self.cats_lndu_max_out_transition_probs) else 0) for x in attribute_land_use.key_values]
+        else:
+            out = np.zeros(attribute_land_use.n_key_values).astype(int)
+
+        return out
+
+
+
     ##  get the transition and emission factors matrices from the data frame
     def get_markov_matrices(self,
         df_ordered_trajectories: pd.DataFrame,
@@ -620,7 +665,8 @@ class AFOLU:
         mat_column: np.ndarray,
         target_scalar: np.ndarray,
         vec_x: np.ndarray,
-        mask_scalable_states: np.ndarray = None,
+        eps: float = 0.000001,
+        mask_max_out_states: np.ndarray = None,
         max_iter: int = 100,
         printer: bool = False
     ) -> float:
@@ -637,9 +683,10 @@ class AFOLU:
 
             Keyword Arguments
             -----------------
-            - mask_scalable_states: np.array of same length as mat_column that contains a mask for states that need are scalable. The default is for all states to be scalable.
-                * For example, to ensure that a scalar does not affect the second state in a column with 5 states, the vector should be
-                    mask_fixed_states = np.array([1, 0, 1, 1, 1])
+            - eps: area convergence tolerance.
+            - mask_max_out_states: np.array of same length as mat_column that contains a mask for states that should be "maxed out" (sent to 0 or 1) first. The default is for all states to be scalable.
+                * For example, to ensure that masses of area are first shifted to/from state 1 out of states 0, 1, 2, 3, 4, 5, the vector should be
+                    mask_max_out_states = np.array([0, 1, 0, 0, 0])
                 * Default is None. If None, all states are scalable states.
             - max_iter: maximum number of iterations. Default is 100.
 
@@ -657,77 +704,61 @@ class AFOLU:
 
         """
         # check input
-        if not isinstance(mask_scalable_states, list) or isinstance(mask_scalable_states, np.ndarray):
+        if not isinstance(mask_max_out_states, list) or isinstance(mask_max_out_states, np.ndarray):
             # LOG HERE - INVALID STATE
-            mask_scalable_states = None
-        elif len(mask_scalable_states) != len(mask_scalable_states):
-            mask_scalable_states = None
+            mask_max_out_states = None
+        elif len(mask_max_out_states) != len(mask_max_out_states):
+            mask_max_out_states = None
         else:
-            mask_scalable_states = sf.vec_bounds(np.round(mask_scalable_states), (0, 1))
+            mask_max_out_states = sf.vec_bounds(np.round(mask_max_out_states), (0, 1))
 
-        if mask_scalable_states is None:
-            mask_scalable_states = np.ones(len(mat_column))
+        if mask_max_out_states is None:
+            mask_max_out_states = np.zeros(len(mat_column))
 
-        # get the target scalar
-        scalar_adj = target_scalar
-        q_j = sf.vec_bounds(mat_column*scalar_adj*mask_scalable_states + (1 - mask_scalable_states)*mat_column, (0, 1))
-        # true area and target area
-        area = np.dot(vec_x, q_j)
+
+        ##  START BY GETTING AREA THAT CAN BE MAXED OUT FROM INPUT CLASSES
+
+        # true area, target area, and area incoming from
+        area = np.dot(vec_x, mat_column)
+        area_target = target_scalar*area
+        area_incoming_from_max_out_states_at_full = np.sum(mask_max_out_states*vec_x)
+        area_incoming_from_max_out_states_at_current = np.sum(mask_max_out_states*vec_x*mat_column)
+        delta_area  = area_target - area
+
+        scalar_adj = (1 - mask_max_out_states)
+        if np.sum(mask_max_out_states) > 0:
+            # if the max-out states can't absorb the required change, then max them out and allow the rest to continue
+            max_scale = area_incoming_from_max_out_states_at_full/area_incoming_from_max_out_states_at_current
+            scale_max_out_states = min(max(1 + delta_area/area_incoming_from_max_out_states_at_current, 0), max_scale)
+            scalar_adj += mask_max_out_states*scale_max_out_states
+
+
+
+        q_j = sf.vec_bounds(mat_column*scalar_adj, (0, 1))
         area_target = target_scalar*np.dot(vec_x, mat_column)
         # index of probabilities that are scalable
-        w_scalable = np.where((q_j < 1) & (q_j > 0) & (mask_scalable_states != 0))[0]
-        w_unscalable = np.where((q_j == 1) | (q_j == 0) | (mask_scalable_states == 0))[0]
+        w_scalable = np.where((q_j < 1) & (q_j > 0))[0]
+        w_unscalable = np.where((q_j == 1) | (q_j == 0))[0]
         i = 0
         n = len(vec_x)
-        n_iter = max_iter*2 if (sum(mask_scalable_states) < len(mat_column)) else max_iter
-
-        if printer:
-            print(f"q_j (init):\t{mat_column*scalar_adj*mask_scalable_states}")
-            print(f"w_scalable:\t{w_scalable}")
-            print(f"area:\t{area}")
-            print(f"area_target:\t{area_target}")
-            print("\nstart iter\n")
+        n_iter = max_iter#*2 if (sum(mask_max_out_states) < len(mat_column)) else max_iter
 
         # prevent iterating if every entry is a 1/0, double number of iterations to allow to turn off mask halfway through (after max_iter) if still non-convergent
-        while (area != area_target) and (len(w_unscalable) < n) and (i < n_iter):
+        while (np.abs(area/area_target - 1) > eps) and (len(w_unscalable) < n) and (i < n_iter):
             # scalar is capped at one, so we are effectively applying this to only scalable indices
+            area = np.dot(vec_x, q_j)
             area_unscalable = np.dot(vec_x[w_unscalable], q_j[w_unscalable])
-            """
-            if area_unscalable > area_target:
-                scalar_adj[w_scalable] = 0.0
-                scalar_adj[w_unscalable] = target_scalar
-                # reset mask, recalculate scalable, then check again
-                mask_scalable_states = np.ones(len(mat_column))
-                w_unscalable = np.where((q_j == 1) | (q_j == 0) | (mask_scalable_states == 0))[0]
-                area_unscalable = np.dot(vec_x[w_unscalable], q_j[w_unscalable])
-            """
-            # update the scalar vector
             scalar_cur = np.nan_to_num((area_target - area_unscalable)/(area - area_unscalable), 1.0, posinf = 1.0)
-            print(scalar_cur) if printer else None
             if (scalar_cur < 0):
                 break
             scalar_adj *= scalar_cur
 
             # recalculate vector + implied area
-            q_j = sf.vec_bounds(mat_column*scalar_adj*mask_scalable_states + (1 - mask_scalable_states)*mat_column, (0, 1))
-            area = np.dot(vec_x, q_j)
+            q_j = sf.vec_bounds(mat_column*scalar_adj, (0, 1))
 
-            # probabilities that are scalable
-            mask_scalable_states = np.ones(len(mat_column)) if (i >= max_iter) else mask_scalable_states
-            w_scalable = np.where((q_j < 1) & (q_j > 0) & (mask_scalable_states != 0))[0]
-            if len(w_scalable) == 0:
-                mask_scalable_states = np.ones(len(mat_column))
-                w_scalable = np.where((q_j < 1) & (q_j > 0) & (mask_scalable_states != 0))[0]
-            w_unscalable = np.where((q_j == 1) | (q_j == 0) | (mask_scalable_states == 0))[0]
+            w_scalable = np.where((q_j < 1) & (q_j > 0))[0]
+            w_unscalable = np.where((q_j == 1) | (q_j == 0))[0]
             i += 1
-
-            if printer:
-                print(f"area_target:\t{area_target}")
-                print(f"area:\t{area}")
-                print(f"area_unscalable:\t{area_unscalable}")
-                print(f"q_j2:\t{q_j}")
-                print(f"w_scalable:\t{w_scalable}")
-                print("\n")
 
         return scalar_adj
 
@@ -881,12 +912,12 @@ class AFOLU:
             # calculate required increase in transition probabilities
             area_lndu_pstr_increase = sum(np.nan_to_num(vec_lvst_reallocation/vec_lvst_cc_proj, 0, posinf = 0.0))
             scalar_lndu_pstr = (area_pstr_proj + area_lndu_pstr_increase)/np.dot(x, arrs_transitions[i_tr][:, self.ind_lndu_pstr])
-            mask_lndu_scalable_states_pstr = [(1 if (x in [self.cat_lndu_fstp]) else 0) for x in attr_lndu.key_values]
+            mask_lndu_max_out_states_pstr = self.get_lndu_scalar_max_out_states(scalar_lndu_pstr)
             scalar_lndu_pstr = self.get_matrix_column_scalar(
                 arrs_transitions[i_tr][:, self.ind_lndu_pstr],
                 scalar_lndu_pstr,
-                x
-                #mask_scalable_states = mask_lndu_scalable_states_pstr
+                x,
+                mask_max_out_states = mask_lndu_max_out_states_pstr
             )
 
             # AGRICULTURE - calculate demand increase in crops, which is a function of gdp/capita (exogenous) and livestock demand (used for feed)
@@ -901,17 +932,15 @@ class AFOLU:
             vec_agrc_yield_adj = vec_agrc_total_dem_yield - vec_agrc_net_imports_increase
             # get the true scalar
             scalar_lndu_crop = sum(vec_agrc_cropareas_adj)/np.dot(x, arrs_transitions[i_tr][:, self.ind_lndu_crop])
-            mask_lndu_scalable_states_crop = [(1 if (x in [self.cat_lndu_fstp]) else 0) for x in attr_lndu.key_values]
+            mask_lndu_max_out_states_crop = self.get_lndu_scalar_max_out_states(scalar_lndu_crop)
             scalar_lndu_crop = self.get_matrix_column_scalar(
                 arrs_transitions[i_tr][:, self.ind_lndu_crop],
                 scalar_lndu_crop,
                 x,
-                #ask_scalable_states = mask_lndu_scalable_states_crop,
-                printer = False
+                mask_max_out_states = mask_lndu_max_out_states_crop
             )
 
             # force all changes in the forest_primary row to be applied to forest primary--e.g., reductions in fp -> pstr and fp -> crop should => increase in fp -> fp only
-            """
             dict_adj = {}
             dict_adj.update(
                 dict(zip([(r, self.ind_lndu_pstr) for r in range(len(scalar_lndu_pstr))], scalar_lndu_pstr))
@@ -919,16 +948,11 @@ class AFOLU:
             dict_adj.update(
                 dict(zip([(r, self.ind_lndu_crop) for r in range(len(scalar_lndu_crop))], scalar_lndu_crop))
             )
-            """
-            dict_adj = {
-                (self.ind_lndu_pstr, ): scalar_lndu_pstr,
-                (self.ind_lndu_crop, ): scalar_lndu_crop,
-                # force wetlands + other to stabilize
+
+            dict_adj.update({
                 (self.ind_lndu_othr, ): 1,
                 (self.ind_lndu_wetl, ): 1
-            }
-
-
+            })
             cats_ignore = [self.cat_lndu_crop, self.cat_lndu_fstp, self.cat_lndu_pstr]
             ind_lndu_fstp = attr_lndu.get_key_value_index(self.cat_lndu_fstp)
             for cat in attr_lndu.key_values:
@@ -936,11 +960,9 @@ class AFOLU:
                 if cat not in cats_ignore:
                     dict_adj.update({(ind_lndu_fstp, ind): 1})
 
-            if i == 10:
-                print(f"dict_adj: {dict_adj}\n\n")
+
             # adjust the transition matrix
             trans_adj = self.adjust_transition_matrix(arrs_transitions[i_tr], dict_adj)
-            #self.trans_adj = trans_adj if i == 0 else self.trans_adj
             # calculate final land conversion and emissions
             arr_land_conv = (trans_adj.transpose()*x.transpose()).transpose()
             vec_emissions_conv = sum((trans_adj*arrs_efs[i_ef]).transpose()*x.transpose())

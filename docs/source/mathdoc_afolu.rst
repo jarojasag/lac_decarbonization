@@ -64,3 +64,9 @@ The **MODELNAMEHERE** does not calculate a general equilibrium for land use dema
 
 .. note::
    **MODELNAMEHERE** Accounts for increases in crop demand for livestock feed, but changes to diet are not reflected in crop mix.
+
+
+Adjusting the Land Use Transition Matrix
+========================================
+
+**Description of adjustment process here**
