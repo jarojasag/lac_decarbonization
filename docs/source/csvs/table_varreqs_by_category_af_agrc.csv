@@ -18,7 +18,7 @@ Input,Initial Cropland Area Proportion,"Proportion of total **crop** area (%/100
 Output,Change to Net Imports of Crops,Difference between crops demanded and those that can be produced locally. Assumption is that demand is met and they will be imported.,``net_imports_agrc_$CAT-AGRICULTURE$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,,,,1,1,1,none,0
 Output,Changes to Agriculture Net Imports Lost," | Use this value to quantify the opportunity cost of reducing crop production for export.
  | 
- | If specifying values of **Fraction of Changes to Net Exports Met** or **Fraction of Changes to Net Imports Met**  :math:`\not= 1` (see variables in the `Land Use <../afolu.html#land_use>_` subsector), then reductions in changes to net imports may incur economic costs. ",``qty_agrc_loss_to_increasing_net_imports_$CAT-AGRICULTURE$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,,,,1,1,1,none,0
+ | If specifying values of **Fraction of Changes to Net Exports Met** or **Fraction of Changes to Net Imports Met**  :math:`\not= 1` (see variables in the `Land Use <../afolu.html#land_use>_` subsector), then reductions in changes to net imports may incur economic costs. ",``qty_agrc_changes_in_net_imports_lost_$CAT-AGRICULTURE$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,,,,1,1,1,none,0
 Output,Crop Area,Total area of each crop given in terms of the value specified in the configuration parameter ``area_units``.,``area_agrc_crops_$CAT-AGRICULTURE$``,,,,,1,1,1,none,0
 Output,Crop Demand,Total tonnage of crops demanded,``demand_agrc_$CAT-AGRICULTURE$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,,,,1,1,1,none,0
 Output,Crop Yield,Total tonnage of crops yielded,``yield_agrc_$CAT-AGRICULTURE$_$UNIT-MASS$`` (``$UNIT-MASS$ = tonne``),,,,,1,1,1,none,0

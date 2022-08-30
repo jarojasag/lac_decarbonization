@@ -69,6 +69,6 @@ Output,:math:`\text{CH}_4` Emissions from Livestock Enteric Fermentation,Methane
 Output,Change to Net Imports of Livestock,Difference between livestock demanded and those that can be produced locally. ,``net_imports_change_lvst_$CAT-LIVESTOCK$``,,,,,1,1,1,none,0,0
 Output,Changes to Livestock Net Imports Lost," | Use this value to quantify the opportunity cost of reducing crop production for export.
  | 
- | If specifying values of **Fraction of Changes to Net Exports Met** or **Fraction of Changes to Net Imports Met**  :math:`\not= 1` (see variables in the `Land Use <../afolu.html#land_use>_` subsector), then reductions in changes to net imports may incur economic costs. ",``qty_lvst_loss_to_increasing_net_imports_$CAT-LIVESTOCK$``,,,,,1,1,1,none,0,
+ | If specifying values of **Fraction of Changes to Net Exports Met** or **Fraction of Changes to Net Imports Met**  :math:`\not= 1` (see variables in the `Land Use <../afolu.html#land_use>_` subsector), then reductions in changes to net imports may incur economic costs. ",``qty_lvst_changes_in_net_imports_lost_$CAT-LIVESTOCK$``,,,,,1,1,1,none,0,
 Output,Livestock Demand,Total production demand for heads of livestock,``demand_lvst_$CAT-LIVESTOCK$``,,,,,1,1,1,none,0,0
 Output,Livestock Head Count,"Estimated as a function of land use, carrying capacity, and the **Carrying Capacity Scalar**. ",``pop_lvst_$CAT-LIVESTOCK$``,,,,,1,1,1,none,0,0
