@@ -298,7 +298,7 @@ class AFOLU:
             }
         )[0]
         self.cat_lndu_othr = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lndu, {"other_category": 1})[0]
-        self.cat_lndu_pstr = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lndu, {"pasture_category": 1})[0]
+        self.cat_lndu_grass = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lndu, {"pasture_category": 1})[0]
         self.cat_lndu_stlm = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lndu, {"settlements_category": 1})[0]
         self.cat_lndu_wetl = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lndu, {"wetlands_category": 1})[0]
         # list of categories to use to "max out" transition probabilities when scaling land use prevelance
@@ -313,7 +313,7 @@ class AFOLU:
         self.ind_lndu_crop = attr_lndu.get_key_value_index(self.cat_lndu_crop)
         self.ind_lndu_fstp = attr_lndu.get_key_value_index(self.cat_lndu_fstp)
         self.ind_lndu_othr = attr_lndu.get_key_value_index(self.cat_lndu_othr)
-        self.ind_lndu_pstr = attr_lndu.get_key_value_index(self.cat_lndu_pstr)
+        self.ind_lndu_grass = attr_lndu.get_key_value_index(self.cat_lndu_grass)
         self.ind_lndu_stlm = attr_lndu.get_key_value_index(self.cat_lndu_stlm)
         self.ind_lndu_wetl = attr_lndu.get_key_value_index(self.cat_lndu_wetl)
 
@@ -847,7 +847,7 @@ class AFOLU:
             - arr_agrc_yield_factors: array of agricultural yield factors
             - arr_lndu_frac_increasing_net_exports_met: fraction--by land use type--of increases to net exports that are met. Adjusts production demands downward if less than 1.
             - arr_lndu_frac_increasing_net_exports_met: fraction--by land use type--of increases to net imports that are met. Adjusts production demands upward if less than 1.
-            - arr_lndu_yield_by_lvst: array of lvst yield by land use category (used to project future livestock supply)
+            - arr_lndu_yield_by_lvst: array of lvst yield by land use category (used to project future livestock supply). Array gives the total yield of crop type i allocated to livestock type j at time 0 (attr_agriculture.n_key_values x attr_livestock.n_key_values)
             - arr_lvst_dem: array of livestock demand
             - vec_agrc_frac_cropland_area: vector of fractions of agricultural area fractions by classes
             - vec_lndu_frac_grassland_pasture: vector giving the fraction of grassland that is pasture
@@ -862,7 +862,7 @@ class AFOLU:
 
             Returns
             -------
-            Tuple with 12 elements:
+            Tuple with 13 elements:
             - arr_agrc_change_to_net_imports_lost,
             - arr_agrc_frac_cropland,
             - arr_agrc_net_import_increase,
@@ -895,10 +895,12 @@ class AFOLU:
         # set some commonly called attributes and indices in arrays
         m = attr_lndu.n_key_values
 
+        #TEMP
+        #vec_lndu_frac_grassland_pasture = np.ones(vec_lndu_frac_grassland_pasture.shape)
+
         # initialize variables for livestock
-        #arr_lvst_dem_gr = np.nan_to_num(np.cumprod(arr_lvst_dem/arr_lvst_dem[0], axis = 0), posinf = 1)
         vec_lvst_dem_gr_iterator = np.ones(len(arr_lvst_dem[0]))
-        vec_lvst_cc_init = np.nan_to_num(vec_lvst_pop_init/(vec_initial_area[self.ind_lndu_pstr]*vec_lvst_pstr_weights), 0.0, posinf = 0.0)
+        vec_lvst_cc_init = np.nan_to_num(vec_lvst_pop_init/(vec_initial_area[self.ind_lndu_grass]*vec_lvst_pstr_weights*vec_lndu_frac_grassland_pasture[0]), 0.0, posinf = 0.0)
 
         # intilize output arrays, including land use, land converted, emissions, and adjusted transitions
         arr_agrc_frac_cropland = np.array([vec_agrc_frac_cropland_area for k in range(n_tp)])
@@ -907,6 +909,7 @@ class AFOLU:
         arr_agrc_yield = np.array([(vec_initial_area[self.ind_lndu_crop]*vec_agrc_frac_cropland_area*arr_agrc_yield_factors[0]) for k in range(n_tp)])
         arr_emissions_conv = np.zeros((n_tp, attr_lndu.n_key_values))
         arr_land_use = np.array([vec_initial_area for k in range(n_tp)])
+        arr_lvst_dem_adj = arr_lvst_dem.copy().astype(int)
         arr_lvst_pop_adj = arr_lvst_dem.copy().astype(int)
         arr_lvst_net_import_increase = np.zeros((n_tp, attr_lvst.n_key_values))
         arr_lvst_change_to_net_imports_lost = np.zeros((n_tp, attr_lvst.n_key_values))
@@ -931,41 +934,43 @@ class AFOLU:
             # calculate the unadjusted land use areas (projected to time step i + 1)
             area_crop_cur = x[self.ind_lndu_crop]
             area_crop_proj = np.dot(x, arrs_transitions[i_tr][:, self.ind_lndu_crop])
-            area_pstr_cur = x[self.ind_lndu_pstr]
-            area_pstr_proj = np.dot(x, arrs_transitions[i_tr][:, self.ind_lndu_pstr])
+            area_pstr_cur = x[self.ind_lndu_grass]*vec_lndu_frac_grassland_pasture[i]
+            area_pstr_proj = np.dot(x, arrs_transitions[i_tr][:, self.ind_lndu_grass])*vec_lndu_frac_grassland_pasture[i + 1]
             vec_agrc_cropland_area_proj = area_crop_proj*arr_agrc_frac_cropland[i]
 
             # LIVESTOCK - calculate carrying capacities, demand used for pasture reallocation, and net surplus
             vec_lvst_cc_proj = vec_lvst_scale_cc[i + 1]*vec_lvst_cc_init
             inds_lvst_where_pop_noncc = np.where(vec_lvst_cc_proj == 0)[0]
             vec_lvst_prod_proj = vec_lvst_cc_proj*area_pstr_proj*vec_lvst_pstr_weights
-            vec_lvst_net_surplus = np.nan_to_num(arr_lvst_dem[i + 1] - vec_lvst_prod_proj)
+            vec_lvst_unmet_demand = np.nan_to_num(arr_lvst_dem[i + 1] - vec_lvst_prod_proj)
             # calculate net surplus met
-            vec_lvst_net_surplus_met = sf.vec_bounds(vec_lvst_net_surplus, (0, np.inf))*arr_lndu_frac_increasing_net_imports_met[i + 1, self.ind_lndu_pstr]
-            vec_lvst_net_surplus_met += sf.vec_bounds(vec_lvst_net_surplus, (-np.inf, 0))*arr_lndu_frac_increasing_net_exports_met[i + 1, self.ind_lndu_pstr]
-            vec_lvst_net_surplus_unmet = vec_lvst_net_surplus - vec_lvst_net_surplus_met
-            # update demand for livestock to account for unmet net surplus (net surplus is + if imports increase, - if exports increase)
-            vec_lvst_pop_adj = vec_lvst_prod_proj + vec_lvst_net_surplus_unmet
+            vec_lvst_unmet_demand_to_impexp = sf.vec_bounds(vec_lvst_unmet_demand, (0, np.inf))*arr_lndu_frac_increasing_net_imports_met[i + 1, self.ind_lndu_grass]
+            vec_lvst_unmet_demand_to_impexp += sf.vec_bounds(vec_lvst_unmet_demand, (-np.inf, 0))*arr_lndu_frac_increasing_net_exports_met[i + 1, self.ind_lndu_grass]
+            vec_lvst_unmet_demand_lost = vec_lvst_unmet_demand - vec_lvst_unmet_demand_to_impexp
+            # update production in livestock to account for lost unmet demand (unmet demand is + if imports increase, - if exports increase)
+            vec_lvst_pop_adj = vec_lvst_prod_proj + vec_lvst_unmet_demand_lost
             if len(inds_lvst_where_pop_noncc) > 0:
-                np.put(vec_lvst_net_surplus_met, inds_lvst_where_pop_noncc, 0)
-                np.put(vec_lvst_net_surplus_unmet, inds_lvst_where_pop_noncc, 0)
+                np.put(vec_lvst_unmet_demand_to_impexp, inds_lvst_where_pop_noncc, 0)
+                np.put(vec_lvst_unmet_demand_lost, inds_lvst_where_pop_noncc, 0)
                 np.put(vec_lvst_pop_adj, inds_lvst_where_pop_noncc, arr_lvst_dem[i + 1, inds_lvst_where_pop_noncc])
-            #
-            vec_lvst_net_surplus = vec_lvst_net_surplus_met
+            # get unmet demand, reallocation, and final increase to net imports, then update the population
+            vec_lvst_unmet_demand = vec_lvst_unmet_demand_to_impexp
+            vec_lvst_reallocation = vec_lvst_unmet_demand*vec_lndu_yrf[i + 1] # demand for livestock met by reallocating land
+            vec_lvst_net_import_increase = vec_lvst_unmet_demand - vec_lvst_reallocation # demand for livestock met by increasing net imports (neg => net exports)
+            vec_lvst_pop_adj += vec_lvst_reallocation
+            # update output arrays
             arr_lvst_pop_adj[i + 1] = np.round(vec_lvst_pop_adj).astype(int)
-            # update growth rate of livestock and carrying capacity
-            vec_lvst_dem_gr_iterator *= (vec_lvst_pop_adj/arr_lvst_dem[0])
+            # set growth in livestock relative to baseline and carrying capacity
+            vec_lvst_dem_gr_iterator = np.nan_to_num(vec_lvst_pop_adj/arr_lvst_dem[0], 1.0, posinf = 1.0)
             vec_lvst_cc_proj_adj = np.nan_to_num(vec_lvst_pop_adj/(area_pstr_proj*vec_lvst_pstr_weights), 0.0, posinf = 0.0)
-            # get reallocation and final increase to net imports
-            vec_lvst_reallocation = vec_lvst_net_surplus*vec_lndu_yrf[i + 1] # demand for livestock met by reallocating land
-            vec_lvst_net_import_increase = vec_lvst_net_surplus - vec_lvst_reallocation # demand for livestock met by increasing net imports (neg => net exports)
 
             # calculate required increase in transition probabilities
             area_lndu_pstr_increase = sum(np.nan_to_num(vec_lvst_reallocation/vec_lvst_cc_proj_adj, 0, posinf = 0.0))
-            scalar_lndu_pstr = (area_pstr_proj + area_lndu_pstr_increase)/np.dot(x, arrs_transitions[i_tr][:, self.ind_lndu_pstr])
+            area_grss_proj = np.nan_to_num(area_pstr_proj/vec_lndu_frac_grassland_pasture[i + 1], 0.0, posinf = 0.0)
+            scalar_lndu_pstr = (area_grss_proj + area_lndu_pstr_increase)/np.dot(x, arrs_transitions[i_tr][:, self.ind_lndu_grass])
             mask_lndu_max_out_states_pstr = self.get_lndu_scalar_max_out_states(scalar_lndu_pstr)
             scalar_lndu_pstr = self.get_matrix_column_scalar(
-                arrs_transitions[i_tr][:, self.ind_lndu_pstr],
+                arrs_transitions[i_tr][:, self.ind_lndu_grass],
                 scalar_lndu_pstr,
                 x,
                 mask_max_out_states = mask_lndu_max_out_states_pstr
@@ -976,20 +981,20 @@ class AFOLU:
             vec_agrc_total_dem_yield = (arr_agrc_nonfeeddem_yield[i + 1] + vec_agrc_feed_dem_yield)
             # calculate net surplus for yields
             vec_agrc_proj_yields = vec_agrc_cropland_area_proj*arr_agrc_yield_factors[i + 1]
-            vec_agrc_net_surplus_yields = vec_agrc_total_dem_yield - vec_agrc_proj_yields
-            vec_agrc_net_surplus_yields_met = sf.vec_bounds(vec_agrc_net_surplus_yields, (0, np.inf))*arr_lndu_frac_increasing_net_imports_met[i + 1, self.ind_lndu_crop]
-            vec_agrc_net_surplus_yields_met += sf.vec_bounds(vec_agrc_net_surplus_yields, (-np.inf, 0))*arr_lndu_frac_increasing_net_exports_met[i + 1, self.ind_lndu_crop]
-            vec_agrc_net_surplus_yields_unmet = vec_agrc_net_surplus_yields - vec_agrc_net_surplus_yields_met
+            vec_agrc_unmet_demand_yields = vec_agrc_total_dem_yield - vec_agrc_proj_yields
+            vec_agrc_unmet_demand_yields_to_impexp = sf.vec_bounds(vec_agrc_unmet_demand_yields, (0, np.inf))*arr_lndu_frac_increasing_net_imports_met[i + 1, self.ind_lndu_crop]
+            vec_agrc_unmet_demand_yields_to_impexp += sf.vec_bounds(vec_agrc_unmet_demand_yields, (-np.inf, 0))*arr_lndu_frac_increasing_net_exports_met[i + 1, self.ind_lndu_crop]
+            vec_agrc_unmet_demand_yields_lost = vec_agrc_unmet_demand_yields - vec_agrc_unmet_demand_yields_to_impexp
             # adjust yields for import/export scalar
-            vec_agrc_proj_yields_adj = vec_agrc_proj_yields + vec_agrc_net_surplus_yields_unmet
+            vec_agrc_proj_yields_adj = vec_agrc_proj_yields + vec_agrc_unmet_demand_yields_lost
             vec_agrc_yield_factors_adj = np.nan_to_num(vec_agrc_proj_yields_adj/vec_agrc_cropland_area_proj, 0.0, posinf = 0.0) # replaces arr_agrc_yield_factors[i + 1] below
-            vec_agrc_total_dem_yield = vec_agrc_proj_yields_adj + vec_agrc_net_surplus_yields_met
+            vec_agrc_total_dem_yield = vec_agrc_proj_yields_adj + vec_agrc_unmet_demand_yields_to_impexp
             # now, generate modified crop areas and net surplus of crop areas
             vec_agrc_dem_cropareas = np.nan_to_num(vec_agrc_total_dem_yield/vec_agrc_yield_factors_adj, posinf = 0.0)
-            vec_agrc_net_surplus = vec_agrc_dem_cropareas - vec_agrc_cropland_area_proj
-            vec_agrc_reallocation = vec_agrc_net_surplus*vec_lndu_yrf[i + 1]
+            vec_agrc_unmet_demand = vec_agrc_dem_cropareas - vec_agrc_cropland_area_proj
+            vec_agrc_reallocation = vec_agrc_unmet_demand*vec_lndu_yrf[i + 1]
             # get surplus yield (increase to net imports)
-            vec_agrc_net_imports_increase = (vec_agrc_net_surplus - vec_agrc_reallocation)*vec_agrc_yield_factors_adj
+            vec_agrc_net_imports_increase = (vec_agrc_unmet_demand - vec_agrc_reallocation)*vec_agrc_yield_factors_adj
             vec_agrc_cropareas_adj = vec_agrc_cropland_area_proj + vec_agrc_reallocation
             vec_agrc_yield_adj = vec_agrc_total_dem_yield - vec_agrc_net_imports_increase
             # get the true scalar
@@ -1002,28 +1007,24 @@ class AFOLU:
                 mask_max_out_states = mask_lndu_max_out_states_crop
             )
 
-            #print(f"scalar_lndu_pstr: {scalar_lndu_pstr}")
-            #print(f"scalar_lndu_crop: {scalar_lndu_crop}")
+
+            ##  SET TRANSITION ADJUSTMENTS
 
             # force all changes in the forest_primary row to be applied to forest primary--e.g., reductions in fp -> pstr and fp -> crop should => increase in fp -> fp only
             dict_adj = {}
             dict_adj.update(
-                dict(zip([(r, self.ind_lndu_pstr) for r in range(len(scalar_lndu_pstr))], scalar_lndu_pstr))
+                dict(zip([(r, self.ind_lndu_grass) for r in range(len(scalar_lndu_pstr))], scalar_lndu_pstr))
             )
             dict_adj.update(
                 dict(zip([(r, self.ind_lndu_crop) for r in range(len(scalar_lndu_crop))], scalar_lndu_crop))
             )
-            """
+            # force settlements to stay stable
             dict_adj.update({
-                (self.ind_lndu_othr, ): 1,
-                (self.ind_lndu_wetl, ): 1
+                (self.ind_lndu_stlm, ): 1
             })
-
-            """
-
-            cats_ignore = [self.cat_lndu_crop, self.cat_lndu_fstp, self.cat_lndu_pstr]
+            # force primary forest to other categories to stay stable (if applicable)
+            cats_ignore = [self.cat_lndu_crop, self.cat_lndu_fstp, self.cat_lndu_grass]
             ind_lndu_fstp = attr_lndu.get_key_value_index(self.cat_lndu_fstp)
-
             for cat in attr_lndu.key_values:
                 ind = attr_lndu.get_key_value_index(cat)
                 if cat not in cats_ignore:
@@ -1039,12 +1040,12 @@ class AFOLU:
             if i + 1 < n_tp:
                 # update agriculture arrays
                 rng_agrc = list(range((i + 1)*attr_agrc.n_key_values, (i + 2)*attr_agrc.n_key_values))
-                np.put(arr_agrc_change_to_net_imports_lost, rng_agrc, vec_agrc_net_surplus_yields_unmet)
+                np.put(arr_agrc_change_to_net_imports_lost, rng_agrc, vec_agrc_unmet_demand_yields_lost)
                 np.put(arr_agrc_frac_cropland, rng_agrc, vec_agrc_cropareas_adj/sum(vec_agrc_cropareas_adj))
                 np.put(arr_agrc_net_import_increase, rng_agrc, np.round(vec_agrc_net_imports_increase), 2)
                 np.put(arr_agrc_yield, rng_agrc, vec_agrc_yield_adj)
                 # update livestock arrays
-                arr_lvst_change_to_net_imports_lost[i + 1] = vec_lvst_net_surplus_unmet
+                arr_lvst_change_to_net_imports_lost[i + 1] = vec_lvst_unmet_demand_lost
                 arr_lvst_net_import_increase[i + 1] = np.round(vec_lvst_net_import_increase).astype(int)
 
             # non-ag arrays
@@ -1059,8 +1060,8 @@ class AFOLU:
             x = np.matmul(x, trans_adj)
             i += 1
 
-        # add on final time step
-        trans_adj = arrs_transitions[len(arrs_transitions) - 1]
+        # add on final time step by repeating the transition matrix
+        trans_adj = arrs_transitions_adj[i - 1]
         # calculate final land conversion and emissions
         arr_land_conv = (trans_adj.transpose()*x.transpose()).transpose()
         vec_emissions_conv = sum((trans_adj*arrs_efs[len(arrs_efs) - 1]).transpose()*x.transpose())
@@ -1444,8 +1445,14 @@ class AFOLU:
         arr_lvst_elas_demand = np.array(df_afolu_trajectories[fields_lvst_elas])
         # get the "vegetarian" factor and use to estimate livestock pop
         vec_lvst_demscale = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.model_socioeconomic.modvar_gnrl_frac_eating_red_meat, False, "array_base", var_bounds = (0, np.inf))
-        arr_lvst_dem_pop_unadj = self.project_per_capita_demand(vec_modvar_lvst_pop_init, vec_pop, vec_rates_gdp_per_capita, arr_lvst_elas_demand, vec_lvst_demscale, int)
-
+        arr_lvst_dem_pop_unadj = self.project_per_capita_demand(
+            vec_modvar_lvst_pop_init,
+            vec_pop,
+            vec_rates_gdp_per_capita,
+            arr_lvst_elas_demand,
+            vec_lvst_demscale,
+            int
+        )
         # get weights for allocating grazing area and feed requirement to animals - based on first year only
         vec_lvst_base_graze_weights = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_dry_matter_consumption, True, "array_base")[0]
         vec_lvst_feed_allocation_weights = (vec_modvar_lvst_pop_init*vec_lvst_base_graze_weights)/np.dot(vec_modvar_lvst_pop_init, vec_lvst_base_graze_weights)
@@ -1523,7 +1530,7 @@ class AFOLU:
         ################################################
 
         # get land use projections (np arrays) - note, arrs_land_conv returns a list of matrices for troubleshooting
-        arr_agrc_change_to_net_imports_lost, arr_agrc_frac_cropland, arr_agrc_net_import_increase, arr_agrc_yield, arr_lndu_emissions_conv, arr_land_use, arr_lvst_change_to_net_imports_lost, arr_lvst_net_import_increase, arr_lvst_dem_pop, arrs_lndu_land_conv, self.mat_trans_adj, self.yields_per_livestock = self.project_integrated_land_use(
+        arr_agrc_change_to_net_imports_lost, arr_agrc_frac_cropland, arr_agrc_net_import_increase, arr_agrc_yield, arr_lndu_emissions_conv, arr_land_use, arr_lvst_change_to_net_imports_lost, arr_lvst_net_import_increase, arr_lvst_pop, arrs_lndu_land_conv, self.mat_trans_adj, self.yields_per_livestock = self.project_integrated_land_use(
             vec_modvar_lndu_initial_area,
             self.mat_trans_unadj,
             self.mat_ef,
@@ -1541,7 +1548,9 @@ class AFOLU:
             vec_lvst_carry_capacity_scale,
             n_projection_time_periods
         )
-        self.arrs_lndu_land_conv = arrs_lndu_land_conv
+
+        # update demand from population
+        arr_lvst_demand = arr_lvst_pop + arr_lvst_net_import_increase
 
         # assign some dfs that are used below in other subsectors
         df_agrc_frac_cropland = self.model_attributes.array_to_df(arr_agrc_frac_cropland, self.modvar_agrc_area_prop_calc)
@@ -1610,7 +1619,7 @@ class AFOLU:
             self.model_attributes.array_to_df(arrs_lndu_conv_to*scalar_lndu_input_area_to_output_area, self.modvar_lndu_area_converted_to_type),
             self.model_attributes.array_to_df(arr_lndu_emissions_conv, self.modvar_lndu_emissions_conv, True),
             self.model_attributes.array_to_df(arr_lvst_change_to_net_imports_lost, self.modvar_lvst_changes_to_net_imports_lost),
-            self.model_attributes.array_to_df(arr_lvst_dem_pop, self.modvar_lvst_demand_livestock),
+            self.model_attributes.array_to_df(arr_lvst_demand, self.modvar_lvst_demand_livestock),
             self.model_attributes.array_to_df(arr_lvst_net_import_increase, self.modvar_lvst_net_imports)
         ]
 
@@ -1826,10 +1835,9 @@ class AFOLU:
         ###################
 
         # get area of grassland/pastures
-        field_lvst_graze_array = self.model_attributes.build_varlist(self.subsec_name_lndu, variable_subsec = self.modvar_lndu_area_by_cat, restrict_to_category_values = [self.cat_lndu_pstr])[0]
+        field_lvst_graze_array = self.model_attributes.build_varlist(self.subsec_name_lndu, variable_subsec = self.modvar_lndu_area_by_cat, restrict_to_category_values = [self.cat_lndu_grass])[0]
         vec_lvst_graze_area = np.array(df_land_use[field_lvst_graze_array])
-        # estimate the total number of livestock that are raised
-        arr_lvst_pop = arr_lvst_dem_pop - arr_lvst_net_import_increase
+        # estimate the total number of livestock that are raised - arr_lvst_pop is a direct output of project_integrated_land_use
         arr_lvst_total_weight = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_animal_weight, True, "array_base", expand_to_all_cats = True)
         arr_lvst_total_animal_mass = arr_lvst_pop*arr_lvst_total_weight
         arr_lvst_aggregate_animal_mass = np.sum(arr_lvst_total_animal_mass, axis = 1)
@@ -1886,7 +1894,7 @@ class AFOLU:
         vec_lsmm_ratio_n2_to_n2o = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lsmm_ratio_n2_to_n2o, False, "array_base")
 
         # soil EF4/EF5 from Table 11.3 - use average fractions from grasslands
-        vec_soil_ef_ef4 = attr_lndu.get_key_value_index(self.cat_lndu_pstr)
+        vec_soil_ef_ef4 = attr_lndu.get_key_value_index(self.cat_lndu_grass)
         vec_soil_ef_ef4 = arr_lndu_ef4_n_volatilisation[:, vec_soil_ef_ef4]
         vec_soil_ef_ef5 = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_soil_ef5_n_leaching, False, "array_base")
 
@@ -2090,10 +2098,11 @@ class AFOLU:
         )
         vec_soil_n_fertilizer_use_organic += vec_lsmm_nitrogen_to_fertilizer_dung
         vec_soil_init_n_fertilizer_total = vec_soil_init_n_fertilizer_synthetic + vec_soil_n_fertilizer_use_organic
-        # get land that's fertilized and use to project fertilizer demand
+        # get land that's fertilized and use to project fertilizer demand - add in fraction of grassland that is pasture
         arr_lndu_frac_fertilized = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_frac_fertilized, True, "array_base", expand_to_all_cats = True, var_bounds = (0, 1))
-        vec_soil_area_fertilized = np.sum(arr_lndu_frac_fertilized*arr_land_use, axis = 1)
-        arr_soil_lndu_frac_of_fertilized_land = np.nan_to_num(((arr_lndu_frac_fertilized*arr_land_use).transpose()/vec_soil_area_fertilized).transpose(), 0.0)
+        arr_land_use_with_pastures_as_grassland = arr_land_use.copy()
+        arr_land_use_with_pastures_as_grassland[:, self.ind_lndu_grass] *= vec_lndu_frac_grassland_pasture
+        vec_soil_area_fertilized = np.sum(arr_lndu_frac_fertilized*arr_land_use_with_pastures_as_grassland, axis = 1)
         vec_soil_demscalar_fertilizer = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_soil_demscalar_fertilizer, False, "array_base", var_bounds = (0, np.inf))
         # estimate fertilizer demand
         vec_soil_n_fertilizer_use_total = np.concatenate([np.ones(1), np.cumprod(vec_soil_area_fertilized[1:]/vec_soil_area_fertilized[0:-1])])
@@ -2138,7 +2147,9 @@ class AFOLU:
         # some variables
         arr_lndu_frac_mineral_soils = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_frac_mineral_soils, True, "array_base", expand_to_all_cats = True, var_bounds = (0, 1))
         arr_lndu_frac_organic_soils = 1 - arr_lndu_frac_mineral_soils
-        vec_soil_area_crop_pasture = np.sum(arr_land_use[:, [self.ind_lndu_crop, self.ind_lndu_pstr]], axis = 1)
+        vec_soil_area_crop_pasture = arr_land_use[:, [self.ind_lndu_crop, self.ind_lndu_grass]]
+        vec_soil_area_crop_pasture[:, 1] *= vec_lndu_frac_grassland_pasture
+        vec_soil_area_crop_pasture = np.sum(vec_soil_area_crop_pasture, axis = 1)
 
 
         ##  F_ON AND F_SN - SYNTHETIC FERTILIZERS AND ORGANIC AMENDMENTS
@@ -2178,8 +2189,8 @@ class AFOLU:
             cat_soil = ds.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
             ind_soil = attr_soil.get_key_value_index(cat_soil)
             # get current factors
-            vec_soil_cur_wetdry_fertilized_pstr = dict_arrs_lndu_frac_drywet[modvar]*arr_land_use
-            vec_soil_cur_wetdry_fertilized_pstr = np.sum(vec_soil_cur_wetdry_fertilized_pstr*arr_lndu_frac_fertilized, axis = 1)
+            vec_soil_cur_wetdry_fertilized_pstr = dict_arrs_lndu_frac_drywet[modvar]*arr_land_use_with_pastures_as_grassland
+            vec_soil_cur_wetdry_fertilized_pstr = (vec_soil_cur_wetdry_fertilized_pstr*arr_lndu_frac_fertilized)[:, self.ind_lndu_grass]
             # get fraction of fertilized land represented by current area of cropland
             vec_soil_frac_cur_drywet_pstr = (vec_soil_cur_wetdry_fertilized_pstr/vec_soil_area_fertilized)
             vec_soil_n2odirectn_fon += (vec_soil_frac_cur_drywet_pstr*vec_soil_n_fertilizer_use_organic)*arr_soil_ef1_organic[:, ind_soil]
@@ -2352,12 +2363,12 @@ class AFOLU:
             # soil category
             cat_soil = ds.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
             ind_soil = attr_soil.get_key_value_index(cat_soil)
-            vec_soil_soc_pstr_drywet_cur = (arr_land_use*dict_arrs_lndu_frac_drywet[modvar])[:, self.ind_lndu_pstr]
+            vec_soil_soc_pstr_drywet_cur = (arr_land_use*dict_arrs_lndu_frac_drywet[modvar])[:, self.ind_lndu_grass]
             # add component to EF1 estimate for F_SOM
             vec_soil_ef1_soc_est += vec_soil_soc_pstr_drywet_cur.copy()*arr_soil_ef1_organic[:, ind_soil]/vec_soil_area_crop_pasture
-            vec_soil_soc_pstr_drywet_cur *= arr_soil_organic_c_stocks[:, ind_soil]*arr_lndu_factor_soil_carbon[:, self.ind_lndu_pstr]
+            vec_soil_soc_pstr_drywet_cur *= arr_soil_organic_c_stocks[:, ind_soil]*arr_lndu_factor_soil_carbon[:, self.ind_lndu_grass]
             vec_soil_soc_total += vec_soil_soc_pstr_drywet_cur
-            vec_soil_soc_total_mineral += vec_soil_soc_pstr_drywet_cur*arr_lndu_frac_mineral_soils[:, self.ind_lndu_pstr]
+            vec_soil_soc_total_mineral += vec_soil_soc_pstr_drywet_cur*arr_lndu_frac_mineral_soils[:, self.ind_lndu_grass]
 
         # loop over tropical/temperate NP/temperate NR
         for modvar in self.modvar_list_frst_frac_temptrop:
@@ -2430,8 +2441,8 @@ class AFOLU:
             # soil category
             cat_soil = ds.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
             ind_soil = attr_soil.get_key_value_index(cat_soil)
-            vec_soil_pstr_temptrop_cur = (arr_land_use*dict_arrs_lndu_frac_temptrop[modvar])[:, self.ind_lndu_pstr]
-            vec_soil_pstr_temptrop_cur *= arr_lndu_frac_organic_soils[:, self.ind_lndu_pstr]*arr_soil_ef2[:, ind_soil]
+            vec_soil_pstr_temptrop_cur = (arr_land_use*dict_arrs_lndu_frac_temptrop[modvar])[:, self.ind_lndu_grass]
+            vec_soil_pstr_temptrop_cur *= arr_lndu_frac_organic_soils[:, self.ind_lndu_grass]*arr_soil_ef2[:, ind_soil]
             vec_soil_n2on_direct_organic += vec_soil_pstr_temptrop_cur
         # loop over tropical/temperate NP/temperate NR
         for modvar in self.modvar_list_frst_frac_temptrop:
@@ -2468,7 +2479,7 @@ class AFOLU:
             # soil category
             cat_soil = ds.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
             ind_soil = attr_soil.get_key_value_index(cat_soil)
-            vec_soil_frac_pstr_drywet_cur = (arr_land_use*dict_arrs_lndu_frac_drywet[modvar])[:, self.ind_lndu_pstr]/arr_land_use[:, self.ind_lndu_pstr]
+            vec_soil_frac_pstr_drywet_cur = (arr_land_use*dict_arrs_lndu_frac_drywet[modvar])[:, self.ind_lndu_grass]/arr_land_use[:, self.ind_lndu_grass]
             # add component to EF1 estimate for F_SOM
             vec_soil_prp_cur = (vec_lsmm_nitrogen_to_pasture + vec_soil_n_fertilizer_use_organic_to_pasture)*vec_soil_frac_pstr_drywet_cur
             vec_soil_n2on_direct_prp += vec_soil_prp_cur*arr_soil_ef3[:, ind_soil]
