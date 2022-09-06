@@ -6,7 +6,7 @@ Input,Fire Biomass Consumption for Temperate Forests,"See Table 2.4  and Equatio
 Input,Fire Biomass Consumption for Tropical Forests,"See Table 2.4  and Equation 2.27 in V4, C2, IPCC GNGHGI (2019R)","``qty_frst_biomass_consumed_by_fire_tropical_$CAT-FOREST$_$UNIT-MASS$_per_$UNIT-AREA$`` (``$UNIT-MASS$ = tonne``, ``$UNIT-AREA$ = ha``)",,,,,0,1,1,none,0
 Input,Forest Fraction Temperate Nutrient Poor," | Used to calculate :math:`\text{N}_2\text{O}` emissions from organic soils. 
  | 
- | Forest Fraction Temperate Nutrient Poor, Forest Fraction Temperate Nutrient Rich, and Forest Fraction Tropical must sum to 1",``frac_frst_$CAT-FOREST$_c1_temperate_nutrient_poor``,,,,,0,1,1,``temperate_forest_nutrient_poor``,0
+ | Forest Fraction Temperate Nutrient Poor, Forest Fraction Temperate Nutrient Rich, and Forest Fraction Tropical must sum to 1",``frac_frst_$CAT-FOREST$_cl1_temperate_nutrient_poor``,,,,,0,1,1,``temperate_forest_nutrient_poor``,0
 Input,Forest Fraction Temperate Nutrient Rich," | Used to calculate :math:`\text{N}_2\text{O}` emissions from organic soils. 
  | 
  | Forest Fraction Temperate Nutrient Poor, Forest Fraction Temperate Nutrient Rich, and Forest Fraction Tropical must sum to 1",``frac_frst_$CAT-FOREST$_cl1_temperate_nutrient_rich``,,,,,0,1,1,``temperate_forest_nutrient_rich``,0

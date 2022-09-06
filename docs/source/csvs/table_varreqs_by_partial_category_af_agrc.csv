@@ -18,7 +18,6 @@ Input,Ratio of Above Ground Residue to Harvested Yield,,``ratio_agrc_above_groun
 Input,Ratio of Below Ground Biomass to Above Ground Biomass,,``ratio_agrc_below_ground_to_above_ground_biomass_$CAT-AGRICULTURE$``,,``cereals``|``other_annual``|``pulses``|``rice``|``tubers``,,,,0,1,1,0
 Output,:math:`\text{CH}_4` Emissions from Rice,Captures :math:`\text{CH}_4` emissions from rice paddies,``emission_co2e_$EMISSION-GAS$_agrc_anaerobicdom_$CAT-AGRICULTURE$`` (``$EMISSION-GAS$ = ch4``),,``rice``,,,,1,1,1,1
 Output,:math:`\text{CO}_2` Emissions from Biomass Carbon Stock Changes,,``emission_co2e_$EMISSION-GAS$_agrc_biomass_$CAT-AGRICULTURE$`` (``$EMISSION-GAS$ = co2``),,``bevs_and_spices``|``fruits``|``nuts``|``other_woody_perennial``,,,,1,1,1,1
-Output,:math:`\text{CO}_2` Emissions from Soil Carbon in Mineral Soils,N Mineralization in conversion to cropland,``emission_co2e_$EMISSION-GAS$_agrc_soil_carbon_mineral_soils`` (``$EMISSION-GAS$ = co2``),,none,,,,1,1,1,1
 Output,:math:`\text{CO}_2` Emissions from Soil Carbon in Organic Soils,Emissions of :math:`\text{CO}_2` in from drained organic soils.,``emission_co2e_$EMISSION-GAS$_agrc_soil_carbon_organic_soils`` (``$EMISSION-GAS$ = co2``),,none,,,,1,1,1,1
 Output,:math:`\text{N}_2\text{O}` Emissions from Biomass Burning,,``emission_co2e_$EMISSION-GAS$_agrc_biomass_burning`` (``$EMISSION-GAS$ = n2o``),,none,,,,1,1,1,1
 Output,:math:`\text{N}_2\text{O}` Emissions from Crop Residues,,``emission_co2e_$EMISSION-GAS$_agrc_crop_residues`` (``$EMISSION-GAS$ = n2o``),,none,,,,1,1,1,1

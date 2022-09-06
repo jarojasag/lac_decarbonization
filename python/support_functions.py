@@ -554,13 +554,22 @@ def vec_bounds(
         -----------------
         - cycle_vector_bounds_q: cycle bounds if there is a mismatch and the bounds are entered as a vector
     """
-    # check on approch--is there a vector of bounds?
+    # initialize bools -- using paried vector + is there a vector of bounds?
+    paired_vector_check = False # later depends on use_bounding_vec
     use_bounding_vec = False
 
     # check if specification is a list of tuples
     if len(np.array(bounds).shape) > 1:
         # initialize error check
-        error_q = not all(isinstance(n, tuple) for n in bounds)
+        if isinstance(bounds[0], np.ndarray) and isinstance(bounds[1], np.ndarray) and isinstance(vec, np.ndarray):
+            paired_vector_check = (bounds[0].shape == bounds[1].shape) and (bounds[0].shape == vec.shape)
+            if paired_vector_check:
+                shape_reset = vec.shape
+                bounds = [tuple(x) for x in zip(bounds[0].flatten(), bounds[1].flatten())]
+                vec = vec.flatten()
+
+        tuple_entry_check = all(isinstance(x, tuple) for x in bounds)
+        error_q = not tuple_entry_check
 
         # restrict use_bounding_vec to vector vs. vector with dim (n, )
         dim_vec = (len(vec), ) if isinstance(vec, list) else vec.shape
@@ -589,6 +598,8 @@ def vec_bounds(
     else:
         vec_out = [scalar_bounds(x[0], x[1]) for x in zip(vec, bounds)]
         vec_out = np.array(vec_out) if isinstance(vec, np.ndarray) else vec_out
+
+    vec_out = np.reshape(vec_out, shape_reset) if paired_vector_check else vec_out
 
     return vec_out
 

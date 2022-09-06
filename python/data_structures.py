@@ -1862,7 +1862,7 @@ class ModelAttributes:
             injection_q = True
         )
         # check required fields - binary
-        fields_req_bin = ["primary_forest_category"]
+        fields_req_bin = ["mangroves_forest_category", "primary_forest_category", "secondary_forest_category"]
         self._check_binary_fields(attribute_forest, self.subsec_name_frst, fields_req_bin, force_sum_to_1 = 1)
 
 

@@ -56,18 +56,22 @@ fp_sqlite_nemomod_db_tmp = os.path.join(dir_tmp, "nemomod_intermediate_database.
 ##  BATCH DATA GENERATION DIRECTORIES
 
 dir_rbd_baseline_transition_probs = os.path.join(dir_ref_batch_data, "baseline_transition_probability_estimates")
+dir_rbd_kcc = os.path.join(dir_ref_batch_data, "koppen_climate_classifications")
 dir_rbd_nemomod_energy_inputs = os.path.join(dir_ref_batch_data, "nemomod_energy_inputs")
-for dir in [dir_rbd_baseline_transition_probs, dir_rbd_nemomod_energy_inputs]:
+for dir in [dir_rbd_baseline_transition_probs, dir_rbd_kcc, dir_rbd_nemomod_energy_inputs]:
     os.makedirs(dir, exist_ok = True) if (not os.path.exists(dir)) else None
-# files for batch data generation
+# files for energy/nemomod inputs
 fp_csv_nemomod_residual_capacity_inputs = os.path.join(dir_rbd_nemomod_energy_inputs, "inputs_by_country_modvar_entc_nemomod_residual_capacity.csv")
+# files for afolu transition probabilities
 fp_csv_transition_probability_estimation_annual = os.path.join(dir_rbd_baseline_transition_probs, "transition_probs_by_region_and_year.csv")
 fp_csv_transition_probability_estimation_mean = os.path.join(dir_rbd_baseline_transition_probs, "transition_probs_by_region_mean.csv")
 fp_csv_transition_probability_estimation_mean_recent = os.path.join(dir_rbd_baseline_transition_probs, "transition_probs_by_region_mean_recent_only.csv")
 fpt_csv_transition_probability_estimation_mean_with_growth = os.path.join(dir_rbd_baseline_transition_probs, "transition_probs_by_region_mean_with_target_growth-%s.csv")
 fpt_pkl_transition_probability_estimation_mean_with_growth_assumptions = os.path.join(dir_rbd_baseline_transition_probs, "transition_probs_by_region_mean_with_target_growth-%s_assumptions.pkl")
-
-
+# files for Koppen Climate Classification
+fp_csv_kcc_cells_merged_to_country = os.path.join(dir_rbd_kcc, "kcc_cells_merged_to_country.csv")
+fp_csv_kcc_cell_counts_by_country_kcc = os.path.join(dir_rbd_kcc, "cc_cell_counts_by_country_kcc.csv")
+fp_climate_fields_by_country_simple = os.path.join(dir_rbd_kcc, "climate_fields_by_country.csv")
 ##  FILE-PATH DEPENDENT FUNCTIONS
 
 def excel_template_path(sector: str, region: str, type_db: str, create_export_dir: bool = True) -> str:

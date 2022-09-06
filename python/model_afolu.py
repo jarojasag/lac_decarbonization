@@ -41,6 +41,8 @@ class AFOLU:
         ##  SET MODEL FIELDS
 
         # agricultural model variables
+        self.modvar_agrc_adjusted_equivalent_exports = "Adjusted Agriculture Equivalent Exports"
+        self.modvar_agrc_adjusted_equivalent_imports = "Adjusted Agriculture Equivalent Imports"
         self.modvar_agrc_area_prop_calc = "Cropland Area Proportion"
         self.modvar_agrc_area_prop_init = "Initial Cropland Area Proportion"
         self.modvar_agrc_area_crop = "Crop Area"
@@ -54,11 +56,12 @@ class AFOLU:
         self.modvar_agrc_elas_crop_demand_income = "Crop Demand Income Elasticity"
         self.modvar_agrc_emissions_ch4_rice = ":math:\\text{CH}_4 Emissions from Rice"
         self.modvar_agrc_emissions_co2_biomass = ":math:\\text{CO}_2 Emissions from Biomass Carbon Stock Changes"
-        self.modvar_agrc_emissions_co2_soil_carbon_mineral = ":math:\\text{CO}_2 Emissions from Soil Carbon in Mineral Soils"
         self.modvar_agrc_emissions_co2_soil_carbon_organic = ":math:\\text{CO}_2 Emissions from Soil Carbon in Organic Soils"
         self.modvar_agrc_emissions_n2o_biomass_burning = ":math:\\text{N}_2\\text{O} Emissions from Biomass Burning"
         self.modvar_agrc_emissions_n2o_crop_residues = ":math:\\text{N}_2\\text{O} Emissions from Crop Residues"
+        self.modvar_agrc_equivalent_exports = "Agriculture Equivalent Exports"
         self.modvar_agrc_frac_animal_feed = "Crop Fraction Animal Feed"
+        self.modvar_agrc_frac_demand_imported = "Fraction of Agriculture Demand Imported"
         self.modvar_agrc_frac_dry = "Agriculture Fraction Dry"
         self.modvar_agrc_frac_dry_matter_in_crop = "Dry Matter Fraction of Harvested Crop"
         self.modvar_agrc_frac_production_lost = "Fraction of Food Produced Lost Before Consumption"
@@ -119,9 +122,8 @@ class AFOLU:
             self.modvar_frst_frac_temperate_nutrient_rich,
             self.modvar_frst_frac_tropical
         ]
-        # some key categories
-        self.cat_frst_prim = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_frst, {"primary_forest_category": 1})[0]
-
+        # assign some key categories
+        self._assign_cats_frst()
 
         # land use model variables
         self.modvar_lndu_area_by_cat = "Land Use Area"
@@ -131,6 +133,7 @@ class AFOLU:
         self.modvar_lndu_emissions_conv = ":math:\\text{CO}_2 Emissions from Land Use Conversion"
         self.modvar_lndu_emissions_ch4_from_wetlands = ":math:\\text{CH}_4 Emissions from Wetlands"
         self.modvar_lndu_factor_soil_carbon = "Soil Carbon Land Use Factor"
+        self.modvar_lndu_factor_soil_management = "Soil Carbon Land Management Factor"
         self.modvar_lndu_frac_dry = "Land Use Fraction Dry"
         self.modvar_lndu_frac_fertilized = "Land Use Fraction Fertilized"
         self.modvar_lndu_frac_grassland_that_is_pasture = "Pasture Fraction of Grassland"
@@ -157,7 +160,32 @@ class AFOLU:
         # some key categories
         self._assign_cats_lndu()
 
+        # manure management variables
+        self.modvar_lsmm_dung_incinerated = "Dung Incinerated"
+        self.modvar_lsmm_ef_direct_n2o = ":math:\\text{N}_2\\text{O} Manure Management Emission Factor"
+        self.modvar_lsmm_emissions_ch4 = ":math:\\text{CH}_4 Emissions from Manure Management"
+        self.modvar_lsmm_emissions_n2o = ":math:\\text{N}_2\\text{O} Emissions from Manure Management"
+        self.modvar_lsmm_frac_loss_leaching = "Fraction of Nitrogen Lost to Leaching"
+        self.modvar_lsmm_frac_loss_volatilisation = "Fraction of Nitrogen Lost to Volatilisation"
+        self.modvar_lsmm_frac_n_available_used = "Fraction of Nitrogen Used in Fertilizer"
+        self.modvar_lsmm_mcf_by_pathway = "Manure Management Methane Correction Factor"
+        self.modvar_lsmm_n_from_bedding = "Nitrogen from Bedding per Animal"
+        self.modvar_lsmm_n_from_codigestates = "Nitrogen from Co-Digestates Factor"
+        self.modvar_lsmm_n_to_pastures = "Total Nitrogen to Pastures"
+        self.modvar_lsmm_n_to_fertilizer= "Nitrogen Available for Fertilizer"
+        self.modvar_lsmm_n_to_fertilizer_agg_dung = "Total Nitrogen Available for Fertilizer from Dung"
+        self.modvar_lsmm_n_to_fertilizer_agg_urine = "Total Nitrogen Available for Fertilizer from Urine"
+        self.modvar_lsmm_n_to_other_use = "Total Nitrogen Available for Construction/Feed/Other"
+        self.modvar_lsmm_ratio_n2_to_n2o = "Ratio of :math:\\text{N}_2 to :math:\\text{N}_2\\text{O}"
+        self.modvar_lsmm_recovered_biogas = "LSMM Biogas Recovered from Anaerobic Digesters"
+        self.modvar_lsmm_rf_biogas = "Biogas Recovery Factor at LSMM Anaerobic Digesters"
+        # some categories
+        self.cat_lsmm_incineration = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lsmm, {"incineration_category": 1})[0]
+        self.cat_lsmm_pasture = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lsmm, {"pasture_category": 1})[0]
+
         # livestock model variables
+        self.modvar_lvst_adjusted_equivalent_exports = "Adjusted Livestock Equivalent Exports"
+        self.modvar_lvst_adjusted_equivalent_imports = "Adjusted Livestock Equivalent Imports"
         self.modvar_lvst_animal_weight = "Animal Weight"
         self.modvar_lvst_carrying_capacity_scalar = "Carrying Capacity Scalar"
         self.modvar_lvst_changes_to_net_imports_lost = "Changes to Livestock Net Imports Lost"
@@ -166,6 +194,8 @@ class AFOLU:
         self.modvar_lvst_ef_ch4_ef = ":math:\\text{CH}_4 Enteric Fermentation Emission Factor"
         self.modvar_lvst_elas_lvst_demand = "Elasticity of Livestock Demand to GDP per Capita"
         self.modvar_lvst_emissions_ch4_ef = ":math:\\text{CH}_4 Emissions from Livestock Enteric Fermentation"
+        self.modvar_lvst_equivalent_exports = "Livestock Equivalent Exports"
+        self.modvar_lvst_frac_demand_imported = "Fraction of Livestock Demand Imported"
         self.modvar_lvst_frac_exc_n_in_dung = "Fraction Nitrogen Excretion in Dung"
         self.modvar_lvst_frac_mm_anaerobic_digester = "Livestock Manure Management Fraction Anaerobic Digester"
         self.modvar_lvst_frac_mm_anaerobic_lagoon = "Livestock Manure Management Fraction Anaerobic Lagoon"
@@ -198,29 +228,6 @@ class AFOLU:
             self.modvar_lvst_frac_mm_ppr,
             self.modvar_lvst_frac_mm_solid_storage
         ]
-        # some categories
-        self.cat_lsmm_incineration = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lsmm, {"incineration_category": 1})[0]
-        self.cat_lsmm_pasture = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lsmm, {"pasture_category": 1})[0]
-
-        # manure management variables
-        self.modvar_lsmm_dung_incinerated = "Dung Incinerated"
-        self.modvar_lsmm_ef_direct_n2o = ":math:\\text{N}_2\\text{O} Manure Management Emission Factor"
-        self.modvar_lsmm_emissions_ch4 = ":math:\\text{CH}_4 Emissions from Manure Management"
-        self.modvar_lsmm_emissions_n2o = ":math:\\text{N}_2\\text{O} Emissions from Manure Management"
-        self.modvar_lsmm_frac_loss_leaching = "Fraction of Nitrogen Lost to Leaching"
-        self.modvar_lsmm_frac_loss_volatilisation = "Fraction of Nitrogen Lost to Volatilisation"
-        self.modvar_lsmm_frac_n_available_used = "Fraction of Nitrogen Used in Fertilizer"
-        self.modvar_lsmm_mcf_by_pathway = "Manure Management Methane Correction Factor"
-        self.modvar_lsmm_n_from_bedding = "Nitrogen from Bedding per Animal"
-        self.modvar_lsmm_n_from_codigestates = "Nitrogen from Co-Digestates Factor"
-        self.modvar_lsmm_n_to_pastures = "Total Nitrogen to Pastures"
-        self.modvar_lsmm_n_to_fertilizer= "Nitrogen Available for Fertilizer"
-        self.modvar_lsmm_n_to_fertilizer_agg_dung = "Total Nitrogen Available for Fertilizer from Dung"
-        self.modvar_lsmm_n_to_fertilizer_agg_urine = "Total Nitrogen Available for Fertilizer from Urine"
-        self.modvar_lsmm_n_to_other_use = "Total Nitrogen Available for Construction/Feed/Other"
-        self.modvar_lsmm_ratio_n2_to_n2o = "Ratio of :math:\\text{N}_2 to :math:\\text{N}_2\\text{O}"
-        self.modvar_lsmm_recovered_biogas = "LSMM Biogas Recovered from Anaerobic Digesters"
-        self.modvar_lsmm_rf_biogas = "Biogas Recovery Factor at LSMM Anaerobic Digesters"
 
         # soil management variables
         self.modvar_soil_demscalar_fertilizer = "Fertilizer N Demand Scalar"
@@ -237,6 +244,7 @@ class AFOLU:
         self.modvar_soil_ef_c_organic_soils = "C Annual Cultivated Organic Soils Emission Factor"
         self.modvar_soil_ef_c_urea = "C Urea Emission Factor"
         self.modvar_soil_emissions_co2_lime_urea = ":math:\\text{CO}_2 Emissions from Lime and Urea"
+        self.modvar_soil_emissions_co2_soil_carbon_mineral = ":math:\\text{CO}_2 Emissions from Soil Carbon in Mineral Soils"
         self.modvar_soil_emissions_n2o_fertilizer = ":math:\\text{N}_2\\text{O} Emissions from Fertilizer Use"
         self.modvar_soil_emissions_n2o_mineral_soils = ":math:\\text{N}_2\\text{O} Emissions from Mineral Soils"
         self.modvar_soil_emissions_n2o_organic_soils = ":math:\\text{N}_2\\text{O} Emissions from Organic Soils"
@@ -245,7 +253,6 @@ class AFOLU:
         self.modvar_soil_frac_n_lost_volatilisation_on = "Volatilisation Fraction from Organic Amendments and Fertilizers"
         self.modvar_soil_frac_n_lost_volatilisation_sn_non_urea = "Volatilisation Fraction from Non-Urea Synthetic Fertilizers"
         self.modvar_soil_frac_n_lost_volatilisation_sn_urea = "Volatilisation Fraction from Urea Synthetic Fertilizers"
-        self.modvar_soil_frac_soc_lost = "Fraction of SOC Lost in Cropland"
         self.modvar_soil_frac_synethic_fertilizer_urea = "Fraction Synthetic Fertilizer Use Urea"
         self.modvar_soil_fertuse_final_organic = "Organic Fertilizer N Use"
         self.modvar_soil_fertuse_final_synthetic = "Synthetic Fertilizer N Use"
@@ -282,7 +289,16 @@ class AFOLU:
 
 
 
+
     ##  FUNCTIONS FOR MODEL ATTRIBUTE DIMENSIONS
+
+    def _assign_cats_frst(self):
+        # some key categories'
+        self.cat_frst_mang = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_frst, {"mangroves_forest_category": 1})[0]
+        self.cat_frst_prim = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_frst, {"primary_forest_category": 1})[0]
+        self.cat_frst_scnd = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_frst, {"secondary_forest_category": 1})[0]
+
+
 
     # assign some land use categories
     def _assign_cats_lndu(self):
@@ -291,10 +307,22 @@ class AFOLU:
 
         # set categories
         self.cat_lndu_crop = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lndu, {"crop_category": 1})[0]
+        self.cat_lndu_fstm = self.model_attributes.get_categories_from_attribute_characteristic(
+            self.subsec_name_lndu,
+            {
+                self.model_attributes.get_subsector_attribute(self.subsec_name_frst, "pycategory_primary"): f"``{self.cat_frst_mang}``"
+            }
+        )[0]
         self.cat_lndu_fstp = self.model_attributes.get_categories_from_attribute_characteristic(
             self.subsec_name_lndu,
             {
                 self.model_attributes.get_subsector_attribute(self.subsec_name_frst, "pycategory_primary"): f"``{self.cat_frst_prim}``"
+            }
+        )[0]
+        self.cat_lndu_fsts = self.model_attributes.get_categories_from_attribute_characteristic(
+            self.subsec_name_lndu,
+            {
+                self.model_attributes.get_subsector_attribute(self.subsec_name_frst, "pycategory_primary"): f"``{self.cat_frst_scnd}``"
             }
         )[0]
         self.cat_lndu_othr = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lndu, {"other_category": 1})[0]
@@ -311,7 +339,9 @@ class AFOLU:
 
         # assign indices
         self.ind_lndu_crop = attr_lndu.get_key_value_index(self.cat_lndu_crop)
+        self.ind_lndu_fstm = attr_lndu.get_key_value_index(self.cat_lndu_fstm)
         self.ind_lndu_fstp = attr_lndu.get_key_value_index(self.cat_lndu_fstp)
+        self.ind_lndu_fsts = attr_lndu.get_key_value_index(self.cat_lndu_fsts)
         self.ind_lndu_othr = attr_lndu.get_key_value_index(self.cat_lndu_othr)
         self.ind_lndu_grass = attr_lndu.get_key_value_index(self.cat_lndu_grass)
         self.ind_lndu_stlm = attr_lndu.get_key_value_index(self.cat_lndu_stlm)
@@ -576,16 +606,102 @@ class AFOLU:
         return vec_soc_delta
 
 
+
+    ##  calcualte the SOC stock change with time dependence (includes some qualitative non-linearities)
+    def calculate_soc_stock_change_with_time_dependence(self,
+        arrs_lndu_land_conv: np.ndarray,
+        arrs_lndu_soc_conversion_factors: np.ndarray,
+        time_dependence_stock_change: int,
+        shape_param: Union[float, int] = None
+    ):
+        """
+            Function Arguments
+            ------------------
+            arrs_lndu_land_conv: arrays with land use conversion totals
+            arrs_lndu_soc_conversion_factors: arrays with SOC conversion factors between types
+            time_dependence_stock_change: time-dependent stock change factor to use
+
+            Keyword Arguments
+            -----------------
+            shape_param: parameter that expands the sigmoid. If None, defaults to time_dependence_stock_change/10.
+
+            Notes
+            -----
+
+            See Volume 4, Chapter 2 of the IPCC 2006 Guidance for National Greenhouse Gas Inventories, page 2.38 for the following description of changes to soil carbon:
+
+            "Changes in C stocks normally occur in a non-linear fashion, and it
+            is possible to further develop the time dependence of stock change
+            factors to reflect this pattern. For changes in land use or
+            management that cause a decrease in soil C content, the rate of
+            change is highest during the first few years, and progressively
+            declines with time. In contrast, when soil C is increasing due to
+            land-use or management change, the rate of accumulation tends to
+            follow a sigmoidal curve, with rates of change being slow at the
+            beginning, then increasing and finally decreasing with time. If
+            historical changes in land-use or management practices are
+            explicitly tracked by re- surveying the same locations (i.e.,
+            Approach 2 or 3 activity data, see Chapter 3), it may be possible
+            to implement a Tier 2 method that incorporates the non-linearity
+            of changes in soil C stock."
+
+            We use this guidance to assign different shapes to
+
+        """
+
+        # get length
+        n = min(len(arrs_lndu_land_conv), len(arrs_lndu_soc_conversion_factors))
+        D = int(np.round(time_dependence_stock_change))
+        shape_param = D/10 if (shape_param is None) else shape_param
+
+        # get functions that characterize SOC stock change from conversion - sequestration (sigmoid) and emissions (complementary sigmoid with double phase)
+        def emission_curve(x):
+            d = D/2
+            x_pr = x/(2*shape_param) + d*(shape_param - 1)/shape_param
+            sig = 1/(1 + np.e**(d - x_pr))
+            return 2*(1 - sig) - 1
+        def sequestration_curve(x):
+            d = D/2
+            #f_fan(x/shape_param + d*(shape_param - 1)/shape_param, D, 1, 0, np.e, d)
+            x_pr = x/shape_param + d*(shape_param - 1)/shape_param
+            sig = 1/(1 + np.e**(d - x_pr))
+            return sig
+
+        # get emission/sequestration proportions
+        vec_proportional_emission = np.array([emission_curve(x) for x in range(D)])
+        vec_proportional_emission /= np.sum(vec_proportional_emission)
+        vec_proportional_sequestration = np.array([sequestration_curve(x) for x in range(D)])
+        vec_proportional_sequestration /= np.sum(vec_proportional_sequestration)
+
+        #vec_proportional_emission = np.ones(D)/D#np.array(range(D, 0, -1))/(D*(D + 1)/2)
+        #vec_proportional_sequestration = np.ones(D)/D#np.array(range(1, D + 1))/(D*(D + 1)/2)
+        # get arrays in terms of sequestration and emission
+        arrs = arrs_lndu_land_conv*arrs_lndu_soc_conversion_factors
+        arrs_sequestration = sf.vec_bounds(arrs, (0, np.inf))
+        arrs_emission = sf.vec_bounds(arrs, (-np.inf, 0))
+
+        v_out = np.zeros(n)
+
+        for i in range(n):
+            v_cur_emission = vec_proportional_emission*(arrs_emission[i].sum())
+            v_cur_sequestration = vec_proportional_sequestration*(arrs_sequestration[i].sum())
+            v_cur = v_cur_emission + v_cur_sequestration
+            v_out[i:min(n, i + D)] += v_cur[0:min(D, n - i)]
+
+        return v_out
+
+
+
     ##  check the shape of transition/emission factor matrices sent to project_land_use
     def check_markov_shapes(self, arrs: np.ndarray, function_var_name:str):
-            # get land use info
-            pycat_lndu = self.model_attributes.get_subsector_attribute(self.subsec_name_lndu, "pycategory_primary")
-            attr_lndu = self.model_attributes.dict_attributes[pycat_lndu]
+        # get land use info
+        pycat_lndu = self.model_attributes.get_subsector_attribute(self.subsec_name_lndu, "pycategory_primary")
+        attr_lndu = self.model_attributes.dict_attributes[pycat_lndu]
 
-            if len(arrs.shape) < 3:
-                raise ValueError(f"Invalid shape for array {function_var_name}; the array must be a list of square matrices.")
-            elif arrs.shape[1:3] != (attr_lndu.n_key_values, attr_lndu.n_key_values):
-                raise ValueError(f"Invalid shape of matrices in {function_var_name}. They must have shape ({attr_lndu.n_key_values}, {attr_lndu.n_key_values}).")
+        if len(arrs.shape) < 3:
+            raise ValueError(f"Invalid shape for array {function_var_name}; the array must be a list of square matrices.")
+        elif arrs.shape[1:3] != (attr_lndu.n_key_values, attr_lndu.n_key_values):
+            raise ValueError(f"Invalid shape of matrices in {function_var_name}. They must have shape ({attr_lndu.n_key_values}, {attr_lndu.n_key_values}).")
 
 
 
@@ -769,6 +885,428 @@ class AFOLU:
         return scalar_adj
 
 
+
+    ##  get mineral soil organic change matrices
+    def get_mineral_soc_change_matrices(self,
+        arr_agrc_crop_area: np.ndarray,
+        arr_lndu_area: np.ndarray,
+        arr_lndu_factor_soil_carbon: np.ndarray,
+        arr_lndu_factor_soil_management: np.ndarray,
+        arr_lndu_frac_mineral_soils: np.ndarray,
+        arr_soil_ef1_organic: np.ndarray,
+        arr_soil_soc_stock: np.ndarray,
+        vec_lndu_frac_grassland_pasture: np.ndarray,
+        vec_soil_area_crop_pasture: np.ndarray,
+        dict_soil_fracs_to_use_agrc: dict,
+        dict_soil_fracs_to_use_frst: dict,
+        dict_soil_fracs_to_use_lndu: dict
+    ) -> tuple:
+        """
+            Retrieve matrices of delta SOC (- means loss of SOC, + indicates sequestration) for conversion from class i to class j in each time period, as well as a land-area weighted average EF1 for each time period. Note that all areas should be in the same units.
+
+            Returns: tuple of form (arrs_delta_soc, vec_avg_ef1)
+
+            Function Arguments
+            ------------------
+            - arr_agrc_crop_area: array giving crop areas
+            - arr_lndu_area: array of land use areas (ordered by attr_lndu.key_values)
+            - arr_lndu_factor_soil_carbon: array of F_LU SOC factors by land use type
+            - arr_lndu_factor_soil_management: array of F_MG SOC adjustment factors by land use type
+            - arr_lndu_frac_mineral_soils: array giving the fraction of soils that are mineral by each land use category
+            - arr_soil_ef1_organic: N2O Organic EF1 by soil type
+            - arr_soil_soc_stock: array giving soil carbon content of soil types (30cm) for each time period (n_tp x attr_soil.n_key_values)
+            - vec_lndu_frac_grassland_pasture: fraction of grassland that is pasture
+            - vec_soil_area_crop_pasture: area of crop and pasture by time period
+            - dict_soil_fracs_to_use_agrc: dictionary mapping soil fraction model variable string to array (wide by crop categories)
+            - dict_soil_fracs_to_use_frst: dictionary mapping soil fraction model variable string to fraction array (wide by forest categories)
+            - dict_soil_fracs_to_use_lndu: dictionary mapping soil fraction model variable string to fraction array (wide by land use categories)
+        """
+
+        # get attribute tables
+        attr_agrc = self.model_attributes.get_attribute_table(self.subsec_name_agrc)
+        attr_frst = self.model_attributes.get_attribute_table(self.subsec_name_frst)
+        attr_lndu = self.model_attributes.get_attribute_table(self.subsec_name_lndu)
+        attr_soil = self.model_attributes.get_attribute_table(self.subsec_name_soil)
+        # initialize SOC transition arrays
+        n_tp = len(arr_agrc_crop_area)
+        arrs_delta_soc_source = np.zeros((n_tp, attr_lndu.n_key_values, attr_lndu.n_key_values))
+        arrs_delta_soc_target = arrs_delta_soc_source.copy()
+        # initialize dictionary for building matrix lists out and vector of average ef1 soild
+        dict_lndu_avg_soc_vecs = {}
+        vec_soil_ef1_soc_est = 0.0
+
+
+        ##  GET AVERAGE SOC CONTENT IN CROPLANDS
+
+        vec_agrc_area = np.sum(arr_agrc_crop_area, axis = 1)
+        vec_agrc_avg_soc = 0.0
+        for modvar in dict_soil_fracs_to_use_agrc.keys():
+            # soil category
+            cat_soil = ds.clean_schema(self.model_attributes.get_variable_attribute(modvar, attr_soil.key))
+            ind_soil = attr_soil.get_key_value_index(cat_soil)
+            #
+            vec_agrc_avg_soc_cur = np.sum(arr_agrc_crop_area*dict_soil_fracs_to_use_agrc[modvar], axis = 1)
+            vec_soil_ef1_soc_est += vec_agrc_avg_soc_cur*arr_soil_ef1_organic[:, ind_soil]/vec_soil_area_crop_pasture
+            vec_agrc_avg_soc_cur = np.nan_to_num(vec_agrc_avg_soc_cur/vec_agrc_area, 0.0, posinf = 0.0)
+            vec_agrc_avg_soc_cur *= arr_soil_soc_stock[:, ind_soil]*arr_lndu_factor_soil_carbon[:, self.ind_lndu_crop]*arr_lndu_factor_soil_management[:, self.ind_lndu_crop]
+            vec_agrc_avg_soc += vec_agrc_avg_soc_cur*arr_lndu_frac_mineral_soils[:, self.ind_lndu_crop]
+
+        dict_lndu_avg_soc_vecs.update({self.ind_lndu_crop: vec_agrc_avg_soc})
+
+        ##  GET AVERAGE SOC CONTENT IN FORESTS
+
+        arr_frst_avg_soc = 0.0
+        dict_lndu_forest_to_frst_forest = self.model_attributes.get_ordered_category_attribute(
+            self.subsec_name_lndu,
+            attr_frst.key,
+            clean_attribute_schema_q = True,
+            return_type = dict,
+            skip_none_q = True
+        )
+        inds_frst = np.array([(attr_lndu.get_key_value_index(x), attr_frst.get_key_value_index(dict_lndu_forest_to_frst_forest[x])) for x in dict_lndu_forest_to_frst_forest.keys()])
+        inds_lndu = inds_frst[:, 0]
+        inds_frst = inds_frst[:, 1]
+
+        for modvar in dict_soil_fracs_to_use_frst.keys():
+            # soil category
+            cat_soil = ds.clean_schema(self.model_attributes.get_variable_attribute(modvar, attr_soil.key))
+            ind_soil = attr_soil.get_key_value_index(cat_soil)
+            #
+            arr_frst_avg_soc_cur = arr_lndu_area[:, inds_lndu]*dict_soil_fracs_to_use_frst[modvar][:, inds_frst]
+            arr_frst_avg_soc_cur = np.nan_to_num(arr_frst_avg_soc_cur/arr_lndu_area[:, inds_lndu], 0.0, posinf = 0.0).transpose()
+            arr_frst_avg_soc_cur *= arr_soil_soc_stock[:, ind_soil]*arr_lndu_factor_soil_carbon[:, inds_lndu].transpose()
+            arr_frst_avg_soc += arr_frst_avg_soc_cur.transpose()*arr_lndu_frac_mineral_soils[:, inds_lndu]
+
+        for i in enumerate(inds_lndu):
+            i, ind = i
+            dict_lndu_avg_soc_vecs.update({ind: arr_frst_avg_soc[:, i]})
+
+
+        ##  GET AVERAGE SOC CONTENT IN ADDITIONAL LAND USE CATEGORIES
+
+        arr_lndu_avg_soc = 0.0
+        cats_lndu = list(set(sum([self.model_attributes.get_variable_categories(x) for x in dict_soil_fracs_to_use_lndu.keys()], [])))
+        inds_lndu = sorted([attr_lndu.get_key_value_index(x) for x in cats_lndu])
+        ind_grass = inds_lndu.index(attr_lndu.get_key_value_index(self.cat_lndu_grass))
+
+        for modvar in dict_soil_fracs_to_use_lndu.keys():
+            # soil category
+            cat_soil = ds.clean_schema(self.model_attributes.get_variable_attribute(modvar, attr_soil.key))
+            ind_soil = attr_soil.get_key_value_index(cat_soil)
+            # get soil management factor for grasslands
+            arr_lndu_soil_management_factor_cur = (1 - vec_lndu_frac_grassland_pasture) + vec_lndu_frac_grassland_pasture*arr_lndu_factor_soil_management[:, inds_lndu].transpose()
+            #
+            arr_lndu_avg_soc_cur = arr_lndu_area[:, inds_lndu]*dict_soil_fracs_to_use_lndu[modvar][:, inds_lndu]
+            vec_soil_ef1_soc_est += arr_lndu_avg_soc_cur[:, ind_grass]*arr_soil_ef1_organic[:, ind_soil]*vec_lndu_frac_grassland_pasture/vec_soil_area_crop_pasture
+            arr_lndu_avg_soc_cur = np.nan_to_num(arr_lndu_avg_soc_cur/arr_lndu_area[:, inds_lndu], 0.0, posinf = 0.0).transpose()
+            arr_lndu_avg_soc_cur *= arr_soil_soc_stock[:, ind_soil]*arr_lndu_factor_soil_carbon[:, inds_lndu].transpose()*arr_lndu_soil_management_factor_cur
+            arr_lndu_avg_soc += arr_lndu_avg_soc_cur.transpose()*arr_lndu_frac_mineral_soils[:, inds_lndu]
+
+        for i in enumerate(inds_lndu):
+            i, ind = i
+            dict_lndu_avg_soc_vecs.update({ind: arr_lndu_avg_soc[:, i]})
+
+
+        ##  UPDATE SOURCE/TARGET ARRAYS USING AVERAGE SOC
+
+        for k in dict_lndu_avg_soc_vecs.keys():
+            vec = dict_lndu_avg_soc_vecs[k]
+            w = np.where(vec != 0)[0]
+            vec = np.interp(range(len(vec)), w, vec[w]) if (len(w) > 0) else vec
+            for i in range(n_tp):
+                arrs_delta_soc_source[i, k, :] = vec[i]
+                arrs_delta_soc_target[i, :, k] = vec[i]
+
+        arrs_delta = arrs_delta_soc_target - arrs_delta_soc_source
+        return arrs_delta, vec_soil_ef1_soc_est
+
+
+
+    ##  format a transition matrix as a data frame
+    def format_transition_matrix_as_input_dataframe(self,
+        mat: np.ndarray,
+        key_vals: list = None,
+        field_key: str = "key"
+    ) -> pd.DataFrame:
+        """
+            Convert an input transition matrix mat to a wide dataframe using AFOLU.modvar_lndu_prob_transition as variable template
+
+            Function Arguments
+            ------------------
+            - mat: row-stochastic transition matrix to format as wide data frame
+
+            Keyword Arguments
+            -----------------
+            - key_vals: ordered land use categories representing states in mat. If None, default to attr_lndu.key_values. Should be of length n for mat an nxn transition matrix.
+            - field_key: temporary field to use for merging
+
+        """
+        attr_lndu = self.model_attributes.get_attribute_table(self.subsec_name_lndu)
+        key_vals = attr_lndu.key_values if (key_vals is None) else [x for x in key_vals if x in attr_lndu.key_values]
+
+        # setup as matrix
+        df_mat = pd.DataFrame(mat, columns = key_vals)
+        df_mat[field_key] = key_vals
+        df_mat_melt = pd.melt(df_mat, id_vars = [field_key], value_vars = key_vals).sort_values(by = [field_key, "variable"])
+
+        # get field names
+        fields_names = self.model_attributes.build_varlist(
+            self.subsec_name_lndu,
+            self.modvar_lndu_prob_transition,
+            restrict_to_category_values = key_vals
+        )
+
+        df_mat_melt["field"] = fields_names
+        df_mat_melt.set_index("field", inplace = True)
+        df_mat_melt = df_mat_melt[["value"]].transpose().reset_index(drop = True)
+        # doing this only to drop index
+        df_out = pd.DataFrame()
+        df_out[df_mat_melt.columns] = df_mat_melt[df_mat_melt.columns]
+
+        return df_out
+
+
+
+    ##  project agriculture and livestock demands
+    def project_agrc_lvst_integrated_demands(self,
+        df_afolu_trajectories: pd.DataFrame,
+        area_agrc_cropland_init: float,
+        vec_pop: np.ndarray,
+        vec_rates_gdp_per_capita: np.ndarray
+    ) -> tuple:
+        """
+            Calculate agricultural and livestock demands, imports, exports, and production. Agriculture and Livestock demands are related through feed demands, requiring integration.
+
+            Function Arguments
+            ------------------
+            - df_afolu_trajectories: data frame containing input variables
+            - area_agrc_cropland_init: initial area of cropland
+            - vec_pop: vector of population
+            - vec_rates_gdp_per_capita: vector of gdp/capita growth rates
+
+            Notes
+            -----
+
+            Let:
+                D = Domestic production to satisfy domestic demand
+                E = Exports
+                F = Fraction of domestic demand met by imports
+                I = Imports
+                M = Domestic demand
+                P = Domestic production
+
+            Then:
+                P = D + E, MF = I, M - I = D => M - MF = D =>
+
+                P = M - MF + E : Domestic Production
+                M = (P - E)/(1 - F) : Domestic Demand
+
+        """
+
+        ###########################
+        #    LIVESTOCK DEMANDS    #
+        ###########################
+
+        # get variables requried to estimate demand - start with exports
+        arr_lvst_exports_unadj = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories,
+            self.modvar_lvst_equivalent_exports,
+            return_type = "array_base",
+            var_bounds = (0, np.inf)
+        )
+        arr_lvst_frac_imported = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories,
+            self.modvar_lvst_frac_demand_imported,
+            return_type = "array_base",
+            var_bounds = (0, 1)
+        )
+        fields_lvst_elas = self.model_attributes.switch_variable_category(
+            self.subsec_name_lvst,
+            self.modvar_lvst_elas_lvst_demand,
+            "demand_elasticity_category"
+        )
+        vec_gnrl_frac_eating_red_meat = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories,
+            self.model_socioeconomic.modvar_gnrl_frac_eating_red_meat,
+            return_type = "array_base",
+            var_bounds = (0, 1)
+        )
+        vec_lvst_production_init = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories,
+            self.modvar_lvst_pop_init,
+            override_vector_for_single_mv_q = True,
+            return_type = "array_base",
+            var_bounds = (0, np.inf)
+        )[0]
+        arr_lvst_elas_demand = np.array(df_afolu_trajectories[fields_lvst_elas])
+
+
+        # 1. calculate domestic demand
+        #
+        # adjust exports to have cap at production; modify series downward
+        vec_lvst_exports_modifier = sf.vec_bounds(vec_lvst_production_init - arr_lvst_exports_unadj[0], (-np.inf, 0))
+        arr_lvst_exports_unadj = sf.vec_bounds(arr_lvst_exports_unadj + vec_lvst_exports_modifier, (0, np.inf))
+        # get the demand
+        vec_lvst_domestic_demand_init = sf.vec_bounds(vec_lvst_production_init - arr_lvst_exports_unadj[0], (0, np.inf))
+        vec_lvst_domestic_demand_init /= (1 - arr_lvst_frac_imported[0])
+        vec_lvst_domestic_demand_init = sf.vec_bounds(np.nan_to_num(vec_lvst_domestic_demand_init, 0.0, posinf = 0.0), (0, np.inf))
+        # project aggregate domestic demand forward
+        vec_gnrl_frac_eating_red_meat_scalar = sf.vec_bounds(vec_gnrl_frac_eating_red_meat/vec_gnrl_frac_eating_red_meat[0], (0, 1))
+        arr_lvst_domestic_demand_unadj = self.project_per_capita_demand(
+            vec_lvst_domestic_demand_init,
+            vec_pop,
+            vec_rates_gdp_per_capita,
+            arr_lvst_elas_demand,
+            vec_gnrl_frac_eating_red_meat_scalar,
+            int
+        )
+        # get imports, domestic production for domestic demand (unadj), and domestic production
+        arr_lvst_imports_unadj = arr_lvst_domestic_demand_unadj*arr_lvst_frac_imported
+        arr_lvst_domestic_production_for_domestic_demand_unadj = arr_lvst_domestic_demand_unadj - arr_lvst_imports_unadj
+        arr_lvst_domestic_production_unadj = arr_lvst_domestic_production_for_domestic_demand_unadj + arr_lvst_exports_unadj
+
+
+        #  2. get weights for allocating grazing area and feed requirement to animals - based on first year only
+        #
+        vec_lvst_base_graze_weights = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories,
+            self.modvar_lvst_dry_matter_consumption,
+            override_vector_for_single_mv_q = True,
+            return_type = "array_base"
+        )[0]
+        vec_lvst_feed_allocation_weights = (vec_lvst_production_init*vec_lvst_base_graze_weights)/np.dot(vec_lvst_production_init, vec_lvst_base_graze_weights)
+        # get carrying capacity scalar relative to baseline
+        vec_lvst_carry_capacity_scale = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories,
+            self.modvar_lvst_carrying_capacity_scalar,
+            return_type = "array_base",
+            var_bounds = (0, np.inf)
+        )
+        vec_lvst_carry_capacity_scale = vec_lvst_carry_capacity_scale/vec_lvst_carry_capacity_scale[0]
+
+
+        #############################
+        #    AGRICULTURE DEMANDS    #
+        #############################
+
+        # variables required for demand
+        arr_agrc_elas_crop_demand = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories,
+            self.modvar_agrc_elas_crop_demand_income,
+            return_type = "array_base"
+        )
+        arr_agrc_exports_unadj = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories,
+            self.modvar_agrc_equivalent_exports,
+            return_type = "array_base",
+            var_bounds = (0, np.inf)
+        )
+        arr_agrc_frac_feed = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories,
+            self.modvar_agrc_frac_animal_feed,
+            return_type = "array_base"
+        )
+        arr_agrc_frac_imported = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories,
+            self.modvar_agrc_frac_demand_imported,
+            return_type = "array_base",
+            var_bounds = (0, 1)
+        )
+        # do some unit conversion
+        arr_agrc_exports_unadj *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_agrc_equivalent_exports,
+            self.modvar_agrc_yf,
+            "mass"
+        )
+
+        #  1. get initial cropland areas and yields
+        #
+        vec_agrc_frac_cropland_area = self.check_cropland_fractions(df_afolu_trajectories, "initial")[0]
+        vec_agrc_cropland_area = area_agrc_cropland_init*vec_agrc_frac_cropland_area
+        # get yield factors and calculate yield
+        arr_agrc_yf = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories,
+            self.modvar_agrc_yf,
+            return_type = "array_base"
+        )
+        arr_agrc_yf *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_agrc_yf,
+            self.model_socioeconomic.modvar_gnrl_area,
+            "area"
+        )
+        vec_agrc_yield_init = arr_agrc_yf[0]*vec_agrc_cropland_area
+
+        #  2. get dietary demand scalar for crop demand (increases based on reduction in red meat demand) - depends on how many people eat red meat (vec_gnrl_frac_eating_red_meat)
+        #
+        vec_agrc_diet_exchange_scalar = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories,
+            self.modvar_lndu_vdes,
+            return_type = "array_base",
+            var_bounds = (0, np.inf)
+        )
+        vec_agrc_demscale = vec_gnrl_frac_eating_red_meat + vec_agrc_diet_exchange_scalar - vec_gnrl_frac_eating_red_meat*vec_agrc_diet_exchange_scalar
+        vec_agrc_demscale = np.nan_to_num(vec_agrc_demscale/vec_agrc_demscale[0], 1.0, posinf = 1.0)
+        # get categories that need to be scaled
+        vec_agrc_scale_demands_for_veg = np.array(self.model_attributes.get_ordered_category_attribute(self.subsec_name_agrc, "apply_vegetarian_exchange_scalar"))
+        arr_agrc_demscale = np.outer(vec_agrc_demscale, vec_agrc_scale_demands_for_veg)
+        arr_agrc_demscale = arr_agrc_demscale + np.outer(np.ones(len(vec_agrc_demscale)), 1 - vec_agrc_scale_demands_for_veg)
+
+        #  3. Calculate crop demands split into yield for livestock feed (responsive to changes in domestic livestock population) and yield for consumption and export (nonlvstfeed)
+        #
+        vec_agrc_domestic_demand_init = sf.vec_bounds(vec_agrc_yield_init - arr_agrc_exports_unadj[0], (0, np.inf))
+        vec_agrc_domestic_demand_init /= (1 - arr_agrc_frac_imported[0])
+        vec_agrc_domestic_demand_init = sf.vec_bounds(np.nan_to_num(vec_agrc_domestic_demand_init, 0.0, posinf = 0.0), (0, np.inf))
+        # split out livestock demands and human consumption
+        vec_agrc_domestic_demand_init_lvstfeed = vec_agrc_domestic_demand_init*arr_agrc_frac_feed[0]
+        vec_agrc_domestic_demand_init_nonlvstfeed = vec_agrc_domestic_demand_init - vec_agrc_domestic_demand_init_lvstfeed
+        vec_agrc_production_init_lvstfeed = vec_agrc_domestic_demand_init_lvstfeed*(1 - arr_agrc_frac_imported[0])
+        # project domestic demand
+        arr_agrc_domestic_demand_nonfeed_unadj = self.project_per_capita_demand(
+            vec_agrc_domestic_demand_init_nonlvstfeed,
+            vec_pop,
+            vec_rates_gdp_per_capita,
+            arr_agrc_elas_crop_demand,
+            arr_agrc_demscale,
+            float
+        )
+        arr_agrc_imports_unadj = arr_agrc_domestic_demand_nonfeed_unadj*arr_agrc_frac_imported
+        arr_agrc_production_nonfeed_unadj = arr_agrc_domestic_demand_nonfeed_unadj - arr_agrc_imports_unadj + arr_agrc_exports_unadj
+
+        #  4. Apply production wasted scalar to projected supply requirements, then re-calculate demand (reducing domestic production loss will drop future demands)
+        #
+        vec_agrc_frac_production_wasted = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories,
+            self.modvar_agrc_frac_production_lost,
+            return_type = "array_base",
+            var_bounds = (0, 1)
+        )
+        vec_agrc_frac_production_wasted_scalar = np.nan_to_num((1 - vec_agrc_frac_production_wasted[0])/(1 - vec_agrc_frac_production_wasted), posinf = 0.0)
+        arr_agrc_production_nonfeed_unadj = (arr_agrc_production_nonfeed_unadj.transpose()*vec_agrc_frac_production_wasted_scalar).transpose()
+        arr_agrc_domestic_demand_nonfeed_unadj = arr_agrc_production_nonfeed_unadj + arr_agrc_imports_unadj
+        # array gives the total yield of crop type i allocated to livestock type j at time 0
+        arr_lndu_yield_i_reqd_lvst_j_init = np.outer(vec_agrc_production_init_lvstfeed, vec_lvst_feed_allocation_weights)
+
+        return (
+            # agrc vars
+            arr_agrc_domestic_demand_nonfeed_unadj,
+            arr_agrc_exports_unadj,
+            arr_agrc_imports_unadj,
+            arr_agrc_production_nonfeed_unadj,
+            arr_agrc_yf,
+            vec_agrc_frac_cropland_area,
+            vec_agrc_frac_production_wasted,
+            # lvst vars
+            arr_lndu_yield_i_reqd_lvst_j_init,
+            arr_lvst_domestic_demand_unadj,
+            arr_lvst_exports_unadj,
+            arr_lvst_imports_unadj,
+            arr_lvst_domestic_production_unadj,
+            vec_lvst_carry_capacity_scale,
+            vec_lvst_feed_allocation_weights
+        )
+
+
+
     ##  project demand for ag/livestock
     def project_per_capita_demand(self,
         dem_0: np.ndarray, # initial demand (e.g., total yield/livestock produced per acre) ()
@@ -796,18 +1334,16 @@ class AFOLU:
         dem_scale_proj_pc = (gdp_per_capita_rates.transpose()*elast[0:-1].transpose()).transpose()
         dem_scale_proj_pc = np.cumprod(1 + dem_scale_proj_pc, axis = 0)
         dem_scale_proj_pc = np.concatenate([np.ones((1,len(dem_scale_proj_pc[0]))), dem_scale_proj_pc])
-
         # estimate demand for livestock (used in CBA) - start with livestock population per capita
-        if type(dem_pc_scalar_exog) == type(None):
-            vec_demscale_exog = np.ones(len(pop))
+        dem_pc_scalar_exog = np.ones(pop.shape) if (dem_pc_scalar_exog is None) else dem_pc_scalar_exog
+
+        if dem_pc_scalar_exog.shape == pop.shape:
+            arr_dem_base = np.outer(pop*dem_pc_scalar_exog, dem_0/pop[0])
+        elif dem_pc_scalar_exog.shape == dem_scale_proj_pc.shape:
+            arr_pc = (dem_0/pop[0])*dem_pc_scalar_exog
+            arr_dem_base = (pop*arr_pc.transpose()).transpose()
         else:
-            if dem_pc_scalar_exog.shape == pop.shape:
-                arr_dem_base = np.outer(pop*dem_pc_scalar_exog, dem_0/pop[0])
-            elif dem_pc_scalar_exog.shape == dem_scale_proj_pc.shape:
-                arr_pc = (dem_0/pop[0])*dem_pc_scalar_exog
-                arr_dem_base = (pop*arr_pc.transpose()).transpose()
-            else:
-                raise ValueError(f"Invalid shape of dem_pc_scalar_exog: valid shapes are '{pop.shape}' and '{dem_scale_proj_pc.shape}'.")
+            raise ValueError(f"Invalid shape of dem_pc_scalar_exog: valid shapes are '{pop.shape}' and '{dem_scale_proj_pc.shape}'.")
 
         # get the total demand
         arr_dem_base = np.array(dem_scale_proj_pc*arr_dem_base).astype(return_type)
@@ -816,12 +1352,12 @@ class AFOLU:
 
 
 
-    ##  integrated land use model, which performas required land use transition adjustments
+    ##  integrated land use model, which performs required land use transition adjustments
     def project_integrated_land_use(self,
         vec_initial_area: np.ndarray,
         arrs_transitions: np.ndarray,
         arrs_efs: np.ndarray,
-        arr_agrc_nonfeeddem_yield: np.ndarray,
+        arr_agrc_production_nonfeed_unadj: np.ndarray,
         arr_agrc_yield_factors: np.ndarray,
         arr_lndu_frac_increasing_net_exports_met: np.ndarray,
         arr_lndu_frac_increasing_net_imports_met: np.ndarray,
@@ -843,7 +1379,7 @@ class AFOLU:
             - vec_initial_area: initial state vector of area
             - arrs_transitions: array of transition matrices, ordered by time period
             - arrs_efs: array of emission factor matrices, ordered by time period
-            - arr_agrc_nonfeeddem_yield: array of agricultural non-feed demand yield (human consumption)
+            - arr_agrc_production_nonfeed_unadj: array of agricultural non-feed demand yield (human consumption)
             - arr_agrc_yield_factors: array of agricultural yield factors
             - arr_lndu_frac_increasing_net_exports_met: fraction--by land use type--of increases to net exports that are met. Adjusts production demands downward if less than 1.
             - arr_lndu_frac_increasing_net_exports_met: fraction--by land use type--of increases to net imports that are met. Adjusts production demands upward if less than 1.
@@ -978,7 +1514,7 @@ class AFOLU:
 
             # AGRICULTURE - calculate demand increase in crops, which is a function of gdp/capita (exogenous) and livestock demand (used for feed)
             vec_agrc_feed_dem_yield = sum((arr_lndu_yield_by_lvst*vec_lvst_dem_gr_iterator).transpose())
-            vec_agrc_total_dem_yield = (arr_agrc_nonfeeddem_yield[i + 1] + vec_agrc_feed_dem_yield)
+            vec_agrc_total_dem_yield = (arr_agrc_production_nonfeed_unadj[i + 1] + vec_agrc_feed_dem_yield)
             # calculate net surplus for yields
             vec_agrc_proj_yields = vec_agrc_cropland_area_proj*arr_agrc_yield_factors[i + 1]
             vec_agrc_unmet_demand_yields = vec_agrc_total_dem_yield - vec_agrc_proj_yields
@@ -1018,8 +1554,9 @@ class AFOLU:
             dict_adj.update(
                 dict(zip([(r, self.ind_lndu_crop) for r in range(len(scalar_lndu_crop))], scalar_lndu_crop))
             )
-            # force settlements to stay stable
+            # force settlements and mangroves to stay stable
             dict_adj.update({
+                (self.ind_lndu_fstm, ): 1,
                 (self.ind_lndu_stlm, ): 1
             })
             # force primary forest to other categories to stay stable (if applicable)
@@ -1422,80 +1959,24 @@ class AFOLU:
         ########################################
 
         # area of the country + the applicable scalar used to convert outputs
-        area = float(self.model_attributes.get_standard_variables(df_afolu_trajectories, self.model_socioeconomic.modvar_gnrl_area, return_type = "array_base")[0])
+        area = float(self.model_attributes.get_standard_variables(
+            df_afolu_trajectories,
+            self.model_socioeconomic.modvar_gnrl_area,
+            return_type = "array_base")[0]
+        )
         scalar_lndu_input_area_to_output_area = self.model_attributes.get_scalar(self.model_socioeconomic.modvar_gnrl_area, "area")
         # get the initial distribution of land
         vec_modvar_lndu_initial_frac = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_initial_frac, return_type = "array_base")[0]
         vec_modvar_lndu_initial_area = vec_modvar_lndu_initial_frac*area
+        area_agrc_cropland_init = area*vec_modvar_lndu_initial_frac[self.ind_lndu_crop]
         self.vec_modvar_lndu_initial_area = vec_modvar_lndu_initial_area
         self.mat_trans_unadj, self.mat_ef = self.get_markov_matrices(df_afolu_trajectories, n_projection_time_periods)
         # factor for reallocating land in adjustment
-        vec_lndu_reallocation_factor = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_reallocation_factor, False, "array_base")
-
-
-        ###########################
-        #    CALCULATE DEMANDS    #
-        ###########################
-
-        ##  livestock demands (calculated exogenously)
-
-        # variables requried to estimate demand
-        vec_modvar_lvst_pop_init = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_pop_init, True, "array_base")[0]
-        fields_lvst_elas = self.model_attributes.switch_variable_category(self.subsec_name_lvst, self.modvar_lvst_elas_lvst_demand, "demand_elasticity_category")
-        arr_lvst_elas_demand = np.array(df_afolu_trajectories[fields_lvst_elas])
-        # get the "vegetarian" factor and use to estimate livestock pop
-        vec_lvst_demscale = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.model_socioeconomic.modvar_gnrl_frac_eating_red_meat, False, "array_base", var_bounds = (0, np.inf))
-        arr_lvst_dem_pop_unadj = self.project_per_capita_demand(
-            vec_modvar_lvst_pop_init,
-            vec_pop,
-            vec_rates_gdp_per_capita,
-            arr_lvst_elas_demand,
-            vec_lvst_demscale,
-            int
+        vec_lndu_reallocation_factor = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories,
+            self.modvar_lndu_reallocation_factor,
+            return_type = "array_base"
         )
-        # get weights for allocating grazing area and feed requirement to animals - based on first year only
-        vec_lvst_base_graze_weights = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_dry_matter_consumption, True, "array_base")[0]
-        vec_lvst_feed_allocation_weights = (vec_modvar_lvst_pop_init*vec_lvst_base_graze_weights)/np.dot(vec_modvar_lvst_pop_init, vec_lvst_base_graze_weights)
-        # get information used to calculate carrying capacity of land
-        vec_lvst_carry_capacity_scale = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_carrying_capacity_scalar, False, "array_base", var_bounds = (0, np.inf))
-        vec_lvst_carry_capacity_scale = vec_lvst_carry_capacity_scale/vec_lvst_carry_capacity_scale[0]
-
-
-        ##  agricultural demands
-
-        # variables required for demand
-        arr_agrc_elas_crop_demand = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_elas_crop_demand_income, False, "array_base")
-        arr_agrc_frac_feed = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_frac_animal_feed, False, "array_base")
-        # get initial cropland area
-        area_agrc_cropland_init = area*vec_modvar_lndu_initial_frac[self.ind_lndu_crop]
-        vec_agrc_frac_cropland_area = self.check_cropland_fractions(df_afolu_trajectories, "initial")[0]
-        vec_agrc_cropland_area = area_agrc_cropland_init*vec_agrc_frac_cropland_area
-        # get initial yield
-        arr_agrc_yf = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_yf, True, "array_base")
-        arr_agrc_yf *= self.model_attributes.get_variable_unit_conversion_factor(
-            self.modvar_agrc_yf,
-            self.model_socioeconomic.modvar_gnrl_area,
-            "area"
-        )
-        vec_agrc_yield_init = arr_agrc_yf[0]*vec_agrc_cropland_area
-        # split into yield for livestock feed (responsive to changes in livestock population) and yield for consumption and export (nonlvstfeed)
-        vec_agrc_yield_init_lvstfeed = vec_agrc_yield_init*arr_agrc_frac_feed[0]
-        vec_agrc_yield_init_nonlvstfeed = vec_agrc_yield_init - vec_agrc_yield_init_lvstfeed
-        # project ag demand for crops that are driven by gdp/capita - set demand scalar for crop demand (increases based on reduction in red meat demand) - depends on how many people eat red meat (vec_lvst_demscale)
-        vec_agrc_diet_exchange_scalar = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_vdes, False, "array_base", var_bounds = (0, np.inf))
-        vec_agrc_demscale = vec_lvst_demscale + vec_agrc_diet_exchange_scalar - vec_lvst_demscale*vec_agrc_diet_exchange_scalar
-        # get categories that need to be scaled
-        vec_agrc_scale_demands_for_veg = np.array(self.model_attributes.get_ordered_category_attribute(self.subsec_name_agrc, "apply_vegetarian_exchange_scalar"))
-        arr_agrc_demscale = np.outer(vec_agrc_demscale, vec_agrc_scale_demands_for_veg)
-        arr_agrc_demscale = arr_agrc_demscale + np.outer(np.ones(len(vec_agrc_demscale)), 1 - vec_agrc_scale_demands_for_veg)
-        # get production wasted and adjust the demand scalar again
-        vec_agrc_frac_production_lost = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_frac_production_lost, False, "array_base", var_bounds = (0, 1))
-        vec_agrc_frac_production_lost_scalar = np.nan_to_num((1 - vec_agrc_frac_production_lost[0])/(1 - vec_agrc_frac_production_lost), posinf = 0.0)
-        arr_agrc_demscale = (arr_agrc_demscale.transpose()*vec_agrc_frac_production_lost_scalar).transpose()
-        arr_agrc_nonfeeddem_yield = self.project_per_capita_demand(vec_agrc_yield_init_nonlvstfeed, vec_pop, vec_rates_gdp_per_capita, arr_agrc_elas_crop_demand, arr_agrc_demscale, float)
-        self.arr_tmp = arr_agrc_nonfeeddem_yield
-        # array gives the total yield of crop type i allocated to livestock type j at time 0
-        arr_lndu_yield_i_reqd_lvst_j_init = np.outer(vec_agrc_yield_init_lvstfeed, vec_lvst_feed_allocation_weights)
         # get fractions of increasing net exports/exports met
         arr_lndu_frac_increasing_net_exports_met = self.model_attributes.get_standard_variables(
             df_afolu_trajectories,
@@ -1511,10 +1992,6 @@ class AFOLU:
             return_type = "array_base",
             var_bounds = (0, 1)
         )
-
-
-        ##  other land use variables
-
         # get fraction of grassland that is pasture
         vec_lndu_frac_grassland_pasture = self.model_attributes.get_standard_variables(
             df_afolu_trajectories,
@@ -1524,44 +2001,99 @@ class AFOLU:
         )
 
 
+        ##  Get agriculture and livestock demands
+
+        (
+            # agrc vars
+            arr_agrc_domestic_demand_nonfeed_unadj,
+            arr_agrc_exports_unadj,
+            arr_agrc_imports_unadj,
+            arr_agrc_production_nonfeed_unadj,
+            arr_agrc_yf,
+            vec_agrc_frac_cropland_area,
+            vec_agrc_frac_production_wasted,
+            # lvst vars
+            arr_lndu_yield_i_reqd_lvst_j_init,
+            arr_lvst_domestic_demand_unadj,
+            arr_lvst_exports_unadj,
+            arr_lvst_imports_unadj,
+            arr_lvst_domestic_production_unadj,
+            vec_lvst_carry_capacity_scale,
+            vec_lvst_feed_allocation_weights
+        ) = self.project_agrc_lvst_integrated_demands(
+            df_afolu_trajectories,
+            area_agrc_cropland_init,
+            vec_pop,
+            vec_rates_gdp_per_capita
+        )
+
 
         ################################################
         #    CALCULATE LAND USE + AGRC/LVST DRIVERS    #
         ################################################
 
         # get land use projections (np arrays) - note, arrs_land_conv returns a list of matrices for troubleshooting
-        arr_agrc_change_to_net_imports_lost, arr_agrc_frac_cropland, arr_agrc_net_import_increase, arr_agrc_yield, arr_lndu_emissions_conv, arr_land_use, arr_lvst_change_to_net_imports_lost, arr_lvst_net_import_increase, arr_lvst_pop, arrs_lndu_land_conv, self.mat_trans_adj, self.yields_per_livestock = self.project_integrated_land_use(
+        (
+            arr_agrc_change_to_net_imports_lost,
+            arr_agrc_frac_cropland,
+            arr_agrc_net_import_increase,
+            arr_agrc_yield,
+            arr_lndu_emissions_conv,
+            arr_land_use,
+            arr_lvst_change_to_net_imports_lost,
+            arr_lvst_net_import_increase,
+            arr_lvst_pop,
+            arrs_lndu_land_conv,
+            self.mat_trans_adj,
+            self.yields_per_livestock
+        ) = self.project_integrated_land_use(
             vec_modvar_lndu_initial_area,
             self.mat_trans_unadj,
             self.mat_ef,
-            arr_agrc_nonfeeddem_yield,
+            arr_agrc_production_nonfeed_unadj,
             arr_agrc_yf,
             arr_lndu_frac_increasing_net_exports_met,
             arr_lndu_frac_increasing_net_imports_met,
             arr_lndu_yield_i_reqd_lvst_j_init,
-            arr_lvst_dem_pop_unadj,
+            arr_lvst_domestic_production_unadj,
             vec_agrc_frac_cropland_area,
             vec_lndu_frac_grassland_pasture,
             vec_lndu_reallocation_factor,
-            vec_modvar_lvst_pop_init,
+            arr_lvst_domestic_production_unadj[0],
             vec_lvst_feed_allocation_weights,
             vec_lvst_carry_capacity_scale,
             n_projection_time_periods
         )
+        self.arrs_lndu_land_conv = arrs_lndu_land_conv
 
+        # update imports/exports for agriculture
+        arr_agrc_exports_adj = sf.vec_bounds(
+            arr_agrc_exports_unadj - sf.vec_bounds(arr_agrc_net_import_increase, (-np.inf, 0)),
+            (np.zeros(arr_agrc_yield.shape), arr_agrc_yield)
+        )
+        arr_agrc_imports_adj = sf.vec_bounds(
+            arr_agrc_imports_unadj + sf.vec_bounds(arr_agrc_net_import_increase, (0, np.inf)),
+            (0, np.inf)
+        )
         # update demand from population
-        arr_lvst_demand = arr_lvst_pop + arr_lvst_net_import_increase
+        arr_lvst_exports_adj = sf.vec_bounds(
+            arr_lvst_exports_unadj - sf.vec_bounds(arr_lvst_net_import_increase, (-np.inf, 0)),
+            (np.zeros(arr_lvst_pop.shape), arr_lvst_pop)
+        )
+        arr_lvst_imports_adj = sf.vec_bounds(
+            arr_lvst_imports_unadj + sf.vec_bounds(arr_lvst_net_import_increase, (0, np.inf)),
+            (0, np.inf)
+        )
+        arr_lvst_demand = arr_lvst_pop + arr_lvst_imports_adj - arr_lvst_exports_adj
 
         # assign some dfs that are used below in other subsectors
         df_agrc_frac_cropland = self.model_attributes.array_to_df(arr_agrc_frac_cropland, self.modvar_agrc_area_prop_calc)
         df_land_use = self.model_attributes.array_to_df(arr_land_use, self.modvar_lndu_area_by_cat)
-
         # calculate land use conversions
         arrs_lndu_conv_to = np.array([np.sum(x - np.diag(np.diagonal(x)), axis = 0) for x in arrs_lndu_land_conv])
         arrs_lndu_conv_from = np.array([np.sum(x - np.diag(np.diagonal(x)), axis = 1) for x in arrs_lndu_land_conv])
-
-        # get total production wasted
-        vec_agrc_food_produced_wasted_before_consumption = np.sum(arr_agrc_nonfeeddem_yield.transpose()*vec_agrc_frac_production_lost, axis = 0)
+        # get total production wasted FLAG!!HEREHERE - check if arr_agrc_production_nonfeed_unadj is correct
+        vec_agrc_food_produced_wasted_before_consumption = np.sum(arr_agrc_production_nonfeed_unadj.transpose()*vec_agrc_frac_production_wasted, axis = 0)
         vec_agrc_food_produced_wasted_before_consumption *= self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_agrc_yf,
             self.modvar_agrc_total_food_lost_in_ag,
@@ -1575,12 +2107,28 @@ class AFOLU:
             self.modvar_agrc_total_food_lost_in_ag_to_landfills,
             "mass"
         )
+
+
+        ##  UNIT CONVERSIONS
+
         # convert yield out units
         arr_agrc_yield_out = arr_agrc_yield*self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_agrc_yf,
             self.modvar_agrc_yield,
             "mass"
         )
+        # convert exports/imports
+        arr_agrc_exports_adj *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_agrc_yf,
+            self.modvar_agrc_adjusted_equivalent_exports,
+            "mass"
+        )
+        arr_agrc_imports_adj *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_agrc_yf,
+            self.modvar_agrc_adjusted_equivalent_imports,
+            "mass"
+        )
+
         # convert change to net imports to yield units
         arr_agrc_change_to_net_imports_lost *= self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_agrc_yf,
@@ -1593,15 +2141,19 @@ class AFOLU:
             self.modvar_agrc_net_imports,
             "mass"
         )
-
-        # get total crop production demand
+        # get total domestic crop demand
         arr_agrc_demand_out = arr_agrc_yield_out*self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_agrc_yield,
             self.modvar_agrc_demand_crops,
             "mass"
         )
-        arr_agrc_demand_out += arr_agrc_net_import_increase*self.model_attributes.get_variable_unit_conversion_factor(
-            self.modvar_agrc_net_imports,
+        arr_agrc_demand_out += arr_agrc_imports_adj*self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_agrc_adjusted_equivalent_imports,
+            self.modvar_agrc_demand_crops,
+            "mass"
+        )
+        arr_agrc_demand_out -= arr_agrc_exports_adj*self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_agrc_adjusted_equivalent_exports,
             self.modvar_agrc_demand_crops,
             "mass"
         )
@@ -1610,17 +2162,21 @@ class AFOLU:
             df_agrc_frac_cropland,
             self.model_attributes.array_to_df(arr_agrc_change_to_net_imports_lost, self.modvar_agrc_changes_to_net_imports_lost),
             self.model_attributes.array_to_df(arr_agrc_demand_out, self.modvar_agrc_demand_crops),
-            self.model_attributes.array_to_df(arr_agrc_net_import_increase, self.modvar_agrc_net_imports),
+            self.model_attributes.array_to_df(arr_agrc_exports_adj, self.modvar_agrc_adjusted_equivalent_exports),
+            self.model_attributes.array_to_df(arr_agrc_imports_adj, self.modvar_agrc_adjusted_equivalent_imports),
+            self.model_attributes.array_to_df(arr_agrc_yield_out, self.modvar_agrc_yield),
+            #self.model_attributes.array_to_df(arr_agrc_net_import_increase, self.modvar_agrc_net_imports),
             self.model_attributes.array_to_df(vec_agrc_food_produced_wasted_before_consumption, self.modvar_agrc_total_food_lost_in_ag),
             self.model_attributes.array_to_df(vec_agrc_food_wasted_to_landfills, self.modvar_agrc_total_food_lost_in_ag_to_landfills),
-            self.model_attributes.array_to_df(arr_agrc_yield_out, self.modvar_agrc_yield),
             self.model_attributes.array_to_df(arr_land_use*scalar_lndu_input_area_to_output_area, self.modvar_lndu_area_by_cat),
             self.model_attributes.array_to_df(arrs_lndu_conv_from*scalar_lndu_input_area_to_output_area, self.modvar_lndu_area_converted_from_type),
             self.model_attributes.array_to_df(arrs_lndu_conv_to*scalar_lndu_input_area_to_output_area, self.modvar_lndu_area_converted_to_type),
             self.model_attributes.array_to_df(arr_lndu_emissions_conv, self.modvar_lndu_emissions_conv, True),
             self.model_attributes.array_to_df(arr_lvst_change_to_net_imports_lost, self.modvar_lvst_changes_to_net_imports_lost),
             self.model_attributes.array_to_df(arr_lvst_demand, self.modvar_lvst_demand_livestock),
-            self.model_attributes.array_to_df(arr_lvst_net_import_increase, self.modvar_lvst_net_imports)
+            self.model_attributes.array_to_df(arr_lvst_exports_adj, self.modvar_lvst_adjusted_equivalent_exports),
+            self.model_attributes.array_to_df(arr_lvst_imports_adj, self.modvar_lvst_adjusted_equivalent_imports)
+            #self.model_attributes.array_to_df(arr_lvst_net_import_increase, self.modvar_lvst_net_imports)
         ]
 
 
@@ -2311,9 +2867,28 @@ class AFOLU:
 
         ##  F_SOM AND AGRICULTURAL SOIL CARBON
 
-        # get carbon stocks and ratio of c to n
-        arr_lndu_factor_soil_carbon = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lndu_factor_soil_carbon, False, "array_base", expand_to_all_cats = True)
-        arr_soil_organic_c_stocks = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_soil_organic_c_stocks, True, "array_base", expand_to_all_cats = True)
+        # get carbon stocks and ratio of c to n - conver to self.modvar_lsmm_n_to_fertilizer_agg_dung units for N2O/EF1
+        arr_lndu_factor_soil_carbon = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories,
+            self.modvar_lndu_factor_soil_carbon,
+            return_type = "array_base",
+            expand_to_all_cats = True
+        )
+        # soil management factor
+        arr_lndu_factor_soil_management = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories,
+            self.modvar_lndu_factor_soil_management,
+            return_type = "array_base",
+            expand_to_all_cats = True,
+            all_cats_missing_val = 1.0
+        )
+        arr_soil_organic_c_stocks = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories,
+            self.modvar_soil_organic_c_stocks,
+            override_vector_for_single_mv_q = True,
+            return_type = "array_base",
+            expand_to_all_cats = True
+        )
         arr_soil_organic_c_stocks *= self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_soil_organic_c_stocks,
             self.modvar_lsmm_n_to_fertilizer_agg_dung,
@@ -2325,29 +2900,39 @@ class AFOLU:
             "area"
         )
         # get some other factors
-        vec_soil_ratio_c_to_n_soil_organic_matter = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_soil_ratio_c_to_n_soil_organic_matter, False, "array_base")
-        vec_soil_soc_lost_in_cropland = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_soil_frac_soc_lost, False, "array_base", var_bounds = (0, 1))
+        vec_soil_ratio_c_to_n_soil_organic_matter = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories,
+            self.modvar_soil_ratio_c_to_n_soil_organic_matter,
+            return_type = "array_base"
+        )
 
-        # initialize SOC totals
+
+        # get arrays of SOC conversion per area by land use
+        arrs_lndu_soc_conversion_factors, vec_soil_ef1_soc_est = self.get_mineral_soc_change_matrices(
+            arr_agrc_crop_area,
+            arr_land_use,
+            arr_lndu_factor_soil_carbon,
+            arr_lndu_factor_soil_management,
+            arr_lndu_frac_mineral_soils,
+            arr_soil_ef1_organic,
+            arr_soil_organic_c_stocks,
+            vec_lndu_frac_grassland_pasture,
+            vec_soil_area_crop_pasture,
+            dict_arrs_agrc_frac_drywet,
+            dict_arrs_frst_frac_temptrop,
+            dict_arrs_lndu_frac_drywet
+        )
+        self.arrs_lndu_soc_conversion_factors = arrs_lndu_soc_conversion_factors
+        vec_soil_delta_soc_mineral = self.calculate_soc_stock_change_with_time_dependence(
+            arrs_lndu_land_conv,
+            arrs_lndu_soc_conversion_factors,
+            20# get from config
+        )
+        #vec_soil_delta_soc_mineral = (arrs_lndu_land_conv*arrs_lndu_soc_conversion_factors).sum(axis = 1).sum(axis = 1)
+        self.vec_soil_delta_soc_mineral = vec_soil_delta_soc_mineral
+
+        # initialize organic SOC, then loop over tropical/temperate cropland to get soil carbon for organic drained soils
         vec_soil_emission_co2_soil_carbon_organic = 0.0
-        vec_soil_soc_total = 0.0
-        vec_soil_soc_total_mineral = 0.0
-        vec_soil_ef1_soc_est = 0.0
-        # loop over dry/wet to estimate carbon stocks in crops
-        for modvar in self.modvar_list_agrc_frac_drywet:
-            # soil category
-            cat_soil = ds.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
-            ind_soil = attr_soil.get_key_value_index(cat_soil)
-            arr_soil_soc_crop_drywet_cur = (arr_agrc_crop_area*dict_arrs_agrc_frac_drywet[modvar]).transpose()
-            # add component to EF1 estimate for F_SOM
-            vec_soil_ef1_soc_est += np.sum(arr_soil_soc_crop_drywet_cur, axis = 0)*arr_soil_ef1_organic[:, ind_soil]/vec_soil_area_crop_pasture
-            # then, modify the soc array and estimate contribution to w
-            arr_soil_soc_crop_drywet_cur *= arr_soil_organic_c_stocks[:, ind_soil]*arr_lndu_factor_soil_carbon[:, self.ind_lndu_crop]*(1 - vec_soil_soc_lost_in_cropland)
-            vec_soil_soc_total_cur = np.sum(arr_soil_soc_crop_drywet_cur, axis = 0)
-            vec_soil_soc_total += vec_soil_soc_total_cur
-            vec_soil_soc_total_mineral += vec_soil_soc_total_cur*arr_lndu_frac_mineral_soils[:, self.ind_lndu_crop]
-
-        # loop over tropical/temperate cropland to get soil carbon for
         for modvar in self.modvar_list_agrc_frac_temptrop:
             # soil category
             cat_soil = ds.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
@@ -2358,40 +2943,14 @@ class AFOLU:
             # get SOC totals and integrate land-use specific mineral fractions
             vec_soil_emission_co2_soil_carbon_organic += np.sum(arr_soil_soc_crop_temptrop_cur*arr_soil_ef_c_organic_cultivated_soils[:, ind_soil], axis = 0)
 
-        # loop over dry/wet to estimate carbon stocks in grassland
-        for modvar in self.modvar_list_lndu_frac_drywet:
-            # soil category
-            cat_soil = ds.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
-            ind_soil = attr_soil.get_key_value_index(cat_soil)
-            vec_soil_soc_pstr_drywet_cur = (arr_land_use*dict_arrs_lndu_frac_drywet[modvar])[:, self.ind_lndu_grass]
-            # add component to EF1 estimate for F_SOM
-            vec_soil_ef1_soc_est += vec_soil_soc_pstr_drywet_cur.copy()*arr_soil_ef1_organic[:, ind_soil]/vec_soil_area_crop_pasture
-            vec_soil_soc_pstr_drywet_cur *= arr_soil_organic_c_stocks[:, ind_soil]*arr_lndu_factor_soil_carbon[:, self.ind_lndu_grass]
-            vec_soil_soc_total += vec_soil_soc_pstr_drywet_cur
-            vec_soil_soc_total_mineral += vec_soil_soc_pstr_drywet_cur*arr_lndu_frac_mineral_soils[:, self.ind_lndu_grass]
-
-        # loop over tropical/temperate NP/temperate NR
-        for modvar in self.modvar_list_frst_frac_temptrop:
-            # soil category
-            cat_soil = ds.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
-            ind_soil = attr_soil.get_key_value_index(cat_soil)
-            # get land use category for soil carbon facto
-            cats_lndu = [ds.clean_schema(x) for x in self.model_attributes.get_ordered_category_attribute(self.subsec_name_frst, pycat_lndu)]
-            inds_lndu = [attr_lndu.get_key_value_index(x) for x in cats_lndu]
-            arr_soil_soc_frst_temptrop_cur = (arr_area_frst*dict_arrs_frst_frac_temptrop[modvar]*arr_lndu_factor_soil_carbon[:, inds_lndu]).transpose()
-            arr_soil_soc_frst_temptrop_cur *= arr_soil_organic_c_stocks[:, ind_soil]
-            # get SOC totals and integrate land-use specific mineral fractions
-            vec_soil_soc_total_cur = np.sum(arr_soil_soc_frst_temptrop_cur, axis = 0)
-            vec_soil_soc_total += vec_soil_soc_total_cur
-            vec_soil_soc_total_mineral += np.sum(arr_soil_soc_frst_temptrop_cur.transpose()*arr_lndu_frac_mineral_soils[:, inds_lndu], axis = 1)
-
         # calculate the change in soil carbon year over year for all and for mineral
-        vec_soil_delta_soc = self.calculate_ipcc_soc_deltas(vec_soil_soc_total, 2)
-        vec_soil_delta_soc_mineral = self.calculate_ipcc_soc_deltas(vec_soil_soc_total_mineral, 2)
+        #vec_soil_delta_soc = self.calculate_ipcc_soc_deltas(vec_soil_soc_total, 2)
+        #vec_soil_delta_soc_mineral = self.calculate_ipcc_soc_deltas(vec_soil_soc_total_mineral, 2)
         #HEREHERE TEMP
-        self.vec_soil_soc_total_mineral = vec_soil_soc_total_mineral
+        #self.vec_soil_ratio_c_to_n_soil_organic_matter = vec_soil_ratio_c_to_n_soil_organic_matter
+
         # calculate FSOM from fraction mineral
-        vec_soil_n2odirectn_fsom = -(vec_soil_delta_soc_mineral/vec_soil_ratio_c_to_n_soil_organic_matter)*vec_soil_ef1_soc_est
+        vec_soil_n2odirectn_fsom = -(sf.vec_bounds(vec_soil_delta_soc_mineral, (-np.inf, 0))/vec_soil_ratio_c_to_n_soil_organic_matter)*vec_soil_ef1_soc_est
         vec_soil_emission_co2_soil_carbon_mineral = -self.factor_c_to_co2*vec_soil_delta_soc_mineral
         vec_soil_emission_co2_soil_carbon_mineral *= self.model_attributes.get_scalar(self.modvar_lsmm_n_to_fertilizer_agg_dung, "mass")
         vec_soil_emission_co2_soil_carbon_mineral *= self.model_attributes.get_gwp("co2")
@@ -2584,8 +3143,8 @@ class AFOLU:
         # build emissions outputs
         df_out += [
             self.model_attributes.array_to_df(vec_soil_emission_n2o_crop_residue*scalar_n2on_to_emission_out, self.modvar_agrc_emissions_n2o_crop_residues),
-            self.model_attributes.array_to_df(vec_soil_emission_co2_soil_carbon_mineral, self.modvar_agrc_emissions_co2_soil_carbon_mineral),
             self.model_attributes.array_to_df(vec_soil_emission_co2_soil_carbon_organic, self.modvar_agrc_emissions_co2_soil_carbon_organic),
+            self.model_attributes.array_to_df(vec_soil_emission_co2_soil_carbon_mineral, self.modvar_soil_emissions_co2_soil_carbon_mineral),
             self.model_attributes.array_to_df(vec_soil_emission_n2o_fertilizer*scalar_n2on_to_emission_out, self.modvar_soil_emissions_n2o_fertilizer),
             self.model_attributes.array_to_df(vec_soil_emission_n2o_mineral_soils*scalar_n2on_to_emission_out, self.modvar_soil_emissions_n2o_mineral_soils),
             self.model_attributes.array_to_df(vec_soil_emission_n2o_organic_soils*scalar_n2on_to_emission_out, self.modvar_soil_emissions_n2o_organic_soils),
