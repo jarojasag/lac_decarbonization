@@ -953,6 +953,7 @@ class AFOLU:
 
         dict_lndu_avg_soc_vecs.update({self.ind_lndu_crop: vec_agrc_avg_soc})
 
+
         ##  GET AVERAGE SOC CONTENT IN FORESTS
 
         arr_frst_avg_soc = 0.0

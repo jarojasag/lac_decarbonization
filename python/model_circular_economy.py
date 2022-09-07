@@ -190,7 +190,7 @@ class CircularEconomy:
     def set_integrated_variables(self):
         list_vars_required_for_integration = [
         # DROP FIRST THREE
-        # TEMP INCLUDE
+            # TEMP INCLUDE
             self.modvar_lsmm_dung_incinerated,
             self.modvar_lvst_pop,
 			self.modvar_lvst_net_imports,

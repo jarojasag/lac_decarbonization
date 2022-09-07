@@ -1,27 +1,27 @@
-﻿Category Name,``$REGION$``,Region Abbreviation,Description,Powerplant Data,IO Data
-Argentina,``argentina``,arg,,Yes,Yes
-Bahamas,``bahamas``,bhs,,No,No
-Barbados,``barbados``,brb,,No,No
-Belize,``belize``,blz,,No,No
-Bolivia,``bolivia``,bol,,Yes,Yes
-Brazil,``brazil``,bra,,Yes,Yes
-Chile,``chile``,chl,,Yes,Yes
-Colombia,``colombia``,col,,Yes,Yes
-Costa Rica,``costa_rica``,cri,,Yes,Yes
-Dominican Republic,``dominican_republic``,dom,,Yes,Yes
-Ecuador,``ecuador``,ecu,,Yes,Yes
-El Salvador,``el_salvador``,slv,,Yes,Yes
-Guatemala,``guatemala``,gtm,,Yes,Yes
-Guyana,``guyana``,guy,,Yes,No
-Haiti,``haiti``,hti,,No,No
-Honduras,``honduras``,hnd,,Yes,Yes
-Jamaica,``jamaica``,jam,,Yes,No
-Mexico,``mexico``,mex,,Yes,Yes
-Nicaragua,``nicaragua``,nic,,Yes,Yes
-Panama,``panama``,pan,,Yes,Yes
-Paraguay,``paraguay``,pry,,Yes,Yes
-Peru,``peru``,per,,Yes,Yes
-Suriname,``suriname``,sur,,Yes,No
-Trinidad and Tobago,``trinidad_and_tobago``,tto,,Yes,No
-Uruguay,``uruguay``,ury,,Yes,Yes
-Venezuela,``venezuela``,ven,,Yes,Yes
+﻿Category Name,``$REGION$``,Region Abbreviation,Description,Powerplant Data,IO Data,FAO Area Code
+Argentina,``argentina``,arg,,Yes,Yes,9
+Bahamas,``bahamas``,bhs,,No,No,12
+Barbados,``barbados``,brb,,No,No,14
+Belize,``belize``,blz,,No,No,23
+Bolivia,``bolivia``,bol,,Yes,Yes,19
+Brazil,``brazil``,bra,,Yes,Yes,21
+Chile,``chile``,chl,,Yes,Yes,40
+Colombia,``colombia``,col,,Yes,Yes,44
+Costa Rica,``costa_rica``,cri,,Yes,Yes,48
+Dominican Republic,``dominican_republic``,dom,,Yes,Yes,56
+Ecuador,``ecuador``,ecu,,Yes,Yes,58
+El Salvador,``el_salvador``,slv,,Yes,Yes,60
+Guatemala,``guatemala``,gtm,,Yes,Yes,89
+Guyana,``guyana``,guy,,Yes,No,91
+Haiti,``haiti``,hti,,No,No,93
+Honduras,``honduras``,hnd,,Yes,Yes,95
+Jamaica,``jamaica``,jam,,Yes,No,109
+Mexico,``mexico``,mex,,Yes,Yes,138
+Nicaragua,``nicaragua``,nic,,Yes,Yes,157
+Panama,``panama``,pan,,Yes,Yes,166
+Paraguay,``paraguay``,pry,,Yes,Yes,169
+Peru,``peru``,per,,Yes,Yes,170
+Suriname,``suriname``,sur,,Yes,No,207
+Trinidad and Tobago,``trinidad_and_tobago``,tto,,Yes,No,220
+Uruguay,``uruguay``,ury,,Yes,Yes,234
+Venezuela,``venezuela``,ven,,Yes,Yes,236
