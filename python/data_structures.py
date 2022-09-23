@@ -565,6 +565,7 @@ class ModelAttributes:
             raise ValueError(f"Missing specification of required dimensions of analysis: no attribute tables for dimensions {missing_vals} found in directory '{self.attribute_directory}'.")
 
 
+
     ##  check data frames specified for integrated variables
     def check_integrated_df_vars(self,
         df_in: pd.DataFrame,
@@ -598,12 +599,15 @@ class ModelAttributes:
 
         return dict_out[subsec] if (subsec != "all") else dict_out
 
+
+
     ##  function to ensure a sector is properly specified
     def check_sector(self, sector: str):
         # check sectors
         if sector not in self.all_sectors:
             valid_sectors = sf.format_print_list(self.all_sectors)
             raise ValueError(f"Invalid sector specification '{sector}': valid sectors are {valid_sectors}")
+
 
 
     ##  function to ensure a sector is properly specified
@@ -619,6 +623,7 @@ class ModelAttributes:
             return (None if throw_error_q else subsector)
 
 
+
     ##  simple inline function to dimensions in a data frame (if they are converted to floats)
     def clean_dimension_fields(self, df_in: pd.DataFrame):
         fields_clean = [x for x in self.sort_ordered_dimensions_of_analysis if x in df_in.columns]
@@ -626,11 +631,14 @@ class ModelAttributes:
             df_in[fld] = np.array(df_in[fld]).astype(int)
 
 
+
     ##  commonly used--restrict variable values
     def check_restricted_value_argument(self, arg, valid_values: list, func_arg: str = "", func_name: str = ""):
         if arg not in valid_values:
             vrts = sf.format_print_list(valid_values)
             raise ValueError(f"Invalid {func_arg} in {func_name}: valid values are {vrts}.")
+
+
 
     ##  get subsectors that have a primary category; these sectors can leverage the functions below effectively
     def get_all_subsectors_with_primary_category(self):
@@ -642,12 +650,14 @@ class ModelAttributes:
         return l_with, l_without
 
 
+
     ##  function to return all primary category flags
     def get_all_primary_category_flags(self) -> list:
         all_pcflags = sorted(list(set(self.dict_attributes["abbreviation_subsector"].table["primary_category"])))
         all_pcflags = [x.replace("`", "") for x in all_pcflags if sf.clean_field_names([x])[0] in self.all_pycategories]
 
         return all_pcflags
+
 
 
     ##  function to simplify retrieval of attribute tables within functions
@@ -663,12 +673,15 @@ class ModelAttributes:
             raise ValueError(f"Invalid table_type '{table_type}': valid options are 'pycategory_primary', 'key_varreqs_all', 'key_varreqs_partial'.")
 
 
+
     ##  get the baseline scenario associated with a scenario dimension
     def get_baseline_scenario_id(self, dim: str):
 
         """
-            get_baseline_scenario_id returns the scenario id associated with a baseline scenario (as specified in the attribute table)
+            Return the scenario id associated with a baseline scenario (as specified in the attribute table)
 
+            Function Arguments
+            ------------------
             - dim: a scenario dimension specified in an attribute table (attribute_dim_####.csv) within the ModelAttributes class
 
         """
@@ -691,6 +704,7 @@ class ModelAttributes:
             return tab_red[0]
 
 
+
     ##  function to get all dimensions of analysis in a data frame - can be used on two data frames for merges
     def get_df_dimensions_of_analysis(self, df_in: pd.DataFrame, df_in_shared: pd.DataFrame = None) -> list:
         if type(df_in_shared) == pd.DataFrame:
@@ -698,6 +712,7 @@ class ModelAttributes:
         else:
             cols = [x for x in self.sort_ordered_dimensions_of_analysis if x in df_in.columns]
         return cols
+
 
 
     ##  function to return categories from an attribute table that match some characteristics (defined in dict_subset)
@@ -725,6 +740,7 @@ class ModelAttributes:
             return None
 
 
+
     ##  function for dimensional attributes
     def get_dimensional_attribute(self, dimension, return_type):
         if dimension not in self.all_dims:
@@ -742,6 +758,7 @@ class ModelAttributes:
             # warn user, but still allow a return
             warnings.warn(f"Invalid dimensional attribute '{return_type}'. Valid return type values are:{valid_rts}")
             return None
+
 
 
     def get_emission_modvars_by_gas(self
@@ -783,6 +800,7 @@ class ModelAttributes:
         return dict_fields_by_gas, dict_modvar_by_gas
 
 
+
     ##  function to get different dimensions
     def get_sector_dims(self):
         # sector info
@@ -797,6 +815,7 @@ class ModelAttributes:
         all_subsector_abvs.sort()
 
         return (all_sectors, all_sectors_abvs, all_subsectors, all_subsector_abvs)
+
 
 
     ##  function for grabbing an attribute column from an attribute table ordered the same as key values
@@ -940,7 +959,7 @@ class ModelAttributes:
             - n is the number of defined time periods
 
         """
-        pydim_time_period = self.get_dimensional_attribute("time_period", "pydim")
+        pydim_time_period = self.get_dimensional_attribute(self.dim_time_period, "pydim")
         time_periods = self.dict_attributes[pydim_time_period].key_values
         return time_periods, len(time_periods)
 
@@ -952,7 +971,7 @@ class ModelAttributes:
         """
             Get a list of all years (as integers) associated with time periods in SISEPUEDE. Returns None if no years are defined.
         """
-        pydim_time_period = self.get_dimensional_attribute("time_period", "pydim")
+        pydim_time_period = self.get_dimensional_attribute(self.dim_time_period, "pydim")
         attr_tp = self.dict_attributes[pydim_time_period]
 
         # initialize output years
@@ -1866,6 +1885,7 @@ class ModelAttributes:
         self._check_binary_fields(attribute_forest, self.subsec_name_frst, fields_req_bin, force_sum_to_1 = 1)
 
 
+
     ##  check the livestock manure management attribute table
     def check_lsmm_attribute_table(self):
         subsec = "Livestock Manure Management"
@@ -1885,6 +1905,8 @@ class ModelAttributes:
             fields = sf.format_print_list(fields_check_sum)
             raise ValueError(f"Invalid specification of fields {fields} in {subsec} attribute located at {attr.fp_table}: Non-injective mapping specified--categories can map to at most 1 of these fields.")
 
+
+
     ##  function to check the variables specified in the Transportation Demand attribute table
     def check_trde_category_variable_crosswalk(self):
         self._check_subsector_attribute_table_crosswalk(
@@ -1896,10 +1918,12 @@ class ModelAttributes:
         )
 
 
+
     ##  function to check the transportation/transportation demand crosswalk in both the attribute table and the varreqs table
     def check_trns_trde_crosswalks(self):
         self._check_subsector_attribute_table_crosswalk("Transportation", "Transportation Demand", type_primary = "varreqs_partial", injection_q = True)
         self._check_subsector_attribute_table_crosswalk("Transportation", "Transportation Demand", injection_q = False)
+
 
 
     ##  function to check the liquid waste/population crosswalk in liquid waste
@@ -1907,9 +1931,11 @@ class ModelAttributes:
         self._check_subsector_attribute_table_crosswalk("Liquid Waste", "General", injection_q = True)
 
 
+
     ##  liquid waste/wastewater crosswalk
     def check_wali_trww_crosswalk(self):
         self._check_subsector_attribute_table_crosswalk("Liquid Waste", "Wastewater Treatment", type_primary = "varreqs_all")
+
 
 
     ##  function to check if the solid waste attribute table is properly defined
@@ -1919,6 +1945,7 @@ class ModelAttributes:
         cats_sludge = self.get_categories_from_attribute_characteristic("Solid Waste", {"sewage_sludge_category": 1})
         if len(cats_sludge) > 1:
             raise ValueError(f"Error in Solid Waste attribute table at {attr_waso.fp_table}: multiple sludge categories defined in the 'sewage_sludge_category' field. There should be no more than 1 sewage sludge category.")
+
 
 
     ##  function to check the projection input dataframe and (1) return time periods available, (2) a dicitonary of scenario dimenions, and (3) an interpolated data frame if there are missing values.
@@ -1987,6 +2014,7 @@ class ModelAttributes:
         df_project = df_project[[self.dim_time_period] + fields_dat] if strip_dims else df_project[fields_dims_notime + [self.dim_time_period] + fields_dat]
 
         return dict_dims, df_project, n_projection_time_periods, projection_time_periods
+
 
 
     ##  function transfer variables from one data frame (source) to another (target)
@@ -2131,6 +2159,7 @@ class ModelAttributes:
         return fld_nam
 
 
+
     ##  add a year from a time period field
     def exchange_year_time_period(self,
         df_in: pd.DataFrame,
@@ -2244,7 +2273,6 @@ class ModelAttributes:
             - type_table: default = "categories". Represents the type of attribute table; valid values are 'categories', 'varreqs_all', and 'varreqs_partial'
             - clean_field_vals: default = True. Apply clean_schema() to the values found in attr_subsector[field_attribute]?
             - clean_attr_key: default is False. Apply clean_schema() to the keys that are assigned to the output dictionary (e.g., clean_schema(variable_name))
-
         """
 
         # check the subsector

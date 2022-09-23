@@ -54,12 +54,14 @@ for table in required_tables_nemomod:
 fp_sqlite_nemomod_db_tmp = os.path.join(dir_tmp, "nemomod_intermediate_database.sqlite")
 
 
-##  BATCH DATA GENERATION DIRECTORIES
+##  BATCH DATA GENERATION DIRECTORIES AND FILES
+
 dir_rbd_afolu_exports_imports = sf.check_path(os.path.join(dir_ref_batch_data, "afolu_imports_exports"), True)
 dir_rbd_baseline_transition_probs = sf.check_path(os.path.join(dir_ref_batch_data, "baseline_transition_probability_estimates"), True)
 dir_rbd_kcc = sf.check_path(os.path.join(dir_ref_batch_data, "koppen_climate_classifications"), True)
+dir_rbd_soc = sf.check_path(os.path.join(dir_ref_batch_data, "soil_grids_soil_organic_carbon"), True)
 dir_rbd_nemomod_energy_inputs = sf.check_path(os.path.join(dir_ref_batch_data, "nemomod_energy_inputs"), True)
-# Data crosswalks
+# data crosswalks
 fp_csv_cw_fao_crops = os.path.join(dir_ref_data_crosswalks, "fao_crop_categories.csv")
 fp_csv_cw_fao_product_demand_categories_for_ie = os.path.join(dir_ref_data_crosswalks, "fao_product_demand_categories_for_import_export.csv")
 # files for afolu imports/exports
@@ -74,8 +76,12 @@ fpt_csv_transition_probability_estimation_mean_with_growth = os.path.join(dir_rb
 fpt_pkl_transition_probability_estimation_mean_with_growth_assumptions = os.path.join(dir_rbd_baseline_transition_probs, "transition_probs_by_region_mean_with_target_growth-%s_assumptions.pkl")
 # files for Koppen Climate Classification
 fp_csv_kcc_cells_merged_to_country = os.path.join(dir_rbd_kcc, "kcc_cells_merged_to_country.csv")
-fp_csv_kcc_cell_counts_by_country_kcc = os.path.join(dir_rbd_kcc, "cc_cell_counts_by_country_kcc.csv")
-fp_climate_fields_by_country_simple = os.path.join(dir_rbd_kcc, "climate_fields_by_country.csv")
+fp_csv_kcc_cell_counts_by_country_kcc = os.path.join(dir_rbd_kcc, "kcc_cell_counts_by_country.csv")
+fp_csv_climate_fields_by_country_simple = os.path.join(dir_rbd_kcc, "climate_fields_by_country.csv")
+# fiels for Soil Organic Carbon by country from SoilGrids
+fp_csv_soc_cells_merged_to_country = os.path.join(dir_rbd_soc, "scc_cells_merged_to_country.csv")
+fp_csv_soc_average_soc_by_country = os.path.join(dir_rbd_soc, "soc_average_soc_by_country.csv")
+fp_csv_soc_fields_by_country_simple = os.path.join(dir_rbd_soc, "soc_fields_by_country.csv")
 
 
 ##  FILE-PATH DEPENDENT FUNCTIONS

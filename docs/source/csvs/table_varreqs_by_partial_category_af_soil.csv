@@ -32,9 +32,6 @@ Input,EF5 N Leaching and Runoff Emission Factor," | See :math:`EF_5` from Table 
  | 
  | This emission factor is given by the IPCC as kg :math:`\text{N}_2\text{O-N}`(kg N), and it is multipled in the by the factor 11/7 to convert :math:`\text{N}_2\text{O-N}` to  :math:`\text{N}_2\text{O}`.",``ef_soil_ef5_n_leaching_$EMISSION-GAS$`` (``$EMISSION-GAS$ = n2o``),,none,,,,0,0.8,1.2,0
 Input,Fertilizer N Demand Scalar,Use to reduce or increase per-unit demand for fertilizer N,``demscalar_soil_fertilizer_n_per_area``,,none,,,,0,1,1,0
-Input,Fraction of SOC Lost in Cropland," | Fraction of SOC that is lost due to management. :math:`1 - F_{MG}` from Box 2.2.
- | 
- | Based on combination of assumed land use SOC factor of 0.92 (see Box 2.2, V4, C2 IPCC GNGHGI (2019R) for this assumption--and a potential reduction of between 20% and 40% in SOC for land cropland relative to forest and grasslands (see pg 2.29).",``frac_soil_soc_loss_in_cropland``,,none,,,,0,1,1,0
 Input,Fraction Synthetic Fertilizer Use Urea,Fraction of synthetic fertilizer use that comes from Urea. Can change in the future.,``frac_soil_synthetic_fertilizer_urea``,,none,,,,0,1,1,0
 Input,Initial Liming Dolomite Applied to Soils,,``qtyinit_soil_liming_dolomite_applied_to_soils_$UNIT-MASS$`` (``$UNIT-MASS$ = kt),,none,,,,0,1,1,0
 Input,Initial Liming Limestone Applied to Soils,,``qtyinit_soil_liming_limestone_applied_to_soils_$UNIT-MASS$`` (``$UNIT-MASS$ = kt),,none,,,,0,1,1,0

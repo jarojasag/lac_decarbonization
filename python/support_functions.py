@@ -3,6 +3,30 @@ import numpy as np
 import pandas as pd
 from typing import Union
 
+
+"""
+##  using a dictionary, add fields to a data frame in place
+def add_data_frame_fields_from_dict():#df: pd.DataFrame,dict_field_vals: dict,overwrite_fields: bool = False
+#) -> pd.DataFrame:
+    nms = list(df.columns)
+
+    for key in dict_field_vals.keys()
+        if !(key in nms) or overwrite_fields:
+            val = dict_field_vals.get(key)
+            if isinstance(val, list) or isinstance(val, np.array):
+                # chceck length
+                if len(val) == len(df):
+                    df[key] = val
+                else:
+                    raise ValueError(f"Unable to add key {key} to data from in add_data_frame_fields_from_dict! -- the vector associated with the value does not match the length of the data frame.")
+            else:
+                df[!, key] .= val
+            end
+        elif (key in nms):
+            raise ValueError(f"Field '{key}' found in dictionary in add_data_frame_fields_from_dict!. It will not be overwritten. ")
+"""
+
+
 ##  function to "projct" backwards waste that was deposited (used only in the absence of historical data)
 def back_project_array(
     array_in: np.ndarray,
@@ -39,6 +63,7 @@ def back_project_array(
     return (vec_mu**array_exponent)*array_in[0]
 
 
+
 ##  build a dictionary from a dataframe
 def build_dict(df_in, dims = None) -> dict:
 
@@ -68,15 +93,25 @@ def build_dict(df_in, dims = None) -> dict:
     return dict_out
 
 
+
 # check that the data frame contains required information
-def check_fields(df, fields: list, msg_prepend: str = "Required fields: "):
+def check_fields(
+    df: pd.DataFrame,
+    fields: list,
+    msg_prepend: str = "Required fields: ",
+    throw_error_q = True
+):
     s_fields_df = set(df.columns)
     s_fields_check = set(fields)
     if s_fields_check.issubset(s_fields_df):
         return True
     else:
         fields_missing = format_print_list(s_fields_check - s_fields_df)
-        raise KeyError(f"{msg_prepend}{fields_missing} not found in the data frame.")
+        if throw_error_q:
+            raise KeyError(f"{msg_prepend}{fields_missing} not found in the data frame.")
+
+        return False
+
 
 
 # check that a dictionary contains the required keys
@@ -101,6 +136,7 @@ def check_path(fp, create_q = False):
         raise ValueError(f"Path '{fp}' not found. It will not be created.")
 
 
+
 ##  check row sums to ensure they add to 1
 def check_row_sums(
     array: np.ndarray,
@@ -116,6 +152,7 @@ def check_row_sums(
         return (array.transpose()/sums).transpose()
 
 
+
 ##  print a set difference; sorts to ensure easy reading for user
 def check_set_values(subset: set, superset: set, str_append: str = "") -> str:
     if not set(subset).issubset(set(superset)):
@@ -123,6 +160,7 @@ def check_set_values(subset: set, superset: set, str_append: str = "") -> str:
         invalid_vals.sort()
         invalid_vals = format_print_list(invalid_vals)
         raise ValueError(f"Invalid values {invalid_vals} found{str_append}.")
+
 
 
 ##  clean names of an input table to eliminate spaces/unwanted characters
@@ -153,11 +191,13 @@ def clean_field_names(nms, dict_repl: dict = {"  ": " ", " ": "_", "$": "", "\\"
     return nms
 
 
+
 ##  export a dictionary of data frames to an excel
 def dict_to_excel(fp_out: str, dict_out: dict) -> None:
     with pd.ExcelWriter(fp_out) as excel_writer:
         for k in dict_out.keys():
             dict_out[k].to_excel(excel_writer, sheet_name = str(k), index = False, encoding = "UTF-8")
+
 
 
 ##  function to help fill in fields that are in another dataframe the same number of rows
@@ -183,6 +223,7 @@ def df_get_missing_fields_from_source_df(df_target, df_source, side = "right", c
         df_out = df_out[flds_1 + flds_2]
 
     return df_out
+
 
 
 ##  allows for multiplication of np.arrays that might be of the same shape or row-wise similar
@@ -216,6 +257,7 @@ def do_array_mult(
         return np.outer(arr_stable, arr_variable)
     else:
         raise ValueError(f"Error in do_array_mult: Incompatable shape {arr_variable.shape} in arr_variable. The stable array has shape {arr_stable.shape}.")
+
 
 
 ##  simple but often used function
@@ -387,6 +429,7 @@ def print_setdiff(set_required: set, set_check: set) -> str:
     return format_print_list(missing_vals)
 
 
+
 ##  project a vector of growth scalars from a vector of growth rates and elasticities
 def project_growth_scalar_from_elasticity(
     vec_rates: np.ndarray,
@@ -437,12 +480,15 @@ def project_growth_scalar_from_elasticity(
     return vec_growth_scalar
 
 
+
 ##  repeat the first row and prepend
 def prepend_first_element(array: np.ndarray, n_rows: int) -> np.ndarray:
     out = np.concatenate([
         np.repeat(array[0:1], n_rows, axis = 0), array
     ])
     return out
+
+
 
 ##  replace values in a two-dimensional array
 def repl_array_val_twodim(array, val_repl, val_new):
@@ -451,6 +497,7 @@ def repl_array_val_twodim(array, val_repl, val_new):
     inds = w[0]*len(array[0]) + w[1]
     np.put(array, inds, val_new)
     return None
+
 
 
 ##  perform a merge to overwrite some values for a new sub-df
@@ -498,6 +545,7 @@ def replace_numerical_column_from_merge(
     return df_out
 
 
+
 ##  quick function to reverse dictionaries
 def reverse_dict(dict_in: dict) -> dict:
     # check keys
@@ -510,11 +558,11 @@ def reverse_dict(dict_in: dict) -> dict:
 
 
 
-
 ##  set a vector to element-wise stay within bounds
 def scalar_bounds(scalar, bounds: tuple):
     bounds = np.array(bounds).astype(float)
     return min([max([scalar, min(bounds)]), max(bounds)])
+
 
 
 ##  multiple string replacements using a dictionary
@@ -522,6 +570,7 @@ def str_replace(str_in: str, dict_replace: dict) -> str:
     for k in dict_replace.keys():
         str_in = str_in.replace(k, dict_replace[k])
     return str_in
+
 
 
 ##  subset a data frame using a dictionary
@@ -534,6 +583,7 @@ def subset_df(df, dict_in):
                 val = dict_in[k]
             df = df[df[k].isin(val)]
     return df
+
 
 
 ##  set a vector to element-wise stay within bounds
@@ -602,6 +652,7 @@ def vec_bounds(
     vec_out = np.reshape(vec_out, shape_reset) if paired_vector_check else vec_out
 
     return vec_out
+
 
 
 # use the concept of a limiter and renormalize elements beyond a threshold
