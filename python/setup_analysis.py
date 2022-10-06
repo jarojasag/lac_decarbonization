@@ -30,11 +30,11 @@ model_attributes = ds.ModelAttributes(dir_attribute_tables, fp_config)
 
 dir_ingestion = sf.check_path(os.path.join(dir_ref, "ingestion"), True)
 # storage for parameter sheets of calibrated parameters
-dir_parameters_calibrated = sf.check_path(os.path.join(dir_ingestion, "parameters_calibrated"), True)
+dir_parameters_calibrated = sf.check_path(os.path.join(dir_ingestion, "calibrated"), True)
 # sheets used to demonstrate the structure of parameter input tables
-dir_parameters_demo = sf.check_path(os.path.join(dir_ingestion, "parameters_demo"), True)
+dir_parameters_demo = sf.check_path(os.path.join(dir_ingestion, "demo"), True)
 # sheets with raw, best-guess uncalibrated parameters by country
-dir_parameters_uncalibrated = sf.check_path(os.path.join(dir_ingestion, "parameters_uncalibrated"), True)
+dir_parameters_uncalibrated = sf.check_path(os.path.join(dir_ingestion, "uncalibrated"), True)
 
 
 ##  DEVELOP SOME FILE PATHS

@@ -2,29 +2,62 @@ import os, os.path
 import numpy as np
 import pandas as pd
 from typing import Union
+import warnings
 
 
-"""
 ##  using a dictionary, add fields to a data frame in place
-def add_data_frame_fields_from_dict():#df: pd.DataFrame,dict_field_vals: dict,overwrite_fields: bool = False
-#) -> pd.DataFrame:
-    nms = list(df.columns)
+def add_data_frame_fields_from_dict(
+    df: pd.DataFrame,
+    dict_field_vals: dict,
+    field_hierarchy: Union[None, list, np.ndarray] = None,
+    overwrite_fields: bool = False,
+    prepend_q: bool = True
+) -> pd.DataFrame:
+    """
+    Inplace operator for adding fields to a dataframe.
+        * New fields are entered as a key in `dict_field_vals`, and new values for the dataframe are entered as values
+        * Values may be passed as a single value (e.g., str, int, float) or a vector (list/np.array)
 
-    for key in dict_field_vals.keys()
-        if !(key in nms) or overwrite_fields:
+    Function Arguments
+    ------------------
+    - df: DataFrame to add index fields to
+    - dict_field_vals: dictionary mapping a new field (key) to value (value)
+
+    Keyword Arguments
+    -----------------
+    - field_hierarchy: field hierachy (ordering) for new fields. Only used if `prepend_q` = True. If None, default to sorted()
+    - overwrite_fields: for key in dict_field_vals.keys(), overwrite field `key` if present in `df`?
+    - prepend_q: prepend the new fields to the data frame (ordered fields)
+    """
+
+    nms = list(df.columns)
+    fields_add = []
+
+    for key in dict_field_vals.keys():
+        if (key not in nms) or overwrite_fields:
             val = dict_field_vals.get(key)
-            if isinstance(val, list) or isinstance(val, np.array):
+            if isinstance(val, list) or isinstance(val, np.ndarray):
                 # chceck length
                 if len(val) == len(df):
                     df[key] = val
+                    fields_add.append(key)
                 else:
-                    raise ValueError(f"Unable to add key {key} to data from in add_data_frame_fields_from_dict! -- the vector associated with the value does not match the length of the data frame.")
+                    warnings.warn(f"Unable to add key {key} to data from in add_data_frame_fields_from_dict() -- the vector associated with the value does not match the length of the data frame.")
             else:
-                df[!, key] .= val
-            end
+                df[key] = val
+                fields_add.append(key)
         elif (key in nms):
-            raise ValueError(f"Field '{key}' found in dictionary in add_data_frame_fields_from_dict!. It will not be overwritten. ")
-"""
+            warnings.warn(f"Field '{key}' found in dictionary in add_data_frame_fields_from_dict(). It will not be overwritten. ")
+            fields_add.append(key)
+
+    # order output fields
+    fields_out = list(df.columns)
+    if prepend_q:
+        ordering_prepend = [x for x in field_hierarchy if x in fields_add] if (field_hierarchy is not None) else sorted(fields_add)
+        ordering_append = [x for x in fields_out if x not in ordering_prepend]
+        fields_out = ordering_prepend + ordering_append
+
+    return df[fields_out]
 
 
 ##  function to "projct" backwards waste that was deposited (used only in the absence of historical data)
@@ -65,9 +98,29 @@ def back_project_array(
 
 
 ##  build a dictionary from a dataframe
-def build_dict(df_in, dims = None) -> dict:
+def build_dict(
+    df_in: pd.DataFrame,
+    dims = None,
+    force_tuple = False
+) -> dict:
 
-    if len(df_in.columns) == 2:
+    """
+    Build a dictionary to map row-wise elements of df_in to other row-wise elements.
+        * If dims is None, then df_in will map the first n - 1 columns (as a tuple) to the nth column
+
+    Function Arguments
+    ------------------
+    - df_in: DataFrame used to build dictionary
+
+    Keyword Arguments
+    -----------------
+    - dims: dims used to build dictionary
+        * e.g., in 4-column data frame, can enter (2, 2) to map the first two columns [as a tuple] to the next two columns (as a tuple))
+    - force_tuple: if True, force an individual element as a tuple
+
+    """
+
+    if (len(df_in.columns) == 2) and not force_tuple:
         dict_out = dict([x for x in zip(df_in.iloc[:, 0], df_in.iloc[:, 1])])
     else:
         if dims == None:
@@ -78,19 +131,32 @@ def build_dict(df_in, dims = None) -> dict:
             raise ValueError(f"Invalid dictionary dimensions {dims}: the sum of dims should be equal to the number of columns in the input dataframe ({len(df_in.columns)}). They sum to {n_key + n_val}.")
 
         # keys to zip
-        if n_key == 1:
+        if (n_key == 1) and not force_tuple:
             keys = df_in.iloc[:, 0]
         else:
             keys = [tuple(x) for x in np.array(df_in[list(df_in.columns)[0:n_key]])]
         # values to zip
         if n_val == 1:
-            vals = df_in.iloc[:, len(df_in.columns) - 1]
+            vals = np.array(df_in.iloc[:, len(df_in.columns) - 1])
         else:
             vals = [np.array(x) for x in np.array(df_in[list(df_in.columns)[n_key:(n_key + n_val)]])]
 
         dict_out = dict([x for x in zip(keys, vals)])
 
     return dict_out
+
+
+
+def check_binary_fields(
+    df_in: pd.DataFrame,
+    field: str
+) -> pd.DataFrame:
+
+    w1 = list(np.where(df_in[field].isna())[0])
+    if len(w1) > 0:
+        df_in[field].iloc[w1] = 0
+
+    return df_in
 
 
 

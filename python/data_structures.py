@@ -384,9 +384,18 @@ class ModelAttributes:
         self.dim_region = "region"
         self.dim_strategy_id = "strategy_id"
         self.dim_time_period = "time_period"
+        self.dim_time_series_id = "time_series_id"
         self.dim_primary_id = "primary_id"
         # ordered by sort hierarchy
-        self.sort_ordered_dimensions_of_analysis = [self.dim_primary_id, self.dim_design_id, self.dim_strategy_id, self.dim_future_id, self.dim_time_period]
+        self.sort_ordered_dimensions_of_analysis = [
+            self.dim_primary_id,
+            self.dim_design_id,
+            self.dim_region,
+            self.dim_time_series_id,
+            self.dim_strategy_id,
+            self.dim_future_id,
+            self.dim_time_period
+        ]
 
         # some common shared fields
         self.field_dim_year = "year"
@@ -558,8 +567,68 @@ class ModelAttributes:
     #   FUNCTIONS FOR ATTRIBUTE TABLES, DIMENSIONS, SECTORS    #
     ############################################################
 
+    ##  wrapper function to add scenarios to
+    def add_index_fields(self,
+        df_input: pd.DataFrame,
+        design_id: Union[None, int] = None,
+        future_id: Union[None, int] = None,
+        primary_id: Union[None, int] = None,
+        region: Union[None, int] = None,
+        strategy_id: Union[None, int] = None,
+        time_period: Union[None, int] = None,
+        time_series_id: Union[None, int] = None,
+        overwrite_fields: bool = False
+    ) -> pd.DataFrame:
+        """
+        Add scenario and dimensional index fields to a data frame using consistent field hierachy
+
+        Function Arguments
+        ------------------
+        - df_input: Input DataFrame to add indexes to
+
+        Keyword Arguments
+        -----------------
+        - design_id: value for index ModelAttributes.dim_design_id; if None, the index is not added
+        - future_id: value for index ModelAttributes.dim_future_id; if None, the index is not added
+        - primary_id: value for index ModelAttributes.dim_primary_id; if None, the index is not added
+        - region: value for index ModelAttributes.dim_region; if None, the index is not added
+        - strategy_id: value for index ModelAttributes.dim_strategy_id; if None, the index is not added
+        - time_period: value for index ModelAttributes.dim_time_period; if None, the index is not added
+        - time_series_id: value for index ModelAttributes.dim_time_series_id; if None, the index is not added
+        - overwrite_fields:
+            * If True, if the index field already iexists in `df_input`, it will be overwritten with the value passed to add_index_fields
+            * Otherwise, the existing field will be left.
+            * NOTE: if a value is passed with overwrite_q = False, then the data frame will still order fields hierarchically
+        """
+
+        if df_input is None:
+            return None
+
+        dict_indices = {}
+
+        # update values
+        dict_indices.update({self.dim_design_id: design_id}) if (design_id is not None) else None
+        dict_indices.update({self.dim_future_id: future_id}) if (future_id is not None) else None
+        dict_indices.update({self.dim_primary_id: primary_id}) if (primary_id is not None) else None
+        dict_indices.update({self.dim_region: region}) if (region is not None) else None
+        dict_indices.update({self.dim_strategy_id: strategy_id}) if (strategy_id is not None) else None
+        dict_indices.update({self.dim_time_period: time_period}) if (time_period is not None) else None
+        dict_indices.update({self.dim_time_series_id: time_series_id}) if (time_series_id is not None) else None
+
+        df_input = sf.add_data_frame_fields_from_dict(
+            df_input,
+            dict_indices,
+            field_hierarchy = self.sort_ordered_dimensions_of_analysis,
+            prepend_q = True,
+            overwrite_fields = overwrite_fields
+        )
+
+        return df_input
+
+
+
     ##  function to ensure dimensions of analysis are properly specified
-    def check_dimensions_of_analysis(self):
+    def check_dimensions_of_analysis(self) -> None:
         if not set(self.sort_ordered_dimensions_of_analysis).issubset(set(self.all_dims)):
             missing_vals = sf.print_setdiff(set(self.sort_ordered_dimensions_of_analysis), set(self.all_dims))
             raise ValueError(f"Missing specification of required dimensions of analysis: no attribute tables for dimensions {missing_vals} found in directory '{self.attribute_directory}'.")
@@ -602,6 +671,22 @@ class ModelAttributes:
 
 
     ##  function to ensure a sector is properly specified
+    def check_region(self,
+        region: str,
+        allow_unclean: bool = False
+    ):
+
+        region = clean_region(region) if allow_unclean else region
+        attr_region = self.dict_attributes.get(self.dim_region)
+
+        # check sectors
+        if region not in attr_region.key_values:
+            valid_regions = sf.format_print_list(attr_region.key_values)
+            raise ValueError(f"Invalid region specification '{region}': valid sectors are {valid_region}")
+
+
+
+    ##  function to ensure a sector is properly specified
     def check_sector(self, sector: str):
         # check sectors
         if sector not in self.all_sectors:
@@ -624,6 +709,14 @@ class ModelAttributes:
 
 
 
+    ##  commonly used--restrict variable values
+    def check_restricted_value_argument(self, arg, valid_values: list, func_arg: str = "", func_name: str = ""):
+        if arg not in valid_values:
+            vrts = sf.format_print_list(valid_values)
+            raise ValueError(f"Invalid {func_arg} in {func_name}: valid values are {vrts}.")
+
+
+
     ##  simple inline function to dimensions in a data frame (if they are converted to floats)
     def clean_dimension_fields(self, df_in: pd.DataFrame):
         fields_clean = [x for x in self.sort_ordered_dimensions_of_analysis if x in df_in.columns]
@@ -632,11 +725,9 @@ class ModelAttributes:
 
 
 
-    ##  commonly used--restrict variable values
-    def check_restricted_value_argument(self, arg, valid_values: list, func_arg: str = "", func_name: str = ""):
-        if arg not in valid_values:
-            vrts = sf.format_print_list(valid_values)
-            raise ValueError(f"Invalid {func_arg} in {func_name}: valid values are {vrts}.")
+    ##  inline function to clean regions (commonly called)
+    def clean_region(self, region: str) -> str:
+        return region.strip().lower().replace(" ", "_")
 
 
 
@@ -3084,13 +3175,10 @@ class ModelAttributes:
 
             Function Arguments
             ------------------
-            array_in: array with data. Must be merged to all categories for the subsector.
-
-            vec_ordered_cats_source: array of source categories to swap with targets (source_i -> target_i). Must be well defined categories
-
-            vec_ordered_cats_target: array of target categories to swap with the source. Must be well defined categories
-
-            subsector: subsector in which the swap occurs
+            - array_in: array with data. Must be merged to all categories for the subsector.
+            - vec_ordered_cats_source: array of source categories to swap with targets (source_i -> target_i). Must be well defined categories
+            - vec_ordered_cats_target: array of target categories to swap with the source. Must be well defined categories
+            - subsector: subsector in which the swap occurs
 
             Notes
             -----
