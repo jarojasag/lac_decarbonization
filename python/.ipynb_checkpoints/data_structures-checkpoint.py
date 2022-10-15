@@ -172,7 +172,7 @@ class ModelAttributes:
         self.dict_attributes["abbreviation_subsector"].field_maps["subsector_to_primary_category_py"]["Forest"]
         # loop over required variables
         for var in dict_vr_vvs.keys():
-            var_schema = ds.clean_schema(dict_vr_vvs[var])
+            var_schema = ma.clean_schema(dict_vr_vvs[var])
             # fix the emission
             for catval in attribute_table.key_values:
                 vars_out.append(var_schema.replace(category, catval))

@@ -1,5 +1,6 @@
 import support_functions as sf
-import data_structures as ds
+import model_attributes as ma
+from attribute_table import AttributeTable
 from model_afolu import AFOLU
 from model_circular_economy import CircularEconomy
 from model_energy import NonElectricEnergy
@@ -57,7 +58,7 @@ class ElectricEnergy:
     """
 
     def __init__(self,
-        attributes: ds.ModelAttributes,
+        attributes: ma.ModelAttributes,
         nemomod_reference_files: Union[str, dict]
     ):
 
@@ -684,7 +685,7 @@ class ElectricEnergy:
     ##  build variable cost component for dummy techs
     def build_dummy_tech_variable_cost(self,
         price: Union[int, float],
-        attribute_technology: ds.AttributeTable = None
+        attribute_technology: AttributeTable = None
     ):
         """
             Build variable costs for dummy techs based on an input price.
@@ -856,7 +857,7 @@ class ElectricEnergy:
 
     ##  return information relating techs to storage and dummy techs to fuels
     def get_tech_info_dict(self,
-        attribute_technology: ds.AttributeTable = None
+        attribute_technology: AttributeTable = None
     ) -> dict:
         """
             Retrieve information relating technology to storage, including a map of technologies to storage, storage to associated technology, and classifications of generation techs vs. storage techs.
@@ -1082,7 +1083,7 @@ class ElectricEnergy:
     ##  get waste outputs needed for inputs as energy
     def get_waste_energy_components(self,
         df_elec_trajectories: pd.DataFrame,
-        attribute_technology: ds.AttributeTable = None,
+        attribute_technology: AttributeTable = None,
         return_emission_factors: bool = True
     ) -> tuple:
 
@@ -1304,7 +1305,7 @@ class ElectricEnergy:
 
     ##  get a dictionary of dummy techs for use in OperationalLifeStorage and OutputActivityRatio
     def get_dummy_techs(self,
-        attribute_technology: ds.AttributeTable = None
+        attribute_technology: AttributeTable = None
     ) -> dict:
         """
             Get a dictionary mapping fuels mapped to powerplant generation to associated dummy techs
@@ -1441,7 +1442,7 @@ class ElectricEnergy:
 
     ##  format EMISSION for NemoMod
     def format_nemomod_attribute_table_emission(self,
-        attribute_emission: ds.AttributeTable = None,
+        attribute_emission: AttributeTable = None,
         dict_rename: dict = None
     ) -> pd.DataFrame:
         """
@@ -1468,7 +1469,7 @@ class ElectricEnergy:
 
     ##  format FUEL for NemoMod
     def format_nemomod_attribute_table_fuel(self,
-        attribute_fuel: ds.AttributeTable = None,
+        attribute_fuel: AttributeTable = None,
         dict_rename: dict = None
     ) -> pd.DataFrame:
         """
@@ -1496,7 +1497,7 @@ class ElectricEnergy:
 
     ##  format MODE_OF_OPERATION for NemoMod
     def format_nemomod_attribute_table_mode_of_operation(self,
-        attribute_mode: ds.AttributeTable = None,
+        attribute_mode: AttributeTable = None,
         dict_rename: dict = None
     ) -> pd.DataFrame:
         """
@@ -1523,7 +1524,7 @@ class ElectricEnergy:
 
     ##  format NODE for NemoMod
     def format_nemomod_attribute_table_node(self,
-        attribute_node: ds.AttributeTable = None,
+        attribute_node: AttributeTable = None,
         dict_rename: dict = None
     ) -> pd.DataFrame:
         """
@@ -1542,7 +1543,7 @@ class ElectricEnergy:
 
     ##  format REGION for NemoMod
     def format_nemomod_attribute_table_region(self,
-        attribute_region: ds.AttributeTable = None,
+        attribute_region: AttributeTable = None,
         dict_rename: dict = None
     ) -> pd.DataFrame:
         """
@@ -1569,7 +1570,7 @@ class ElectricEnergy:
 
     ##  format STORAGE for NemoMod
     def format_nemomod_attribute_table_storage(self,
-        attribute_storage: ds.AttributeTable = None,
+        attribute_storage: AttributeTable = None,
         dict_rename: dict = None
     ) -> pd.DataFrame:
         """
@@ -1597,7 +1598,7 @@ class ElectricEnergy:
 
     ##  format TECHNOLOGY for NemoMod
     def format_nemomod_attribute_table_technology(self,
-        attribute_technology: ds.AttributeTable = None,
+        attribute_technology: AttributeTable = None,
         dict_rename: dict = None
     ) -> pd.DataFrame:
         """
@@ -1675,8 +1676,8 @@ class ElectricEnergy:
     ##  format AnnualEmissionLimit for NemoMod
     def format_nemomod_table_annual_emission_limit(self,
         df_elec_trajectories: pd.DataFrame,
-        attribute_emission: ds.AttributeTable = None,
-        attribute_time_period: ds.AttributeTable = None,
+        attribute_emission: AttributeTable = None,
+        attribute_time_period: AttributeTable = None,
         dict_gas_to_emission_fields: dict = None,
         drop_flag: int = -999
     ) -> pd.DataFrame:
@@ -1769,8 +1770,8 @@ class ElectricEnergy:
     ##  format CapacityFactor for NemoMod
     def format_nemomod_table_capacity_factor(self,
         df_reference_capacity_factor: pd.DataFrame,
-        attribute_technology: ds.AttributeTable = None,
-        attribute_region: ds.AttributeTable = None
+        attribute_technology: AttributeTable = None,
+        attribute_region: AttributeTable = None
     ) -> pd.DataFrame:
         """
             Format the CapacityFactor input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
@@ -2005,7 +2006,7 @@ class ElectricEnergy:
 
     ##  format DefaultParameters for NemoMod
     def format_nemomod_table_default_parameters(self,
-        attribute_nemomod_table: ds.AttributeTable = None,
+        attribute_nemomod_table: AttributeTable = None,
         field_default_values: str = "default_value"
     ) -> pd.DataFrame:
         """
@@ -2064,7 +2065,7 @@ class ElectricEnergy:
     ##  format EmissionsActivityRatio for NemoMod
     def format_nemomod_table_emissions_activity_ratio(self,
         df_elec_trajectories: pd.DataFrame,
-        attribute_time_period: ds.AttributeTable = None
+        attribute_time_period: AttributeTable = None
     ) -> pd.DataFrame:
         """
             Format the EmissionsActivityRatio input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
@@ -2275,7 +2276,7 @@ class ElectricEnergy:
     ##  format InputActivityRatio for NemoMod
     def format_nemomod_table_input_activity_ratio(self,
         df_elec_trajectories: pd.DataFrame,
-        attribute_technology: ds.AttributeTable = None,
+        attribute_technology: AttributeTable = None,
         max_ratio: float = 1000000.0
     ) -> pd.DataFrame:
         """
@@ -2374,7 +2375,7 @@ class ElectricEnergy:
     ##  format MinStorageCharge for NemoMod
     def format_nemomod_table_min_storage_charge(self,
         df_elec_trajectories: pd.DataFrame,
-        attribute_storage: ds.AttributeTable = None,
+        attribute_storage: AttributeTable = None,
         field_attribute_min_charge: str = "minimum_charge_fraction"
     ) -> pd.DataFrame:
         """
@@ -2486,9 +2487,9 @@ class ElectricEnergy:
 
     ##  format OperationalLife and OperationalLifeStorage for NemoMod
     def format_nemomod_table_operational_life(self,
-        attribute_fuel: ds.AttributeTable = None,
-        attribute_storage: ds.AttributeTable = None,
-        attribute_technology: ds.AttributeTable = None,
+        attribute_fuel: AttributeTable = None,
+        attribute_storage: AttributeTable = None,
+        attribute_technology: AttributeTable = None,
         operational_life_dummies: Union[float, int] = 250
     ) -> pd.DataFrame:
         """
@@ -2560,7 +2561,7 @@ class ElectricEnergy:
     ##  format OutputActivityRatio for NemoMod
     def format_nemomod_table_output_activity_ratio(self,
         df_elec_trajectories: pd.DataFrame,
-        attribute_technology: ds.AttributeTable = None
+        attribute_technology: AttributeTable = None
     ) -> pd.DataFrame:
         """
             Format the OutputActivityRatio input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
@@ -2628,7 +2629,7 @@ class ElectricEnergy:
 
     ##  format RETagTechnology for NemoMod
     def format_nemomod_table_re_tag_technology(self,
-        attribute_technology: ds.AttributeTable = None
+        attribute_technology: AttributeTable = None
     ) -> pd.DataFrame:
         """
             Format the RETagTechnology (renewable energy technology tag) input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
@@ -2845,7 +2846,7 @@ class ElectricEnergy:
     ##  format SpecifiedAnnualDemand for NemoMod
     def format_nemomod_table_specified_annual_demand(self,
         df_elec_trajectories: pd.DataFrame,
-        attribute_time_period: ds.AttributeTable = None
+        attribute_time_period: AttributeTable = None
     ) -> pd.DataFrame:
         """
             Format the SpecifiedAnnualDemand input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
@@ -2948,7 +2949,7 @@ class ElectricEnergy:
     ##  format StorageMaxChargeRate, StorageMaxDishargeRate, and StorageStartLevel for NemoMod
     def format_nemomod_table_storage_attributes(self,
         df_elec_trajectories: pd.DataFrame,
-        attribute_storage: ds.AttributeTable = None,
+        attribute_storage: AttributeTable = None,
         field_attribute_min_charge: str = "minimum_charge_fraction",
         field_tmp: str = "TMPNEW"
     ) -> pd.DataFrame:
@@ -3030,8 +3031,8 @@ class ElectricEnergy:
 
     ##  format TechnologyFromStorage and TechnologyToStorage for NemoMod
     def format_nemomod_table_technology_from_and_to_storage(self,
-        attribute_storage: ds.AttributeTable = None,
-        attribute_technology: ds.AttributeTable = None
+        attribute_storage: AttributeTable = None,
+        attribute_technology: AttributeTable = None
     ) -> pd.DataFrame:
         """
             Format the TechnologyFromStorage and TechnologyToStorage input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
@@ -3120,7 +3121,7 @@ class ElectricEnergy:
 
     ##  format LTsGroup, TSGROUP1, TSGROUP2, and YearSplit for NemoMod
     def format_nemomod_table_tsgroup_tables(self,
-        attribute_time_slice: ds.AttributeTable = None
+        attribute_time_slice: AttributeTable = None
     ) -> pd.DataFrame:
         """
             Format the LTsGroup, TIMESLICE, TSGROUP1, TSGROUP2, and YearSplit input tables for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
@@ -3523,7 +3524,7 @@ class ElectricEnergy:
     ##  format TotalTechnologyAnnualActivityLowerLimit for NemoMod
     def format_nemomod_table_total_technology_activity_lower_limit(self,
         df_elec_trajectories: pd.DataFrame,
-        attribute_technology: ds.AttributeTable = None,
+        attribute_technology: AttributeTable = None,
         return_type: str = "NemoMod"
     ) -> pd.DataFrame:
         """
@@ -3647,7 +3648,7 @@ class ElectricEnergy:
         field_pivot: str,
         field_index: str = None,
         field_values: str = None,
-        attribute_time_period: ds.AttributeTable = None,
+        attribute_time_period: AttributeTable = None,
         field_year: str = "year",
         time_period_as_year: bool = None
     ) -> pd.DataFrame:

@@ -1,9 +1,12 @@
+from attribute_table import AttributeTable
+import logging
 import math
 import numpy as np
 import pandas as pd
 import os, os.path
 import re
 import support_functions as sf
+import time
 from typing import *
 
 
@@ -143,6 +146,7 @@ class SamplingUnit:
 		df_scen = pd.DataFrame(tups_id, columns = fields_id)
 		df_in = pd.merge(df_in, df_scen, how = "inner", on = fields_id)
 		df_scen[field_merge_key] = range(len(df_scen))
+		tups_id = sorted(list(tups_id))
 
 		return (df_in, df_scen, tups_id)
 
@@ -155,65 +159,73 @@ class SamplingUnit:
 
 	def generate_indexing_data_frame(self,
 		df_id_coords: Union[pd.DataFrame, None] = None,
-		field_primary_key_id_coords: Union[str, None] = None
+		dict_additional_fields: Dict[str, Union[float, int, str]] = None,
+		field_primary_key_id_coords: Union[str, None] = None,
 		field_time_period: Union[str, None] = None
 	) -> pd.DataFrame:
 
-	"""
-	Generate an data frame long by time period and all id coordinates included in the sample unit.
+		"""
+		Generate an data frame long by time period and all id coordinates included in the sample unit.
 
-	Function Arguments
-	------------------
+		Function Arguments
+		------------------
 
+		Keyword Arguments
+		-----------------
+		- df_id_coords: data frame containing id coordinates + primary key (in field_primary_key_id_coords)
+			* If None, default to self.df_id_coordinates
+		- dict_additional_fields: dictionary mapping additional fields to values to add
+			* If None, no additional fields are added
+		- field_primary_key_id_coords: field in df_id_coords denoting the primary key
+			* If None, default to self.primary_key_id_coordinates
+		- field_time_period: field to use for data frame
+			* If None, default to self.field_time_period
+		"""
 
-	Keyword Arguments
-	-----------------
-	- df_id_coords: data frame containing id coordinates + primary key (in field_primary_key_id_coords)
-		* If None, default to self.df_id_coordinates
-	- field_primary_key_id_coords: field in df_id_coords denoting the primary key
-		* If None, default to self.primary_key_id_coordinates
-	- field_time_period: field to use for data frame
-		* If None, default to self.field_time_period
-	"""
+		df_id_coords = self.df_id_coordinates if (df_id_coords is None) else df_id_coords
+		field_primary_key_id_coords = self.primary_key_id_coordinates if (field_primary_key_id_coords is None) else field_primary_key_id_coords
+		field_time_period = self.field_time_period if (field_time_period is None) else field_time_period
 
-	df_id_coords = self.df_id_coordinates if (df_id_coords is None) else df_id_coords
-	field_primary_key_id_coords = self.primary_key_id_coordinates if (field_primary_key_id_coords is None) else field_primary_key_id_coords
-	field_time_period = self.field_time_period if (field_time_period is None) else field_time_period
-
-	# build array of coordinates x time periods
-	df_coords_by_future = np.array([
-		np.repeat(
-			df_id_coords[field_primary_key_id_coords],
-			len(self.time_periods)
-		),
-		np.concatenate(
+		# build array of coordinates x time periods
+		df_coords_by_future = np.array([
 			np.repeat(
-				[self.time_periods],
-				len(self.df_id_coordinates),
-				axis = 0
+				df_id_coords[field_primary_key_id_coords],
+				len(self.time_periods)
+			),
+			np.concatenate(
+				np.repeat(
+					[self.time_periods],
+					len(self.df_id_coordinates),
+					axis = 0
+				)
 			)
+		]).transpose()
+
+		# convert to data frame
+		df_coords_by_future = pd.DataFrame(
+			df_coords_by_future,
+			columns = [field_primary_key_id_coords, field_time_period]
 		)
-	]).transpose()
 
-	# convert to data frame
-	df_coords_by_future = pd.DataFrame(
-		df_coords_by_future,
-		columns = [field_primary_key_id_coords, field_time_period]
-	)
+		df_coords_by_future = pd.merge(
+			df_coords_by_future,
+			df_id_coords,
+			how = "left"
+		).sort_values(
+			by = [field_primary_key_id_coords, field_time_period]
+		).reset_index(
+			drop = True
+		).drop(
+			field_primary_key_id_coords, axis = 1
+		)
 
-	df_coords_by_future = pd.merge(
-		df_coords_by_future,
-		df_id_coords,
-		how = "left"
-	).sort_values(
-		by = [field_primary_key_id_coords, field_time_period]
-	).reset_index(
-		drop = True
-	).drop(
-		field_primary_key_id_coords, axis = 1
-	)
+		if dict_additional_fields is not None:
+			df_coords_by_future = sf.add_data_frame_fields_from_dict(
+				df_coords_by_future,
+				dict_additional_fields
+			)
 
-	return df_coords_by_future
+		return df_coords_by_future
 
 
 
@@ -443,11 +455,12 @@ class SamplingUnit:
 				tgs_loops = self.required_tg_specs
 			else:
 				tgs_loops = [None]
+
 			for tgs in tgs_loops:
 
 				# get the vector (dim is by scenario, sorted by self.fields_id )
-				vec_tp_end = self.ordered_trajectory_arrays[(vs, tgs)]["data"][:,-1]
-				tups_id_coords = [tuple(x) for x in np.array(self.ordered_trajectory_arrays[(vs, tgs)]["id_coordinates"])]
+				vec_tp_end = self.ordered_trajectory_arrays.get((vs, tgs)).get("data")[:,-1]
+				tups_id_coords = [tuple(x) for x in np.array(self.ordered_trajectory_arrays.get((vs, tgs))["id_coordinates"])]
 
 				# order the max/min scalars
 				vec_scale_max = np.array([self.dict_variable_info[(vs, tgs)]["max_scalar"][x] for x in tups_id_coords])
@@ -582,8 +595,9 @@ class SamplingUnit:
 	def generate_future(self,
 		lhs_trial_x: float,
 		lhs_trial_l: float = 1.0,
+		baseline_future_q: bool = False,
 		constraints_mix_tg: tuple = (0, 1),
-		baseline_future_q: bool = False
+		flatten_output_array: bool = False
 	) -> Dict[str, np.ndarray]:
 		"""
 		Generate a dictionary mapping each variable specification to futures ordered by self.ordered_trajectory_arrays((vs, tg))["id_coordinates"]
@@ -595,8 +609,9 @@ class SamplingUnit:
 		Keyword Arguments
 		------------------
 		- lhs_trial_l: LHS trial used to modify strategy effect
+		- baseline_future_q: generate a baseline future? If so, lhs trials do not apply
 		- constraints_mix_tg: constraints on the mixing fraction for trajectory groups
-		- baseline_future_q: generate a baseline future? If so, lhs trials do not apply.
+		- flatten_output_array: return a flattened output array (apply np.flatten())
 		"""
 
 		# some checks
@@ -622,10 +637,14 @@ class SamplingUnit:
 			# use mix between 0/1 (0 = 100% trajectory_boundary_0, 1 = 100% trajectory_boundary_1)
 			for vs in self.variable_specifications:
 
+				dict_ordered_traj_arrays = self.ordered_trajectory_arrays.get((vs, None))
+				dict_scalar_diff_arrays = self.scalar_diff_arrays.get((vs, None))
+				dict_var_info = self.dict_variable_info.get((vs, None))
+
 				dict_arrs = {
-					cat_b0: self.ordered_trajectory_arrays[(vs, cat_b0)]["data"],
-					cat_b1: self.ordered_trajectory_arrays[(vs, cat_b1)]["data"],
-					cat_mix: self.ordered_trajectory_arrays[(vs, cat_mix)]["data"]
+					cat_b0: self.ordered_trajectory_arrays[(vs, cat_b0)].get("data"),
+					cat_b1: self.ordered_trajectory_arrays[(vs, cat_b1)].get("data"),
+					cat_mix: self.ordered_trajectory_arrays[(vs, cat_mix)].get("data")
 				}
 
 				# for trajectory groups, the baseline is the specified mixing vector
@@ -638,7 +657,7 @@ class SamplingUnit:
 					#
 					# get id coordinates( any of cat_mix, cat_b0, or cat_b1 would work -- use cat_mix)
 					df_ids_ota = pd.concat([
-						self.ordered_trajectory_arrays[(vs, cat_mix)]["id_coordinates"].copy().reset_index(drop = True),
+						self.ordered_trajectory_arrays.get((vs, cat_mix))["id_coordinates"].copy().reset_index(drop = True),
 						pd.DataFrame(arr_out, columns = self.fields_time_periods)],
 						axis = 1
 					)
@@ -646,28 +665,37 @@ class SamplingUnit:
 					df_ids_ota = df_ids_ota.iloc[w[0].repeat(n_strat)].reset_index(drop = True)
 
 					arr_out = np.array(df_ids_ota[self.fields_time_periods])
+					arrs_strategy_diffs = self.dict_strategy_info.get("difference_arrays_by_strategy")
+					df_baseline_strategy = self.dict_strategy_info.get("baseline_strategy_data_table")
+					inds0 = set(np.where(df_baseline_strategy[self.field_variable] == vs)[0])
 					l_modified_cats = []
-					inds0 = set(np.where(self.dict_strategy_info["baseline_strategy_data_table"][self.field_variable] == vs)[0])
 
 					for cat_cur in [cat_b0, cat_b1, cat_mix]:
 
 						# get the index for the current vs/cat_cur
-						inds = np.sort(np.array(list(inds0 & set(np.where(self.dict_strategy_info["baseline_strategy_data_table"][self.field_variable_trajgroup_type] == cat_cur)[0]))))
+						inds = np.sort(np.array(list(inds0 & set(np.where(df_baseline_strategy[self.field_variable_trajgroup_type] == cat_cur)[0]))))
 						n_inds = len(inds)
-						df_ids0 = self.dict_strategy_info["baseline_strategy_data_table"][[x for x in self.fields_id if (x != self.field_strategy_id)]].loc[inds.repeat(n_strat)].reset_index(drop = True)
+						df_ids0 = df_baseline_strategy[[x for x in self.fields_id if (x != self.field_strategy_id)]].loc[inds.repeat(n_strat)].reset_index(drop = True)
 						new_strats = list(np.zeros(len(df_ids0)).astype(int))
 
 						# initialize as list - we only do this to guarantee the sort is correct
 						df_future_strat = np.zeros((n_inds*n_strat, len(self.fields_time_periods)))
 						ind_repl = 0
 
-						##  start loop
+						# iterate over strategies
 						for strat in all_strats:
-							# strategy ids
+							# replace strategy ids
 							new_strats[ind_repl*n_inds:((ind_repl + 1)*n_inds)] = [strat for x in inds]
 							# get the strategy difference that is adjusted by lhs_trial_x_delta; if baseline strategy, use 0s
-							df_repl = np.zeros((n_inds, len(self.fields_time_periods))) if (strat == strat_base) else self.dict_strategy_info["difference_arrays_by_strategy"][strat][inds, :]*lhs_trial_l
-							np.put(df_future_strat, range(n_inds*len(self.fields_time_periods)*ind_repl, n_inds*len(self.fields_time_periods)*(ind_repl + 1)), df_repl)
+							df_repl = np.zeros((n_inds, len(self.fields_time_periods))) if (strat == strat_base) else arrs_strategy_diffs[strat][inds, :]*lhs_trial_l
+							np.put(
+								df_future_strat,
+								range(
+									n_inds*len(self.fields_time_periods)*ind_repl,
+									n_inds*len(self.fields_time_periods)*(ind_repl + 1)
+								),
+								df_repl
+							)
 							ind_repl += 1
 
 						df_ids0[self.field_strategy_id] = new_strats
@@ -676,10 +704,8 @@ class SamplingUnit:
 
 					arr_out = self.mix_tensors(*l_modified_cats, constraints_mix_tg)
 
-					#
-					# one option for this approach is to compare the difference between the "L" design uncertainty and the baseline and add this to the uncertain future (final array)
-					#
-
+				# to compare the difference between the "L" design uncertainty and the baseline and add this to the uncertain future (final array)
+				arr_out = arr_out.flatten() if flatten_output_array else arr_out
 				dict_out.update({vs: arr_out})
 
 
@@ -688,44 +714,51 @@ class SamplingUnit:
 			rv = self.uncertainty_ramp_vector
 
 			for vs in self.variable_specifications:
+
+				dict_ordered_traj_arrays = self.ordered_trajectory_arrays.get((vs, None))
+				dict_scalar_diff_arrays = self.scalar_diff_arrays.get((vs, None))
+				dict_var_info = self.dict_variable_info.get((vs, None))
+
 				# order the uniform scaling by the ordered trajectory arrays
-				vec_unif_scalar = self.ordered_by_ota_from_fid_dict(self.dict_variable_info[(vs, None)]["uniform_scaling_q"], (vs, None))
+				vec_unif_scalar = self.ordered_by_ota_from_fid_dict(dict_var_info["uniform_scaling_q"], (vs, None))
 				# gives 1s where we keep standard fanning (using the ramp vector) and 0s where we use uniform scaling
 				vec_base = 1 - vec_unif_scalar
 				#
 				if max(vec_unif_scalar) > 0:
-					vec_max_scalar = self.ordered_by_ota_from_fid_dict(self.dict_variable_info[(vs, None)]["max_scalar"], (vs, None))
-					vec_min_scalar = self.ordered_by_ota_from_fid_dict(self.dict_variable_info[(vs, None)]["min_scalar"], (vs, None))
+					vec_max_scalar = self.ordered_by_ota_from_fid_dict(dict_var_info["max_scalar"], (vs, None))
+					vec_min_scalar = self.ordered_by_ota_from_fid_dict(dict_var_info["min_scalar"], (vs, None))
 					vec_unif_scalar = vec_unif_scalar*(vec_min_scalar + lhs_trial_x*(vec_max_scalar - vec_min_scalar))
 
 				vec_unif_scalar = np.array([vec_unif_scalar]).transpose()
 				vec_base = np.array([vec_base]).transpose()
 
-				delta_max = self.scalar_diff_arrays[(vs, None)]["max_tp_end_delta"]
-				delta_min = self.scalar_diff_arrays[(vs, None)]["min_tp_end_delta"]
+				delta_max = dict_scalar_diff_arrays.get("max_tp_end_delta")
+				delta_min = dict_scalar_diff_arrays.get("min_tp_end_delta")
 				delta_diff = delta_max - delta_min
 				delta_val = delta_min + lhs_trial_x*delta_diff
 
-				dict_ota = self.ordered_trajectory_arrays.get((vs, None))
 				delta_vec = 0.0 if baseline_future_q else (rv * np.array([delta_val]).transpose())
-				array_out = dict_ota.get("data") + delta_vec
-				array_out = array_out*vec_base + vec_unif_scalar*self.ordered_trajectory_arrays[(vs, None)]["data"]
+				arr_out = dict_ordered_traj_arrays.get("data") + delta_vec
+				arr_out = arr_out*vec_base + vec_unif_scalar*dict_ordered_traj_arrays.get("data")
 
 				if self.xl_type == "L":
 					# get series of strategies
-					series_strats = self.ordered_trajectory_arrays.get((vs, None))["id_coordinates"][self.field_strategy_id]
+					series_strats = dict_ordered_traj_arrays.get("id_coordinates")[self.field_strategy_id]
 					w = np.where(np.array(series_strats) == strat_base)[0]
 					# get strategy adjustments
 					lhs_mult_deltas = 1.0 if baseline_future_q else lhs_trial_l
 					array_strat_deltas = np.concatenate(
 						series_strats.apply(
 							self.dict_strategy_info["difference_arrays_by_strategy"].get,
-							args = (np.zeros((1, len(self.time_periods))),)
+							args = (np.zeros((1, len(self.time_periods))), )
 						)
 					)*lhs_mult_deltas
-					array_out = (array_strat_deltas + array_out[w, :]) if (len(w) > 0) else array_out
 
-				dict_out.update({vs: array_out})
+					arr_out = (array_strat_deltas + arr_out[w, :]) if (len(w) > 0) else arr_out
+
+				arr_out = arr_out.flatten() if flatten_output_array else arr_out
+				dict_out.update({vs: arr_out})
+
 
 		return dict_out
 
@@ -750,11 +783,13 @@ class FutureTrajectories:
 	- fan_function_specification: type of uncertainty approach to use
 		* linear: linear ramp to time time T - 1
 		* sigmoid: sigmoid function that ramps to time T - 1
+	- field_future_id: field used to identify the future
 	- field_sample_unit_group: field used to identify sample unit groups. Sample unit groups are composed of:
 		* individual variable specifications
 		* trajectory groups
 	- field_strategy_id: field used to identify the strategy (int)
 		* This field is important as uncertainty in strategies is assessed differently than uncetainty in other variables
+	- field_time_period: field used to specify the time period
 	- field_uniform_scaling_q: field used to identify whether or not a variable
 	- field_variable: field used to specify variables
 	- field_variable_trajgroup: field used to identify the trajectory group (integer)
@@ -762,6 +797,7 @@ class FutureTrajectories:
 	- fan_function_specification: type of uncertainty approach to use
 		* linear: linear ramp to time time T - 1
 		* sigmoid: sigmoid function that ramps to time T - 1
+	- logger: optional logging.Logger object used to track generation of futures
 	- regex_trajgroup: Regular expression used to identify trajectory group variables in `field_variable` of `df_input_database`
 	- regex_trajmax: Regular expression used to identify trajectory maxima in variables and trajgroups specified in `field_variable` of `df_input_database`
 	- regex_trajmin: Regular expression used to identify trajectory minima in variables and trajgroups specified in `field_variable` of `df_input_database`
@@ -774,18 +810,22 @@ class FutureTrajectories:
 		time_period_u0: int,
 
 		fan_function_specification: str = "linear",
+		field_future_id: str = "future_id",
 		field_sample_unit_group: str = "sample_unit_group",
 		field_strategy_id: str = "strategy_id",
+		field_time_period: str = "time_period",
 		field_uniform_scaling_q: str = "uniform_scaling_q",
 		field_variable: str = "variable",
 		field_variable_trajgroup: str = "variable_trajectory_group",
 		field_variable_trajgroup_type: str = "variable_trajectory_group_trajectory_type",
-
+		# optional logger
+		logger: Union[logging.Logger, None] = None,
+		# regular expressions used to define trajectory group components in input database
 		regex_trajgroup: re.Pattern = re.compile("trajgroup_(\d*)-(\D*$)"),
 		regex_trajmax: re.Pattern = re.compile("trajmax_(\D*$)"),
 		regex_trajmin: re.Pattern = re.compile("trajmin_(\D*$)"),
 		regex_trajmix: re.Pattern = re.compile("trajmix_(\D*$)"),
-
+		# some internal vars
 		specification_tgt_lhs: str = "lhs",
 		specification_tgt_max: str = "trajectory_boundary_1",
 		specification_tgt_min: str = "trajectory_boundary_0"
@@ -793,14 +833,20 @@ class FutureTrajectories:
 
 		##  INITIALIZE PARAMETERS
 
-		self.df_input_database = df_input_database
+		# dictionary of baseline ids and fan function
+		self.dict_baseline_ids = dict_baseline_ids
+		self.fan_function_specification = fan_function_specification
 		# set default fields
+		self.field_future_id = field_future_id
 		self.field_sample_unit_group = field_sample_unit_group
 		self.field_strategy_id = field_strategy_id
+		self.field_time_period = field_time_period
 		self.field_uniform_scaling_q = field_uniform_scaling_q
 		self.field_variable = field_variable
 		self.field_variable_trajgroup = field_variable_trajgroup
 		self.field_variable_trajgroup_type = field_variable_trajgroup_type
+		# logging.Logger
+		self.logger = logger
 		# missing values flag
 		self.missing_flag_int = -999
 		# default regular expressions
@@ -812,8 +858,97 @@ class FutureTrajectories:
 		self.specification_tgt_lhs = specification_tgt_lhs
 		self.specification_tgt_max = specification_tgt_max
 		self.specification_tgt_min = specification_tgt_min
+		# first period with uncertainty
+		self.time_period_u0 = time_period_u0
 
 
+		##  KEY INITIALIZATIONS
+
+		self.input_database = self.prepare_input_database(df_input_database)
+		self.n_su, self.all_sampling_units, self.dict_sampling_units = self.get_sampling_units()
+		self._set_xl_sampling_units()
+
+
+
+	###########################################################
+	#	SOME BASIC INITIALIZATIONS AND INTERNAL FUNCTIONS	#
+	###########################################################
+
+	def _log(self,
+		msg: str,
+		type_log: str = "log",
+		**kwargs
+	):
+		"""
+		Clean implementation of sf._optional_log in-line using default logger. See ?sf._optional_log for more information
+
+		Function Arguments
+		------------------
+		- msg: message to log
+
+		Keyword Arguments
+		-----------------
+		- type_log: type of log to use
+		- **kwargs: passed as logging.Logger.METHOD(msg, **kwargs)
+		"""
+		sf._optional_log(self.logger, msg, type_log = type_log, **kwargs)
+
+
+
+	def _set_xl_sampling_units(self) -> None:
+		"""
+		Determine X/L sampling units--sets three properties:
+
+		- all_sampling_units_l
+		- all_sampling_units_x
+		- dict_sampling_unit_to_xl_type
+		"""
+		all_sampling_units_l = []
+		all_sampling_units_x = []
+		dict_sampling_unit_to_xl_type = {}
+
+		for k in self.dict_sampling_units.keys():
+			xl_type = self.dict_sampling_units.get(k).xl_type
+			dict_sampling_unit_to_xl_type.update({k: xl_type})
+			all_sampling_units_x.append(k) if (xl_type == "X") else all_sampling_units_l.append(k)
+
+		self.all_sampling_units_l = all_sampling_units_l
+		self.all_sampling_units_x = all_sampling_units_x
+		self.dict_sampling_unit_to_xl_type = dict_sampling_unit_to_xl_type
+
+
+
+	def get_df_row_element(self,
+		row: Union[pd.Series, pd.DataFrame, None],
+		index: Union[int, float, str],
+		return_def: Union[int, float, str, None] = None
+	) -> float:
+		"""
+		Support for self.generate_future_from_lhs_vector. Read an element from a named series or DataFrame.
+
+		Function Arguments
+		------------------
+		- row: Series or DataFrame. If DataFrame, only reads the first row
+		- index: column index in input DataFrame to read (field)
+
+		Keyword Arguments
+		-----------------
+		- return_def: default return value if row is None
+		
+		"""
+		out = return_def
+		if isinstance(row, pd.DataFrame):
+			out = float(row[index].iloc[0]) if (index in row.columns) else out
+		elif isinstance(row, pd.Series):
+			out = float(row[index]) if (index in row.index) else out
+
+		return out
+
+
+
+	####################################
+	#	PREPARE THE INPUT DATABASE	#
+	####################################
 
 	def get_trajgroup_and_variable_specification(self,
 		input_var_spec: str,
@@ -831,8 +966,10 @@ class FutureTrajectories:
 
 		Keyword Arguments
 		-----------------
-		- regex_trajgroup:
-
+		- regex_trajgroup: Regular expression used to identify trajectory group variables in `field_variable` of `df_input_database`
+		- regex_trajmax: Regular expression used to identify trajectory maxima in variables and trajgroups specified in `field_variable` of `df_input_database`
+		- regex_trajmin: Regular expression used to identify trajectory minima in variables and trajgroups specified in `field_variable` of `df_input_database`
+		- regex_trajmix: Regular expression used to identify trajectory baseline mix (fraction maxima) in variables and trajgroups specified in `field_variable` of `df_input_database`
 		"""
 		input_var_spec = str(input_var_spec)
 		regex_trajgroup = self.regex_trajgroup if (regex_trajgroup is None) else regex_trajgroup
@@ -866,7 +1003,7 @@ class FutureTrajectories:
 
 
 	def prepare_input_database(self,
-		df_in: pd.DataFrame = None,
+		df_in: pd.DataFrame,
 		field_sample_unit_group: Union[str, None] = None,
 		field_variable: Union[str, None] = None,
 		field_variable_trajgroup: Union[str, None] = None,
@@ -876,13 +1013,16 @@ class FutureTrajectories:
 		regex_trajmax: Union[re.Pattern, None] = None,
 		regex_trajmin: Union[re.Pattern, None] = None,
 		regex_trajmix: Union[re.Pattern, None] = None
-	):
+	) -> pd.DataFrame:
 		"""
 		Prepare the input database for sampling by adding sample unit group, cleaning up trajectory groups, etc.
 
+		Function Arguments
+		------------------
+		- df_in: input database to use to generate SampleUnit objects
+
 		Keyword Arguments
 		-----------------
-		- df_in: input database to use to generate SampleUnit objects
 		- field_sample_unit_group: field used to identify groupings of sample units
 		- field_variable: field in df_in used to denote the database
 		- field_variable_trajgroup: field denoting the variable trajectory group
@@ -895,7 +1035,7 @@ class FutureTrajectories:
 		"""
 
 		# input dataframe
-		df_in = self.df_input_database if (df_in is None) else df_in
+		#df_in = self.df_input_database if (df_in is None) else df_in
 
 		# key fields
 		field_sample_unit_group = self.field_sample_unit_group if (field_sample_unit_group is None) else field_sample_unit_group
@@ -995,3 +1135,143 @@ class FutureTrajectories:
 		df_in[field_sample_unit_group] = df_in[field_variable].replace(dict_var_to_su)
 
 		return df_in
+
+
+
+	def generate_future_from_lhs_vector(self,
+		df_row_lhc_sample_x: Union[pd.Series, pd.DataFrame],
+		df_row_lhc_sample_l: Union[pd.Series, pd.DataFrame, None] = None,
+		future_id: Union[int, None] = None,
+		baseline_future_q: bool = False
+	) -> pd.DataFrame:
+		"""
+		Build a data frame of a single future for all sample units
+
+		Function Arguments
+		------------------
+		- df_row_lhc_sample_x: data frame row with column names as sample groups for all sample groups to vary with uncertainties
+
+		Keyword Arguments
+		-----------------
+		- df_row_lhc_sample_l: data frame row with column names as sample groups for all sample groups to vary with uncertainties
+			* If None, lhs_trial_l = 1 in all samples (constant strategy effect across all futures)
+		- future_id: optional future id to add to the dataframe using self.future_id
+		- baseline_future_q: generate the dataframe for the baseline future?
+
+		"""
+
+		# check the specification of
+		if not (isinstance(df_row_lhc_sample_x, pd.DataFrame) or isinstance(df_row_lhc_sample_x, pd.Series)):
+			tp = str(type(df_row_lhc_sample_x))
+			self._log(f"Invalid input type {tp} specified for df_row_lhc_sample_x in get_future: pandas Series or DataFrames (first row) are acceptable inputs.", type_log = "warning")
+			return None
+
+		# initialize outputs and iterate
+		dict_df = {}
+		df_out = []
+		for k in enumerate(self.all_sampling_units):
+			k, su = k
+			samp = self.dict_sampling_units.get(su)
+
+			if samp is not None:
+
+				# get LHC samples for X and L
+				lhs_x = self.get_df_row_element(df_row_lhc_sample_x, su)
+				lhs_l = self.get_df_row_element(df_row_lhc_sample_l, su, 1.0)
+
+				dict_fut = samp.generate_future(lhs_x, lhs_l, baseline_future_q = baseline_future_q)
+
+				dict_df.update(
+					dict((key, value.flatten()) for key, value in dict_fut.items())
+				)
+
+				# initialize indexing if necessary
+				if len(df_out) == 0:
+					dict_fields = None if (future_id is None) else {self.field_future_id: future_id}
+					df_out.append(
+						samp.generate_indexing_data_frame(
+							dict_additional_fields = dict_fields
+						)
+					)
+
+
+		df_out.append(pd.DataFrame(dict_df))
+		df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
+
+		return df_out
+
+
+
+	# get the sampling units
+	def get_sampling_units(self,
+		df_in: Union[pd.DataFrame, None] = None,
+		fan_function: Union[str, None] = None,
+		**kwargs
+	) -> dict:
+		"""
+		Instantiate all defined SamplingUnits from input database
+
+		Function Arguments
+		------------------
+
+
+		Keword Arguments
+		-----------------
+		- df_in: input database used to identify sampling units. Must include self.field_sample_unit_group
+		- fan_function: function specification to use for uncertainty fans
+		- **kwargs: passed to SamplingUnit initializtion
+		"""
+
+		# get some defaults
+		df_in = self.input_database if (df_in is None) else df_in
+		fan_function = self.fan_function_specification if (fan_function is None) else fan_function
+		# setup inputs
+		kwarg_keys = list(kwargs.keys())
+		field_strategy_id = self.field_strategy_id if ("field_strategy_id" not in kwarg_keys) else kwargs.get("field_strategy_id")
+		field_time_period = self.field_time_period if ("field_time_period" not in kwarg_keys) else kwargs.get("field_time_period")
+		field_uniform_scaling_q = self.field_uniform_scaling_q if ("field_uniform_scaling_q" not in kwarg_keys) else kwargs.get("field_uniform_scaling_q")
+		field_variable_trajgroup = self.field_variable_trajgroup if ("field_variable_trajgroup" not in kwarg_keys) else kwargs.get("field_variable_trajgroup")
+		field_variable_trajgroup_type = self.field_variable_trajgroup_type if ("field_variable_trajgroup_type" not in kwarg_keys) else kwargs.get("field_variable_trajgroup_type")
+		field_variable = self.field_variable if ("field_variable" not in kwarg_keys) else kwargs.get("field_variable")
+
+		dict_sampling_units = {}
+
+		dfgroup_sg = df_in.groupby(self.field_sample_unit_group)
+		all_sample_groups = sorted(list(set(df_in[self.field_sample_unit_group])))
+		n_sg = len(dfgroup_sg)
+
+
+		##  GENERATE SamplingUnit FROM DATABASE
+
+		self._log(f"Instantiating {n_sg} sampling units.", type_log = "info")
+		t0 = time.time()
+
+		for iterate in enumerate(dfgroup_sg):
+
+			i, df_sg = iterate
+			df_sg = df_sg[1]
+			sg = int(df_sg[self.field_sample_unit_group].iloc[0])
+
+			self._log(f"Iteration {i} complete.", type_log = "info") if (i%250 == 0) else None
+
+			samp = SamplingUnit(
+				df_sg.drop(self.field_sample_unit_group, axis = 1),
+				self.dict_baseline_ids,
+				self.time_period_u0,
+				fan_function_specification = fan_function,
+				field_strategy_id = field_strategy_id,
+				field_time_period = field_time_period,
+				field_uniform_scaling_q = field_uniform_scaling_q,
+				field_variable_trajgroup = field_variable_trajgroup,
+				field_variable_trajgroup_type = field_variable_trajgroup_type,
+				field_variable = field_variable,
+				missing_trajgroup_flag = self.missing_flag_int
+			)
+
+			dict_sampling_units = dict(zip(all_sample_groups, [samp for x in range(n_sg)])) if (i == 0) else dict_sampling_units
+			dict_sampling_units.update({sg: samp})
+
+		t_elapse = sf.get_time_elapsed(t0)
+		self._log(f"...	{n_sg} sampling units complete in {t_elapse} seconds.", type_log = "info")
+
+		return n_sg, all_sample_groups, dict_sampling_units

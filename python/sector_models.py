@@ -1,5 +1,6 @@
 import support_functions as sf
-import data_structures as ds
+import model_attributes as ma
+from attribute_table import AttributeTable
 import pandas as pd
 import numpy as np
 import time

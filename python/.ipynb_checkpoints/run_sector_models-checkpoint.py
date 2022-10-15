@@ -1,73 +1,45 @@
+import warnings
+warnings.filterwarnings("ignore")
+import argparse
+import model_attributes as ma
+from attribute_table import AttributeTable
 import os, os.path
 import numpy as np
 import pandas as pd
-import data_structures as ds
+import sector_models as sm
 import setup_analysis as sa
 import support_functions as sf
-import sector_models as sm
-import argparse
+import sqlalchemy
 
 
-# use to merge data frames together into a single output
-def merge_output_df_list(
-    dfs_output_data: list,
-    model_attributes,
-    merge_type: str = "concatenate"
-) -> pd.DataFrame:
 
-    # check type
-    valid_merge_types = ["concatenate", "merge"]
-    if merge_type not in valid_merge_types:
-        str_valid_types = sf.format_print_list(valid_merge_types)
-        raise ValueError(f"Invalid merge_type '{merge_type}': valid types are {str_valid_types}.")
 
-    # start building the output dataframe and retrieve dimensions of analysis for merging/ordering
-    df_out = dfs_output_data[0]
-    dims_to_order = model_attributes.sort_ordered_dimensions_of_analysis
-    dims_in_out = set([x for x in dims_to_order if x in df_out.columns])
-
-    if (len(dfs_output_data) == 0):
-        return None
-    if len(dfs_output_data) == 1:
-        return dfs_output_data[0]
-    elif len(dfs_output_data) > 1:
-        # loop to merge where applicable
-        for i in range(1, len(dfs_output_data)):
-            if merge_type == "concatenate":
-                # check available dims; if there are ones that aren't already contained, keep them. Otherwise, drop
-                fields_dat = [x for x in dfs_output_data[i].columns if (x not in dims_to_order)]
-                fields_new_dims = [x for x in dfs_output_data[i].columns if (x in dims_to_order) and (x not in dims_in_out)]
-                dims_in_out = dims_in_out | set(fields_new_dims)
-                dfs_output_data[i] = dfs_output_data[i][fields_new_dims + fields_dat]
-            elif merge_type == "merge":
-                df_out = pd.merge(df_out, dfs_output_data[i])
-
-        # clean up - assume merged may need to be re-sorted on rows
-        if merge_type == "concatenate":
-            fields_dim = [x for x in dims_to_order if x in dims_in_out]
-            df_out = pd.concat(dfs_output_data, axis = 1).reset_index(drop = True)
-        elif merge_type == "merge":
-            fields_dim = [x for x in dims_to_order if x in df_out.columns]
-            df_out = pd.concat(df_out, axis = 1).sort_values(by = fields_dim).reset_index(drop = True)
-
-        fields_dat = [x for x in df_out.columns if x not in dims_in_out]
-        fields_dat.sort()
-        #
-        return df_out[fields_dim + fields_dat]
 
 
 def parse_arguments() -> dict:
 
     parser = argparse.ArgumentParser(description = "Run SISEPUEDE models from the command line.")
-    parser.add_argument("--input", type = str,
-                        help = f"Path to an input CSV, long by {sa.model_attributes.dim_time_period}, that contains required input variables.")
-    parser.add_argument("--output", type = str,
-                        help="Path to output csv file", default = sa.fp_csv_default_single_run_out)
+    parser.add_argument(
+        "--input",
+        type = str,
+        help = f"Path to an input CSV, long by {sa.model_attributes.dim_time_period}, that contains required input variables."
+    )
+    parser.add_argument(
+        "--output",
+        type = str,
+        help = "Path to output csv file",
+        default = sa.fp_csv_default_single_run_out
+    )
     parser.add_argument(
         "--models",
         type = str,
-        help = "Models to run using the input file. Possible values include 'AFOLU', 'CIRCECON', 'ENERGY', 'INDUSTRY'",
-        default = "AFOLU",
+        help = "Models to run using the input file. Possible values include 'All' (run all models) or any comma-delimited combination of the following: 'AFOLU', 'CircularEconomy', 'ElectricEnergy', 'IPPU', and 'NonElectricEnergy'",
+        default = "All"
+    )
+    parser.add_argument(
+        "--integrated",
+        help = "Include this flag to run included models as integrated sectors. Output from upstream models will be passed as inputs to downstream models.",
+        action = "store_true"
     )
     parsed_args = parser.parse_args()
 
@@ -84,13 +56,16 @@ def parse_arguments() -> dict:
     return parsed_args_as_dict
 
 
+
 def main(args: dict) -> None:
 
-    print("\n***\n***\n*** Welcome to SISEPUEDE! Hola Edmundo y equipo ITEM—esta mensaje va a cambiar en el futuro, but have fun seeing this message *every time*.\n***\n***\n")
+    print("\n***\n***\n*** Bienvenidos a SISEPUEDE! Hola Edmundo y equipo ITEM—esta mensaje va a cambiar en el futuro, y hoy pasa este dia. Mira, incluye electricidad, que rico. Espero que todavia disfruten esta mensaje *cada vez*.\n***\n***\n")
 
     fp_in = args.get("input")
     fp_out = args.get("output")
-    models_run = args.get("models")
+    models_run = args.get("models").split(",")
+    models_run = models_run if (models_run[0].lower() != "all") else ["AFOLU", "CircularEconomy", "ElectricEnergy", "IPPU", "NonElectricEnergy"]
+
 
     # load data
     if not fp_in:
@@ -107,37 +82,110 @@ def main(args: dict) -> None:
     print(f"\n\n*** STARTING MODELS ***\n\nOutput file will be written to {fp_out}.\n")
 
     init_merge_q = True
+    run_integrated_q = bool(args.get("integrated"))
     df_output_data = []
+
+
+    ##  RUN MODELS
 
     # run AFOLU and collect output
     if "AFOLU" in models_run:
         print("\n\tRunning AFOLU")
+        # get the model, run it using the input data, then update the output data (for integration)
         model_afolu = sm.AFOLU(sa.model_attributes)
-        df_output_data += [model_afolu.project(df_input_data)]
-        init_merge_q = False
+        df_output_data.append(model_afolu.project(df_input_data))
+
 
     # run CircularEconomy and collect output
     if "CircularEconomy" in models_run:
         print("\n\tRunning CircularEconomy")
         model_circecon = sm.CircularEconomy(sa.model_attributes)
-        df_output_data += [model_circecon.project(df_input_data)]
+        # integrate AFOLU output?
+        if run_integrated_q and set(["AFOLU"]).issubset(set(models_run)):
+            df_input_data = sa.model_attributes.transfer_df_variables(
+                df_input_data,
+                df_output_data[0],
+                model_circecon.integration_variables
+            )
+        df_output_data.append(model_circecon.project(df_input_data))
+        df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")] if run_integrated_q else df_output_data
+
 
     # run IPPU and collect output
     if "IPPU" in models_run:
-        print("\n\t*** NOTE: IPPU INCOMPLETE. IT WILL NOT BE RUN")
-        #print("\n\tRunning IPPU")
-        #model_ippu = sm.IPPU(sa.model_attributes)
-        #df_output_data += [model_ippu.project(df_input_data)]
+        print("\n\tRunning IPPU")
+        model_ippu = sm.IPPU(sa.model_attributes)
+        # integrate Circular Economy output?
+        if run_integrated_q and set(["CircularEconomy"]).issubset(set(models_run)):
+            df_input_data = sa.model_attributes.transfer_df_variables(
+                df_input_data,
+                df_output_data[0],
+                model_ippu.integration_variables
+            )
+        df_output_data.append(model_ippu.project(df_input_data))
+        df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")] if run_integrated_q else df_output_data
 
-    # run Energy and collect output
-    if "Energy" in models_run:
-        print("\n\t*** NOTE: Energy INCOMPLETE. IT WILL NOT BE RUN")
-        #print("\n\tRunning Energy")
-        #model_energy = sm.Energy(sa.model_attributes)
-        #df_output_data += [model_energy.project(df_input_data)]
+
+    # run Non-Electric Energy and collect output
+    if "NonElectricEnergy" in models_run:
+        print("\n\tRunning NonElectricEnergy")
+        model_energy = sm.NonElectricEnergy(sa.model_attributes)
+        # integrate IPPU output?
+        if run_integrated_q and set(["IPPU", "AFOLU"]).issubset(set(models_run)):
+            df_input_data = sa.model_attributes.transfer_df_variables(
+                df_input_data,
+                df_output_data[0],
+                model_energy.integration_variables_non_fgtv
+            )
+        else:
+            print("LOG ERROR HERE: CANNOT RUN WITHOUT IPPU")
+        df_output_data.append(model_energy.project(df_input_data))
+        df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")] if run_integrated_q else df_output_data
+
+
+    # run Electricity and collect output
+    if "ElectricEnergy" in models_run:
+        print("\n\tRunning ElectricEnergy")
+        model_elecricity = sm.ElectricEnergy(sa.model_attributes, sa.dir_ref_nemo)
+        # integrate energy-related output?
+        if run_integrated_q and set(["CircularEconomy", "AFOLU", "NonElectricEnergy"]).issubset(set(models_run)):
+            df_input_data = sa.model_attributes.transfer_df_variables(
+                df_input_data,
+                df_output_data[0],
+                model_elecricity.integration_variables
+            )
+
+        # create the engine
+        engine = sqlalchemy.create_engine(f"sqlite:///{sa.fp_sqlite_nemomod_db_tmp}")
+        try:
+            df_elec =  model_elecricity.project(df_input_data, engine)
+            df_output_data.append(df_elec)
+            df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")] if run_integrated_q else df_output_data
+        except Exception as e:
+            #LOGGING
+            print(f"Error running ElectricEnergy model: {e}")
+
+
+    # finally, add fugitive emissions from Non-Electric Energy and collect output
+    if "NonElectricEnergy" in models_run:
+        print("\n\tRunning NonElectricEnergy - Fugitive Emissions")
+        model_energy = sm.NonElectricEnergy(sa.model_attributes)
+        # integrate IPPU output?
+        if run_integrated_q and set(["IPPU", "AFOLU"]).issubset(set(models_run)):
+            df_input_data = sa.model_attributes.transfer_df_variables(
+                df_input_data,
+                df_output_data[0],
+                model_energy.integration_variables_fgtv
+            )
+        else:
+            print("LOG ERROR HERE: CANNOT RUN WITHOUT IPPU AND AFOLU")
+
+        df_output_data.append(model_energy.project(df_input_data, subsectors_project = sa.model_attributes.subsec_name_fgtv))
+        df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")] if run_integrated_q else df_output_data
+
 
     # build output data frame
-    df_output_data = merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")
+    df_output_data = sf.merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")
 
 
     print("\n*** MODEL RUNS COMPLETE ***\n")

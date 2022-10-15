@@ -6,7 +6,7 @@
 # loop over dry/wet to estimate carbon stocks in crops
 for modvar in self.modvar_list_agrc_frac_drywet:
     # soil category
-    cat_soil = ds.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
+    cat_soil = ma.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
     ind_soil = attr_soil.get_key_value_index(cat_soil)
     arr_soil_soc_crop_drywet_cur = (arr_agrc_crop_area*dict_arrs_agrc_frac_drywet[modvar]).transpose()
     # add component to EF1 estimate for F_SOM
@@ -20,7 +20,7 @@ for modvar in self.modvar_list_agrc_frac_drywet:
 # loop over tropical/temperate cropland to get soil carbon for organic drained soils
 for modvar in self.modvar_list_agrc_frac_temptrop:
     # soil category
-    cat_soil = ds.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
+    cat_soil = ma.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
     ind_soil = attr_soil.get_key_value_index(cat_soil)
     # get land use category for soil carbon facto
     arr_soil_soc_crop_temptrop_cur = (arr_agrc_crop_area*dict_arrs_agrc_frac_temptrop[modvar]).transpose()
@@ -31,7 +31,7 @@ for modvar in self.modvar_list_agrc_frac_temptrop:
 # loop over dry/wet to estimate carbon stocks in grassland
 for modvar in self.modvar_list_lndu_frac_drywet:
     # soil category
-    cat_soil = ds.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
+    cat_soil = ma.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
     ind_soil = attr_soil.get_key_value_index(cat_soil)
     vec_soil_soc_pstr_drywet_cur = (arr_land_use*dict_arrs_lndu_frac_drywet[modvar])[:, self.ind_lndu_grass]
     # add component to EF1 estimate for F_SOM
@@ -44,10 +44,10 @@ for modvar in self.modvar_list_lndu_frac_drywet:
 # loop over tropical/temperate NP/temperate NR
 for modvar in self.modvar_list_frst_frac_temptrop:
     # soil category
-    cat_soil = ds.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
+    cat_soil = ma.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
     ind_soil = attr_soil.get_key_value_index(cat_soil)
     # get land use category for soil carbon facto
-    cats_lndu = [ds.clean_schema(x) for x in self.model_attributes.get_ordered_category_attribute(self.subsec_name_frst, pycat_lndu)]
+    cats_lndu = [ma.clean_schema(x) for x in self.model_attributes.get_ordered_category_attribute(self.subsec_name_frst, pycat_lndu)]
     inds_lndu = [attr_lndu.get_key_value_index(x) for x in cats_lndu]
     arr_soil_soc_frst_temptrop_cur = (arr_area_frst*dict_arrs_frst_frac_temptrop[modvar]*arr_lndu_factor_soil_carbon[:, inds_lndu]).transpose()
     arr_soil_soc_frst_temptrop_cur *= arr_soil_organic_c_stocks[:, ind_soil]

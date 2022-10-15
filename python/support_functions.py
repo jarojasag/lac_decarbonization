@@ -1,6 +1,8 @@
-import os, os.path
+import logging
 import numpy as np
+import os, os.path
 import pandas as pd
+import time
 from typing import Union
 import warnings
 
@@ -191,6 +193,7 @@ def check_keys(dict_in, keys: list):
         raise KeyError(f"Required keys {fields_missing} not found in the dictionary.")
 
 
+
 ##  check path and create a directory if needed
 def check_path(fp, create_q = False):
     if os.path.exists(fp):
@@ -332,6 +335,19 @@ def format_print_list(list_in, delim = ","):
 
 
 
+def get_time_elapsed(
+    t_0: float,
+    n_digits: int = 2
+) -> str:
+    """
+    Get the time elapsed from reference point t_0. Use `n_digits` to specify rounding.
+    """
+    t_elapsed = np.round(time.time() - t_0, n_digits)
+
+    return t_elapsed
+
+
+
 ##  get growth rates associated with a numpy array
 def get_vector_growth_rates_from_first_element(arr: np.ndarray) -> np.ndarray:
     """
@@ -443,6 +459,68 @@ def merge_output_df_list(
         fields_dat.sort()
         #
         return df_out[fields_dim + fields_dat]
+
+
+
+def _optional_log(
+    logger: Union[logging.Logger, None],
+    msg: str,
+    type_log: str = "log",
+    warn_if_none: bool = True,
+    **kwargs
+):
+    """
+    Log using logging.Logger if an object is defined; Otherwise, no action.
+
+    Function Arguments
+    ------------------
+    - logger: logging.Logger object used to log events. If None, no action is taken
+    - msg: msg to pass in log
+
+    Keyword Arguments
+    -----------------
+    - type_log: type of log to execute. Acceptable values are:
+        * "critical": logger.critical(msg)
+        * "debug": logger.debug(msg)
+        * "error": logger.error(msg)
+        * "info": logger.info(msg)
+        * "log": logger.log(msg)
+        * "warning": logger.warning(msg)
+    - warn_if_none: pass a message through warnings.warn() if logger is None
+    - **kwargs: passed as logger.METHOD(msg, **kwargs)
+
+    See https://docs.python.org/3/library/logging.html for more information on Logger methods and calls
+    """
+    if isinstance(logger, logging.Logger):
+
+        valid_type_log = [
+            "critical",
+            "debug",
+            "error",
+            "info",
+            "log",
+            "warning"
+        ]
+
+        if type_log not in valid_type_log:
+            warnings.warn(f"Warning in optional_log: log type '{type_log}' not found. Defaulting to type 'log'.")
+            type_log = "log"
+
+        if type_log == "critical":
+            logger.critical(msg, **kwargs)
+        elif type_log == "debug":
+            logger.debug(msg, **kwargs)
+        elif type_log == "error":
+            logger.error(msg, **kwargs)
+        elif type_log == "info":
+            logger.info(msg, **kwargs)
+        elif type_log == "warning":
+            logger.warning(msg, **kwargs)
+        else:
+            logger.log(msg, **kwargs)
+
+    elif warn_if_none:
+        warnings.warn(f"Warning passed from optional_log: {msg}.")
 
 
 

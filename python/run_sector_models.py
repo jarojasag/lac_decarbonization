@@ -1,7 +1,8 @@
 import warnings
 warnings.filterwarnings("ignore")
 import argparse
-import data_structures as ds
+import model_attributes as ma
+from attribute_table import AttributeTable
 import os, os.path
 import numpy as np
 import pandas as pd
@@ -80,7 +81,6 @@ def main(args: dict) -> None:
     # notify of output path
     print(f"\n\n*** STARTING MODELS ***\n\nOutput file will be written to {fp_out}.\n")
 
-    init_merge_q = True
     run_integrated_q = bool(args.get("integrated"))
     df_output_data = []
 

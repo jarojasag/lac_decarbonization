@@ -2,12 +2,13 @@ import os, os.path
 import pandas as pd
 import numpy as np
 import support_functions as sf
-import data_structures as ds
+import model_attributes as ma
+from attribute_table import AttributeTable
 
 # TEMP
 import importlib
 importlib.reload(sf)
-importlib.reload(ds)
+importlib.reload(ma)
 
 # setup some 
 dir_py = os.path.dirname(os.path.realpath(__file__))
@@ -24,7 +25,7 @@ dir_attribute_tables = sf.check_path(os.path.join(dir_docs, "csvs"), False)
 
 
 # get model attributes
-model_attributes = ds.ModelAttributes(dir_attribute_tables)
+model_attributes = ma.ModelAttributes(dir_attribute_tables)
 
 
 

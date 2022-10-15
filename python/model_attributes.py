@@ -1,84 +1,12 @@
+from attribute_table import AttributeTable
 import itertools
+import model_attributes as ma
 import numpy as np
 import os, os.path
 import pandas as pd
 import support_functions as sf
 from typing import Union
 import warnings
-
-##  the AttributeTable class checks existence, keys, key values, and generates field maps
-class AttributeTable:
-
-    def __init__(self, fp_table: str, key: str, fields_to_dict: list, clean_table_fields: bool = True):
-
-        # verify table exists and check keys
-        if isinstance(fp_table, str):
-            table = pd.read_csv(sf.check_path(fp_table, False), skipinitialspace = True)
-        elif isinstance(fp_table, pd.DataFrame):
-            table = fp_table.copy()
-            fp_table = None
-
-        fields_to_dict = [x for x in fields_to_dict if x != key]
-
-        # clean the fields in the attribute table?
-        dict_fields_clean_to_fields_orig = {}
-        if clean_table_fields:
-            fields_orig = list(table.columns)
-            dict_fields_clean_to_fields_orig = dict(zip(sf.clean_field_names(fields_orig), fields_orig))
-            table = sf.clean_field_names(table)
-            fields_to_dict = sf.clean_field_names(fields_to_dict)
-            key = sf.clean_field_names([key])[0]
-
-
-        # add a key if not specified
-        if not key in table.columns:
-            print(f"Key {key} not found in table '{fp_table}''. Adding integer key.")
-            table[key] = range(len(table))
-        # check all fields
-        sf.check_fields(table, [key] + fields_to_dict)
-        # check key
-        if len(set(table[key])) < len(table):
-            raise ValueError(f"Invalid key {key} found in '{fp_table}': the key is not unique. Check the table and specify a unique key.")
-
-
-        # if no fields for the dictionary are specified, default to all
-        if len(fields_to_dict) == 0:
-            fields_to_dict = [x for x in table.columns if (x != key)]
-
-        # clear RST formatting in the table if applicable
-        if table[key].dtype in [object, str]:
-            table[key] = np.array([sf.str_replace(str(x), {"`": "", "\$": ""}) for x in list(table[key])]).astype(str)
-        # set all keys
-        key_values = list(table[key])
-        key_values.sort()
-
-        # next, create dict maps
-        field_maps = {}
-        for fld in fields_to_dict:
-            field_fwd = f"{key}_to_{fld}"
-            field_rev = f"{fld}_to_{key}"
-
-            field_maps.update({field_fwd: sf.build_dict(table[[key, fld]])})
-            # check for 1:1 correspondence before adding reverse
-            vals_unique = set(table[fld])
-            if (len(vals_unique) == len(table)):
-                field_maps.update({field_rev: sf.build_dict(table[[fld, key]])})
-
-        self.dict_fields_clean_to_fields_orig = dict_fields_clean_to_fields_orig
-        self.field_maps = field_maps
-        self.fp_table = fp_table
-        self.key = key
-        self.key_values = key_values
-        self.n_key_values = len(key_values)
-        self.table = table
-
-    # function for the getting the index of a key value
-    def get_key_value_index(self, key_value):
-        if key_value not in self.key_values:
-            raise KeyError(f"Error: invalid AttributeTable key value {key_value}.")
-        return self.key_values.index(key_value)
-
-
 
 
 ##  CONFIGURATION file
@@ -370,8 +298,15 @@ class Configuration:
 
 
 class ModelAttributes:
+    """
+    Create a centralized object for managing inter-sectoral objects, dimensions, attributes, and variables.
 
-    def __init__(self, dir_attributes: str, fp_config: str = None):
+    INFO HERE
+    """
+    def __init__(self,
+        dir_attributes: str,
+        fp_config: str = None
+    ):
 
         ############################################
         #    INITIALIZE SHARED CLASS PROPERTIES    #
@@ -766,7 +701,10 @@ class ModelAttributes:
 
 
     ##  get the baseline scenario associated with a scenario dimension
-    def get_baseline_scenario_id(self, dim: str):
+    def get_baseline_scenario_id(self,
+        dim: str,
+        infer_baseline_as_minimum: bool = True
+    ) -> int:
 
         """
             Return the scenario id associated with a baseline scenario (as specified in the attribute table)
@@ -774,25 +712,39 @@ class ModelAttributes:
             Function Arguments
             ------------------
             - dim: a scenario dimension specified in an attribute table (attribute_dim_####.csv) within the ModelAttributes class
-
+            - infer_baseline_as_minimum: If True, infers the baseline scenario as the minimum specified.
         """
         if dim not in self.all_dims:
             fpl = sf.format_print_list(self.all_dims)
             raise ValueError(f"Invalid dimension '{dim}': valid dimensions are {fpl}.")
 
+        attr = self.dict_attributes.get(f"dim_{dim}")
+        min_val = min(attr.key_values)
+
         # get field to check
         field_check = f"baseline_{dim}"
-        if field_check not in self.dict_attributes[f"dim_{dim}"].table:
-            warnings.warn(f"No baseline specified for dimension '{dim}'.")
-            return None
+        if field_check not in attr.table:
+            str_append = f" Inferring minimum key value {min_val} as baseline." if infer_baseline_as_minimum else " Returning None."
+            warnings.warn(f"No baseline specified for dimension '{dim}'.{str_append}")
+            ret = min_val if infer_baseline_as_minimum else None
+
         else:
-            tab = self.dict_attributes[f"dim_{dim}"].table
-            tab_red = list(tab[tab[field_check] == 1][dim])
+            tab = self.dict_attributes.get(f"dim_{dim}")
+            tab_red = sorted(list(tab.table[tab.table[field_check] == 1][dim]))
 
             if len(tab_red) > 1:
-                raise ValueError(f"Multiple baselines specified for dimension {dim}. Ensure that only baseline is set in the attribute table at '{tab.fp_table}'")
+                ret = tab_red[0]
+                warnings.warn(f"Multiple baselines specified for dimension {dim}. Ensure that only baseline is set in the attribute table at '{tab.fp_table}'. Defaulting to minimum value of {ret}.")
 
-            return tab_red[0]
+            elif len(tab_red) == 0:
+                str_append = f" Inferring minimum key value {min_val} as baseline." if infer_baseline_as_minimum else " Returning None."
+                warnings.warn(f"No baseline specified for dimension '{dim}'.{str_append}")
+                ret = min_val if infer_baseline_as_minimum else None
+
+            else:
+                ret = tab_red[0]
+
+        return ret
 
 
 

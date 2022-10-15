@@ -1,9 +1,10 @@
+from attribute_table import AttributeTable
+import model_attributes as ma
+import numpy as np
 import os, os.path
 import pandas as pd
-import numpy as np
 import support_functions as sf
-import data_structures as ds
-import importlib
+
 
 ##  SETUP DIRECTORIES AND KEY FILES
 
@@ -23,7 +24,7 @@ dir_tmp = sf.check_path(os.path.join(dir_proj, "tmp"), True)
 dir_docs = sf.check_path(os.path.join(os.path.dirname(dir_py), "docs", "source"), False)
 dir_attribute_tables = sf.check_path(os.path.join(dir_docs, "csvs"), False)
 # get model attributes
-model_attributes = ds.ModelAttributes(dir_attribute_tables, fp_config)
+model_attributes = ma.ModelAttributes(dir_attribute_tables, fp_config)
 
 
 ##  INGESTION DATA STRUCTURE (DEPENDS ON ATTRIBUTES)

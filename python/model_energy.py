@@ -1,9 +1,10 @@
-import support_functions as sf
-import data_structures as ds
-from model_socioeconomic import Socioeconomic
+from attribute_table import AttributeTable
+import model_attributes as ma
 from model_ippu import IPPU
-import pandas as pd
+from model_socioeconomic import Socioeconomic
 import numpy as np
+import pandas as pd
+import support_functions as sf
 import time
 from typing import Union
 
@@ -16,7 +17,7 @@ from typing import Union
 
 class NonElectricEnergy:
 
-    def __init__(self, attributes: ds.ModelAttributes):
+    def __init__(self, attributes: ma.ModelAttributes):
 
         # some subector reference variables
         self.subsec_name_ccsq = "Carbon Capture and Sequestration"
@@ -745,7 +746,7 @@ class NonElectricEnergy:
     ##  project imports, exports, and local production of fuels
     def project_enfu_production_and_demands(self,
         df_neenergy_trajectories: pd.DataFrame,
-        attribute_fuel: ds.AttributeTable = None,
+        attribute_fuel: AttributeTable = None,
         modvars_energy_demands: list = None,
         modvars_energy_distribution_demands: list = None,
         modvar_energy_exports: str = None,
@@ -974,7 +975,7 @@ class NonElectricEnergy:
         # loop over fuels to calculate demand totals
         for var_ener_frac in list(self.modvar_dict_ccsq_fuel_fractions_to_efficiency_factors.keys()):
             # retrive the fuel category and index
-            cat_fuel = ds.clean_schema(self.model_attributes.get_variable_attribute(var_ener_frac, pycat_enfu))
+            cat_fuel = ma.clean_schema(self.model_attributes.get_variable_attribute(var_ener_frac, pycat_enfu))
             index_cat_fuel = attr_enfu.get_key_value_index(cat_fuel)
             # get the demand for the current fuel
             arr_ccsq_endem_cur_fuel = dict_ccsq_demands_by_fuel_heat[var_ener_frac]
@@ -1377,7 +1378,7 @@ class NonElectricEnergy:
         # loop over fuels to
         for var_ener_frac in self.modvars_inen_list_fuel_fraction:
             # retrive the fuel category and index
-            cat_fuel = ds.clean_schema(self.model_attributes.get_variable_attribute(var_ener_frac, pycat_enfu))
+            cat_fuel = ma.clean_schema(self.model_attributes.get_variable_attribute(var_ener_frac, pycat_enfu))
             index_cat_fuel = attr_enfu.get_key_value_index(cat_fuel)
             # get the demand for the current fuel
             arr_inen_endem_cur_fuel = dict_inen_energy_consumption[var_ener_frac].copy()
@@ -1555,7 +1556,7 @@ class NonElectricEnergy:
         # loop over fuels to calculate demand totals
         for var_ener_frac in list(self.modvar_dict_scoe_fuel_fractions_to_efficiency_factors.keys()):
             # retrive the fuel category and index
-            cat_fuel = ds.clean_schema(self.model_attributes.get_variable_attribute(var_ener_frac, pycat_enfu))
+            cat_fuel = ma.clean_schema(self.model_attributes.get_variable_attribute(var_ener_frac, pycat_enfu))
             index_cat_fuel = attr_enfu.get_key_value_index(cat_fuel)
             # get the demand for the current fuel
             arr_scoe_endem_cur_fuel = dict_demands_by_fuel_heat[var_ener_frac]

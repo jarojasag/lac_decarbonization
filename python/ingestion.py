@@ -1,4 +1,6 @@
-import data_structures as ds
+from attribute_table import AttributeTable
+import logging
+import model_attributes as ma
 import numpy as np
 import os, os.path
 import pandas as pd
@@ -18,10 +20,12 @@ class InputTemplate:
 
 		See https://sisepuede.readthedocs.io for more information on the input template.
 
-		Initialization
-		--------------
+		Initialization Arguments
+		------------------------
 		- template: The InputTemplate can be initialized using a file path to an Excel file or a dictionary of
-			* path: if initializing using a path, the template should point to an Excel workbook containing the input data template. A description of the workbook's format is found below under "Template Formatting".
+			* path: if initializing using a path, the template should point to an Excel workbook containing the
+				input data template. A description of the workbook's format is found below under "Template
+				Formatting".
 			* dict: if initializing using a dictionary, the dictionary should have the following structure:
 				{
 					"strategy_id-X0": pd.DataFrame(),
@@ -31,6 +35,40 @@ class InputTemplate:
 				I.e., keys should follow the
 
 		- model_attributes: a ModelAttributes data structure used to coordinate variables and inputs
+		- subsec: subsectors to instantiate
+
+		Optional Arguments
+		------------------
+		- attribute_strategy: AttributeTable used to define input strategies and filter undefined.
+			* If None (default), try to read from the model_attributes.dict_attributes
+			* If AttributeTable, checks key against ModelAttributes.dim_strategy_id
+				* If either check is unsuccessful, will turn off filtering of undefined strategies and set
+					InputTemplate.attribute_strategy = None
+
+		Keyword Arguments
+		-----------------
+		- field_prepend_req_attr_baseline_scenario: prepandage applied to AttributeTable key to generate field required
+			in attribute tables to specify a baseline scenario. E.g., field_prepend_req_attr_baseline_scenario = "baseline_"
+			means that the baseline strategy_id is stored in field "baseline_strategy" in the attribute_strategy
+			attribute table.
+			* Only applies for attributes not passed through ModelAttributes
+		- field_req_normalize_group: Required field used to specify whether or not to normalize a group (ensures
+			always sums to 1)
+		- field_req_subsector: Required field used to define the ubsector associated with a variable
+		- field_req_trajgroup_no_vary_q: Required field used to determine whether or not a trajectory group may vary
+			* Note: all values in the same trajectory group must be the same
+		- field_req_uniform_scaling_q: Required field used to determine whether or not a variable trjaectory should
+			be scaled uniformly over all time periods
+			* E.g., many biophysical parameters may be uncertain but not change over time
+		- field_req_variable: Required field used name the variable
+			* Trajectory groups require special naming convention used to define all parts:
+				(INFO HERE)
+		- field_req_variable_trajectory_group: Field used to explicitly add trajectory group (added after import)
+		- field_req_variable_trajectory_group_trajectory_type: Field used to explicitly add trajectory group type
+			for variables in a trajectory group (added after import)
+		- filter_invalid_strategies: filter strategies that aren't defined in an attribute table
+		- logger: optional logging object to pass
+
 
 		Template Formatting
 		-------------------
@@ -38,30 +76,30 @@ class InputTemplate:
 		(info here)
 
 
-		Required Fields
-		---------------
-
-		(info here)
-
-
-
 	"""
-
 	def __init__(self,
 		template: Union[str, dict],
-		model_attributes: ds.ModelAttributes,
+		model_attributes: ma.ModelAttributes,
 		subsec: Union[str, None],
+		attribute_strategy: Union[AttributeTable, str, None] = None,
+		field_prepend_req_attr_baseline_scenario: str = "baseline_",
 		field_req_normalize_group: str = "normalize_group",
 		field_req_subsector: str = "subsector",
 		field_req_trajgroup_no_vary_q: str = "trajgroup_no_vary_q",
 		field_req_uniform_scaling_q: str = "uniform_scaling_q",
 		field_req_variable: str = "variable",
 		field_req_variable_trajectory_group: str = "variable_trajectory_group",
-		field_req_variable_trajectory_group_trajectory_type: str = "variable_trajectory_group_trajectory_type"
+		field_req_variable_trajectory_group_trajectory_type: str = "variable_trajectory_group_trajectory_type",
+		filter_invalid_strategies: bool = True,
+		logger: Union[logging.Logger, None] = None
 	):
+		# initialize some base properties
+		self.filter_invalid_strategies = filter_invalid_strategies
+		self.logger = logger
 		self.model_attributes = model_attributes
 
 		# set characteristics of the template (can be modified if needed)
+		self.field_prepend_req_attr_baseline_scenario = field_prepend_req_attr_baseline_scenario
 		self.field_req_normalize_group = field_req_normalize_group
 		self.field_req_subsector = field_req_subsector
 		self.field_req_trajgroup_no_vary_q = field_req_trajgroup_no_vary_q
@@ -84,8 +122,10 @@ class InputTemplate:
 			self.field_req_uniform_scaling_q
 		]
 
-		#
-		self.regex_sheet_name = self.set_regex_sheet_name()
+		# initialize additional key elements
+		self._initialize_attribute_strategy(attribute_strategy)
+		self._set_regex_sheet_name()
+
 		(
 			self.dict_strategy_id_to_sheet,
 			self.dict_strategy_id_to_strategy_sheet,
@@ -96,22 +136,99 @@ class InputTemplate:
 
 
 
+
+
 	##################################
 	#	INITIALIZATION FUNCTIONS	#
 	##################################
 
-	def set_regex_sheet_name(self
+	def _initialize_attribute_strategy(self,
+		attribute_strategy: Union[AttributeTable, str, None]
+	) -> None:
+		"""
+		Initialize the strategy attribute table based on one of two potential inputs. Sets two InputTemplate parameters:
+
+		self.attribute_strategy
+		self.baseline_strategy
+
+		Function Arguments
+		------------------
+		- attribute_strategy: One of the following:
+			* None: no strategy table is passed, and templates are read without consideration of defined strategies
+			* AttributeTable: any attribute table with a key that matches
+			self.model_attributes.dict_attributes(f"dim_{self.model_attributes.dim_strategy_id}"). The AttributeTable
+			should also include the following fields:
+				* baseline_scenario: binary field denoting the baseline scenario. Only one should exist per
+
+		"""
+		# default to model attributes designation
+		self.baseline_strategy = self.model_attributes.get_baseline_scenario_id(self.model_attributes.dim_strategy_id)
+
+		if isinstance(attribute_strategy, AttributeTable):
+			out = attribute_strategy
+			field_check = f"{self.field_prepend_req_attr_baseline_scenario}{out.key}"
+
+			# verify key match - if matched, check for baseline strategy id
+			if attribute_strategy.key != self.model_attributes.dim_strategy_id:
+				self._log(f"Invalid attribute_strategy passed to InputTemplate: strategy key '{attribute_strategy.key}' does not match the ModelAttributes strategy key '{self.model_attributes.dim_strategy_id}'. Check the file at '{attribute_strategy.fp_table}'. Setting self.attribute_strategy = None.", type_log = "warning")
+				out = None
+			elif (field_check in out.table.columns) and (len(out.table) > 0):
+				tab_filt = out.table[out.table[field_check] == 1][out.key]
+				if len(tab_filt) > 0:
+					self.baseline_strategy = min(tab_filt)
+					self._log(f"Multiple specifications of baseline {out.key} found in field '{field_check}' in attribute_strategy. Check the file at '{out.fp_table}'. Inferring baseline {out.key} = {self.baseline_strategy}.") if (len(tab_filt) > 1) else None
+				else:
+					self.baseline_strategy = min(out.table[out.key])
+					self._log(f"No specifications of baseline {out.key} found in field '{field_check}' in attribute_strategy. Check the file at '{out.fp_table}'. Inferring baseline {out.key} = {self.baseline_strategy}.")
+
+		elif (attribute_strategy is None) and (self.filter_invalid_strategies):
+			key_try = f"dim_{self.model_attributes.dim_strategy_id}"
+			out = self.model_attributes.dict_attributes.get(key_try)
+			if out is None:
+				self._log(f"No strategy attribute found in ModelAttributes using dict_attributes key '{key_try}'. Setting self.attribute_strategy = None and self.baseline_strategy = {self.baseline_strategy}.", type_log = "warning")
+
+		else:
+			tp = str(type(attribute_strategy))
+			self._log(f"Invalid type '{tp}' of attribute_strategy passed to InputTemplate. Setting self.attribute_strategy = None and self.baseline_strategy = {self.baseline_strategy}.", type_log)
+			out = None
+
+		self.attribute_strategy = out
+
+
+
+	def _log(self,
+		msg: str,
+		type_log: str = "log",
+		**kwargs
+	) -> None:
+		"""
+		Clean implementation of sf._optional_log in-line using default logger. See ?sf._optional_log for more information
+
+		Function Arguments
+		------------------
+		- msg: message to log
+
+		Keyword Arguments
+		-----------------
+		- type_log: type of log to use
+		- **kwargs: passed as logging.Logger.METHOD(msg, **kwargs)
+		"""
+		sf._optional_log(self.logger, msg, type_log = type_log, **kwargs)
+
+
+
+	def _set_regex_sheet_name(self,
 	) -> re.Pattern:
 		"""
 		Set the regular expression for input sheets to match
 		"""
-		return re.compile(f"{self.model_attributes.dim_strategy_id}-(\d*$)")
+		self.regex_sheet_name = re.compile(f"{self.model_attributes.dim_strategy_id}-(\d*$)")
 
 
 
-	############################
+	#########################
 	#	TEMPLATE FUNCTIONS	#
-	############################
+	#########################
 
 	def get_sheet_strategy(self,
 		sheet_name: str,
@@ -173,7 +290,7 @@ class InputTemplate:
 		all_time_period_fields = None
 		all_time_period_fields_max = None
 		any_baseline = False
-		strat_base = self.model_attributes.get_baseline_scenario_id(self.model_attributes.dim_strategy_id)
+		strat_base = self.baseline_strategy
 
 		# outputs and iterators
 		dict_outputs = {}
@@ -185,40 +302,50 @@ class InputTemplate:
 				# get the strategy, test if it is baseline
 				dict_strat_cur = self.get_sheet_strategy(k, return_type = dict)
 				strat_cur = dict_strat_cur.get(k)
-				baseline_q = (strat_cur == strat_base)
-				any_baseline = any_baseline or baseline_q
-				# get the data frame and check it
-				df_template_sheet = dict_inputs.get(k)
 
-				tup = self.verify_input_template_sheet(df_template_sheet, base_strategy_q = baseline_q)
+				# check strategy filter
+				proceed_q = False if self.filter_invalid_strategies else True
+				if not proceed_q:
+					if self.attribute_strategy is not None:
+						if strat_cur in self.attribute_strategy.key_values:
+							proceed_q = True
+						else:
+							self._log(f"InputTemplate initialization warning: Strategy '{strat_cur}' not found--it will not be included in the input database.", type_log = "warning")
 
-				# note: error passing and descriptions are handled in verify_input_template_sheet
-				if tup is not None:
-					dict_field_tp_to_tp, df_template_sheet, field_min, field_max, fields_tp  = tup
+				if proceed_q:
+					baseline_q = (strat_cur == strat_base)
+					any_baseline = any_baseline or baseline_q
 
-					# check time period fields
-					all_time_period_fields = set(fields_tp) if (all_time_period_fields is None) else (all_time_period_fields & set(fields_tp))
-					if all_time_period_fields != set(fields_tp):
-						raise KeyError(f"Error in sheet {k}: encountered inconsistent definition of time periods.")
+					# get the data frame and check it
+					df_template_sheet = dict_inputs.get(k)
 
-					# check max time period fields
-					all_time_period_fields_max = set([field_max]) if (all_time_period_fields_max is None) else (all_time_period_fields_max | set([field_max]))
-					if len(all_time_period_fields_max) > 1:
-						raise KeyError(f"Error in sheet {k}: encountered inconsistent definition of fields specifying maximum and minimum scalars.")
+					tup = self.verify_input_template_sheet(df_template_sheet, base_strategy_q = baseline_q)
 
-					# check binary fields HEREHERE
-					for fld in self.list_fields_required_binary:
-						df_template_sheet = sf.check_binary_fields(df_template_sheet, fld)
+					# note: error passing and descriptions are handled in verify_input_template_sheet
+					if tup is not None:
+						dict_field_tp_to_tp, df_template_sheet, field_min, field_max, fields_tp  = tup
 
-					# update outputs
-					dict_strategy_to_sheet.update({strat_cur: k})
-					df_template_sheet = df_template_sheet[self.list_fields_required_base + [field_min, field_max] + fields_tp]
-					dict_outputs.update({strat_cur: df_template_sheet})
+						# check time period fields
+						all_time_period_fields = set(fields_tp) if (all_time_period_fields is None) else (all_time_period_fields & set(fields_tp))
+						if all_time_period_fields != set(fields_tp):
+							raise KeyError(f"Error in sheet {k}: encountered inconsistent definition of time periods.")
 
+						# check max time period fields
+						all_time_period_fields_max = set([field_max]) if (all_time_period_fields_max is None) else (all_time_period_fields_max | set([field_max]))
+						if len(all_time_period_fields_max) > 1:
+							raise KeyError(f"Error in sheet {k}: encountered inconsistent definition of fields specifying maximum and minimum scalars.")
 
+						# check binary fields HEREHERE
+						for fld in self.list_fields_required_binary:
+							df_template_sheet = sf.check_binary_fields(df_template_sheet, fld)
+
+						# update outputs
+						dict_strategy_to_sheet.update({strat_cur: k})
+						df_template_sheet = df_template_sheet[self.list_fields_required_base + [field_min, field_max] + fields_tp]
+						dict_outputs.update({strat_cur: df_template_sheet})
 
 		if not any_baseline:
-			warnings.warn(f"Note: no sheets associated with the baseline strategy {strat_base} were found in the input template. Check the template before proceeding to build the input database.")
+			self._log(f"Note: no sheets associated with the baseline strategy {strat_base} were found in the input template. Check the template before proceeding to build the input database.", type_log = "warning")
 
 		return dict_outputs, dict_strategy_to_sheet, field_max, field_min, fields_tp
 
@@ -242,7 +369,7 @@ class InputTemplate:
 
 		"""
 		dict_strategies_to_sheet = self.dict_strategy_id_to_sheet if (dict_strategies_to_sheet is None) else dict_strategies_to_sheet
-		strat_base = self.model_attributes.get_baseline_scenario_id(self.model_attributes.dim_strategy_id)
+		strat_base = self.baseline_strategy
 		strats_all = sorted(list(dict_strategies_to_sheet.keys()))
 		strategies_include = strats_all if (strategies_include is None) else [x for x in strategies_include if x in strats_all]
 		if strat_base not in strategies_include:
@@ -377,7 +504,7 @@ class InputTemplate:
 
 		if len(fields_invalid) > 0:
 			flds_drop = sf.format_print_list([x for x in fields_invalid])
-			warnings.warn(f"Dropping fields {flds_drop} from input template: the time periods are not defined in the {self.model_attributes.dim_time_period} attribute table at '{attr_tp.fp_table}'")
+			self._log(f"Dropping fields {flds_drop} from input template: the time periods are not defined in the {self.model_attributes.dim_time_period} attribute table at '{attr_tp.fp_table}'", type_log = "warning")
 			df_in.drop(fields_invalid, axis = 1, inplace = True)
 
 		return (dict_field_tp_to_tp, df_in, field_min, field_max, fields_valid)
@@ -435,7 +562,7 @@ class InputTemplate:
 
 		except Exception as e:
 			sheet_str = f" '{sheet_name}'" if (sheet_name is not None) else ""
-			warnings.warn(f"Trying to verify sheet{sheet_str} produced the following error in verify_input_template_sheet:\n\t{e}\nReturning None")
+			self._log(f"Trying to verify sheet{sheet_str} produced the following error in verify_input_template_sheet:\n\t{e}\nReturning None", type_log = "warning")
 			return None
 
 		return (dict_field_tp_to_tp, df_template_sheet, field_min, field_max, fields_tp)
@@ -461,20 +588,61 @@ class BaseInputDatabase:
 			* If run as demo, then `fp_templates` does not need to include subdirectories for each region specified
 		- sectors: sectors to include
 			* If None, then try to initialize all input sectors
+		- attribute_strategy: strategy attribute used to filter out invalid or undefined strategies
 
-
+		Keyword Arguments
+		-----------------
+		The following keyword arguments are passed to the InputTemplate classes used to Instantiate a BaseInputDatabase
+		- field_req_normalize_group: Required field used to specify whether or not to normalize a group (ensures
+			always sums to 1)
+		- field_req_subsector: Required field used to define the ubsector associated with a variable
+		- field_req_trajgroup_no_vary_q: Required field used to determine whether or not a trajectory group may vary
+			* Note: all values in the same trajectory group must be the same
+		- field_req_uniform_scaling_q: Required field used to determine whether or not a variable trjaectory should
+			be scaled uniformly over all time periods
+			* E.g., many biophysical parameters may be uncertain but not change over time
+		- field_req_variable: Required field used name the variable
+			* Trajectory groups require special naming convention used to define all parts:
+				(INFO HERE)
+		- field_req_variable_trajectory_group: Field used to explicitly add trajectory group (added after import)
+		- field_req_variable_trajectory_group_trajectory_type: Field used to explicitly add trajectory group type
+			for variables in a trajectory group (added after import)
+		- filter_invalid_strategies: filter strategies that are not defined in the attribute_strategy input table
+		- logger: optional logging object to pass
 	"""
 	def __init__(self,
 		fp_templates: str,
-		model_attributes: ds.ModelAttributes,
+		model_attributes: ma.ModelAttributes,
 		regions: Union[list, None],
 		demo_q: bool = True,
-		sectors: Union[list, None] = None
+		sectors: Union[list, None] = None,
+		attribute_strategy: Union[AttributeTable, str, None] = None,
+		field_req_normalize_group: str = "normalize_group",
+		field_req_subsector: str = "subsector",
+		field_req_trajgroup_no_vary_q: str = "trajgroup_no_vary_q",
+		field_req_uniform_scaling_q: str = "uniform_scaling_q",
+		field_req_variable: str = "variable",
+		field_req_variable_trajectory_group: str = "variable_trajectory_group",
+		field_req_variable_trajectory_group_trajectory_type: str = "variable_trajectory_group_trajectory_type",
+		filter_invalid_strategies: bool = True,
+		logger: Union[logging.Logger, None] = None
 	):
 		self.demo_q, self.fp_templates, self.model_attributes = demo_q, fp_templates, model_attributes
+		# initialize some fields
+		self.field_req_normalize_group = field_req_normalize_group
+		self.field_req_subsector = field_req_subsector
+		self.field_req_trajgroup_no_vary_q = field_req_trajgroup_no_vary_q
+		self.field_req_uniform_scaling_q = field_req_uniform_scaling_q
+		self.field_req_variable = field_req_variable
+		self.field_req_variable_trajectory_group = field_req_variable_trajectory_group
+		self.field_req_variable_trajectory_group_trajectory_type = field_req_variable_trajectory_group_trajectory_type
+		# additional initialization
+		self.attribute_strategy = attribute_strategy
+		self.filter_invalid_strategies = filter_invalid_strategies
+		self.logger = logger
+
 		self.regions = self.get_regions(regions)
 		self.sectors = self.get_sectors(sectors)
-
 		self.database = self.generate_database()
 
 
@@ -519,6 +687,27 @@ class BaseInputDatabase:
 
 
 
+	def _log(self,
+		msg: str,
+		type_log: str = "log",
+		**kwargs
+	) -> None:
+		"""
+		Clean implementation of sf._optional_log in-line using default logger. See ?sf._optional_log for more information
+
+		Function Arguments
+		------------------
+		- msg: message to log
+
+		Keyword Arguments
+		-----------------
+		- type_log: type of log to use
+		- **kwargs: passed as logging.Logger.METHOD(msg, **kwargs)
+		"""
+		sf._optional_log(self.logger, msg, type_log = type_log, **kwargs)
+
+
+
 	############################
 	#	CORE FUNCTIONALITY	#
 	############################
@@ -558,22 +747,40 @@ class BaseInputDatabase:
 				# read the input database for the sector
 				try:
 					template_cur = InputTemplate(
-						self.get_template_path(region, sector, **kwargs),
+						self.get_template_path(
+							region,
+							sector,
+							**kwargs
+						),
 						sa.model_attributes,
-						None
+						None,
+						attribute_strategy = self.attribute_strategy,
+						field_req_normalize_group = self.field_req_normalize_group,
+						field_req_subsector = self.field_req_subsector,
+						field_req_trajgroup_no_vary_q = self.field_req_trajgroup_no_vary_q,
+						field_req_uniform_scaling_q = self.field_req_uniform_scaling_q,
+						field_req_variable = self.field_req_variable,
+						field_req_variable_trajectory_group = self.field_req_variable_trajectory_group,
+						field_req_variable_trajectory_group_trajectory_type = self.field_req_variable_trajectory_group_trajectory_type,
+						filter_invalid_strategies = self.filter_invalid_strategies,
+						logger = self.logger
 					)
+
+					# update strategy attribute (will be same for all InputTemplates)
+					self.attribute_strategy = template_cur.attribute_strategy if (self.attribute_strategy is None) else self.attribute_strategy
+					self.baseline_strategy = template_cur.baseline_strategy
 
 					df_template_db = template_cur.build_inputs_by_strategy()
 
 				except Exception as e:
-					warnings.warn(f"Warning in generate_database--template read for sector '{sector}' in region '{region}' failed. The following error was returned: {e}")
+					self._log(f"Warning in generate_database--template read for sector '{sector}' in region '{region}' failed. The following error was returned: {e}", type_log = "warning")
 					df_template_db = None
 
 				# check time period fields
 				set_template_cols = set(df_template_db.columns)
 				if all_fields is not None:
 					if not set(df_template_db.columns).issubset(all_fields):
-						warnings.warn(f"Error in sector '{sector}', region '{region}': encountered inconsistent definition of template fields. Dropping...")
+						self._log(f"Error in sector '{sector}', region '{region}': encountered inconsistent definition of template fields. Dropping...", type_log = "warning")
 						df_template_db = None
 					else:
 						fields_drop = list(set_template_cols - all_fields)
