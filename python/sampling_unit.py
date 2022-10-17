@@ -27,13 +27,13 @@ class SamplingUnit:
 	- fan_function_specification: type of uncertainty approach to use
 		* linear: linear ramp to time time T - 1
 		* sigmoid: sigmoid function that ramps to time T - 1
-	- field_strategy_id: field used to identify the strategy (int)
-		* This field is important as uncertainty in strategies is assessed differently than uncetainty in other variables
 	- field_time_period: field used to denote the time period
 	- field_uniform_scaling_q: field used to identify whether or not a variable
 	- field_variable: field used to specify variables
 	- field_variable_trajgroup: field used to identify the trajectory group (integer)
 	- field_variable_trajgroup_type: field used to identify the trajectory group type (max, min, mix, or lhs)
+	- key_strategy: field used to identify the strategy (int)
+		* This field is important as uncertainty in strategies is assessed differently than uncetainty in other variables
 	- missing_flag_trajgroup: flag used to identify null trajgroups (default is -999)
 	"""
 	def __init__(self,
@@ -41,24 +41,24 @@ class SamplingUnit:
 		dict_baseline_ids: Dict[str, int],
 		time_period_u0: int,
 		fan_function_specification: str = "linear",
-		field_strategy_id: str = "strategy_id",
 		field_time_period: str = "time_period",
 		field_uniform_scaling_q: str = "uniform_scaling_q",
 		field_variable_trajgroup: str = "variable_trajectory_group",
 		field_variable_trajgroup_type: str = "variable_trajectory_group_trajectory_type",
 		field_variable: str = "variable",
+		key_strategy: str = "strategy_id",
 		missing_trajgroup_flag: int = -999
 	):
 
 		##  set some attributes
 
 		# from function args
-		self.field_strategy_id = field_strategy_id
 		self.field_time_period = field_time_period
 		self.field_uniform_scaling_q = field_uniform_scaling_q
 		self.field_variable_trajgroup = field_variable_trajgroup
 		self.field_variable_trajgroup_type = field_variable_trajgroup_type
 		self.field_variable = field_variable
+		self.key_strategy = key_strategy
 		self.missing_trajgroup_flag = missing_trajgroup_flag
 		self.time_period_end_certainty = self.check_time_start_uncertainty(time_period_u0)
 		# others
@@ -85,7 +85,7 @@ class SamplingUnit:
 		self.scalar_diff_arrays = self.get_scalar_diff_arrays()
 
 		# important components for different design ids + assessing uncertainty in lever acheivement
-		self.fields_order_strat_diffs = [x for x in self.fields_id if (x != self.field_strategy_id)] + [self.field_variable, self.field_variable_trajgroup_type]
+		self.fields_order_strat_diffs = [x for x in self.fields_id if (x != self.key_strategy)] + [self.field_variable, self.field_variable_trajgroup_type]
 		self.xl_type, self.dict_strategy_info = self.infer_sampling_unit_type()
 
 
@@ -114,16 +114,15 @@ class SamplingUnit:
 
 
 	def check_input_data_frame(self, df_in: pd.DataFrame):
-
 		# some standardized fields to require
-		fields_req = [self.field_strategy_id, self.field_variable_trajgroup, self.field_variable_trajgroup_type, self.field_uniform_scaling_q, self.field_variable]
+		fields_req = [self.key_strategy, self.field_variable_trajgroup, self.field_variable_trajgroup_type, self.field_uniform_scaling_q, self.field_variable]
 		if len(set(fields_req) & set(df_in.columns)) < len(set(fields_req)):
 			fields_missing = list(set(fields_req) - (set(fields_req) & set(df_in.columns)))
 			fields_missing.sort()
 			str_missing = ", ".join([f"'{x}'" for x in fields_missing])
 			raise ValueError(f"Error: one or more columns are missing from the data frame. Columns {str_missing} not found")
-		elif (self.field_strategy_id in df_in.columns) and ("_id" not in self.field_strategy_id):
-			raise ValueError(f"Error: the strategy field '{self.field_strategy_id}' must contain the substring '_id'. Check to ensure this substring is specified.")
+		elif (self.key_strategy in df_in.columns) and ("_id" not in self.key_strategy):
+			raise ValueError(f"Error: the strategy field '{self.key_strategy}' must contain the substring '_id'. Check to ensure this substring is specified.")
 
 		return df_in.drop_duplicates()
 
@@ -229,7 +228,12 @@ class SamplingUnit:
 
 
 
-	def get_all_vs(self, df_in: pd.DataFrame):
+	def get_all_vs(self,
+		df_in: pd.DataFrame
+	) -> List:
+		"""
+		Get all variable schema associated with input template df_in
+		"""
 		if not self.field_variable in df_in.columns:
 			raise ValueError(f"Field '{self.field_variable}' not found in data frame.")
 		all_vs = list(df_in[self.field_variable].unique())
@@ -238,7 +242,12 @@ class SamplingUnit:
 
 
 
-	def get_id_fields(self, df_in: pd.DataFrame):
+	def get_id_fields(self,
+		df_in: pd.DataFrame
+	) -> List:
+		"""
+		Get all id fields associated with input template df_in
+		"""
 		fields_out = [x for x in df_in.columns if ("_id" in x)]
 		fields_out.sort()
 		if len(fields_out) == 0:
@@ -269,8 +278,19 @@ class SamplingUnit:
 
 
 
-	def get_scalar_time_period(self, df_in:pd.DataFrame):
-		# determine min field/time period
+	def get_scalar_time_period(self,
+		df_in:pd.DataFrame
+	) -> Tuple[str, str, int]:
+		"""
+		Determine final time period (tp_final) as well as the fields associated with the minimum
+			and maximum scalars (field_min/field_max) using input template df_in. Returns a tuple
+			with the following elements:
+
+			* field_min
+			* field_max
+			* tp_final
+
+		"""
 		field_min = [x for x in df_in.columns if "min" in x]
 		if len(field_min) == 0:
 			raise ValueError("No field associated with a minimum scalar value found in data frame.")
@@ -295,8 +315,25 @@ class SamplingUnit:
 
 
 
-	def get_scenario_values(self, df_in: pd.DataFrame, fields_id: list, dict_baseline_ids: dict):
-		# get scenario index values by scenario dimension
+	def get_scenario_values(self,
+		df_in: pd.DataFrame,
+		fields_id: list,
+		dict_baseline_ids: dict
+	) -> Tuple[Dict, Dict]:
+		"""
+		Get scenario index values by scenario dimension and verifies baseline valies. Returns
+			a tuple of two dictionaries:
+
+			* dict_id_values: maps each dimensional key (str) to a list of values
+			* dict_id_baselines: mapes each dimensional key (str) to a baseline scenario index
+
+		Function Arguments
+		------------------
+		- df_in: data frame containing the input template
+		- fields_id: list of id fields
+		- dict_baseline_ids: dictionary mapping each dimensional key to nominal baseline
+		"""
+		#
 		dict_id_values = {}
 		dict_id_baselines = dict_baseline_ids.copy()
 
@@ -309,8 +346,8 @@ class SamplingUnit:
 				bv = int(dict_id_baselines[fld])
 
 				if bv not in dict_id_values[fld]:
-					if fld == self.field_strategy_id:
-						raise ValueError(f"Error: baseline {self.field_strategy_id} scenario index '{bv}' not found in the variable trajectory input sheet. Please ensure the basline strategy is specified correctly.")
+					if fld == self.key_strategy:
+						raise ValueError(f"Error: baseline {self.key_strategy} scenario index '{bv}' not found in the variable trajectory input sheet. Please ensure the basline strategy is specified correctly.")
 					else:
 						msg_warning = f"The baseline id for dimension {fld} not found. The experimental design will not include futures along this dimension of analysis."
 						warnings.warn(msg_warning)
@@ -325,7 +362,16 @@ class SamplingUnit:
 
 
 
-	def get_time_periods(self, df_in: pd.DataFrame):
+	def get_time_periods(self,
+		df_in: pd.DataFrame
+	) -> Tuple[List, List]:
+		"""
+		Get fields associated with time periods in the template as well as time periods
+			defined in input template df_in. Returns the following elements:
+
+			* fields_time_periods: nominal fields in df_in containing time periods
+			* time_periods: ordered list of integer time periods
+		"""
 		fields_time_periods = [x for x in df_in.columns if x.isnumeric()]
 		fields_time_periods = [x for x in fields_time_periods if int(x) == float(x)]
 		if len(fields_time_periods) == 0:
@@ -336,12 +382,16 @@ class SamplingUnit:
 		time_periods.sort()
 		fields_time_periods = [str(x) for x in time_periods]
 
-		return (fields_time_periods, time_periods)
+		return fields_time_periods, time_periods
 
 
 
-	# get the trajectory group for the sampling unit
-	def get_trajgroup(self, df_in: pd.DataFrame):
+	def get_trajgroup(self,
+		df_in: pd.DataFrame
+	) -> Union[int, None]:
+		"""
+		Get the trajectory group for the sampling unit from df_in
+		"""
 		if not self.field_variable_trajgroup in df_in.columns:
 			raise ValueError(f"Field '{self.field_variable_trajgroup}' not found in data frame.")
 		# determine if this is associated with a trajectory group
@@ -398,15 +448,15 @@ class SamplingUnit:
 
 	# determine if the sampling unit represents a strategy (L) or an uncertainty (X)
 	def infer_sampling_unit_type(self, thresh: float = (10**(-12))):
-		fields_id_no_strat = [x for x in self.fields_id if (x != self.field_strategy_id)]
+		fields_id_no_strat = [x for x in self.fields_id if (x != self.key_strategy)]
 
-		strat_base = self.dict_baseline_ids[self.field_strategy_id]
-		strats_not_base = [x for x in self.dict_id_values[self.field_strategy_id] if (x != strat_base)]
+		strat_base = self.dict_baseline_ids[self.key_strategy]
+		strats_not_base = [x for x in self.dict_id_values[self.key_strategy] if (x != strat_base)]
 		fields_ext = [self.field_variable, self.field_variable_trajgroup_type] + self.fields_id + self.fields_time_periods
-		fields_ext = [x for x in fields_ext if (x != self.field_strategy_id)]
+		fields_ext = [x for x in fields_ext if (x != self.key_strategy)]
 		fields_merge = [x for x in fields_ext if (x not in self.fields_time_periods)]
 		# get the baseline strategy specification + set a renaming dictionary for merges
-		df_base = self.data_table[self.data_table[self.field_strategy_id] == strat_base][fields_ext].sort_values(by = self.fields_order_strat_diffs).reset_index(drop = True)
+		df_base = self.data_table[self.data_table[self.key_strategy] == strat_base][fields_ext].sort_values(by = self.fields_order_strat_diffs).reset_index(drop = True)
 		arr_base = np.array(df_base[self.fields_time_periods])
 		fields_base = list(df_base.columns)
 
@@ -421,7 +471,7 @@ class SamplingUnit:
 
 		for strat in strats_not_base:
 
-			df_base = pd.merge(df_base, self.data_table[self.data_table[self.field_strategy_id] == strat][fields_ext], how = "inner", on = fields_merge, suffixes = (None, "_y"))
+			df_base = pd.merge(df_base, self.data_table[self.data_table[self.key_strategy] == strat][fields_ext], how = "inner", on = fields_merge, suffixes = (None, "_y"))
 			df_base.sort_values(by = self.fields_order_strat_diffs, inplace = True)
 			arr_cur = np.array(df_base[[(x + "_y") for x in self.fields_time_periods]])
 			arr_diff = arr_cur - arr_base
@@ -621,9 +671,9 @@ class SamplingUnit:
 				raise ValueError(f"The value of lhs_trial_l = {lhs_trial_l} is invalid. lhs_trial_l must be >= 0.")
 
 		# initialization
-		all_strats = self.dict_id_values.get(self.field_strategy_id)
+		all_strats = self.dict_id_values.get(self.key_strategy)
 		n_strat = len(all_strats)
-		strat_base = self.dict_baseline_ids.get(self.field_strategy_id)
+		strat_base = self.dict_baseline_ids.get(self.key_strategy)
 
 		# index by variable_specification at keys
 		dict_out = {}
@@ -661,7 +711,7 @@ class SamplingUnit:
 						pd.DataFrame(arr_out, columns = self.fields_time_periods)],
 						axis = 1
 					)
-					w = np.where(df_ids_ota[self.field_strategy_id] == strat_base)
+					w = np.where(df_ids_ota[self.key_strategy] == strat_base)
 					df_ids_ota = df_ids_ota.iloc[w[0].repeat(n_strat)].reset_index(drop = True)
 
 					arr_out = np.array(df_ids_ota[self.fields_time_periods])
@@ -675,7 +725,7 @@ class SamplingUnit:
 						# get the index for the current vs/cat_cur
 						inds = np.sort(np.array(list(inds0 & set(np.where(df_baseline_strategy[self.field_variable_trajgroup_type] == cat_cur)[0]))))
 						n_inds = len(inds)
-						df_ids0 = df_baseline_strategy[[x for x in self.fields_id if (x != self.field_strategy_id)]].loc[inds.repeat(n_strat)].reset_index(drop = True)
+						df_ids0 = df_baseline_strategy[[x for x in self.fields_id if (x != self.key_strategy)]].loc[inds.repeat(n_strat)].reset_index(drop = True)
 						new_strats = list(np.zeros(len(df_ids0)).astype(int))
 
 						# initialize as list - we only do this to guarantee the sort is correct
@@ -698,7 +748,7 @@ class SamplingUnit:
 							)
 							ind_repl += 1
 
-						df_ids0[self.field_strategy_id] = new_strats
+						df_ids0[self.key_strategy] = new_strats
 						df_future_strat = pd.concat([df_ids0, pd.DataFrame(df_future_strat, columns = self.fields_time_periods)], axis = 1).sort_values(by = self.fields_id).reset_index(drop = True)
 						l_modified_cats.append(dict_arrs[cat_cur] + np.array(df_future_strat[self.fields_time_periods]))
 
@@ -743,7 +793,7 @@ class SamplingUnit:
 
 				if self.xl_type == "L":
 					# get series of strategies
-					series_strats = dict_ordered_traj_arrays.get("id_coordinates")[self.field_strategy_id]
+					series_strats = dict_ordered_traj_arrays.get("id_coordinates")[self.key_strategy]
 					w = np.where(np.array(series_strats) == strat_base)[0]
 					# get strategy adjustments
 					lhs_mult_deltas = 1.0 if baseline_future_q else lhs_trial_l
@@ -783,12 +833,9 @@ class FutureTrajectories:
 	- fan_function_specification: type of uncertainty approach to use
 		* linear: linear ramp to time time T - 1
 		* sigmoid: sigmoid function that ramps to time T - 1
-	- field_future_id: field used to identify the future
 	- field_sample_unit_group: field used to identify sample unit groups. Sample unit groups are composed of:
 		* individual variable specifications
 		* trajectory groups
-	- field_strategy_id: field used to identify the strategy (int)
-		* This field is important as uncertainty in strategies is assessed differently than uncetainty in other variables
 	- field_time_period: field used to specify the time period
 	- field_uniform_scaling_q: field used to identify whether or not a variable
 	- field_variable: field used to specify variables
@@ -797,6 +844,9 @@ class FutureTrajectories:
 	- fan_function_specification: type of uncertainty approach to use
 		* linear: linear ramp to time time T - 1
 		* sigmoid: sigmoid function that ramps to time T - 1
+	- key_future: field used to identify the future
+	- key_strategy: field used to identify the strategy (int)
+		* This field is important as uncertainty in strategies is assessed differently than uncetainty in other variables
 	- logger: optional logging.Logger object used to track generation of futures
 	- regex_trajgroup: Regular expression used to identify trajectory group variables in `field_variable` of `df_input_database`
 	- regex_trajmax: Regular expression used to identify trajectory maxima in variables and trajgroups specified in `field_variable` of `df_input_database`
@@ -808,16 +858,15 @@ class FutureTrajectories:
 		df_input_database: pd.DataFrame,
 		dict_baseline_ids: Dict[str, int],
 		time_period_u0: int,
-
 		fan_function_specification: str = "linear",
-		field_future_id: str = "future_id",
 		field_sample_unit_group: str = "sample_unit_group",
-		field_strategy_id: str = "strategy_id",
 		field_time_period: str = "time_period",
 		field_uniform_scaling_q: str = "uniform_scaling_q",
 		field_variable: str = "variable",
 		field_variable_trajgroup: str = "variable_trajectory_group",
 		field_variable_trajgroup_type: str = "variable_trajectory_group_trajectory_type",
+		key_future: str = "future_id",
+		key_strategy: str = "strategy_id",
 		# optional logger
 		logger: Union[logging.Logger, None] = None,
 		# regular expressions used to define trajectory group components in input database
@@ -837,9 +886,9 @@ class FutureTrajectories:
 		self.dict_baseline_ids = dict_baseline_ids
 		self.fan_function_specification = fan_function_specification
 		# set default fields
-		self.field_future_id = field_future_id
+		self.key_future = key_future
 		self.field_sample_unit_group = field_sample_unit_group
-		self.field_strategy_id = field_strategy_id
+		self.key_strategy = key_strategy
 		self.field_time_period = field_time_period
 		self.field_uniform_scaling_q = field_uniform_scaling_q
 		self.field_variable = field_variable
@@ -934,7 +983,7 @@ class FutureTrajectories:
 		Keyword Arguments
 		-----------------
 		- return_def: default return value if row is None
-		
+
 		"""
 		out = return_def
 		if isinstance(row, pd.DataFrame):
@@ -1142,7 +1191,8 @@ class FutureTrajectories:
 		df_row_lhc_sample_x: Union[pd.Series, pd.DataFrame],
 		df_row_lhc_sample_l: Union[pd.Series, pd.DataFrame, None] = None,
 		future_id: Union[int, None] = None,
-		baseline_future_q: bool = False
+		baseline_future_q: bool = False,
+		dict_optional_dimensions: Dict[str, int] = {}
 	) -> pd.DataFrame:
 		"""
 		Build a data frame of a single future for all sample units
@@ -1157,7 +1207,7 @@ class FutureTrajectories:
 			* If None, lhs_trial_l = 1 in all samples (constant strategy effect across all futures)
 		- future_id: optional future id to add to the dataframe using self.future_id
 		- baseline_future_q: generate the dataframe for the baseline future?
-
+		- dict_optional_dimensions: dictionary of optional dimensions to pass to the output data frame (form: {key_dimension: id_value})
 		"""
 
 		# check the specification of
@@ -1187,7 +1237,7 @@ class FutureTrajectories:
 
 				# initialize indexing if necessary
 				if len(df_out) == 0:
-					dict_fields = None if (future_id is None) else {self.field_future_id: future_id}
+					dict_fields = None if (future_id is None) else {self.key_future: future_id}
 					df_out.append(
 						samp.generate_indexing_data_frame(
 							dict_additional_fields = dict_fields
@@ -1197,6 +1247,7 @@ class FutureTrajectories:
 
 		df_out.append(pd.DataFrame(dict_df))
 		df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
+		df_out = sf.add_data_frame_fields_from_dict(df_out, dict_optional_dimensions) if isinstance(dict_optional_dimensions, dict) else df_out
 
 		return df_out
 
@@ -1227,12 +1278,12 @@ class FutureTrajectories:
 		fan_function = self.fan_function_specification if (fan_function is None) else fan_function
 		# setup inputs
 		kwarg_keys = list(kwargs.keys())
-		field_strategy_id = self.field_strategy_id if ("field_strategy_id" not in kwarg_keys) else kwargs.get("field_strategy_id")
 		field_time_period = self.field_time_period if ("field_time_period" not in kwarg_keys) else kwargs.get("field_time_period")
 		field_uniform_scaling_q = self.field_uniform_scaling_q if ("field_uniform_scaling_q" not in kwarg_keys) else kwargs.get("field_uniform_scaling_q")
 		field_variable_trajgroup = self.field_variable_trajgroup if ("field_variable_trajgroup" not in kwarg_keys) else kwargs.get("field_variable_trajgroup")
 		field_variable_trajgroup_type = self.field_variable_trajgroup_type if ("field_variable_trajgroup_type" not in kwarg_keys) else kwargs.get("field_variable_trajgroup_type")
 		field_variable = self.field_variable if ("field_variable" not in kwarg_keys) else kwargs.get("field_variable")
+		key_strategy = self.key_strategy if ("key_strategy" not in kwarg_keys) else kwargs.get("key_strategy")
 
 		dict_sampling_units = {}
 
@@ -1259,12 +1310,12 @@ class FutureTrajectories:
 				self.dict_baseline_ids,
 				self.time_period_u0,
 				fan_function_specification = fan_function,
-				field_strategy_id = field_strategy_id,
 				field_time_period = field_time_period,
 				field_uniform_scaling_q = field_uniform_scaling_q,
 				field_variable_trajgroup = field_variable_trajgroup,
 				field_variable_trajgroup_type = field_variable_trajgroup_type,
 				field_variable = field_variable,
+				key_strategy = key_strategy,
 				missing_trajgroup_flag = self.missing_flag_int
 			)
 

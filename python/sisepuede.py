@@ -22,6 +22,268 @@ from typing import *
 import warnings
 
 
+
+class SISEPUEDEFileStructure:
+	"""
+	Create and verify the directory structure for SISEPUEDE.
+
+	Optional Arguments
+	------------------
+	- dir_ingestion: directory containing templates for ingestion. The ingestion directory should include
+		subdirectories for each template class that may be run, including:
+			* calibrated: input variables that are calibrated for each region and sector
+			* demo: demo parameters that are independent of region (default in quick start)
+			* uncalibrated: preliminary input variables defined for each region that have not yet been
+				calibrated
+
+		The calibrated and uncalibrated subdirectories require separate subdrectories for each region, each
+		of which contains an input template for each
+	- fn_config: name of configuration file in SISEPUEDE directory
+	- logger: optional logging.Logger object used for logging
+
+	"""
+	def __init__(self,
+		dir_ingestion: Union[str, None] = None,
+		fn_config: str = "sispuede.config",
+		logger: Union[logging.Logger, None] = None
+	):
+
+		self.logger = logger
+
+		# run checks of directories
+		self._check_config(fn_config)
+		self._check_critical_directories()
+		self._check_ingestion(dir_ingestion)
+		self._check_optional_directories()
+
+		# initialize model attributes
+		self._initialize_model_attributes()
+
+
+
+	##############################
+	#    SUPPORTING FUNCTIONS    #
+	##############################
+
+	def _log(self,
+		msg: str,
+		type_log: str = "log",
+		**kwargs
+	) -> None:
+		"""
+		Clean implementation of sf._optional_log in-line using default logger. See ?sf._optional_log for more information
+
+		Function Arguments
+		------------------
+		- msg: message to log
+
+		Keyword Arguments
+		-----------------
+		- type_log: type of log to use
+		- **kwargs: passed as logging.Logger.METHOD(msg, **kwargs)
+		"""
+		sf._optional_log(self.logger, msg, type_log = type_log, **kwargs)
+
+
+
+	##########################
+	#    DIRECTORY CHECKS    #
+	##########################
+
+	def _check_config(self,
+		fn_config: str
+	) -> None:
+		"""
+		Check the configuration file name. Sets the following properties:
+
+			* self.fn_config
+		"""
+
+		self.fn_config = "sisepuede.config"
+		if isinstance(fn_config, str):
+			self.fn_config = fn_config if fn_config.endswith(".config") else self.fn_config
+
+
+
+	def _check_critical_directories(self,
+	) -> None:
+		"""
+		Check directory structure for SISEPUEDE. Sets the following properties:
+
+			*
+		"""
+
+		##  Initialize base paths
+
+		self.dir_py = os.path.dirname(os.path.realpath(__file__))
+		self.dir_proj = os.path.dirname(self.dir_py)
+		# initialize error message
+		count_errors = 0
+		msg_error_dirs = ""
+
+
+		##  Check configuration file
+
+		self.fp_config = os.path.join(self.dir_proj, self.fn_config)
+		if not os.path.exists(self.fp_config):
+			count_errors += 1
+			msg_error_dirs += f"\n\tConfiguration file '{self.fp_config}' not found"
+			self.fp_config = None
+
+
+		##  Check docs path
+
+		self.dir_docs = os.path.join(os.path.dirname(self.dir_py), "docs", "source") if (self.dir_py is not None) else ""
+		if not os.path.exists(self.dir_docs):
+			count_errors += 1
+			msg_error_dirs += f"\n\tDocs subdirectory '{self.dir_docs}' not found"
+			self.dir_docs = None
+
+
+		##  Check attribute tables path (within docs path)
+
+		self.dir_attribute_tables = os.path.join(self.dir_docs, "csvs") if (self.dir_docs is not None) else ""
+		if not os.path.exists(self.dir_attribute_tables):
+			count_errors += 1
+			msg_error_dirs += f"\n\tAttribute tables subdirectory '{self.dir_attribute_tables}' not found"
+			self.dir_attribute_tables = None
+
+
+		##  Check Julia directory
+
+		self.dir_jl = os.path.join(self.dir_proj, "julia")
+		if not os.path.exists(self.dir_jl):
+			count_errors += 1
+			msg_error_dirs += f"\n\tJulia subdirectory '{self.dir_jl}' not found"
+			self.dir_jl = None
+
+
+		##  Check reference directory
+
+		self.dir_ref = os.path.join(self.dir_proj, "ref")
+		if not os.path.exists(self.dir_ref):
+			count_errors += 1
+			msg_error_dirs += f"\n\tReference subdirectory '{self.dir_ref}' not found"
+			self.dir_ref = None
+
+
+		##  Check NemoMod reference directory (within reference directory)
+
+		self.dir_ref_nemo = os.path.join(self.dir_ref, "nemo_mod") if (self.dir_ref is not None) else ""
+		if not os.path.exists(self.dir_ref_nemo):
+			count_errors += 1
+			msg_error_dirs += f"\n\tNemoMod reference subdirectory '{self.dir_ref_nemo}' not found"
+			self.dir_ref_nemo = None
+
+
+		##  error handling
+		if count_errors > 0:
+			self._log(f"There were {count_errors} errors initializing the SISEPUEDE directory structure:{msg_error_dirs}", type_log = "error")
+
+			raise RuntimeError("SISEPUEDE unable to initialize file directories. Check the log for more information.")
+
+
+
+	def _check_ingestion(self,
+		dir_ingestion: Union[str, None]
+	) -> None:
+		"""
+		Check path to templates.
+
+		Function Arguments
+		------------------
+		dir_ingestion: ingestion directory storing input templates for SISEPUEDE
+			* If None, defaults to ..PATH_SISEPUEDE/ref/ingestion
+
+		"""
+
+		##  Check template ingestion path (within reference directory)
+
+		# initialize
+		self.dir_ingestion = os.path.join(self.dir_ref, "ingestion") if (self.dir_ref is not None) else None
+		self.dir_parameters_calibrated = None
+		self.dir_parameters_demo = None
+		self.dir_parameters_uncalibrated = None
+
+		# override if input path is specified
+		if isinstance(dir_ingestion, str):
+			if os.path.exists(dir_ingestion):
+				self.dir_ingestion = dir_ingestion
+
+		# check existence
+		if not os.path.exists(self.dir_ingestion):
+			self._log(f"\tIngestion templates subdirectory '{self.dir_ingestion}' not found")
+			self.dir_ingestion = None
+		else:
+			# sheets with complete input variables and calibrated parameters by region
+			dir_parameters_calibrated = os.path.join(self.dir_ingestion, "calibrated")
+			self.dir_parameters_calibrated = dir_parameters_calibrated if os.path.exists(dir_parameters_calibrated) else self.dir_parameters_calibrated
+
+			# demonstration input variables and parameters to facilitate quick start/demonstration
+			dir_parameters_demo = os.path.join(self.dir_ingestion, "demo")
+			self.dir_parameters_demo = dir_parameters_demo if os.path.exists(dir_parameters_demo) else self.dir_parameters_demo
+
+			# sheets with complete or incomplete input variables and uncalibrated parameters by region
+			dir_parameters_uncalibrated = os.path.join(self.dir_ingestion, "uncalibrated")
+			self.dir_parameters_uncalibrated = dir_parameters_uncalibrated if os.path.exists(dir_parameters_uncalibrated) else self.dir_parameters_uncalibrated
+
+
+
+	def _check_optional_directories(self,
+	) -> None:
+		"""
+		Check directories that are not critical to SISEPUEDE functioning, including those that
+			can be created if not found. Checks the following properties:
+
+			* self.dir_out
+			* self.dir_ref_batch_data
+			* self.dir_ref_data_crosswalks
+		"""
+
+		##  Output and temporary directories (can be created)
+
+		self.dir_out, self.dir_tmp = None, None
+		if self.dir_proj is not None:
+			self.dir_out = sf.check_path(os.path.join(self.dir_proj, "out"), True)
+			self.dir_tmp = sf.check_path(os.path.join(self.dir_proj, "tmp"), True)
+
+
+		##  Batch data directories (not required to run SISEPUEDE, but required for Data Generation notebooks and routines)
+
+		self.dir_ref_batch_data, self.dir_ref_data_crosswalks = None, None
+		if self.dir_ref is not None:
+			self.dir_ref_batch_data = sf.check_path(os.path.join(self.dir_ref, "batch_data_generation"), True)
+			self.dir_ref_data_crosswalks = sf.check_path(os.path.join(self.dir_ref, "data_crosswalks"), True)
+
+
+
+	###############################################
+	#    INITIALIZE FILES AND MODEL ATTRIBUTES    #
+	###############################################
+
+	def _initialize_model_attributes(self,
+	) -> None:
+		"""
+		Initialize SISEPUEDE model attributes from directory structure. Sets the following
+			properties:
+
+			* self.model_attributes
+		"""
+		self.model_attributes = None
+		if (self.dir_attribute_tables is not None) and (self.fp_config is not None):
+			self.model_attributes = ma.ModelAttributes(self.dir_attribute_tables, self.fp_config)
+
+
+
+	def _initialize_key_file_path_defaults(self,
+	) -> None:
+		"""
+		Initialize key default file paths, including output and temporary files. Sets the
+			following properties:
+
+			*
+		"""
+
 class SISEPUEDEModels:
 	"""
 	Instantiate models based on
@@ -349,7 +611,7 @@ class SISEPUEDEModels:
 
 
 
-class ExperimentalManager:
+class SISEPUEDEExperimentalManager:
 	"""
 	Launch and manage experiments based on LHS sampling over trajectories.
 
@@ -429,18 +691,24 @@ class ExperimentalManager:
 		self.field_variable_trajgroup = field_variable_trajgroup
 		self.field_variable_trajgroup_type = field_variable_trajgroup_type
 		self.field_year = "year"
+
 		# initialize keys--note: key_design is assigned in self._initialize_attribute_design
 		self.key_future = self.model_attributes.dim_future_id
 		self.key_primary = self.model_attributes.dim_primary_id
 		self.key_strategy = self.model_attributes.dim_strategy_id
+
 		# ordered by sort hierarchy
 		self.sort_ordered_dimensions_of_analysis = self.model_attributes.sort_ordered_dimensions_of_analysis
+
 		# initialize additional components
 		self.fan_function_specification = fan_function_specification
 		self.logger = logger
 		self.n_trials = n_trials
 		self.time_period_u0 = time_period_u0
 		self.random_seed = random_seed
+
+		# initialize some SQL information for restoration and/or archival
+		self._initialize_archival_settings()
 
 		# initialize key elements
 		self._initialize_attribute_design(attribute_design)
@@ -452,13 +720,13 @@ class ExperimentalManager:
 		)
 		self._initialize_future_trajectories(
 			fan_function_specification = self.fan_function_specification,
-			field_future_id = self.key_future,
-			field_strategy_id = self.key_strategy,
 			field_time_period = self.field_time_period,
 			field_uniform_scaling_q = self.field_uniform_scaling_q,
 			field_variable = self.field_variable,
 			field_variable_trajgroup = self.field_variable_trajgroup,
 			field_variable_trajgroup_type = self.field_variable_trajgroup_type,
+			key_future = self.key_future,
+			key_strategy = self.key_strategy,
 			logger = self.logger
 		)
 		self._initialize_lhs_design()
@@ -476,6 +744,23 @@ class ExperimentalManager:
 	##################################
 	#    INITIALIZATION FUNCTIONS    #
 	##################################
+
+	def _initialize_archival_settings(self,
+	) -> None:
+		"""
+		Initialize key archival settings used to store necessary experimental parameters,
+			Latin Hypercube Samples, ModelAttribute tables, and more. Sets the following
+			properties:
+
+			* self.
+
+		"""
+
+		self.archive_table_name_experimental_configuration = "EXPERIMENTAL_CONFIGURATION"
+		self.archive_table_name_lhc_samples_l = "LHC_SAMPLES_LEVER_EFFECTS"
+		self.archive_table_name_lhc_samples_x = "LHC_SAMPLES_EXOGENOUS_UNCERTAINTIES"
+
+
 
 	def _initialize_attribute_design(self,
 		attribute_design: AttributeTable,
@@ -550,7 +835,8 @@ class ExperimentalManager:
 		future: Union[int, None]
 	) -> None:
 		"""
-		Set the baseline future. If None, defaults to 0. Initializes the following properties:
+		Set the baseline future. If None, defaults to 0. Initializes the following
+			properties:
 
 			* self.baseline_future
 		"""
@@ -565,8 +851,8 @@ class ExperimentalManager:
 		demo_q: bool
 	) -> None:
 		"""
-		Initialize the BaseInputDatabase class used to construct future trajectories. Initializes the following
-			properties:
+		Initialize the BaseInputDatabase class used to construct future trajectories.
+			Initializes the following properties:
 
 			* self.attribute_strategy
 			* self.base_input_database
@@ -580,6 +866,8 @@ class ExperimentalManager:
 			* If None, will attempt to initialize all regions defined in ModelAttributes
 		- demo_q: import templates run as a demo (region-independent)?
 		"""
+
+		self._log("Initializing BaseInputDatabase", type_log = "info")
 
 		try:
 			self.base_input_database = BaseInputDatabase(
@@ -604,14 +892,16 @@ class ExperimentalManager:
 		**kwargs
 	) -> None:
 		"""
-		Initialize the FutureTrajectories object for executing experiments. Initializes the following properties:
+		Initialize the FutureTrajectories object for executing experiments. Initializes
+			the following properties:
 
-		* self.future_trajectories
-		* self.n_factors
-		* self.n_factors_l
-		* self.n_factors_x
-
+			* self.future_trajectories
+			* self.n_factors
+			* self.n_factors_l
+			* self.n_factors_x
 		"""
+
+		self._log("Initializing FutureTrajectories", type_log = "info")
 
 		try:
 			self.future_trajectories = FutureTrajectories(
@@ -638,12 +928,15 @@ class ExperimentalManager:
 	def _initialize_lhs_design(self,
 	) -> None:
 		"""
-		Initializes LHS design and associated tables used in the Experiment. Creates the following
-			properties:
+		Initializes LHS design and associated tables used in the Experiment. Creates the
+			following properties:
 
 			* self.lhs_design
 
 		"""
+
+		self._log("Initializing LHSDesign", type_log = "info")
+
 		try:
 			self.lhs_design = LHSDesign(
 				self.attribute_design,
@@ -670,7 +963,8 @@ class ExperimentalManager:
 		**kwargs
 	) -> None:
 		"""
-		Clean implementation of sf._optional_log in-line using default logger. See ?sf._optional_log for more information
+		Clean implementation of sf._optional_log in-line using default logger. See
+			?sf._optional_log for more information.
 
 		Function Arguments
 		------------------
@@ -682,6 +976,25 @@ class ExperimentalManager:
 		- **kwargs: passed as logging.Logger.METHOD(msg, **kwargs)
 		"""
 		sf._optional_log(self.logger, msg, type_log = type_log, **kwargs)
+
+
+
+	def _restore_from_database(self,
+		table_name_experimental_configuration: Union[str, None] = None,
+		table_name_lhs_l: Union[str, None] = None,
+		table_name_lhs_x: Union[str, None] = None
+	) -> None:
+		"""
+		Restore a SISEPUEDE Experimental Session from an SQL database containing the following tables:
+
+			*
+		-
+		-
+		"""
+
+
+		return None
+
 
 
 
@@ -713,6 +1026,8 @@ class ExperimentalManager:
 			* self.all_
 			* self.primary_key_database
 		"""
+
+		self._log(f"Generating primary keys (values of {self.key_primary})...", type_log = "info")
 
 		# get all designs, strategies, and futures
 		all_designs = self.attribute_design.key_values
@@ -749,23 +1064,10 @@ class ExperimentalManager:
 	#    CORE FUNCTIONALITY    #
 	############################
 
-	def run_primary_keys(self,
-		list_primary_keys: Union[list, None],
-		database_source: str = "inline"
-	) -> None:
-		"""
-		Run the model against a set of primary keys.
 
-		Function Arguments
-		------------------
-		- list_primary_keys: list of primary keys to run
 
-		Keyword Arguments
-		-----------------
-		- database_source: where to source inputs from. Options are:
-			* inline: generate futures in-line by generating a
 
-		"""
+
 
 
 

@@ -11,7 +11,7 @@ import support_functions as sf
 # setup some
 dir_py = os.path.dirname(os.path.realpath(__file__))
 dir_proj = os.path.dirname(dir_py)
-fp_config = os.path.join(dir_proj, "models.config")
+fp_config = os.path.join(dir_proj, "sisepuede.config")
 # key subdirectories for the project
 dir_jl = sf.check_path(os.path.join(dir_proj, "julia"), False)
 dir_out = sf.check_path(os.path.join(dir_proj, "out"), True)

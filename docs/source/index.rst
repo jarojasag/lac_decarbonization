@@ -55,11 +55,10 @@ Contents
 .. toctree::
    :caption:  Getting Started
    :hidden:
-
    quick_start
+   sisepuede_concept
    analytical_parameters
-   dimensions_of_analysis
-   running_models
+
 
 .. toctree::
    :caption: Variables, Categories, and Data
@@ -72,6 +71,11 @@ Contents
    energy_non_electric
    ippu
    socioeconomic
+
+.. toctree::
+   :caption: SISEPUEDE Experiments
+   dimensions_of_analysis
+   running_models
 
 .. toctree::
    :caption: Mathematical Specifications
