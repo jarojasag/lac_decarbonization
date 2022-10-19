@@ -664,6 +664,11 @@ class SamplingUnit:
 		- flatten_output_array: return a flattened output array (apply np.flatten())
 		"""
 
+		# clean up some cases for None entries
+		baseline_future_q = True if (lhs_trial_x is None) else baseline_future_q
+		lhs_trial_x = 1.0 if (lhs_trial_x is None) else lhs_trial_x
+		lhs_trial_l = 1.0 if (lhs_trial_l is None) else lhs_trial_l
+
 		# some checks
 		if (lhs_trial_x < 0):
 				raise ValueError(f"The value of lhs_trial_x = {lhs_trial_x} is invalid. lhs_trial_x must be >= 0.")
@@ -1211,10 +1216,10 @@ class FutureTrajectories:
 		"""
 
 		# check the specification of
-		if not (isinstance(df_row_lhc_sample_x, pd.DataFrame) or isinstance(df_row_lhc_sample_x, pd.Series)):
+		if not (isinstance(df_row_lhc_sample_x, pd.DataFrame) or isinstance(df_row_lhc_sample_x, pd.Series) or (df_row_lhc_sample_x is None)):
 			tp = str(type(df_row_lhc_sample_x))
-			self._log(f"Invalid input type {tp} specified for df_row_lhc_sample_x in get_future: pandas Series or DataFrames (first row) are acceptable inputs.", type_log = "warning")
-			return None
+			self._log(f"Invalid input type {tp} specified for df_row_lhc_sample_x in generate_future_from_lhs_vector: pandas Series or DataFrames (first row) are acceptable inputs. Returning baseline future.", type_log = "warning")
+			df_row_lhc_sample_x = None
 
 		# initialize outputs and iterate
 		dict_df = {}
@@ -1229,7 +1234,12 @@ class FutureTrajectories:
 				lhs_x = self.get_df_row_element(df_row_lhc_sample_x, su)
 				lhs_l = self.get_df_row_element(df_row_lhc_sample_l, su, 1.0)
 
-				dict_fut = samp.generate_future(lhs_x, lhs_l, baseline_future_q = baseline_future_q)
+				# note: if lhs_x is None, returns baseline future no matter what,
+				dict_fut = samp.generate_future(
+					lhs_x,
+					lhs_l,
+					baseline_future_q = baseline_future_q
+				)
 
 				dict_df.update(
 					dict((key, value.flatten()) for key, value in dict_fut.items())

@@ -12,7 +12,7 @@ import setup_analysis as sa
 import sqlalchemy
 import sql_utilities as sqlutil
 import time
-from typing import Union
+from typing import *
 
 ##  import Julia modules and initialize the environment
 from julia.api import Julia
@@ -134,6 +134,7 @@ class ElectricEnergy:
         ]
 
         # initialize dynamic variables
+        self._set_dict_tables_required_to_required_fields()
         self.model_attributes = attributes
         self.required_dimensions = self.get_required_dimensions()
         self.required_subsectors, self.required_base_subsectors = self.get_required_subsectors()
@@ -284,13 +285,25 @@ class ElectricEnergy:
     ##  load the reference dictionary
     def get_nemomod_reference_dict(self,
         nemomod_reference_files: Union[str, dict],
+        dict_tables_required_to_required_fields: Union[Dict[str, List[str]], None] = None,
         filter_regions: bool = True
     ) -> dict:
         """
             Initialize the dictionary of reference files for NemoMod required to populate the database.
-            - nemomod_reference_files: file path of reference CSV files *OR* dictionary. Required keys/files (without .csv extension):
+
+            Function Arguments
+            ------------------
+            - nemomod_reference_files: file path of reference CSV files *OR* dictionary. Required
+                keys/files (without .csv extension):
+
                 * CapacityFactor
                 * SpecifiedDemandProfile
+
+            Keyword Arguments
+            -----------------
+            - dict_tables_required_to_required_fields: dictionary mapping required reference table
+                names (str) to list of required fields.
+                * If None, defaults to self.dict_tables_required_to_required_fields
             - filter_regions: filter regions to correspond with ModelAttributes region attribute table
         """
 
@@ -298,19 +311,9 @@ class ElectricEnergy:
         attr_region = self.model_attributes.dict_attributes.get(self.model_attributes.dim_region)
         attr_technology = self.model_attributes.get_attribute_table(self.subsec_name_entc)
         attr_time_slice = self.model_attributes.dict_attributes.get("time_slice")
+        dict_tables_required_to_required_fields = self.dict_tables_required_to_required_fields if (dict_tables_required_to_required_fields is None) else dict_tables_required_to_required_fields
         dict_out = {}
-        dict_tables_required_to_required_fields = {
-            "CapacityFactor": [
-                self.field_nemomod_region,
-                self.field_nemomod_time_slice
-            ],
-            "SpecifiedDemandProfile": [
-                self.field_nemomod_region,
-                self.field_nemomod_time_slice,
-                self.field_nemomod_value
-            ]
-        }
-        set_tables_required = set(dict_tables_required_to_required_fields.keys())
+        set_tables_required = set(self.dict_tables_required_to_required_fields.keys())
 
         # if file path, check tables and read in
         if isinstance(nemomod_reference_files, str):
@@ -450,6 +453,35 @@ class ElectricEnergy:
             vector_out = (vector_out + shift) if (direction == "to_nemomod") else (vector_out - shift)
 
         return vector_out
+
+
+
+    ##  function to set some properties
+    def _set_dict_tables_required_to_required_fields(self,
+    ) -> None:
+        """
+        Set a dictionary mapping required references tables to required fields. Initializes
+            the following properties:
+
+            * self.dict_tables_required_to_required_fields
+            * self.required_reference_tables
+        """
+
+        self.dict_tables_required_to_required_fields = {
+            "CapacityFactor": [
+                self.field_nemomod_region,
+                self.field_nemomod_time_slice
+            ],
+            "SpecifiedDemandProfile": [
+                self.field_nemomod_region,
+                self.field_nemomod_time_slice,
+                self.field_nemomod_value
+            ]
+        }
+
+        self.required_reference_tables = sorted(list(
+            self.dict_tables_required_to_required_fields.keys()
+        ))
 
 
 

@@ -1,418 +1,312 @@
-2022-10-15 11:49:11,507 - WARNING - InputTemplate initialization warning: Strategy '2' not found--it will not be included in the input database.
-2022-10-15 11:49:12,070 - ERROR - Error initializing FutureTrajectories -- __init__() got an unexpected keyword argument 'field_future_id'
-2022-10-15 11:49:12,276 - DEBUG - exception occured? 4945008800
-2022-10-15 11:49:12,277 - DEBUG - exception occured? None
-2022-10-15 11:49:12,277 - DEBUG - exception occured? 4945011296
-2022-10-15 11:49:12,277 - DEBUG - exception occured? None
-2022-10-15 11:49:12,278 - DEBUG - exception occured? 4945015104
-2022-10-15 11:49:12,278 - DEBUG - exception occured? None
-2022-10-15 11:49:12,278 - DEBUG - exception occured? 4945150176
-2022-10-15 11:49:12,279 - DEBUG - exception occured? None
-2022-10-15 11:49:12,279 - DEBUG - exception occured? 4945152592
-2022-10-15 11:49:12,279 - DEBUG - exception occured? None
-2022-10-15 11:49:12,280 - DEBUG - exception occured? 4945155024
-2022-10-15 11:49:12,280 - DEBUG - exception occured? None
-2022-10-15 11:49:12,284 - DEBUG - exception occured? 4945158368
-2022-10-15 11:49:12,285 - DEBUG - exception occured? None
-2022-10-15 11:49:12,285 - DEBUG - exception occured? 4945160848
-2022-10-15 11:49:12,285 - DEBUG - exception occured? None
-2022-10-15 11:49:12,286 - DEBUG - exception occured? 4945163392
-2022-10-15 11:49:12,286 - DEBUG - exception occured? None
-2022-10-15 11:49:12,286 - DEBUG - exception occured? 4945166032
-2022-10-15 11:49:12,287 - DEBUG - exception occured? None
-2022-10-15 11:49:12,287 - DEBUG - exception occured? 4945250416
-2022-10-15 11:49:12,287 - DEBUG - exception occured? None
-2022-10-15 11:49:12,287 - DEBUG - exception occured? 4945252800
-2022-10-15 11:49:12,288 - DEBUG - exception occured? None
-2022-10-15 11:51:13,790 - WARNING - InputTemplate initialization warning: Strategy '2' not found--it will not be included in the input database.
-2022-10-15 11:51:14,863 - INFO - Instantiating 1913 sampling units.
-2022-10-15 11:51:14,866 - INFO - Iteration 0 complete.
-2022-10-15 11:51:21,288 - INFO - Iteration 250 complete.
-2022-10-15 11:51:27,224 - INFO - Iteration 500 complete.
-2022-10-15 11:51:32,983 - INFO - Iteration 750 complete.
-2022-10-15 11:51:38,740 - INFO - Iteration 1000 complete.
-2022-10-15 11:51:44,542 - INFO - Iteration 1250 complete.
-2022-10-15 11:51:51,001 - INFO - Iteration 1500 complete.
-2022-10-15 11:51:57,723 - INFO - Iteration 1750 complete.
-2022-10-15 11:52:01,631 - INFO - ...	1913 sampling units complete in 46.77 seconds.
-2022-10-15 11:52:01,635 - INFO - LHSDesign.fields_factors_l reset successful.
-2022-10-15 11:52:01,635 - INFO - LHSDesign.fields_factors_x reset successful.
-2022-10-15 11:52:22,782 - WARNING - Path to NemoMod reference files 'None' not found. The Electricity model will be disallowed from running.
-2022-10-15 11:52:22,879 - DEBUG - exception occured? 4945255264
-2022-10-15 11:52:22,881 - DEBUG - exception occured? None
-2022-10-15 11:52:22,881 - DEBUG - exception occured? 4945257728
-2022-10-15 11:52:22,882 - DEBUG - exception occured? None
-2022-10-15 11:52:22,882 - DEBUG - exception occured? 4945260128
-2022-10-15 11:52:22,883 - DEBUG - exception occured? None
-2022-10-15 11:52:22,883 - DEBUG - exception occured? 4945262576
-2022-10-15 11:52:22,883 - DEBUG - exception occured? None
-2022-10-15 11:52:22,884 - DEBUG - exception occured? 4945330512
-2022-10-15 11:52:22,884 - DEBUG - exception occured? None
-2022-10-15 11:52:22,884 - DEBUG - exception occured? 4945332896
-2022-10-15 11:52:22,885 - DEBUG - exception occured? None
-2022-10-15 11:52:22,887 - DEBUG - exception occured? 4945335312
-2022-10-15 11:52:22,887 - DEBUG - exception occured? None
-2022-10-15 11:52:22,887 - DEBUG - exception occured? 4945337696
-2022-10-15 11:52:22,888 - DEBUG - exception occured? None
-2022-10-15 11:52:22,889 - DEBUG - exception occured? 4945340128
-2022-10-15 11:52:22,889 - DEBUG - exception occured? None
-2022-10-15 11:52:22,890 - DEBUG - exception occured? 4945342560
-2022-10-15 11:52:22,890 - DEBUG - exception occured? None
-2022-10-15 11:52:22,890 - DEBUG - exception occured? 4945345344
-2022-10-15 11:52:22,891 - DEBUG - exception occured? None
-2022-10-15 11:52:22,891 - DEBUG - exception occured? 4945462736
-2022-10-15 11:52:22,891 - DEBUG - exception occured? None
-2022-10-15 11:52:47,597 - INFO - Running AFOLU model
-2022-10-15 11:52:47,919 - INFO - AFOLU model run successfully completed
-2022-10-15 11:52:47,920 - INFO - Running CircularEconomy model
-2022-10-15 11:52:48,026 - INFO - CircularEconomy model run successfully completed
-2022-10-15 11:52:48,027 - INFO - Running IPPU model
-2022-10-15 11:52:48,145 - INFO - IPPU model run successfully completed
-2022-10-15 11:52:48,146 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
-2022-10-15 11:52:48,312 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
-2022-10-15 11:52:48,391 - INFO - Fugitive Emissions from Energy model run successfully completed
-2022-10-15 11:52:58,993 - DEBUG - exception occured? 4945465296
-2022-10-15 11:52:58,994 - DEBUG - exception occured? None
-2022-10-15 11:52:58,994 - DEBUG - exception occured? 4945468256
-2022-10-15 11:52:58,994 - DEBUG - exception occured? None
-2022-10-15 11:52:58,995 - DEBUG - exception occured? 4945471376
-2022-10-15 11:52:58,995 - DEBUG - exception occured? None
-2022-10-15 11:52:58,996 - DEBUG - exception occured? 4945474928
-2022-10-15 11:52:58,996 - DEBUG - exception occured? None
-2022-10-15 11:52:58,996 - DEBUG - exception occured? 4945479632
-2022-10-15 11:52:58,997 - DEBUG - exception occured? None
-2022-10-15 11:52:58,997 - DEBUG - exception occured? 4945482016
-2022-10-15 11:52:58,997 - DEBUG - exception occured? None
-2022-10-15 11:52:58,999 - DEBUG - exception occured? 4945484400
-2022-10-15 11:52:59,001 - DEBUG - exception occured? None
-2022-10-15 11:52:59,001 - DEBUG - exception occured? 4945486784
-2022-10-15 11:52:59,002 - DEBUG - exception occured? None
-2022-10-15 11:52:59,002 - DEBUG - exception occured? 4945489168
-2022-10-15 11:52:59,002 - DEBUG - exception occured? None
-2022-10-15 11:52:59,003 - DEBUG - exception occured? 4945491552
-2022-10-15 11:52:59,003 - DEBUG - exception occured? None
-2022-10-15 11:52:59,004 - DEBUG - exception occured? 4945493936
-2022-10-15 11:52:59,004 - DEBUG - exception occured? None
-2022-10-15 11:52:59,005 - DEBUG - exception occured? 4945594640
-2022-10-15 11:52:59,005 - DEBUG - exception occured? None
-2022-10-15 11:53:27,700 - INFO - Running AFOLU model
-2022-10-15 11:53:28,028 - INFO - AFOLU model run successfully completed
-2022-10-15 11:53:28,029 - INFO - Running CircularEconomy model
-2022-10-15 11:53:28,138 - INFO - CircularEconomy model run successfully completed
-2022-10-15 11:53:28,139 - INFO - Running IPPU model
-2022-10-15 11:53:28,260 - INFO - IPPU model run successfully completed
-2022-10-15 11:53:28,261 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
-2022-10-15 11:53:28,424 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
-2022-10-15 11:53:28,498 - INFO - Fugitive Emissions from Energy model run successfully completed
-2022-10-16 11:36:37,971 - DEBUG - exception occured? 4945597104
-2022-10-16 11:36:38,022 - DEBUG - exception occured? None
-2022-10-16 11:36:38,029 - DEBUG - exception occured? 4945599600
-2022-10-16 11:36:38,030 - DEBUG - exception occured? None
-2022-10-16 11:36:38,035 - DEBUG - exception occured? 4945601984
-2022-10-16 11:36:38,037 - DEBUG - exception occured? None
-2022-10-16 11:36:38,038 - DEBUG - exception occured? 4945604448
-2022-10-16 11:36:38,039 - DEBUG - exception occured? None
-2022-10-16 11:36:38,043 - DEBUG - exception occured? 4945607024
-2022-10-16 11:36:38,044 - DEBUG - exception occured? None
-2022-10-16 11:36:38,045 - DEBUG - exception occured? 4945675248
-2022-10-16 11:36:38,045 - DEBUG - exception occured? None
-2022-10-16 11:36:38,054 - DEBUG - exception occured? 4945677776
-2022-10-16 11:36:38,055 - DEBUG - exception occured? None
-2022-10-16 11:36:38,055 - DEBUG - exception occured? 4945680192
-2022-10-16 11:36:38,055 - DEBUG - exception occured? None
-2022-10-16 11:36:38,056 - DEBUG - exception occured? 4945682592
-2022-10-16 11:36:38,056 - DEBUG - exception occured? None
-2022-10-16 11:36:38,057 - DEBUG - exception occured? 4945685024
-2022-10-16 11:36:38,059 - DEBUG - exception occured? None
-2022-10-16 11:36:38,059 - DEBUG - exception occured? 4945688304
-2022-10-16 11:36:38,059 - DEBUG - exception occured? None
-2022-10-16 11:36:38,060 - DEBUG - exception occured? 4945723584
-2022-10-16 11:36:38,060 - DEBUG - exception occured? None
-2022-10-16 11:36:42,897 - DEBUG - exception occured? 4945726752
-2022-10-16 11:36:42,899 - DEBUG - exception occured? None
-2022-10-16 11:36:42,900 - DEBUG - exception occured? 4945729808
-2022-10-16 11:36:42,901 - DEBUG - exception occured? None
-2022-10-16 11:36:42,902 - DEBUG - exception occured? 4945732736
-2022-10-16 11:36:42,903 - DEBUG - exception occured? None
-2022-10-16 11:36:42,903 - DEBUG - exception occured? 4945735712
-2022-10-16 11:36:42,903 - DEBUG - exception occured? None
-2022-10-16 11:36:42,904 - DEBUG - exception occured? 4945738288
-2022-10-16 11:36:42,905 - DEBUG - exception occured? None
-2022-10-16 11:36:42,905 - DEBUG - exception occured? 5899470912
-2022-10-16 11:36:42,908 - DEBUG - exception occured? None
-2022-10-16 11:36:42,910 - DEBUG - exception occured? 5899474384
-2022-10-16 11:36:42,911 - DEBUG - exception occured? None
-2022-10-16 11:36:42,912 - DEBUG - exception occured? 5899477456
-2022-10-16 11:36:42,912 - DEBUG - exception occured? None
-2022-10-16 11:36:42,912 - DEBUG - exception occured? 5899480400
-2022-10-16 11:36:42,913 - DEBUG - exception occured? None
-2022-10-16 11:36:42,913 - DEBUG - exception occured? 5899483936
-2022-10-16 11:36:42,914 - DEBUG - exception occured? None
-2022-10-16 11:36:42,914 - DEBUG - exception occured? 5899522416
-2022-10-16 11:36:42,915 - DEBUG - exception occured? None
-2022-10-16 11:36:42,915 - DEBUG - exception occured? 5899525184
-2022-10-16 11:36:42,916 - DEBUG - exception occured? None
-2022-10-16 11:36:47,932 - DEBUG - exception occured? 5899528208
-2022-10-16 11:36:47,933 - DEBUG - exception occured? None
-2022-10-16 11:36:47,934 - DEBUG - exception occured? 5899530992
-2022-10-16 11:36:47,937 - DEBUG - exception occured? None
-2022-10-16 11:36:47,938 - DEBUG - exception occured? 5899533632
-2022-10-16 11:36:47,939 - DEBUG - exception occured? None
-2022-10-16 11:36:47,940 - DEBUG - exception occured? 5900207920
-2022-10-16 11:36:47,942 - DEBUG - exception occured? None
-2022-10-16 11:36:47,942 - DEBUG - exception occured? 5900210432
-2022-10-16 11:36:47,944 - DEBUG - exception occured? None
-2022-10-16 11:36:47,945 - DEBUG - exception occured? 5900213888
-2022-10-16 11:36:47,945 - DEBUG - exception occured? None
-2022-10-16 11:36:47,947 - DEBUG - exception occured? 5900217008
-2022-10-16 11:36:47,947 - DEBUG - exception occured? None
-2022-10-16 11:36:47,948 - DEBUG - exception occured? 5900219920
-2022-10-16 11:36:47,948 - DEBUG - exception occured? None
-2022-10-16 11:36:47,949 - DEBUG - exception occured? 5901288096
-2022-10-16 11:36:47,950 - DEBUG - exception occured? None
-2022-10-16 11:36:47,950 - DEBUG - exception occured? 5901290992
-2022-10-16 11:36:47,950 - DEBUG - exception occured? None
-2022-10-16 11:36:47,951 - DEBUG - exception occured? 5901293744
-2022-10-16 11:36:47,951 - DEBUG - exception occured? None
-2022-10-16 11:36:47,952 - DEBUG - exception occured? 5901296432
-2022-10-16 11:36:47,952 - DEBUG - exception occured? None
-2022-10-16 12:01:56,710 - DEBUG - exception occured? 5901299152
-2022-10-16 12:01:56,716 - DEBUG - exception occured? None
-2022-10-16 12:01:56,717 - DEBUG - exception occured? 5901302096
-2022-10-16 12:01:56,721 - DEBUG - exception occured? None
-2022-10-16 12:01:56,722 - DEBUG - exception occured? 5901829376
-2022-10-16 12:01:56,723 - DEBUG - exception occured? None
-2022-10-16 12:01:56,724 - DEBUG - exception occured? 5901832912
-2022-10-16 12:01:56,724 - DEBUG - exception occured? None
-2022-10-16 12:01:56,724 - DEBUG - exception occured? 5901836112
-2022-10-16 12:01:56,727 - DEBUG - exception occured? None
-2022-10-16 12:01:56,727 - DEBUG - exception occured? 5901839408
-2022-10-16 12:01:56,729 - DEBUG - exception occured? None
-2022-10-16 12:01:56,731 - DEBUG - exception occured? 5901842720
-2022-10-16 12:01:56,732 - DEBUG - exception occured? None
-2022-10-16 12:01:56,733 - DEBUG - exception occured? 5902304608
-2022-10-16 12:01:56,735 - DEBUG - exception occured? None
-2022-10-16 12:01:56,736 - DEBUG - exception occured? 5902307344
-2022-10-16 12:01:56,736 - DEBUG - exception occured? None
-2022-10-16 12:01:56,738 - DEBUG - exception occured? 5902309984
-2022-10-16 12:01:56,739 - DEBUG - exception occured? None
-2022-10-16 12:01:56,739 - DEBUG - exception occured? 5902312928
-2022-10-16 12:01:56,741 - DEBUG - exception occured? None
-2022-10-16 12:01:56,741 - DEBUG - exception occured? 5902315840
-2022-10-16 12:01:56,743 - DEBUG - exception occured? None
-2022-10-16 17:53:39,845 - DEBUG - exception occured? 5902318528
-2022-10-16 17:53:39,850 - DEBUG - exception occured? None
-2022-10-16 17:53:39,851 - DEBUG - exception occured? 5902960416
-2022-10-16 17:53:39,853 - DEBUG - exception occured? None
-2022-10-16 17:53:39,853 - DEBUG - exception occured? 5902963232
-2022-10-16 17:53:39,855 - DEBUG - exception occured? None
-2022-10-16 17:53:39,855 - DEBUG - exception occured? 5902966432
-2022-10-16 17:53:39,856 - DEBUG - exception occured? None
-2022-10-16 17:53:39,857 - DEBUG - exception occured? 5902969424
-2022-10-16 17:53:39,857 - DEBUG - exception occured? None
-2022-10-16 17:53:39,858 - DEBUG - exception occured? 5902973472
-2022-10-16 17:53:39,860 - DEBUG - exception occured? None
-2022-10-16 17:53:39,864 - DEBUG - exception occured? 5904157280
-2022-10-16 17:53:39,865 - DEBUG - exception occured? None
-2022-10-16 17:53:39,865 - DEBUG - exception occured? 5904161104
-2022-10-16 17:53:39,866 - DEBUG - exception occured? None
-2022-10-16 17:53:39,867 - DEBUG - exception occured? 5904163968
-2022-10-16 17:53:39,867 - DEBUG - exception occured? None
-2022-10-16 17:53:39,868 - DEBUG - exception occured? 5904166688
-2022-10-16 17:53:39,868 - DEBUG - exception occured? None
-2022-10-16 17:53:39,868 - DEBUG - exception occured? 5904169424
-2022-10-16 17:53:39,872 - DEBUG - exception occured? None
-2022-10-16 17:53:39,873 - DEBUG - exception occured? 5904337808
-2022-10-16 17:53:39,874 - DEBUG - exception occured? None
-2022-10-16 17:53:39,876 - DEBUG - exception occured? 5904342384
-2022-10-16 17:53:39,877 - DEBUG - exception occured? None
-2022-10-16 17:53:39,878 - DEBUG - exception occured? 5904345680
-2022-10-16 17:53:39,879 - DEBUG - exception occured? None
-2022-10-16 17:53:39,879 - DEBUG - exception occured? 5904348832
-2022-10-16 17:53:39,879 - DEBUG - exception occured? None
-2022-10-16 17:53:39,880 - DEBUG - exception occured? 5904941472
-2022-10-16 17:53:39,880 - DEBUG - exception occured? None
-2022-10-16 17:53:39,880 - DEBUG - exception occured? 5904945232
-2022-10-16 17:53:39,881 - DEBUG - exception occured? None
-2022-10-16 17:53:39,881 - DEBUG - exception occured? 5904951728
-2022-10-16 17:53:39,881 - DEBUG - exception occured? None
-2022-10-16 17:53:39,883 - DEBUG - exception occured? 5904955152
-2022-10-16 17:53:39,884 - DEBUG - exception occured? None
-2022-10-16 17:53:39,884 - DEBUG - exception occured? 5905187648
-2022-10-16 17:53:39,886 - DEBUG - exception occured? None
-2022-10-16 17:53:39,887 - DEBUG - exception occured? 5905190624
-2022-10-16 17:53:39,888 - DEBUG - exception occured? None
-2022-10-16 17:53:39,889 - DEBUG - exception occured? 5905194160
-2022-10-16 17:53:39,891 - DEBUG - exception occured? None
-2022-10-16 17:53:39,892 - DEBUG - exception occured? 5905197168
-2022-10-16 17:53:39,893 - DEBUG - exception occured? None
-2022-10-16 17:53:39,893 - DEBUG - exception occured? 5905200752
-2022-10-16 17:53:39,896 - DEBUG - exception occured? None
-2022-10-16 17:53:39,900 - DEBUG - exception occured? 5906597152
-2022-10-16 17:53:39,901 - DEBUG - exception occured? None
-2022-10-16 17:53:39,903 - DEBUG - exception occured? 5906600384
-2022-10-16 17:53:39,905 - DEBUG - exception occured? None
-2022-10-16 17:53:39,906 - DEBUG - exception occured? 5906604016
-2022-10-16 17:53:39,907 - DEBUG - exception occured? None
-2022-10-16 17:53:39,908 - DEBUG - exception occured? 5906607472
-2022-10-16 17:53:39,908 - DEBUG - exception occured? None
-2022-10-16 17:53:39,910 - DEBUG - exception occured? 5906610768
-2022-10-16 17:53:39,910 - DEBUG - exception occured? None
-2022-10-16 17:53:39,911 - DEBUG - exception occured? 5906744816
-2022-10-16 17:53:39,911 - DEBUG - exception occured? None
-2022-10-16 17:53:39,913 - DEBUG - exception occured? 5906748400
-2022-10-16 17:53:39,913 - DEBUG - exception occured? None
-2022-10-16 17:53:39,913 - DEBUG - exception occured? 5906751168
-2022-10-16 17:53:39,914 - DEBUG - exception occured? None
-2022-10-16 17:53:39,915 - DEBUG - exception occured? 5906753744
-2022-10-16 17:53:39,915 - DEBUG - exception occured? None
-2022-10-16 17:53:39,915 - DEBUG - exception occured? 5906756800
-2022-10-16 17:53:39,916 - DEBUG - exception occured? None
-2022-10-16 17:53:39,916 - DEBUG - exception occured? 5906759536
-2022-10-16 17:53:39,917 - DEBUG - exception occured? None
-2022-10-16 17:53:39,917 - DEBUG - exception occured? 5906827504
-2022-10-16 17:53:39,919 - DEBUG - exception occured? None
-2022-10-16 17:55:58,655 - DEBUG - exception occured? 5906829936
-2022-10-16 17:55:58,655 - DEBUG - exception occured? None
-2022-10-16 17:55:58,656 - DEBUG - exception occured? 5906832400
-2022-10-16 17:55:58,658 - DEBUG - exception occured? None
-2022-10-16 17:55:58,658 - DEBUG - exception occured? 5906834880
-2022-10-16 17:55:58,659 - DEBUG - exception occured? None
-2022-10-16 17:55:58,660 - DEBUG - exception occured? 5906837296
-2022-10-16 17:55:58,665 - DEBUG - exception occured? None
-2022-10-16 17:55:58,666 - DEBUG - exception occured? 5906839968
-2022-10-16 17:55:58,666 - DEBUG - exception occured? None
-2022-10-16 17:55:58,668 - DEBUG - exception occured? 5906891712
-2022-10-16 17:55:58,668 - DEBUG - exception occured? None
-2022-10-16 17:55:58,672 - DEBUG - exception occured? 5906894160
-2022-10-16 17:55:58,672 - DEBUG - exception occured? None
-2022-10-16 17:55:58,672 - DEBUG - exception occured? 5906896544
-2022-10-16 17:55:58,673 - DEBUG - exception occured? None
-2022-10-16 17:55:58,674 - DEBUG - exception occured? 5906899008
-2022-10-16 17:55:58,674 - DEBUG - exception occured? None
-2022-10-16 17:55:58,675 - DEBUG - exception occured? 5906901408
-2022-10-16 17:55:58,676 - DEBUG - exception occured? None
-2022-10-16 17:55:58,677 - DEBUG - exception occured? 5906903840
-2022-10-16 17:55:58,678 - DEBUG - exception occured? None
-2022-10-16 17:55:58,678 - DEBUG - exception occured? 5906906272
-2022-10-16 17:55:58,679 - DEBUG - exception occured? None
-2022-10-16 17:56:47,113 - DEBUG - exception occured? 5907498512
-2022-10-16 17:56:47,114 - DEBUG - exception occured? None
-2022-10-16 17:56:47,114 - DEBUG - exception occured? 5907500896
-2022-10-16 17:56:47,115 - DEBUG - exception occured? None
-2022-10-16 17:56:47,115 - DEBUG - exception occured? 5907503296
-2022-10-16 17:56:47,115 - DEBUG - exception occured? None
-2022-10-16 17:56:47,116 - DEBUG - exception occured? 5907505840
-2022-10-16 17:56:47,117 - DEBUG - exception occured? None
-2022-10-16 17:56:47,117 - DEBUG - exception occured? 5907508288
-2022-10-16 17:56:47,117 - DEBUG - exception occured? None
-2022-10-16 17:56:47,118 - DEBUG - exception occured? 5907510672
-2022-10-16 17:56:47,119 - DEBUG - exception occured? None
-2022-10-16 17:56:47,120 - DEBUG - exception occured? 5907513312
-2022-10-16 17:56:47,122 - DEBUG - exception occured? None
-2022-10-16 17:56:47,123 - DEBUG - exception occured? 5907712768
-2022-10-16 17:56:47,123 - DEBUG - exception occured? None
-2022-10-16 17:56:47,124 - DEBUG - exception occured? 5907716656
-2022-10-16 17:56:47,124 - DEBUG - exception occured? None
-2022-10-16 17:56:47,126 - DEBUG - exception occured? 5907720880
-2022-10-16 17:56:47,127 - DEBUG - exception occured? None
-2022-10-16 17:56:47,128 - DEBUG - exception occured? 5907724512
-2022-10-16 17:56:47,130 - DEBUG - exception occured? None
-2022-10-16 17:56:47,130 - DEBUG - exception occured? 5908186592
-2022-10-16 17:56:47,131 - DEBUG - exception occured? None
-2022-10-16 17:56:59,312 - DEBUG - exception occured? 5908190432
-2022-10-16 17:56:59,313 - DEBUG - exception occured? None
-2022-10-16 17:56:59,314 - DEBUG - exception occured? 5908194016
-2022-10-16 17:56:59,315 - DEBUG - exception occured? None
-2022-10-16 17:56:59,315 - DEBUG - exception occured? 5908197440
-2022-10-16 17:56:59,316 - DEBUG - exception occured? None
-2022-10-16 17:56:59,317 - DEBUG - exception occured? 5908200320
-2022-10-16 17:56:59,317 - DEBUG - exception occured? None
-2022-10-16 17:56:59,318 - DEBUG - exception occured? 5908284960
-2022-10-16 17:56:59,318 - DEBUG - exception occured? None
-2022-10-16 17:56:59,319 - DEBUG - exception occured? 5908287840
-2022-10-16 17:56:59,319 - DEBUG - exception occured? None
-2022-10-16 17:56:59,321 - DEBUG - exception occured? 5908290576
-2022-10-16 17:56:59,322 - DEBUG - exception occured? None
-2022-10-16 17:56:59,323 - DEBUG - exception occured? 5908294112
-2022-10-16 17:56:59,324 - DEBUG - exception occured? None
-2022-10-16 17:56:59,325 - DEBUG - exception occured? 5908297680
-2022-10-16 17:56:59,326 - DEBUG - exception occured? None
-2022-10-16 17:56:59,327 - DEBUG - exception occured? 5908464736
-2022-10-16 17:56:59,327 - DEBUG - exception occured? None
-2022-10-16 17:56:59,327 - DEBUG - exception occured? 5908467120
-2022-10-16 17:56:59,328 - DEBUG - exception occured? None
-2022-10-16 17:56:59,328 - DEBUG - exception occured? 5908469504
-2022-10-16 17:56:59,329 - DEBUG - exception occured? None
-2022-10-16 17:57:10,814 - DEBUG - exception occured? 5908472016
-2022-10-16 17:57:10,814 - DEBUG - exception occured? None
-2022-10-16 17:57:10,815 - DEBUG - exception occured? 5908474416
-2022-10-16 17:57:10,815 - DEBUG - exception occured? None
-2022-10-16 17:57:10,816 - DEBUG - exception occured? 5908476800
-2022-10-16 17:57:10,817 - DEBUG - exception occured? None
-2022-10-16 17:57:10,817 - DEBUG - exception occured? 5908479248
-2022-10-16 17:57:10,818 - DEBUG - exception occured? None
-2022-10-16 17:57:10,818 - DEBUG - exception occured? 5908613456
-2022-10-16 17:57:10,819 - DEBUG - exception occured? None
-2022-10-16 17:57:10,819 - DEBUG - exception occured? 5908616192
-2022-10-16 17:57:10,820 - DEBUG - exception occured? None
-2022-10-16 17:57:10,822 - DEBUG - exception occured? 5908620416
-2022-10-16 17:57:10,822 - DEBUG - exception occured? None
-2022-10-16 17:57:10,823 - DEBUG - exception occured? 5908624816
-2022-10-16 17:57:10,824 - DEBUG - exception occured? None
-2022-10-16 17:57:10,824 - DEBUG - exception occured? 5908628208
-2022-10-16 17:57:10,824 - DEBUG - exception occured? None
-2022-10-16 17:57:10,825 - DEBUG - exception occured? 5908632528
-2022-10-16 17:57:10,825 - DEBUG - exception occured? None
-2022-10-16 17:57:10,825 - DEBUG - exception occured? 5908636608
-2022-10-16 17:57:10,827 - DEBUG - exception occured? None
-2022-10-16 17:57:10,827 - DEBUG - exception occured? 5908641184
-2022-10-16 17:57:10,828 - DEBUG - exception occured? None
-2022-10-16 18:14:04,783 - DEBUG - exception occured? 5909039088
-2022-10-16 18:14:04,791 - DEBUG - exception occured? None
-2022-10-16 18:14:04,792 - DEBUG - exception occured? 5909044176
-2022-10-16 18:14:04,794 - DEBUG - exception occured? None
-2022-10-16 18:14:04,795 - DEBUG - exception occured? 5909047568
-2022-10-16 18:14:04,796 - DEBUG - exception occured? None
-2022-10-16 18:14:04,797 - DEBUG - exception occured? 5909050144
-2022-10-16 18:14:04,797 - DEBUG - exception occured? None
-2022-10-16 18:14:04,798 - DEBUG - exception occured? 5909053376
-2022-10-16 18:14:04,798 - DEBUG - exception occured? None
-2022-10-16 18:14:04,798 - DEBUG - exception occured? 5909580288
-2022-10-16 18:14:04,799 - DEBUG - exception occured? None
-2022-10-16 18:14:04,801 - DEBUG - exception occured? 5909584128
-2022-10-16 18:14:04,803 - DEBUG - exception occured? None
-2022-10-16 18:14:04,804 - DEBUG - exception occured? 5909587264
-2022-10-16 18:14:04,805 - DEBUG - exception occured? None
-2022-10-16 18:14:04,806 - DEBUG - exception occured? 5909590368
-2022-10-16 18:14:04,806 - DEBUG - exception occured? None
-2022-10-16 18:14:04,807 - DEBUG - exception occured? 5909708832
-2022-10-16 18:14:04,808 - DEBUG - exception occured? None
-2022-10-16 18:14:04,809 - DEBUG - exception occured? 5909711216
-2022-10-16 18:14:04,810 - DEBUG - exception occured? None
-2022-10-16 18:14:04,811 - DEBUG - exception occured? 5909713728
-2022-10-16 18:14:04,812 - DEBUG - exception occured? None
-2022-10-16 18:14:11,399 - DEBUG - exception occured? 5909716160
-2022-10-16 18:14:11,402 - DEBUG - exception occured? None
-2022-10-16 18:14:11,403 - DEBUG - exception occured? 5909718656
-2022-10-16 18:14:11,403 - DEBUG - exception occured? None
-2022-10-16 18:14:11,684 - DEBUG - exception occured? 5909721072
-2022-10-16 18:14:11,685 - DEBUG - exception occured? None
-2022-10-16 18:14:11,685 - DEBUG - exception occured? 5909723456
-2022-10-16 18:14:11,685 - DEBUG - exception occured? None
-2022-10-16 18:14:11,686 - DEBUG - exception occured? 5909971712
-2022-10-16 18:14:11,687 - DEBUG - exception occured? None
-2022-10-16 18:14:11,688 - DEBUG - exception occured? 5909974176
-2022-10-16 18:14:11,688 - DEBUG - exception occured? None
-2022-10-16 18:14:11,690 - DEBUG - exception occured? 5909976608
-2022-10-16 18:14:11,691 - DEBUG - exception occured? None
-2022-10-16 18:14:11,691 - DEBUG - exception occured? 5909979008
-2022-10-16 18:14:11,692 - DEBUG - exception occured? None
-2022-10-16 18:14:11,692 - DEBUG - exception occured? 5909981536
-2022-10-16 18:14:11,693 - DEBUG - exception occured? None
-2022-10-16 18:14:11,693 - DEBUG - exception occured? 5909983920
-2022-10-16 18:14:11,693 - DEBUG - exception occured? None
-2022-10-16 18:14:11,693 - DEBUG - exception occured? 5909986352
-2022-10-16 18:14:11,694 - DEBUG - exception occured? None
-2022-10-16 18:14:11,694 - DEBUG - exception occured? 5910349936
-2022-10-16 18:14:11,695 - DEBUG - exception occured? None
+2022-10-18 16:42:18,187 - INFO - Successfully initialized SISEPUEDEFileStructure.
+2022-10-18 16:42:18,188 - INFO - Running SISEPUEDE under template data mode 'demo'.
+2022-10-18 16:42:18,189 - INFO - Initializing BaseInputDatabase
+2022-10-18 16:42:18,477 - WARNING - InputTemplate initialization warning: Strategy '2' not found--it will not be included in the input database.
+2022-10-18 16:42:19,047 - INFO - Initializing FutureTrajectories
+2022-10-18 16:42:19,514 - INFO - Instantiating 1913 sampling units.
+2022-10-18 16:42:19,517 - INFO - Iteration 0 complete.
+2022-10-18 16:42:26,373 - INFO - Iteration 250 complete.
+2022-10-18 16:42:33,186 - INFO - Iteration 500 complete.
+2022-10-18 16:42:39,510 - INFO - Iteration 750 complete.
+2022-10-18 16:42:45,777 - INFO - Iteration 1000 complete.
+2022-10-18 16:42:51,996 - INFO - Iteration 1250 complete.
+2022-10-18 16:42:58,305 - INFO - Iteration 1500 complete.
+2022-10-18 16:43:04,806 - INFO - Iteration 1750 complete.
+2022-10-18 16:43:08,936 - INFO - ...	1913 sampling units complete in 49.42 seconds.
+2022-10-18 16:43:08,939 - INFO - Initializing LHSDesign
+2022-10-18 16:43:08,940 - INFO - LHSDesign.fields_factors_l reset successful.
+2022-10-18 16:43:08,941 - INFO - LHSDesign.fields_factors_x reset successful.
+2022-10-18 16:43:09,527 - INFO - Generating primary keys (values of primary_id)...
+2022-10-18 16:43:09,537 - INFO - Successfully initialized SISEPUEDEExperimentalManager.
+2022-10-18 16:43:09,555 - WARNING - Path to NemoMod reference files 'None' not found. The Electricity model will be disallowed from running.
+2022-10-18 16:43:09,638 - INFO - Successfully initialized SISEPUEDEModels.
+2022-10-18 16:43:50,357 - INFO - Running AFOLU model
+2022-10-18 16:43:50,710 - INFO - AFOLU model run successfully completed
+2022-10-18 16:43:50,711 - INFO - Running CircularEconomy model
+2022-10-18 16:43:50,825 - INFO - CircularEconomy model run successfully completed
+2022-10-18 16:43:50,826 - INFO - Running IPPU model
+2022-10-18 16:43:50,965 - INFO - IPPU model run successfully completed
+2022-10-18 16:43:50,965 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 16:43:51,168 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 16:43:51,269 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 16:43:51,273 - INFO - Model run for primary_id = 0 successfully completed in 0.92 seconds.
+2022-10-18 16:43:51,518 - INFO - Running AFOLU model
+2022-10-18 16:43:51,897 - INFO - AFOLU model run successfully completed
+2022-10-18 16:43:51,897 - INFO - Running CircularEconomy model
+2022-10-18 16:43:52,009 - INFO - CircularEconomy model run successfully completed
+2022-10-18 16:43:52,010 - INFO - Running IPPU model
+2022-10-18 16:43:52,153 - INFO - IPPU model run successfully completed
+2022-10-18 16:43:52,153 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 16:43:52,342 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 16:43:52,427 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 16:43:52,431 - INFO - Model run for primary_id = 1 successfully completed in 0.91 seconds.
+2022-10-18 16:43:52,676 - INFO - Running AFOLU model
+2022-10-18 16:43:53,011 - INFO - AFOLU model run successfully completed
+2022-10-18 16:43:53,011 - INFO - Running CircularEconomy model
+2022-10-18 16:43:53,129 - INFO - CircularEconomy model run successfully completed
+2022-10-18 16:43:53,130 - INFO - Running IPPU model
+2022-10-18 16:43:53,261 - INFO - IPPU model run successfully completed
+2022-10-18 16:43:53,261 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 16:43:53,457 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 16:43:53,543 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 16:43:53,545 - INFO - Model run for primary_id = 998 successfully completed in 0.87 seconds.
+2022-10-18 16:48:06,144 - INFO - Running AFOLU model
+2022-10-18 16:48:06,489 - INFO - AFOLU model run successfully completed
+2022-10-18 16:48:06,490 - INFO - Running CircularEconomy model
+2022-10-18 16:48:06,603 - INFO - CircularEconomy model run successfully completed
+2022-10-18 16:48:06,604 - INFO - Running IPPU model
+2022-10-18 16:48:06,718 - INFO - IPPU model run successfully completed
+2022-10-18 16:48:06,719 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 16:48:06,886 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 16:48:06,965 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 16:48:06,968 - INFO - Model run for primary_id = 784 successfully completed in 0.82 seconds.
+2022-10-18 16:48:06,972 - INFO - Running AFOLU model
+2022-10-18 16:48:07,315 - INFO - AFOLU model run successfully completed
+2022-10-18 16:48:07,315 - INFO - Running CircularEconomy model
+2022-10-18 16:48:07,416 - INFO - CircularEconomy model run successfully completed
+2022-10-18 16:48:07,417 - INFO - Running IPPU model
+2022-10-18 16:48:07,530 - INFO - IPPU model run successfully completed
+2022-10-18 16:48:07,530 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 16:48:07,711 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 16:48:07,803 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 16:48:07,806 - INFO - Model run for primary_id = 1785 successfully completed in 0.83 seconds.
+2022-10-18 16:48:08,041 - INFO - Running AFOLU model
+2022-10-18 16:48:08,416 - INFO - AFOLU model run successfully completed
+2022-10-18 16:48:08,417 - INFO - Running CircularEconomy model
+2022-10-18 16:48:08,530 - INFO - CircularEconomy model run successfully completed
+2022-10-18 16:48:08,532 - INFO - Running IPPU model
+2022-10-18 16:48:08,661 - INFO - IPPU model run successfully completed
+2022-10-18 16:48:08,661 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 16:48:08,840 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 16:48:08,921 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 16:48:08,923 - INFO - Model run for primary_id = 2786 successfully completed in 0.88 seconds.
+2022-10-18 16:48:08,927 - INFO - Running AFOLU model
+2022-10-18 16:48:09,290 - INFO - AFOLU model run successfully completed
+2022-10-18 16:48:09,291 - INFO - Running CircularEconomy model
+2022-10-18 16:48:09,399 - INFO - CircularEconomy model run successfully completed
+2022-10-18 16:48:09,399 - INFO - Running IPPU model
+2022-10-18 16:48:09,521 - INFO - IPPU model run successfully completed
+2022-10-18 16:48:09,522 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 16:48:09,685 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 16:48:09,760 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 16:48:09,763 - INFO - Model run for primary_id = 3787 successfully completed in 0.84 seconds.
+2022-10-18 16:48:09,977 - INFO - Running AFOLU model
+2022-10-18 16:48:10,307 - INFO - AFOLU model run successfully completed
+2022-10-18 16:48:10,308 - INFO - Running CircularEconomy model
+2022-10-18 16:48:10,407 - INFO - CircularEconomy model run successfully completed
+2022-10-18 16:48:10,407 - INFO - Running IPPU model
+2022-10-18 16:48:10,520 - INFO - IPPU model run successfully completed
+2022-10-18 16:48:10,521 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 16:48:10,690 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 16:48:10,768 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 16:48:10,771 - INFO - Model run for primary_id = 4788 successfully completed in 0.79 seconds.
+2022-10-18 16:48:10,774 - INFO - Running AFOLU model
+2022-10-18 16:48:11,121 - INFO - AFOLU model run successfully completed
+2022-10-18 16:48:11,122 - INFO - Running CircularEconomy model
+2022-10-18 16:48:11,233 - INFO - CircularEconomy model run successfully completed
+2022-10-18 16:48:11,233 - INFO - Running IPPU model
+2022-10-18 16:48:11,350 - INFO - IPPU model run successfully completed
+2022-10-18 16:48:11,351 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 16:48:11,518 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 16:48:11,594 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 16:48:11,597 - INFO - Model run for primary_id = 5789 successfully completed in 0.82 seconds.
+2022-10-18 16:48:11,794 - INFO - Running AFOLU model
+2022-10-18 16:48:12,104 - INFO - AFOLU model run successfully completed
+2022-10-18 16:48:12,105 - INFO - Running CircularEconomy model
+2022-10-18 16:48:12,206 - INFO - CircularEconomy model run successfully completed
+2022-10-18 16:48:12,207 - INFO - Running IPPU model
+2022-10-18 16:48:12,321 - INFO - IPPU model run successfully completed
+2022-10-18 16:48:12,322 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 16:48:12,484 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 16:48:12,560 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 16:48:12,562 - INFO - Model run for primary_id = 6790 successfully completed in 0.77 seconds.
+2022-10-18 16:48:12,565 - INFO - Running AFOLU model
+2022-10-18 16:48:12,890 - INFO - AFOLU model run successfully completed
+2022-10-18 16:48:12,891 - INFO - Running CircularEconomy model
+2022-10-18 16:48:12,991 - INFO - CircularEconomy model run successfully completed
+2022-10-18 16:48:12,992 - INFO - Running IPPU model
+2022-10-18 16:48:13,101 - INFO - IPPU model run successfully completed
+2022-10-18 16:48:13,102 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 16:48:13,282 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 16:48:13,364 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 16:48:13,368 - INFO - Model run for primary_id = 7791 successfully completed in 0.8 seconds.
+2022-10-18 16:52:16,410 - DEBUG - exception occured? 4950924752
+2022-10-18 16:52:16,455 - DEBUG - exception occured? None
+2022-10-18 16:52:16,457 - DEBUG - exception occured? 4950927440
+2022-10-18 16:52:16,458 - DEBUG - exception occured? None
+2022-10-18 16:52:16,462 - DEBUG - exception occured? 4950930160
+2022-10-18 16:52:16,462 - DEBUG - exception occured? None
+2022-10-18 16:52:16,465 - DEBUG - exception occured? 4951949328
+2022-10-18 16:52:16,465 - DEBUG - exception occured? None
+2022-10-18 16:52:16,468 - DEBUG - exception occured? 4951952880
+2022-10-18 16:52:16,470 - DEBUG - exception occured? None
+2022-10-18 16:52:16,471 - DEBUG - exception occured? 4951955456
+2022-10-18 16:52:16,472 - DEBUG - exception occured? None
+2022-10-18 16:52:16,480 - DEBUG - exception occured? 4951958192
+2022-10-18 16:52:16,482 - DEBUG - exception occured? None
+2022-10-18 16:52:16,482 - DEBUG - exception occured? 4951960832
+2022-10-18 16:52:16,484 - DEBUG - exception occured? None
+2022-10-18 16:52:16,485 - DEBUG - exception occured? 4951963888
+2022-10-18 16:52:16,485 - DEBUG - exception occured? None
+2022-10-18 16:52:16,485 - DEBUG - exception occured? 4953015232
+2022-10-18 16:52:16,486 - DEBUG - exception occured? None
+2022-10-18 16:52:16,487 - DEBUG - exception occured? 4953018832
+2022-10-18 16:52:16,487 - DEBUG - exception occured? None
+2022-10-18 16:52:16,488 - DEBUG - exception occured? 4953022144
+2022-10-18 16:52:16,488 - DEBUG - exception occured? None
+2022-10-18 16:52:25,847 - DEBUG - exception occured? 4953024944
+2022-10-18 16:52:25,848 - DEBUG - exception occured? None
+2022-10-18 16:52:25,848 - DEBUG - exception occured? 4953028464
+2022-10-18 16:52:25,849 - DEBUG - exception occured? None
+2022-10-18 16:52:25,851 - DEBUG - exception occured? 4953130048
+2022-10-18 16:52:25,852 - DEBUG - exception occured? None
+2022-10-18 16:52:25,853 - DEBUG - exception occured? 4953132960
+2022-10-18 16:52:25,853 - DEBUG - exception occured? None
+2022-10-18 16:52:25,854 - DEBUG - exception occured? 4953136112
+2022-10-18 16:52:25,856 - DEBUG - exception occured? None
+2022-10-18 16:52:25,857 - DEBUG - exception occured? 4953139248
+2022-10-18 16:52:25,857 - DEBUG - exception occured? None
+2022-10-18 16:52:25,861 - DEBUG - exception occured? 4953142368
+2022-10-18 16:52:25,862 - DEBUG - exception occured? None
+2022-10-18 16:52:25,863 - DEBUG - exception occured? 4953440352
+2022-10-18 16:52:25,863 - DEBUG - exception occured? None
+2022-10-18 16:52:25,864 - DEBUG - exception occured? 4953442912
+2022-10-18 16:52:25,865 - DEBUG - exception occured? None
+2022-10-18 16:52:25,866 - DEBUG - exception occured? 4953445584
+2022-10-18 16:52:25,866 - DEBUG - exception occured? None
+2022-10-18 16:52:25,866 - DEBUG - exception occured? 4953448208
+2022-10-18 16:52:25,867 - DEBUG - exception occured? None
+2022-10-18 16:52:25,867 - DEBUG - exception occured? 4953450704
+2022-10-18 16:52:25,868 - DEBUG - exception occured? None
+2022-10-18 16:52:33,414 - DEBUG - exception occured? 4953454000
+2022-10-18 16:52:33,415 - DEBUG - exception occured? None
+2022-10-18 16:52:33,416 - DEBUG - exception occured? 4953670576
+2022-10-18 16:52:33,416 - DEBUG - exception occured? None
+2022-10-18 16:52:33,416 - DEBUG - exception occured? 4953674592
+2022-10-18 16:52:33,417 - DEBUG - exception occured? None
+2022-10-18 16:52:33,417 - DEBUG - exception occured? 4953678992
+2022-10-18 16:52:33,418 - DEBUG - exception occured? None
+2022-10-18 16:52:33,418 - DEBUG - exception occured? 4953682496
+2022-10-18 16:52:33,419 - DEBUG - exception occured? None
+2022-10-18 16:52:33,419 - DEBUG - exception occured? 4953964576
+2022-10-18 16:52:33,420 - DEBUG - exception occured? None
+2022-10-18 16:52:33,452 - DEBUG - exception occured? 4953969072
+2022-10-18 16:52:33,454 - DEBUG - exception occured? None
+2022-10-18 16:52:33,454 - DEBUG - exception occured? 4953974256
+2022-10-18 16:52:33,455 - DEBUG - exception occured? None
+2022-10-18 16:52:33,455 - DEBUG - exception occured? 4953977744
+2022-10-18 16:52:33,456 - DEBUG - exception occured? None
+2022-10-18 16:52:33,456 - DEBUG - exception occured? 4954423344
+2022-10-18 16:52:33,456 - DEBUG - exception occured? None
+2022-10-18 16:52:33,457 - DEBUG - exception occured? 4954426416
+2022-10-18 16:52:33,457 - DEBUG - exception occured? None
+2022-10-18 16:52:33,457 - DEBUG - exception occured? 4954430272
+2022-10-18 16:52:33,458 - DEBUG - exception occured? None
+2022-10-18 16:57:05,439 - DEBUG - exception occured? 4954433936
+2022-10-18 16:57:05,442 - DEBUG - exception occured? None
+2022-10-18 16:57:05,443 - DEBUG - exception occured? 4954438432
+2022-10-18 16:57:05,445 - DEBUG - exception occured? None
+2022-10-18 16:57:05,446 - DEBUG - exception occured? 4954769968
+2022-10-18 16:57:05,447 - DEBUG - exception occured? None
+2022-10-18 16:57:05,448 - DEBUG - exception occured? 4954774320
+2022-10-18 16:57:05,449 - DEBUG - exception occured? None
+2022-10-18 16:57:05,449 - DEBUG - exception occured? 4954777712
+2022-10-18 16:57:05,451 - DEBUG - exception occured? None
+2022-10-18 16:57:05,452 - DEBUG - exception occured? 4954781152
+2022-10-18 16:57:05,453 - DEBUG - exception occured? None
+2022-10-18 16:57:05,455 - DEBUG - exception occured? 4955079280
+2022-10-18 16:57:05,456 - DEBUG - exception occured? None
+2022-10-18 16:57:05,457 - DEBUG - exception occured? 4955082416
+2022-10-18 16:57:05,458 - DEBUG - exception occured? None
+2022-10-18 16:57:05,458 - DEBUG - exception occured? 4955085808
+2022-10-18 16:57:05,459 - DEBUG - exception occured? None
+2022-10-18 16:57:05,459 - DEBUG - exception occured? 4955088896
+2022-10-18 16:57:05,460 - DEBUG - exception occured? None
+2022-10-18 16:57:05,461 - DEBUG - exception occured? 4955093232
+2022-10-18 16:57:05,462 - DEBUG - exception occured? None
+2022-10-18 16:57:05,462 - DEBUG - exception occured? 4957407440
+2022-10-18 16:57:05,463 - DEBUG - exception occured? None
+2022-10-18 16:58:38,765 - INFO - Successfully initialized SISEPUEDEFileStructure.
+2022-10-18 16:58:38,766 - INFO - Running SISEPUEDE under template data mode 'demo'.
+2022-10-18 16:58:38,766 - INFO - Initializing BaseInputDatabase
+2022-10-18 16:58:39,022 - WARNING - InputTemplate initialization warning: Strategy '2' not found--it will not be included in the input database.
+2022-10-18 16:58:39,816 - INFO - Initializing FutureTrajectories
+2022-10-18 16:58:40,309 - INFO - Instantiating 1913 sampling units.
+2022-10-18 16:58:40,311 - INFO - Iteration 0 complete.
+2022-10-18 16:58:46,369 - INFO - Iteration 250 complete.
+2022-10-18 16:58:51,968 - INFO - Iteration 500 complete.
+2022-10-18 16:58:57,925 - INFO - Iteration 750 complete.
+2022-10-18 16:59:03,663 - INFO - Iteration 1000 complete.
+2022-10-18 16:59:09,522 - INFO - Iteration 1250 complete.
+2022-10-18 16:59:15,303 - INFO - Iteration 1500 complete.
+2022-10-18 16:59:20,922 - INFO - Iteration 1750 complete.
+2022-10-18 16:59:25,653 - INFO - ...	1913 sampling units complete in 45.34 seconds.
+2022-10-18 16:59:25,656 - INFO - Initializing LHSDesign
+2022-10-18 16:59:25,657 - INFO - LHSDesign.fields_factors_l reset successful.
+2022-10-18 16:59:25,658 - INFO - LHSDesign.fields_factors_x reset successful.
+2022-10-18 16:59:26,283 - INFO - Generating primary keys (values of primary_id)...
+2022-10-18 16:59:26,296 - INFO - Successfully initialized SISEPUEDEExperimentalManager.
+2022-10-18 16:59:26,496 - INFO - Successfully initialized SISEPUEDEModels.
+2022-10-18 17:02:46,240 - INFO - Running AFOLU model
+2022-10-18 17:02:46,598 - INFO - AFOLU model run successfully completed
+2022-10-18 17:02:46,599 - INFO - Running CircularEconomy model
+2022-10-18 17:02:46,712 - INFO - CircularEconomy model run successfully completed
+2022-10-18 17:02:46,712 - INFO - Running IPPU model
+2022-10-18 17:02:46,828 - INFO - IPPU model run successfully completed
+2022-10-18 17:02:46,829 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 17:02:47,007 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 17:02:47,007 - INFO - Running Energy model (Electricity: trying to call Julia)
+2022-10-18 17:02:48,886 - DEBUG - exception occured? None
+2022-10-18 17:02:48,887 - DEBUG - exception occured? None
+2022-10-18 17:02:48,888 - DEBUG - exception occured? None
+2022-10-18 17:02:49,452 - DEBUG - exception occured? None
+2022-10-18 17:02:49,454 - DEBUG - exception occured? None
+2022-10-18 17:02:49,454 - DEBUG - exception occured? None
+2022-10-18 17:02:52,810 - DEBUG - exception occured? None
+2022-10-18 17:02:52,810 - DEBUG - exception occured? None
+2022-10-18 17:02:52,810 - DEBUG - exception occured? None
+2022-10-18 17:04:55,077 - INFO - ElectricEnergy model run successfully completed
+2022-10-18 17:04:55,187 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 17:04:55,191 - INFO - Model run for primary_id = 0 successfully completed in 128.95 seconds.
+2022-10-18 17:04:55,462 - INFO - Running AFOLU model
+2022-10-18 17:04:55,797 - INFO - AFOLU model run successfully completed
+2022-10-18 17:04:55,798 - INFO - Running CircularEconomy model
+2022-10-18 17:04:55,924 - INFO - CircularEconomy model run successfully completed
+2022-10-18 17:04:55,925 - INFO - Running IPPU model
+2022-10-18 17:04:56,049 - INFO - IPPU model run successfully completed
+2022-10-18 17:04:56,050 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 17:04:56,225 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 17:04:56,225 - INFO - Running Energy model (Electricity: trying to call Julia)
+2022-10-18 17:04:57,610 - DEBUG - exception occured? None
+2022-10-18 17:04:57,611 - DEBUG - exception occured? None
+2022-10-18 17:04:57,611 - DEBUG - exception occured? None
+2022-10-18 17:04:57,611 - DEBUG - exception occured? None
+2022-10-18 17:04:57,612 - DEBUG - exception occured? None
+2022-10-18 17:04:57,612 - DEBUG - exception occured? None
+2022-10-18 17:04:57,615 - DEBUG - exception occured? None
+2022-10-18 17:04:57,615 - DEBUG - exception occured? None
+2022-10-18 17:04:57,615 - DEBUG - exception occured? None
+2022-10-18 17:06:13,407 - INFO - ElectricEnergy model run successfully completed
+2022-10-18 17:06:13,512 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 17:06:13,516 - INFO - Model run for primary_id = 1 successfully completed in 78.05 seconds.
+2022-10-18 17:06:13,739 - INFO - Running AFOLU model
+2022-10-18 17:06:14,088 - INFO - AFOLU model run successfully completed
+2022-10-18 17:06:14,089 - INFO - Running CircularEconomy model
+2022-10-18 17:06:14,208 - INFO - CircularEconomy model run successfully completed
+2022-10-18 17:06:14,208 - INFO - Running IPPU model
+2022-10-18 17:06:14,326 - INFO - IPPU model run successfully completed
+2022-10-18 17:06:14,327 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 17:06:14,502 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 17:06:14,503 - INFO - Running Energy model (Electricity: trying to call Julia)
+2022-10-18 17:06:15,919 - DEBUG - exception occured? None
+2022-10-18 17:06:15,920 - DEBUG - exception occured? None
+2022-10-18 17:06:15,920 - DEBUG - exception occured? None
+2022-10-18 17:06:15,921 - DEBUG - exception occured? None
+2022-10-18 17:06:15,922 - DEBUG - exception occured? None
+2022-10-18 17:06:15,922 - DEBUG - exception occured? None
+2022-10-18 17:06:15,927 - DEBUG - exception occured? None
+2022-10-18 17:06:15,927 - DEBUG - exception occured? None
+2022-10-18 17:06:15,927 - DEBUG - exception occured? None
+2022-10-18 17:07:45,517 - INFO - ElectricEnergy model run successfully completed
+2022-10-18 17:07:45,612 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 17:07:45,615 - INFO - Model run for primary_id = 998 successfully completed in 91.88 seconds.

@@ -55,9 +55,20 @@ class Configuration:
             "region",
             "volume_units"
         ]
-        self.params_float = ["days_per_year"]
-        self.params_float_fracs = ["discount_rate"]
-        self.params_int = ["global_warming_potential", "historical_back_proj_n_periods", "nemo_mod_time_periods"]
+        self.params_float = [
+            "days_per_year"
+        ]
+        self.params_float_fracs = [
+            "discount_rate"
+        ]
+        self.params_int = [
+            "global_warming_potential",
+            "historical_back_proj_n_periods",
+            "nemo_mod_time_periods",
+            "num_lhs_samples",
+            "random_seed",
+            "time_period_u0"
+        ]
 
         self.dict_config = self.get_config_information(
             attr_area,
@@ -104,12 +115,15 @@ class Configuration:
         return vals
 
 
+
     # function to retrieve a configuration value
-    def get(self, key: str):
-        if key in self.dict_config.keys():
-            return self.dict_config[key]
-        else:
+    def get(self, key: str, raise_error_q: bool = False):
+        out = self.dict_config.get(key)
+        if (out is None) and raise_error_q:
             raise KeyError(f"Configuration parameter '{key}' not found.")
+
+        return out
+
 
 
     # function for retrieving a configuration file and population missing values with defaults
@@ -195,6 +209,7 @@ class Configuration:
             "nemo_mod_time_periods": valid_time_period,
             "power_units": valid_power,
             "region": valid_region,
+            "time_period_u0": valid_time_period,
             "volume_units": valid_volume
         }
 
@@ -210,8 +225,13 @@ class Configuration:
 
 
         ###   check some parameters
+
         # positive integer restriction
-        dict_conf["historical_back_proj_n_periods"] = max(dict_conf["historical_back_proj_n_periods"], 1)
+        dict_conf.update({
+            "historical_back_proj_n_periods": max(dict_conf.get("historical_back_proj_n_periods"), 1),
+            "num_lhs_samples": max(dict_conf.get("num_lhs_samples"), 0),
+            "random_seed": max(dict_conf.get("random_seed"), 1)
+        })
 
         # set some attributes
         self.valid_area = valid_area
@@ -270,9 +290,18 @@ class Configuration:
 
 
     # function for parsing a configuration file into a dictionary
-    def parse_config(self, fp_config: str, delim: str = ",") -> dict:
+    def parse_config(self,
+        fp_config: str,
+        delim: str = ","
+    ) -> dict:
         """
-            parse_config returns a dictionary of configuration values
+            parse_config returns a dictionary of configuration values found in the
+                configuration file (of form key: value) found at file path
+                `fp_config`.
+
+            Keyword Arguments
+            -----------------
+            delim: delimiter used to split input lists specified in the configuration file
         """
 
         #read in aws initialization

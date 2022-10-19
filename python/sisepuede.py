@@ -1,4 +1,5 @@
 from attribute_table import AttributeTable
+import datetime
 from ingestion import *
 import itertools
 from lhs_design import LHSDesign
@@ -14,12 +15,140 @@ import logging
 import numpy as np
 import os, os.path
 import pandas as pd
+import re
 from sampling_unit import FutureTrajectories
 import support_functions as sf
 import sqlalchemy
 import tempfile
+import time
 from typing import *
 import warnings
+
+
+
+class SISEPUEDEAnalysisID:
+	"""
+	Create a unique ID for each session/set of runs. Can be instantiated using a
+		string (from a previous run) or empty, which creates a new ID.
+
+	Initialization Arguments
+	------------------------
+	- id_str: optional entry of a previous string containing an ID.
+		* If None, creates a new ID based on time in isoformat
+	- logger: optional log object to pass
+	- regex_template: optional regular expression used to parse id
+		* Should take form
+			re.compile("TEMPLATE_STRING_HERE_(.+$)")
+		where whatever is contained in (.+$) is assumed to be an isoformat time.
+
+
+	"""
+	def __init__(self,
+		id_str: Union[str, None] = None,
+		logger: Union[logging.Logger, None] = None,
+		regex_template: Union[str, None] = None
+	):
+		self.logger = logger
+		self._check_id(id_str)
+
+
+	def _log(self,
+		msg: str,
+		type_log: str = "log",
+		**kwargs
+	) -> None:
+		"""
+		Clean implementation of sf._optional_log in-line using default logger. See
+			?sf._optional_log for more information.
+
+		Function Arguments
+		------------------
+		- msg: message to log
+
+		Keyword Arguments
+		-----------------
+		- type_log: type of log to use
+		- **kwargs: passed as logging.Logger.METHOD(msg, **kwargs)
+		"""
+		sf._optional_log(self.logger, msg, type_log = type_log, **kwargs)
+
+
+
+	def _check_id(self,
+		id_str: Union[str, None] = None,
+		regex_template: Union[re.Pattern, None] = None
+	) -> None:
+		"""
+		Set the SISEPUEDE runtime ID to distinguish between different analytical
+		 	runs. Sets the following properties:
+
+			* self.default_regex_template
+			* self.regex_template
+			* self.id
+			* self.isoformat
+			* self.year
+			* self.month
+			* self.day
+			* self.hour
+			* self.minute
+			* self.second
+			* self.microsecond
+		"""
+
+		self.isoformat = None
+		self.default_regex_template = re.compile("sisepuede_run_(.+$)")
+		self.regex_template = self.default_regex_template if not isinstance(regex_template, re.Pattern) else regex_template
+		# get regex substitution
+		str_regex_sub = [x for x in self.regex_template.split(self.regex_template.pattern) if (x != "")]
+		str_regex_sub = str_regex_sub[0] if (len(str_regex_sub) > 0) else None
+		date_info = None
+
+		# try to initialize from string if specified
+		if isinstance(id_str, str):
+			match = self.regex_template.match(id_str)
+			if match is not None:
+				try:
+					date_info = datetime.datetime.fromisoformat(match.groups()[0])
+					self.isoformat = match.groups()[0]
+					self.id = id_str
+
+				except Exception as e:
+					self._log(f"Error in SISEPUEDEAnalysisID trying to initialize ID '{id_str}': {e}.\n\tDefaulting new ID.", type_log = None)
+					id_str = None
+			else:
+				id_str = None
+
+		# otherwise, create a new one
+		if id_str is None:
+			date_info = datetime.datetime.now()
+			self.isoformat = date_info.isoformat()
+			self.id = self.regex_template.pattern.replace(str_regex_sub, self.isoformat) if (str_regex_sub is not None) else f"{self.regex_template.pattern}_{self.isoformat}"
+
+		# set properties
+		(
+			self.year,
+			self.month,
+			self.day,
+			self.hour,
+			self.minute,
+			self.second,
+			self.microsecond
+		) = (
+			date_info.year,
+			date_info.month,
+			date_info.day,
+			date_info.hour,
+			date_info.minute,
+			date_info.second,
+			date_info.microsecond
+		)
+
+		# note the success
+		self._log(f"Successfully initialized SISEPUEDE Analysis ID '{self.id}'", type_log = "info")
+
+
+
+
 
 
 
@@ -39,30 +168,37 @@ class SISEPUEDEFileStructure:
 		The calibrated and uncalibrated subdirectories require separate subdrectories for each region, each
 		of which contains an input template for each
 	- fn_config: name of configuration file in SISEPUEDE directory
+	- id_str: Optional id_str used to create SISEPUEDEAnalysisID (see ?SISEPUEDEAnalysisID for more
+		information on properties). Can be used to set outputs for a previous ID/restore a session.
+		* If None, creates a unique ID for the session (used in output file names)
 	- logger: optional logging.Logger object used for logging
 
 	"""
 	def __init__(self,
 		dir_ingestion: Union[str, None] = None,
-		fn_config: str = "sispuede.config",
+		fn_config: str = "sisepuede.config",
+		id_str: Union[str, None] = None,
 		logger: Union[logging.Logger, None] = None
 	):
 
 		self.logger = logger
+		self._initialize_analysis_id(id_str)
 
 		# run checks of directories
 		self._check_config(fn_config)
-		self._check_critical_directories()
+		self._check_required_directories()
 		self._check_ingestion(dir_ingestion)
 		self._check_optional_directories()
 
-		# initialize model attributes
+		# initialize model attributes, set runtime id, then check/instantiate downstream file paths
 		self._initialize_model_attributes()
+		self._check_nemomod_reference_file_paths()
+		self._initialize_file_path_defaults()
 
 
 
 	##############################
-	#    SUPPORTING FUNCTIONS    #
+	#	SUPPORTING FUNCTIONS	#
 	##############################
 
 	def _log(self,
@@ -87,7 +223,7 @@ class SISEPUEDEFileStructure:
 
 
 	##########################
-	#    DIRECTORY CHECKS    #
+	#	DIRECTORY CHECKS	#
 	##########################
 
 	def _check_config(self,
@@ -105,12 +241,19 @@ class SISEPUEDEFileStructure:
 
 
 
-	def _check_critical_directories(self,
+	def _check_required_directories(self,
 	) -> None:
 		"""
 		Check directory structure for SISEPUEDE. Sets the following properties:
 
-			*
+			* self.dir_attribute_tables
+			* self.dir_docs
+			* self.dir_jl
+			* self.dir_proj
+			* self.dir_py
+			* self.dir_ref
+			* self.dir_ref_nemo
+			* self.fp_config
 		"""
 
 		##  Initialize base paths
@@ -175,12 +318,13 @@ class SISEPUEDEFileStructure:
 			msg_error_dirs += f"\n\tNemoMod reference subdirectory '{self.dir_ref_nemo}' not found"
 			self.dir_ref_nemo = None
 
-
 		##  error handling
+
 		if count_errors > 0:
 			self._log(f"There were {count_errors} errors initializing the SISEPUEDE directory structure:{msg_error_dirs}", type_log = "error")
-
 			raise RuntimeError("SISEPUEDE unable to initialize file directories. Check the log for more information.")
+		else:
+			self._log(f"Verification of SISEPUEDE directory structure completed successfully with 0 errors.", type_log = "info")
 
 
 
@@ -188,22 +332,24 @@ class SISEPUEDEFileStructure:
 		dir_ingestion: Union[str, None]
 	) -> None:
 		"""
-		Check path to templates.
+		Check path to templates. Sets the following properties:
+
+			* self.dir_ingestion
+			* self.dict_data_mode_to_template_directory
+			* self.valid_data_modes
 
 		Function Arguments
 		------------------
 		dir_ingestion: ingestion directory storing input templates for SISEPUEDE
 			* If None, defaults to ..PATH_SISEPUEDE/ref/ingestion
-
 		"""
 
 		##  Check template ingestion path (within reference directory)
 
 		# initialize
+		self.valid_data_modes = ["calibrated", "demo", "uncalibrated"]
 		self.dir_ingestion = os.path.join(self.dir_ref, "ingestion") if (self.dir_ref is not None) else None
-		self.dir_parameters_calibrated = None
-		self.dir_parameters_demo = None
-		self.dir_parameters_uncalibrated = None
+		self.dict_data_mode_to_template_directory = None
 
 		# override if input path is specified
 		if isinstance(dir_ingestion, str):
@@ -215,17 +361,10 @@ class SISEPUEDEFileStructure:
 			self._log(f"\tIngestion templates subdirectory '{self.dir_ingestion}' not found")
 			self.dir_ingestion = None
 		else:
-			# sheets with complete input variables and calibrated parameters by region
-			dir_parameters_calibrated = os.path.join(self.dir_ingestion, "calibrated")
-			self.dir_parameters_calibrated = dir_parameters_calibrated if os.path.exists(dir_parameters_calibrated) else self.dir_parameters_calibrated
-
-			# demonstration input variables and parameters to facilitate quick start/demonstration
-			dir_parameters_demo = os.path.join(self.dir_ingestion, "demo")
-			self.dir_parameters_demo = dir_parameters_demo if os.path.exists(dir_parameters_demo) else self.dir_parameters_demo
-
-			# sheets with complete or incomplete input variables and uncalibrated parameters by region
-			dir_parameters_uncalibrated = os.path.join(self.dir_ingestion, "uncalibrated")
-			self.dir_parameters_uncalibrated = dir_parameters_uncalibrated if os.path.exists(dir_parameters_uncalibrated) else self.dir_parameters_uncalibrated
+			self.dict_data_mode_to_template_directory = dict(zip(
+				self.valid_data_modes,
+				[os.path.join(self.dir_ingestion, x) for x in self.valid_data_modes]
+			))
 
 
 
@@ -261,6 +400,23 @@ class SISEPUEDEFileStructure:
 	#    INITIALIZE FILES AND MODEL ATTRIBUTES    #
 	###############################################
 
+	def _initialize_analysis_id(self,
+		id_str: Union[str, None]
+	) -> None:
+		"""
+		Initialize the session id. Initializes the following properties:
+
+			* self.sisepuede_analysis_id (SISEPUEDEAnalysisID object)
+			* self.analysis_id (shortcurt to self.sisepuede_analysis_id.id)
+		"""
+		self.sisepuede_analysis_id = SISEPUEDEAnalysisID(
+			id_str = id_str,
+			logger = self.logger
+		)
+		self.analysis_id = self.sisepuede_analysis_id.id
+
+
+
 	def _initialize_model_attributes(self,
 	) -> None:
 		"""
@@ -275,14 +431,83 @@ class SISEPUEDEFileStructure:
 
 
 
-	def _initialize_key_file_path_defaults(self,
+	def _check_nemomod_reference_file_paths(self,
 	) -> None:
 		"""
-		Initialize key default file paths, including output and temporary files. Sets the
+		Check and initiailize any NemoMod reference file file paths. Sets the following properties:
+
+			* self.allow_electricity_run
+			* self.required_reference_tables_nemomod
+		"""
+
+		# initialize
+		self.allow_electricity_run = True
+		self.required_reference_tables_nemomod = None
+
+		# error handling
+		count_errors = 0
+		msg_error = ""
+
+		if self.dir_ref_nemo is not None:
+
+			# nemo mod input files - specify required, run checks
+			model_electricity = ElectricEnergy(self.model_attributes, self.dir_ref_nemo)
+			self.required_reference_tables_nemomod = model_electricity.required_reference_tables
+
+			# initialize dictionary of file paths
+			dict_nemomod_reference_tables_to_fp_csv = dict(zip(
+				self.required_reference_tables_nemomod,
+				[None for x in self.required_reference_tables_nemomod]
+			))
+
+			# check all required tables
+			for table in self.required_reference_tables_nemomod:
+				fp_out = os.path.join(self.dir_ref_nemo, f"{table}.csv")
+				if os.path.exists(fp_out):
+					dict_nemomod_reference_tables_to_fp_csv.update({table: fp_out})
+				else:
+					count_errors += 1
+					msg_error += f"\n\tNemoMod reference table '{table}' not found in directory {self.dir_ref_nemo}."
+					self.allow_electricity_run = False
+					del dict_nemomod_reference_tables_to_fp_csv[table]
+		else:
+			count_errors += 1
+			msg_error = "\n\tNo NemoMod model refererence files were found."
+			self.allow_electricity_run = False
+
+		if msg_error != "":
+			self._log(f"There were {count_errors} while trying to initialize NemoMod:{msg_error}\nThe electricity model cannot be run. Disallowing electricity model runs.", type_log = "error")
+		else:
+			self._log(f"NemoMod reference file checks completed successfully.", type_log = "info")
+
+
+
+	def _initialize_file_path_defaults(self,
+	) -> None:
+		"""
+		Initialize any default file paths, including output and temporary files. Sets the
 			following properties:
 
-			*
+			* self.fp_csv_output_raw
+			* self.fp_sqlite_output_raw
+			* self.fp_sqlite_tmp_nemomod_intermediate
 		"""
+
+		self.fp_csv_output_raw = None
+		self.fp_sqlite_output_raw = None
+		self.fp_sqlite_tmp_nemomod_intermediate = None
+
+		fbn_raw = f"{self.analysis_id}_outputs_raw"
+
+		if self.dir_out is not None:
+			self.fp_csv_output_raw = os.path.join(self.dir_out, f"{fbn_raw}.csv")
+			self.fp_sqlite_output_raw = os.path.join(self.dir_out, f"{fbn_raw}.sqlite")
+			# SQLite Database location for intermediate NemoMod calculations
+			self.fp_sqlite_tmp_nemomod_intermediate = os.path.join(self.dir_tmp, "nemomod_intermediate_database.sqlite")
+
+
+
+
 
 class SISEPUEDEModels:
 	"""
@@ -294,6 +519,8 @@ class SISEPUEDEModels:
 
 	Optional Arguments
 	------------------
+	- allow_electricity_run: allow the electricity model to run (high-runtime model)
+		* Generally should be left to True
 	- fp_nemomod_reference_files: directory housing reference files called by NemoMod when running electricity model
 		* REQUIRED TO RUN ELECTRICITY MODEL
 	- fp_nemomod_temp_sqlite_db: optional file path to use for SQLite database used in Julia NemoMod Electricity model
@@ -302,8 +529,9 @@ class SISEPUEDEModels:
 	"""
 	def __init__(self,
 		model_attributes: ModelAttributes,
-		fp_nemomod_reference_files: Union[str, None] = None, #sa.dir_ref_nemo
-		fp_nemomod_temp_sqlite_db: Union[str, None] = None, #sa.fp_sqlite_nemomod_db_tmp
+		allow_electricity_run: bool = True,
+		fp_nemomod_reference_files: Union[str, None] = None,
+		fp_nemomod_temp_sqlite_db: Union[str, None] = None,
 		logger: Union[logging.Logger, None] = None
 	):
 		# initialize input objects
@@ -311,7 +539,7 @@ class SISEPUEDEModels:
 		self.model_attributes = model_attributes
 
 		# initialize sql path for electricity projection and path to electricity models
-		self._initialize_nemomod_reference_path(fp_nemomod_reference_files)
+		self._initialize_nemomod_reference_path(allow_electricity_run, fp_nemomod_reference_files)
 		self._initialize_nemomod_sql_path(fp_nemomod_temp_sqlite_db)
 
 		# initialize models
@@ -320,10 +548,8 @@ class SISEPUEDEModels:
 
 
 
-
-
 	##############################################
-	#    SUPPORT AND INITIALIZATION FUNCTIONS    #
+	#	SUPPORT AND INITIALIZATION FUNCTIONS	#
 	##############################################
 
 	# get sector specifications
@@ -365,13 +591,13 @@ class SISEPUEDEModels:
 		Initialize the path to NemoMod reference files required for ingestion. Initializes
 			the following properties:
 
-			* self.allow_elecricity_run
+			* self.allow_electricity_run
 			* self.fp_nemomod_reference_files
 		"""
 
 		self.model_afolu = AFOLU(self.model_attributes)
 		self.model_circecon = CircularEconomy(self.model_attributes)
-		self.model_electricity = ElectricEnergy(self.model_attributes, self.fp_nemomod_reference_files) if self.allow_elecricity_run else None
+		self.model_electricity = ElectricEnergy(self.model_attributes, self.fp_nemomod_reference_files) if self.allow_electricity_run else None
 		self.model_energy = NonElectricEnergy(self.model_attributes)
 		self.model_ippu = IPPU(self.model_attributes)
 		self.model_socioeconomic = Socioeconomic(self.model_attributes)
@@ -379,20 +605,27 @@ class SISEPUEDEModels:
 
 
 	def _initialize_nemomod_reference_path(self,
+		allow_electricity_run: bool,
 		fp_nemomod_reference_files: Union[str, None]
 	) -> None:
 		"""
 		Initialize the path to NemoMod reference files required for ingestion. Initializes
 			the following properties:
 
-			* self.allow_elecricity_run
+			* self.allow_electricity_run
 			* self.fp_nemomod_reference_files
+
+		Function Arguments
+		------------------
+		- allow_electricity_run: exogenous specification of whether or not to allow the
+			electricity model to run
+		- fp_nemomod_reference_files: path to NemoMod reference files
 		"""
 
-		self.allow_elecricity_run = False
+		self.allow_electricity_run = False
 		try:
 			self.fp_nemomod_reference_files = sf.check_path(fp_nemomod_reference_files, False)
-			self.allow_elecricity_run = True
+			self.allow_electricity_run = allow_electricity_run
 		except Exception as e:
 			self.fp_nemomod_reference_files = None
 			self._log(f"Path to NemoMod reference files '{fp_nemomod_reference_files}' not found. The Electricity model will be disallowed from running.", type_log = "warning")
@@ -448,7 +681,7 @@ class SISEPUEDEModels:
 
 
 	############################
-	#    CORE FUNCTIONALITY    #
+	#	CORE FUNCTIONALITY	#
 	############################
 
 	def project(self,
@@ -561,7 +794,7 @@ class SISEPUEDEModels:
 
 		##  5. Run Electricity and collect output
 
-		if ("Energy" in models_run) and include_electricity_in_energy and self.allow_elecricity_run:
+		if ("Energy" in models_run) and include_electricity_in_energy and self.allow_electricity_run:
 			self._log("Running Energy model (Electricity: trying to call Julia)", type_log = "info")
 			if run_integrated and set(["Circular Economy", "AFOLU"]).issubset(set(models_run)):
 				df_input_data = self.model_attributes.transfer_df_variables(
@@ -613,7 +846,11 @@ class SISEPUEDEModels:
 
 class SISEPUEDEExperimentalManager:
 	"""
-	Launch and manage experiments based on LHS sampling over trajectories.
+	Launch and manage experiments based on LHS sampling over trajectories. The SISEPUEDEExperimentalManager
+		class reads in input templates to generate input databases, controls deployment, generation of
+		multiple runs, writing output to applicable databases, and post-processing of applicable metrics.
+		Users should use SISEPUEDEExperimentalManager to set the number of trials and the start year of
+		uncertainty.
 
 
 	Initialization Arguments
@@ -857,6 +1094,7 @@ class SISEPUEDEExperimentalManager:
 			* self.attribute_strategy
 			* self.base_input_database
 			* self.baseline_strategy
+			* self.regions
 
 
 		Function Arguments
@@ -880,6 +1118,7 @@ class SISEPUEDEExperimentalManager:
 
 			self.attribute_strategy = self.base_input_database.attribute_strategy
 			self.baseline_strategy = self.base_input_database.baseline_strategy
+			self.regions = self.base_input_database.regions
 
 		except Exception as e:
 			msg = f"Error initializing BaseInputDatabase -- {e}"
@@ -1061,7 +1300,7 @@ class SISEPUEDEExperimentalManager:
 
 
 	############################
-	#    CORE FUNCTIONALITY    #
+	#	CORE FUNCTIONALITY	#
 	############################
 
 

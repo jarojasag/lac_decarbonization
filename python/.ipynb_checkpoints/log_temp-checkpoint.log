@@ -1,10 +1,204 @@
-2022-10-06 14:00:07,071 - INFO - Instantiating 1913 sampling units.
-2022-10-06 14:00:07,074 - INFO - Iteration 0 complete.
-2022-10-06 14:00:12,753 - INFO - Iteration 250 complete.
-2022-10-06 14:00:18,650 - INFO - Iteration 500 complete.
-2022-10-06 14:00:24,236 - INFO - Iteration 750 complete.
-2022-10-06 14:00:29,851 - INFO - Iteration 1000 complete.
-2022-10-06 14:00:35,293 - INFO - Iteration 1250 complete.
-2022-10-06 14:00:41,098 - INFO - Iteration 1500 complete.
-2022-10-06 14:00:46,953 - INFO - Iteration 1750 complete.
-2022-10-06 14:00:50,651 - INFO - 1913 sampling units complete in 43.58 seconds.
+2022-10-18 16:42:18,187 - INFO - Successfully initialized SISEPUEDEFileStructure.
+2022-10-18 16:42:18,188 - INFO - Running SISEPUEDE under template data mode 'demo'.
+2022-10-18 16:42:18,189 - INFO - Initializing BaseInputDatabase
+2022-10-18 16:42:18,477 - WARNING - InputTemplate initialization warning: Strategy '2' not found--it will not be included in the input database.
+2022-10-18 16:42:19,047 - INFO - Initializing FutureTrajectories
+2022-10-18 16:42:19,514 - INFO - Instantiating 1913 sampling units.
+2022-10-18 16:42:19,517 - INFO - Iteration 0 complete.
+2022-10-18 16:42:26,373 - INFO - Iteration 250 complete.
+2022-10-18 16:42:33,186 - INFO - Iteration 500 complete.
+2022-10-18 16:42:39,510 - INFO - Iteration 750 complete.
+2022-10-18 16:42:45,777 - INFO - Iteration 1000 complete.
+2022-10-18 16:42:51,996 - INFO - Iteration 1250 complete.
+2022-10-18 16:42:58,305 - INFO - Iteration 1500 complete.
+2022-10-18 16:43:04,806 - INFO - Iteration 1750 complete.
+2022-10-18 16:43:08,936 - INFO - ...	1913 sampling units complete in 49.42 seconds.
+2022-10-18 16:43:08,939 - INFO - Initializing LHSDesign
+2022-10-18 16:43:08,940 - INFO - LHSDesign.fields_factors_l reset successful.
+2022-10-18 16:43:08,941 - INFO - LHSDesign.fields_factors_x reset successful.
+2022-10-18 16:43:09,527 - INFO - Generating primary keys (values of primary_id)...
+2022-10-18 16:43:09,537 - INFO - Successfully initialized SISEPUEDEExperimentalManager.
+2022-10-18 16:43:09,555 - WARNING - Path to NemoMod reference files 'None' not found. The Electricity model will be disallowed from running.
+2022-10-18 16:43:09,638 - INFO - Successfully initialized SISEPUEDEModels.
+2022-10-18 16:43:50,357 - INFO - Running AFOLU model
+2022-10-18 16:43:50,710 - INFO - AFOLU model run successfully completed
+2022-10-18 16:43:50,711 - INFO - Running CircularEconomy model
+2022-10-18 16:43:50,825 - INFO - CircularEconomy model run successfully completed
+2022-10-18 16:43:50,826 - INFO - Running IPPU model
+2022-10-18 16:43:50,965 - INFO - IPPU model run successfully completed
+2022-10-18 16:43:50,965 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 16:43:51,168 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 16:43:51,269 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 16:43:51,273 - INFO - Model run for primary_id = 0 successfully completed in 0.92 seconds.
+2022-10-18 16:43:51,518 - INFO - Running AFOLU model
+2022-10-18 16:43:51,897 - INFO - AFOLU model run successfully completed
+2022-10-18 16:43:51,897 - INFO - Running CircularEconomy model
+2022-10-18 16:43:52,009 - INFO - CircularEconomy model run successfully completed
+2022-10-18 16:43:52,010 - INFO - Running IPPU model
+2022-10-18 16:43:52,153 - INFO - IPPU model run successfully completed
+2022-10-18 16:43:52,153 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 16:43:52,342 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 16:43:52,427 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 16:43:52,431 - INFO - Model run for primary_id = 1 successfully completed in 0.91 seconds.
+2022-10-18 16:43:52,676 - INFO - Running AFOLU model
+2022-10-18 16:43:53,011 - INFO - AFOLU model run successfully completed
+2022-10-18 16:43:53,011 - INFO - Running CircularEconomy model
+2022-10-18 16:43:53,129 - INFO - CircularEconomy model run successfully completed
+2022-10-18 16:43:53,130 - INFO - Running IPPU model
+2022-10-18 16:43:53,261 - INFO - IPPU model run successfully completed
+2022-10-18 16:43:53,261 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 16:43:53,457 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 16:43:53,543 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 16:43:53,545 - INFO - Model run for primary_id = 998 successfully completed in 0.87 seconds.
+2022-10-18 16:48:06,144 - INFO - Running AFOLU model
+2022-10-18 16:48:06,489 - INFO - AFOLU model run successfully completed
+2022-10-18 16:48:06,490 - INFO - Running CircularEconomy model
+2022-10-18 16:48:06,603 - INFO - CircularEconomy model run successfully completed
+2022-10-18 16:48:06,604 - INFO - Running IPPU model
+2022-10-18 16:48:06,718 - INFO - IPPU model run successfully completed
+2022-10-18 16:48:06,719 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 16:48:06,886 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 16:48:06,965 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 16:48:06,968 - INFO - Model run for primary_id = 784 successfully completed in 0.82 seconds.
+2022-10-18 16:48:06,972 - INFO - Running AFOLU model
+2022-10-18 16:48:07,315 - INFO - AFOLU model run successfully completed
+2022-10-18 16:48:07,315 - INFO - Running CircularEconomy model
+2022-10-18 16:48:07,416 - INFO - CircularEconomy model run successfully completed
+2022-10-18 16:48:07,417 - INFO - Running IPPU model
+2022-10-18 16:48:07,530 - INFO - IPPU model run successfully completed
+2022-10-18 16:48:07,530 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 16:48:07,711 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 16:48:07,803 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 16:48:07,806 - INFO - Model run for primary_id = 1785 successfully completed in 0.83 seconds.
+2022-10-18 16:48:08,041 - INFO - Running AFOLU model
+2022-10-18 16:48:08,416 - INFO - AFOLU model run successfully completed
+2022-10-18 16:48:08,417 - INFO - Running CircularEconomy model
+2022-10-18 16:48:08,530 - INFO - CircularEconomy model run successfully completed
+2022-10-18 16:48:08,532 - INFO - Running IPPU model
+2022-10-18 16:48:08,661 - INFO - IPPU model run successfully completed
+2022-10-18 16:48:08,661 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 16:48:08,840 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 16:48:08,921 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 16:48:08,923 - INFO - Model run for primary_id = 2786 successfully completed in 0.88 seconds.
+2022-10-18 16:48:08,927 - INFO - Running AFOLU model
+2022-10-18 16:48:09,290 - INFO - AFOLU model run successfully completed
+2022-10-18 16:48:09,291 - INFO - Running CircularEconomy model
+2022-10-18 16:48:09,399 - INFO - CircularEconomy model run successfully completed
+2022-10-18 16:48:09,399 - INFO - Running IPPU model
+2022-10-18 16:48:09,521 - INFO - IPPU model run successfully completed
+2022-10-18 16:48:09,522 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 16:48:09,685 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 16:48:09,760 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 16:48:09,763 - INFO - Model run for primary_id = 3787 successfully completed in 0.84 seconds.
+2022-10-18 16:48:09,977 - INFO - Running AFOLU model
+2022-10-18 16:48:10,307 - INFO - AFOLU model run successfully completed
+2022-10-18 16:48:10,308 - INFO - Running CircularEconomy model
+2022-10-18 16:48:10,407 - INFO - CircularEconomy model run successfully completed
+2022-10-18 16:48:10,407 - INFO - Running IPPU model
+2022-10-18 16:48:10,520 - INFO - IPPU model run successfully completed
+2022-10-18 16:48:10,521 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 16:48:10,690 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 16:48:10,768 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 16:48:10,771 - INFO - Model run for primary_id = 4788 successfully completed in 0.79 seconds.
+2022-10-18 16:48:10,774 - INFO - Running AFOLU model
+2022-10-18 16:48:11,121 - INFO - AFOLU model run successfully completed
+2022-10-18 16:48:11,122 - INFO - Running CircularEconomy model
+2022-10-18 16:48:11,233 - INFO - CircularEconomy model run successfully completed
+2022-10-18 16:48:11,233 - INFO - Running IPPU model
+2022-10-18 16:48:11,350 - INFO - IPPU model run successfully completed
+2022-10-18 16:48:11,351 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 16:48:11,518 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 16:48:11,594 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 16:48:11,597 - INFO - Model run for primary_id = 5789 successfully completed in 0.82 seconds.
+2022-10-18 16:48:11,794 - INFO - Running AFOLU model
+2022-10-18 16:48:12,104 - INFO - AFOLU model run successfully completed
+2022-10-18 16:48:12,105 - INFO - Running CircularEconomy model
+2022-10-18 16:48:12,206 - INFO - CircularEconomy model run successfully completed
+2022-10-18 16:48:12,207 - INFO - Running IPPU model
+2022-10-18 16:48:12,321 - INFO - IPPU model run successfully completed
+2022-10-18 16:48:12,322 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 16:48:12,484 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 16:48:12,560 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 16:48:12,562 - INFO - Model run for primary_id = 6790 successfully completed in 0.77 seconds.
+2022-10-18 16:48:12,565 - INFO - Running AFOLU model
+2022-10-18 16:48:12,890 - INFO - AFOLU model run successfully completed
+2022-10-18 16:48:12,891 - INFO - Running CircularEconomy model
+2022-10-18 16:48:12,991 - INFO - CircularEconomy model run successfully completed
+2022-10-18 16:48:12,992 - INFO - Running IPPU model
+2022-10-18 16:48:13,101 - INFO - IPPU model run successfully completed
+2022-10-18 16:48:13,102 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-10-18 16:48:13,282 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-10-18 16:48:13,364 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-10-18 16:48:13,368 - INFO - Model run for primary_id = 7791 successfully completed in 0.8 seconds.
+2022-10-18 16:52:16,410 - DEBUG - exception occured? 4950924752
+2022-10-18 16:52:16,455 - DEBUG - exception occured? None
+2022-10-18 16:52:16,457 - DEBUG - exception occured? 4950927440
+2022-10-18 16:52:16,458 - DEBUG - exception occured? None
+2022-10-18 16:52:16,462 - DEBUG - exception occured? 4950930160
+2022-10-18 16:52:16,462 - DEBUG - exception occured? None
+2022-10-18 16:52:16,465 - DEBUG - exception occured? 4951949328
+2022-10-18 16:52:16,465 - DEBUG - exception occured? None
+2022-10-18 16:52:16,468 - DEBUG - exception occured? 4951952880
+2022-10-18 16:52:16,470 - DEBUG - exception occured? None
+2022-10-18 16:52:16,471 - DEBUG - exception occured? 4951955456
+2022-10-18 16:52:16,472 - DEBUG - exception occured? None
+2022-10-18 16:52:16,480 - DEBUG - exception occured? 4951958192
+2022-10-18 16:52:16,482 - DEBUG - exception occured? None
+2022-10-18 16:52:16,482 - DEBUG - exception occured? 4951960832
+2022-10-18 16:52:16,484 - DEBUG - exception occured? None
+2022-10-18 16:52:16,485 - DEBUG - exception occured? 4951963888
+2022-10-18 16:52:16,485 - DEBUG - exception occured? None
+2022-10-18 16:52:16,485 - DEBUG - exception occured? 4953015232
+2022-10-18 16:52:16,486 - DEBUG - exception occured? None
+2022-10-18 16:52:16,487 - DEBUG - exception occured? 4953018832
+2022-10-18 16:52:16,487 - DEBUG - exception occured? None
+2022-10-18 16:52:16,488 - DEBUG - exception occured? 4953022144
+2022-10-18 16:52:16,488 - DEBUG - exception occured? None
+2022-10-18 16:52:25,847 - DEBUG - exception occured? 4953024944
+2022-10-18 16:52:25,848 - DEBUG - exception occured? None
+2022-10-18 16:52:25,848 - DEBUG - exception occured? 4953028464
+2022-10-18 16:52:25,849 - DEBUG - exception occured? None
+2022-10-18 16:52:25,851 - DEBUG - exception occured? 4953130048
+2022-10-18 16:52:25,852 - DEBUG - exception occured? None
+2022-10-18 16:52:25,853 - DEBUG - exception occured? 4953132960
+2022-10-18 16:52:25,853 - DEBUG - exception occured? None
+2022-10-18 16:52:25,854 - DEBUG - exception occured? 4953136112
+2022-10-18 16:52:25,856 - DEBUG - exception occured? None
+2022-10-18 16:52:25,857 - DEBUG - exception occured? 4953139248
+2022-10-18 16:52:25,857 - DEBUG - exception occured? None
+2022-10-18 16:52:25,861 - DEBUG - exception occured? 4953142368
+2022-10-18 16:52:25,862 - DEBUG - exception occured? None
+2022-10-18 16:52:25,863 - DEBUG - exception occured? 4953440352
+2022-10-18 16:52:25,863 - DEBUG - exception occured? None
+2022-10-18 16:52:25,864 - DEBUG - exception occured? 4953442912
+2022-10-18 16:52:25,865 - DEBUG - exception occured? None
+2022-10-18 16:52:25,866 - DEBUG - exception occured? 4953445584
+2022-10-18 16:52:25,866 - DEBUG - exception occured? None
+2022-10-18 16:52:25,866 - DEBUG - exception occured? 4953448208
+2022-10-18 16:52:25,867 - DEBUG - exception occured? None
+2022-10-18 16:52:25,867 - DEBUG - exception occured? 4953450704
+2022-10-18 16:52:25,868 - DEBUG - exception occured? None
+2022-10-18 16:52:33,414 - DEBUG - exception occured? 4953454000
+2022-10-18 16:52:33,415 - DEBUG - exception occured? None
+2022-10-18 16:52:33,416 - DEBUG - exception occured? 4953670576
+2022-10-18 16:52:33,416 - DEBUG - exception occured? None
+2022-10-18 16:52:33,416 - DEBUG - exception occured? 4953674592
+2022-10-18 16:52:33,417 - DEBUG - exception occured? None
+2022-10-18 16:52:33,417 - DEBUG - exception occured? 4953678992
+2022-10-18 16:52:33,418 - DEBUG - exception occured? None
+2022-10-18 16:52:33,418 - DEBUG - exception occured? 4953682496
+2022-10-18 16:52:33,419 - DEBUG - exception occured? None
+2022-10-18 16:52:33,419 - DEBUG - exception occured? 4953964576
+2022-10-18 16:52:33,420 - DEBUG - exception occured? None
+2022-10-18 16:52:33,452 - DEBUG - exception occured? 4953969072
+2022-10-18 16:52:33,454 - DEBUG - exception occured? None
+2022-10-18 16:52:33,454 - DEBUG - exception occured? 4953974256
+2022-10-18 16:52:33,455 - DEBUG - exception occured? None
+2022-10-18 16:52:33,455 - DEBUG - exception occured? 4953977744
+2022-10-18 16:52:33,456 - DEBUG - exception occured? None
+2022-10-18 16:52:33,456 - DEBUG - exception occured? 4954423344
+2022-10-18 16:52:33,456 - DEBUG - exception occured? None
+2022-10-18 16:52:33,457 - DEBUG - exception occured? 4954426416
+2022-10-18 16:52:33,457 - DEBUG - exception occured? None
+2022-10-18 16:52:33,457 - DEBUG - exception occured? 4954430272
+2022-10-18 16:52:33,458 - DEBUG - exception occured? None
