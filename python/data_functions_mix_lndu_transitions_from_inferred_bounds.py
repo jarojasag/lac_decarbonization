@@ -283,7 +283,8 @@ class MixedLNDUTransitionFromBounds:
 		fields_min = [self.field_design_quality_rank]
 		dict_agg = dict([(x, "first") for x in fields_grp])
 		dict_agg.update(dict([(x, "min") for x in fields_min]))
-		self.df_best_design_quality_rankings = self.df_all_transitions.groupby(fields_grp).agg(dict_agg).reset_index(drop = True)
+		self.
+		 = self.df_all_transitions.groupby(fields_grp).agg(dict_agg).reset_index(drop = True)
 
 
 
