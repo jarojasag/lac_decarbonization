@@ -23,6 +23,8 @@ Pkg.activate(sa.dir_jl)
 from julia import NemoMod
 from julia import Cbc
 from julia import Clp
+from julia import GAMS
+from julia import Gurobi
 from julia import JuMP
 
 
@@ -53,7 +55,7 @@ class ElectricEnergy:
         - Julia 1.7+
         - Python PyJulia package
         - NemoMod (see https://sei-international.github.io/NemoMod.jl/stable/ for the latest stable release)
-        - Cbc, Clp, GPLK, CPLEX, Gurobi (at least one)
+        - Cbc, Clp, GPLK, CPLEX, GAMS (to access GAMS solvers), Gurobi (at least one)
 
     """
 
@@ -4458,8 +4460,13 @@ class ElectricEnergy:
             optimizer = JuMP.Model(Cbc.Optimizer)
         elif solver == "clp":
             optimizer = JuMP.Model(Clp.Optimizer)
+        elif solver == "gams_cplex":
+            optimizer = JuMP.Model(GAMS.Optimizer)
+            JuMP.set_optimizer_attribute(optimizer, "Solver", "cplex")
         elif solver == "glpk":
             optimizer = JuMP.Model(GLPK.Optimizer)
+        elif solver == "gurobi":
+            optimizer = JuMP.Model(Gurobi.Optimizer)
         # set up vars to save
         vars_to_save = ", ".join(self.required_nemomod_output_tables)
 

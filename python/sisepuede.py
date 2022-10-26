@@ -148,6 +148,68 @@ class SISEPUEDEAnalysisID:
 
 
 
+	def _set_file_string(self,
+	) -> None:
+		"""
+		Set the file-system safe string. Sets the following properties:
+
+		* self.id_fs_safe
+		* self.dict_id_from_fs_safe_replacements
+		* self.dict_id_to_fs_safe_replacements
+
+		"""
+
+		self.dict_id_to_fs_safe_replacements = {":": ";"}
+		self.dict_id_from_fs_safe_replacements = sf.reverse_dict(self.dict_id_to_fs_safe_replacements)
+		self.id_fs_safe = self.id_to_file_safe_id()
+
+
+	########################################################################
+	#    SOME FUNCTIONS FOR CONVERTING TO/FROM FILE SYSTEM-SAFE STRINGS    #
+	########################################################################
+
+	def id_from_file_safe_id(self,
+		id: str,
+		dict_replacements: Union[Dict, None] = None
+	) -> str:
+		"""
+		Convert a file-system safe string to an ID string (invert invalid characters
+			to support POSIX strings).
+
+		Function Arguments
+		------------------
+		- id: file-system safe string to initialize as id
+
+		Keyword Arguments
+		-----------------
+		- dict_replacements: dictionary to use to replace file-system safe substrings
+			with ID-valid strings
+		"""
+
+		dict_replacements = self.dict_id_from_fs_safe_replacements if (dict_replacements is None) else dict_replacements
+
+		return sf.str_replace(id, dict_replacements)
+
+
+
+	def id_to_file_safe_id(self,
+		id: Union[str, None] = None,
+		dict_replacements: Union[Dict, None] = None
+	) -> str:
+		"""
+		Convert an id to a file-system safe string (replace invalid characters).
+
+		Keyword Arguments
+		-----------------
+		- id: POSIX-time based SISEPUEDEAnalysisID.id string to replace
+		- dict_replacements: dictionary to use to replace substrings
+		"""
+		id = self.id if (id is None) else id
+		dict_replacements = self.dict_id_to_fs_safe_replacements if (dict_replacements is None) else dict_replacements
+
+		return sf.str_replace(id, dict_replacements)
+
+
 
 
 
@@ -488,20 +550,18 @@ class SISEPUEDEFileStructure:
 		Initialize any default file paths, including output and temporary files. Sets the
 			following properties:
 
-			* self.fp_csv_output_raw
-			* self.fp_sqlite_output_raw
+			* self.fp_base_output_raw
 			* self.fp_sqlite_tmp_nemomod_intermediate
 		"""
 
-		self.fp_csv_output_raw = None
-		self.fp_sqlite_output_raw = None
+		self.fp_base_output_raw = None
 		self.fp_sqlite_tmp_nemomod_intermediate = None
 
-		fbn_raw = f"{self.analysis_id}_outputs_raw"
+		fbn_raw = f"{self.analysis_id}_outputs_raw".replace(":", ";")
 
 		if self.dir_out is not None:
-			self.fp_csv_output_raw = os.path.join(self.dir_out, f"{fbn_raw}.csv")
-			self.fp_sqlite_output_raw = os.path.join(self.dir_out, f"{fbn_raw}.sqlite")
+			# base output path for CSV or SQL--if CSVs, represents a directory. If SQLite, append .sqlite to get path
+			self.fp_base_output_raw = os.path.join(self.dir_out, fbn_raw)
 			# SQLite Database location for intermediate NemoMod calculations
 			self.fp_sqlite_tmp_nemomod_intermediate = os.path.join(self.dir_tmp, "nemomod_intermediate_database.sqlite")
 
@@ -643,8 +703,10 @@ class SISEPUEDEModels:
 		"""
 
 		valid_extensions = ["sqlite", "db"]
+
 		if isinstance(fp_nemomod_temp_sqlite_db, str):
 			try_endings = [fp_nemomod_temp_sqlite_db.endswith(x) for x in valid_extensions]
+
 			if any(try_endings):
 				self.fp_nemomod_temp_sqlite_db = fp_nemomod_temp_sqlite_db
 			else:
@@ -938,6 +1000,7 @@ class SISEPUEDEExperimentalManager:
 		self.sort_ordered_dimensions_of_analysis = self.model_attributes.sort_ordered_dimensions_of_analysis
 
 		# initialize additional components
+		self.demo_mode = demo_database_q
 		self.fan_function_specification = fan_function_specification
 		self.logger = logger
 		self.n_trials = n_trials
@@ -955,6 +1018,8 @@ class SISEPUEDEExperimentalManager:
 			regions,
 			demo_database_q
 		)
+		# IMPORTANT: HEREHERE NEED TO INTEGRATE REGIONAL COMPONENT-
+		# ONE FutureTrajectories OBJECT FOR EACH REGION?
 		self._initialize_future_trajectories(
 			fan_function_specification = self.fan_function_specification,
 			field_time_period = self.field_time_period,
@@ -1134,33 +1199,70 @@ class SISEPUEDEExperimentalManager:
 		Initialize the FutureTrajectories object for executing experiments. Initializes
 			the following properties:
 
-			* self.future_trajectories
-			* self.n_factors
-			* self.n_factors_l
-			* self.n_factors_x
+			* self.dict_future_trajectories
+			* self.dict_n_factors
+			* self.dict_n_factors_l
+			* self.dict_n_factors_x
+
+			Additionally, can update
+
+			* self.regions
+
+			if any regions fail.
 		"""
 
 		self._log("Initializing FutureTrajectories", type_log = "info")
 
-		try:
-			self.future_trajectories = FutureTrajectories(
-				self.base_input_database.database,
-				{
-					self.key_strategy: self.base_input_database.baseline_strategy
-				},
-				self.time_period_u0,
-				**kwargs
-			);
+		self.dict_future_trajectories = {}
+		self.dict_n_factors = {}
+		self.dict_n_factors_l = {}
+		self.dict_n_factors_x = {}
 
-			self.n_factors = len(self.future_trajectories.all_sampling_units)
-			self.n_factors_l = len(self.future_trajectories.all_sampling_units_l)
-			self.n_factors_x = len(self.future_trajectories.all_sampling_units_x)
+		drop_regions = []
 
+		# filter base input database for each region to instantiate a new FutureTrajectories object
+		for region in self.regions:
 
-		except Exception as e:
-			msg = f"Error initializing FutureTrajectories -- {e}"
-			self._log(msg, type_log = "error")
-			raise RuntimeError(msg)
+			region_print = self.get_output_region(region)
+
+			try:
+				df_input = self.base_input_database.database[
+					self.base_input_database.database[self.field_region] == region
+				].reset_index(drop = True)
+
+				future_trajectories_cur = FutureTrajectories(
+					df_input,
+					{
+						self.key_strategy: self.base_input_database.baseline_strategy
+					},
+					self.time_period_u0,
+					**kwargs
+				)
+
+				self.dict_future_trajectories.update({
+					region: future_trajectories_cur
+				})
+				self.dict_n_factors.update({
+					region: len(future_trajectories_cur.all_sampling_units)
+				})
+				self.dict_n_factors_l.update({
+					region: len(future_trajectories_cur.all_sampling_units_l)
+				})
+				self.dict_n_factors_x.update({
+					region: len(future_trajectories_cur.all_sampling_units_x)
+				})
+
+				self._log(f"\tFutureTrajectories for '{region_print}' complete.", type_log = "info")
+
+			except Exception as e:
+				self._log(f"Error initializing FutureTrajectories for region {region_print} -- {e}.", type_log = "error")
+				self._log(f"Dropping region '{region_print}' due to error in FutureTrajectories initialization.", type_log = "warning")
+				drop_regions.append(region)
+
+		# update regions if necessary
+		self.regions = [x for x in self.regions if (x not in drop_regions)]
+		if len(self.regions) == 0:
+			raise RuntimeError(f"Error initializing SISEPUEDE: no regions left to instantiate.")
 
 
 
@@ -1170,29 +1272,62 @@ class SISEPUEDEExperimentalManager:
 		Initializes LHS design and associated tables used in the Experiment. Creates the
 			following properties:
 
-			* self.lhs_design
+			* self.dict_lhs_design
+			* self.vector_lhs_key_values
 
+			Additionally, can update
+
+			* self.regions
+
+			if any regions fail.
 		"""
 
 		self._log("Initializing LHSDesign", type_log = "info")
 
-		try:
-			self.lhs_design = LHSDesign(
-				self.attribute_design,
-				self.key_future,
-				n_factors_l = self.n_factors_l,
-				n_factors_x = self.n_factors,
-				n_trials = self.n_trials,
-				random_seed = self.random_seed,
-				fields_factors_l = self.future_trajectories.all_sampling_units_l,
-				fields_factors_x = self.future_trajectories.all_sampling_units,
-				logger = self.logger
-			)
+		self.dict_lhs_design = {}
+		self.vector_lhs_key_values = None
 
-		except Exception as e:
-			msg = f"Error initializing FutureTrajectories -- {e}"
-			self._log(msg, type_log = "error")
-			raise RuntimeError(msg)
+		drop_regions = []
+
+		for region in self.regions:
+
+			region_print = self.get_output_region(region)
+
+			try:
+
+				future_trajectories_cur = self.dict_future_trajectories.get(region)
+				n_factors = self.dict_n_factors.get(region)
+				n_factors_l = self.dict_n_factors_l.get(region)
+
+				lhs_design_cur = LHSDesign(
+					self.attribute_design,
+					self.key_future,
+					n_factors_l = n_factors_l,
+					n_factors_x = n_factors,
+					n_trials = self.n_trials,
+					random_seed = self.random_seed,
+					fields_factors_l = future_trajectories_cur.all_sampling_units_l,
+					fields_factors_x = future_trajectories_cur.all_sampling_units,
+					logger = self.logger
+				)
+
+				self.dict_lhs_design.update({
+					region: lhs_design_cur
+				})
+
+				self.vector_lhs_key_values = lhs_design_cur.vector_lhs_key_values if (self.vector_lhs_key_values is None) else self.vector_lhs_key_values
+
+				self._log(f"\tLHSDesign for region '{region_print}' complete.", type_log = "info")
+
+			except Exception as e:
+				self._log(f"Error initializing LHSDesign for region '{region_print}' -- {e}.", type_log = "error")
+				self._log(f"Dropping region '{region_print}' due to error in LHSDesign initialization.", type_log = "warning")
+				drop_regions.append(region)
+
+		# update regions if necessary
+		self.regions = [x for x in self.regions if (x not in drop_regions)]
+		if len(self.regions) == 0:
+			raise RuntimeError(f"Error initializing SISEPUEDE: no regions left to instantiate.")
 
 
 
@@ -1272,7 +1407,7 @@ class SISEPUEDEExperimentalManager:
 		all_designs = self.attribute_design.key_values
 		all_strategies = self.base_input_database.attribute_strategy.key_values
 		all_futures = [self.baseline_future]
-		all_futures += self.lhs_design.vector_lhs_key_values if (self.lhs_design.vector_lhs_key_values is not None) else []
+		all_futures += self.vector_lhs_key_values if (self.vector_lhs_key_values is not None) else []
 
 		prods = [
 			all_designs,
@@ -1296,11 +1431,32 @@ class SISEPUEDEExperimentalManager:
 
 
 
+	def get_output_region(self,
+		region: str,
+		str_demo_region: str = "DEMO"
+	) -> str:
+		"""
+		Retrieve a region for output tables
+
+		Function Arguments
+		------------------
+		- region: input region to convert
+
+		Keyword Arguments
+		-----------------
+		- str_demo_region: string specifying a region for a demo run
+		"""
+
+		out = str_demo_region if self.demo_mode else region
+
+		return out
+
+
 
 
 
 	############################
-	#	CORE FUNCTIONALITY	#
+	#    CORE FUNCTIONALITY    #
 	############################
 
 
@@ -1312,6 +1468,7 @@ class SISEPUEDEExperimentalManager:
 
 # wrapper for ExperimentalManager and RunSisepuede
 class SISEPUEDE:
+
 	"""
 	SISEPUEDE is a ...
 
@@ -1321,8 +1478,624 @@ class SISEPUEDE:
 	See documentation at (LINK HERE)
 
 
+	Initialization Arguments
+	------------------------
+	- data_mode: template class to initialize from. Three options are allowed:
+		* calibrated
+		* demo
+		* uncalibrated
+
+
+	Optional Arguments
+	------------------
+
+	Optional arguments are used to pass values to SISEPUEDE outside of the configuaration framework.
+		This can be a desireable approach for iterative modeling or determining a suitable data
+		pipeline.
+
+	- attribute_design: optional AttributeTable object used to specify the design_id.
+		* Note: If None, will attempt to find a table within the ModelAttributes object with key
+		"dim_design_id". If none is found, will assume a single design where:
+			(a) exogenous uncertainties vary at ranges specified in input templates; and
+			(b) lever effects are fixed.
+
+	- dir_ingestion: directory storing SISEPUEDE templates for ingestion
+		* Note: if running outside of demo mode, the directory should contain subdirectories dor each
+			region, with each region including input templates for each of the 5 SISEPUEDE sectors. For
+			example, the directory should have the following tree structure:
+
+			* dir_ingestion
+				|_ calibrated
+					|_ region_1
+						|_ model_input_variables_af_demo.xlsx
+						|_ model_input_variables_ce_demo.xlsx
+						|_ model_input_variables_en_demo.xlsx
+						|_ model_input_variables_ip_demo.xlsx
+						|_ model_input_variables_se_demo.xlsx
+					|_ region_2
+						|_ model_input_variables_af_demo.xlsx
+						.
+						.
+						.
+				|_ demo
+					|_ model_input_variables_af_demo.xlsx
+					|_ model_input_variables_ce_demo.xlsx
+					|_ model_input_variables_en_demo.xlsx
+					|_ model_input_variables_ip_demo.xlsx
+					|_ model_input_variables_se_demo.xlsx
+				|_ uncalibrated
+					|_ region_1
+						|_ model_input_variables_af_demo.xlsx
+						|_ model_input_variables_ce_demo.xlsx
+						|_ model_input_variables_en_demo.xlsx
+						|_ model_input_variables_ip_demo.xlsx
+						|_ model_input_variables_se_demo.xlsx
+					|_ region_2
+						|_ model_input_variables_af_demo.xlsx
+						.
+						.
+						.
+
+	- logger: Optional logging.Logger object to use for logging
+	- regions: list of regions to include in the experiment. [NOTE, in v1.0, this shuld be limited to a
+		single region]
+
+	-
 
 	"""
 
-	def __init__(self, ):
-		return None
+	def __init__(self,
+		data_mode: str,
+		attribute_design: Union[AttributeTable, None] = None,
+		dir_ingestion: Union[str, None] = None,
+		logger: Union[logging.Logger, None]= None,
+		regions: Union[List[str], None] = None
+	):
+
+		self.logger = logger
+		self._initialize_file_structure(dir_ingestion)
+		self._initialize_data_mode(data_mode)
+		self._initialize_experimental_manager(regions = regions)
+		self._initialize_models()
+
+		self._initialize_function_aliases()
+
+
+
+	##############################################
+	#    SUPPORT AND INITIALIZATION FUNCTIONS    #
+	##############################################
+
+	def get_config_parameter(self,
+		parameter: str
+	) -> Union[int, List, str]:
+		"""
+		Retrieve a configuration parameter from self.model_attributes. Must be initialized
+			after _initialize_file_structure()
+		"""
+
+		return self.model_attributes.configuration.get(parameter)
+
+
+
+	def _initialize_data_mode(self,
+		data_mode: Union[str, None] = None,
+		default_mode: str = "demo"
+	) -> None:
+		"""
+		Initialize mode of operation. Sets the following properties:
+
+			* self.data_mode
+			* self.demo_mode
+			* self.dir_templates
+			* self.valid_data_modes
+		"""
+		self.valid_data_modes = self.file_struct.valid_data_modes
+
+		try:
+			data_mode = default_mode if (data_mode is None) else data_mode
+			self.data_mode = default_mode if (data_mode not in self.valid_data_modes) else data_mode
+			self.demo_mode = (self.data_mode == "demo")
+			self.dir_templates = self.file_struct.dict_data_mode_to_template_directory.get(self.data_mode) if (self.file_struct is not None) else None
+
+			self._log(f"Running SISEPUEDE under template data mode '{self.data_mode}'.", type_log = "info")
+
+		except Exception as e:
+			self._log(f"Error in _initialize_data_mode(): {e}", type_log = "error")
+			raise RuntimeError()
+
+
+
+	def _initialize_experimental_manager(self,
+		attribute_design: Union[AttributeTable, None] = None,
+		key_config_n_lhs: str = "num_lhc_samples",
+		key_config_random_seed: str = "random_seed",
+		key_config_time_period_u0: str = "time_period_u0",
+		key_model_attributes_design: str = "dim_design_id",
+		num_trials: Union[int, None] = None,
+		random_seed: Union[int, None] = None,
+		regions: Union[List[str], None] = None,
+		time_t0_uncertainty: Union[int, None] = None
+	) -> None:
+		"""
+		Initialize the Experimental Manager for SISEPUEDE. The SISEPUEDEExperimentalManager
+			class reads in input templates to generate input databases, controls deployment,
+			generation of multiple runs, writing output to applicable databases, and
+			post-processing of applicable metrics. Users should use SISEPUEDEExperimentalManager
+			to set the number of trials and the start year of uncertainty. Sets the following
+			properties:
+
+			* self.attribute_primary
+			* self.baseline_future
+			* self.baseline_strategy
+			* self.experimental_manager
+			* self.key_design
+			* self.key_future
+			* self.key_primary
+			* self.key_strategy
+			* self.keys_index
+			* self.n_trials
+			* self.random_seed
+			* self.regions
+			* self.time_period_u0
+
+
+		Keyword Arguments
+		-----------------
+		- attribute_design: AttributeTable used to specify designs.
+			* If None, tries to access "dim_design_id" from ModelAttributes.dict_attributes
+		- key_config_n_lhs: configuration key used to determine the number of LHC samples to
+			generate
+		- key_config_random_seed: configuration key used to set the random seed
+		- key_config_time_period_u0: configuration key used to determine the time period of
+			initial uncertainty in uncertainty assessment.
+		- key_model_attributes_design: key in model_attributes.dict_attributes used to try and
+			get design attribute.
+			* If None, defaults to "dim_design_id"
+		- num_trials: number if LHS trials to run.
+			* If None, revert to configuration defaults from self.model_attributes
+		- random_seed: random seed used to generate LHS samples
+			* If None, revert to configuration defaults from self.model_attributes
+		- regions: regions to initialize.
+			* If None, initialize using all regions
+		- time_t0_uncertainty: time where uncertainty starts
+		"""
+
+		num_trials = int(max(num_trials, 0)) if (isinstance(num_trials, int) or isinstance(num_trials, float)) else self.get_config_parameter(key_config_n_lhs)
+		attribute_design = self.model_attributes.dict_attributes.get(key_model_attributes_design) if not isinstance(attribute_design, AttributeTable) else attribute_design
+
+		self.experimental_manager = None
+		self.n_trials = self.get_config_parameter(key_config_n_lhs)
+		self.time_period_u0 = self.get_config_parameter(key_config_time_period_u0)
+		self.random_seed = self.get_config_parameter(key_config_time_period_u0)
+
+		try:
+			self.experimental_manager = SISEPUEDEExperimentalManager(
+				attribute_design,
+				self.model_attributes,
+				self.dir_templates,
+				regions,
+				self.time_period_u0,
+				self.n_trials,
+				demo_database_q = self.demo_mode,
+				logger = self.logger,
+				random_seed = self.random_seed
+			)
+
+			self._log(f"Successfully initialized SISEPUEDEExperimentalManager.", type_log = "info")
+
+		except Exception as e:
+			self._log(f"Error initializing the experimental manager in _initialize_experimental_manager(): {e}", type_log = "error")
+			raise RuntimeError()
+
+		self.attribute_primary = AttributeTable(
+			self.experimental_manager.primary_key_database,
+			self.experimental_manager.key_primary,
+			[]
+		)
+
+		self.baseline_future = self.experimental_manager.baseline_future
+		self.baseline_strategy = self.experimental_manager.baseline_strategy
+
+		self.field_region = self.experimental_manager.field_region
+		self.key_design = self.experimental_manager.key_design
+		self.key_future = self.experimental_manager.key_future
+		self.key_primary = self.experimental_manager.key_primary
+		self.key_strategy = self.experimental_manager.key_strategy
+		self.keys_index = [
+			self.key_design,
+			self.key_future,
+			self.key_primary,
+			self.key_strategy
+		]
+
+		self.n_trials = self.experimental_manager.n_trials
+		self.random_seed = self.experimental_manager.random_seed
+		self.regions = self.experimental_manager.regions
+		self.time_period_u0 = self.experimental_manager.time_period_u0
+
+
+
+	def _initialize_file_structure(self,
+		dir_ingestion: Union[str, None] = None
+	) -> None:
+
+		"""
+		Intialize the SISEPUEDEFileStructure object and model_attributes object. Initializes
+			the following properties:
+
+			* self.file_struct
+			* self.model_attributes
+		"""
+
+		self.file_struct = None
+		self.model_attributes = None
+
+		try:
+			self.file_struct = SISEPUEDEFileStructure(
+				dir_ingestion = dir_ingestion
+			)
+
+			self._log(f"Successfully initialized SISEPUEDEFileStructure.", type_log = "info")
+
+		except Exception as e:
+			self._log(f"Error trying to initialize SISEPUEDEFileStructure: {e}", type_log = "error")
+			raise RuntimeError()
+
+		self.model_attributes = self.file_struct.model_attributes
+
+
+
+	def _initialize_models(self,
+		fp_sqlite_tmp_nemomod_intermediate: Union[str, None] = None
+	) -> None:
+		"""
+		Initialize models for SISEPUEDE. Sets the following properties:
+
+			* self.dir_nemomod_reference_files
+			* self.fp_sqlite_tmp_nemomod_intermediate
+			* self.models
+
+		Optional Arguments
+		------------------
+		- fp_nemomod_temp_sqlite_db: file name for temporary database used to run NemoMod
+			* If none, reverts to SISEPUEDE default
+		"""
+
+		dir_nemomod_reference_files = self.file_struct.dir_ref_nemo
+		fp_sqlite_tmp_nemomod_intermediate = self.file_struct.fp_sqlite_tmp_nemomod_intermediate if (fp_sqlite_tmp_nemomod_intermediate is None) else fp_sqlite_tmp_nemomod_intermediate
+
+		try:
+			self.models = SISEPUEDEModels(
+				self.model_attributes,
+				allow_electricity_run = self.file_struct.allow_electricity_run,
+				fp_nemomod_reference_files = dir_nemomod_reference_files,
+				fp_nemomod_temp_sqlite_db = fp_sqlite_tmp_nemomod_intermediate,
+				logger = self.logger
+			)
+
+			self._log(f"Successfully initialized SISEPUEDEModels.", type_log = "info")
+			if not self.file_struct.allow_electricity_run:
+				self._log(f"\tOne or more reference files are missing, and the electricity model cannot be run. This run will not include electricity results. Try locating the missing files and re-initializing SISEPUEDE to run the electricity model.", type_log = "warning")
+
+		except Exception as e:
+			self._log(f"Error trying to initialize models: {e}", type_log = "error")
+			raise RuntimeError()
+
+		self.dir_nemomod_reference_files = dir_nemomod_reference_files
+		self.fp_sqlite_tmp_nemomod_intermediate = fp_sqlite_tmp_nemomod_intermediate
+
+
+
+	def _log(self,
+		msg: str,
+		type_log: str = "log",
+		**kwargs
+	) -> None:
+		"""
+		Clean implementation of sf._optional_log in-line using default logger. See
+			?sf._optional_log for more information.
+
+		Function Arguments
+		------------------
+		- msg: message to log
+
+		Keyword Arguments
+		-----------------
+		- type_log: type of log to use
+		- **kwargs: passed as logging.Logger.METHOD(msg, **kwargs)
+		"""
+		sf._optional_log(self.logger, msg, type_log = type_log, **kwargs)
+
+
+
+
+	############################
+	#    SHORTCUT FUNCTIONS    #
+	############################
+
+	def _initialize_function_aliases(self,
+	) -> None:
+		"""
+		Initialize function aliases.
+		"""
+
+		self.get_output_region = self.experimental_manager.get_output_region
+
+
+
+	############################
+	#    CORE FUNCTIONALITY    #
+	############################
+
+
+	# ADD SQL RETURN TYUP
+	def generate_scenario_database_from_primary_key(self,
+		primary_key: Union[int, None],
+		regions: Union[List[str], str, None] = None,
+		**kwargs
+	) -> Union[Dict[str, pd.DataFrame], None]:
+		"""
+		Generate an input database for SISEPUEDE based on the primary key.
+
+		Function Arguments
+		------------------
+		- primary_key: primary key to generate input database for
+			* returns None if primary key entered is invalid
+
+		Keyword Arguments
+		-----------------
+		- regions: list of regions or string of a region to include.
+			* If a list of regions or single region is entered, returns a
+				dictionary of input databases of the form
+				{region: df_input_region, ...}
+			* Invalid regions return None
+		- **kwargs: passed to SISEPUEDE.models.project(..., **kwargs)
+		"""
+
+		# check primary keys to run
+		if (primary_key not in self.attribute_primary.key_values):
+			self._log(f"Error in generate_scenario_database_from_primary_key: {self.key_primary} = {primary_key} not found.", type_log = "error")
+			return None
+
+		# check region
+		regions = self.regions if (regions is None) else regions
+		regions = [regions] if not isinstance(regions, list) else regions
+		regions = [x for x in regions if x in self.regions]
+		if len(regions) == 0:
+			self._log(f"Error in generate_scenario_database_from_primary_key: no valid regions found in input.", type_log = "error")
+			return None
+
+		# get designs
+		df_primary_keys = self.attribute_primary.table[
+			self.attribute_primary.table[self.key_primary].isin([primary_key])
+		]
+		all_designs = sorted(list(set(df_primary_keys[self.key_design])))
+
+		# initialize output (TEMPORARY)
+		dict_return = {}
+
+		for region in regions:
+
+			# retrieve region specific future trajectories and lhs design
+			future_trajectories_cur = self.experimental_manager.dict_future_trajectories.get(region)
+			lhs_design_cur = self.experimental_manager.dict_lhs_design.get(region)
+			region_out = self.get_output_region(region)
+
+
+			##  GET DIMENSIONS
+
+			df_primary_keys_cur_design = sf.subset_df(
+				df_primary_keys,
+				{
+					self.key_primary: primary_key
+				}
+			)
+			design = int(df_primary_keys_cur_design[self.key_design].iloc[0])
+			future = int(df_primary_keys_cur_design[self.key_future].iloc[0])
+			strategy = int(df_primary_keys_cur_design[self.key_strategy].iloc[0])
+
+
+			##  GET LHS TABLES AND FILTER
+			df_lhs_l, df_lhs_x = lhs_design_cur.retrieve_lhs_tables_by_design(design, return_type = pd.DataFrame)
+
+			# reduce lhs tables - LEs
+			df_lhs_l = df_lhs_l[
+				df_lhs_l[self.key_future].isin([future])
+			] if (df_lhs_l is not None) else df_lhs_l
+			# Xs
+			df_lhs_x = df_lhs_x[
+				df_lhs_x[self.key_future].isin([future])
+			] if (df_lhs_x is not None) else df_lhs_x
+
+
+			##  GENERATE INPUT BY FUTURE
+
+			# determine if baseline future and fetch lhs rows
+			base_future_q = (future == self.baseline_future)
+			lhs_l = df_lhs_l[df_lhs_l[self.key_future] == future].iloc[0] if ((df_lhs_l is not None) and not base_future_q) else None
+			lhs_x = df_lhs_x[df_lhs_x[self.key_future] == future].iloc[0] if ((df_lhs_x is not None) and not base_future_q) else None
+
+			# generate the futures and get available strategies
+			df_input = future_trajectories_cur.generate_future_from_lhs_vector(
+				lhs_x,
+				df_row_lhc_sample_l = lhs_l,
+				future_id = future,
+				baseline_future_q = base_future_q
+			)
+
+
+			##  FILTER BY STRATEGY
+
+			df_input = df_input[
+				(df_input[self.key_strategy] == strategy)
+			].sort_values(
+				by = [self.model_attributes.dim_time_period]
+			).drop(
+				[x for x in df_input.columns if x in self.keys_index], axis = 1
+			).reset_index(
+				drop = True
+			)
+
+
+			##  ADD IDS AND RETURN
+
+			sf.add_data_frame_fields_from_dict(
+				df_input,
+				{
+					self.field_region: region_out,
+					self.key_primary: primary_key
+				},
+				prepend_q = True
+			)
+
+			dict_return.update({region_out: df_input})
+
+		return dict_return
+
+
+
+	# ADD SQL RETURN TYUP
+	def project_scenarios(self,
+		primary_keys: Union[List[int], Dict[str, int], None],
+		return_type: Union[type, str, None] = None,
+		**kwargs
+	) -> None:
+		"""
+		Project scenarios forward for a set of primary keys.
+
+		Function Arguments
+		------------------
+		- primary_keys: list of primary keys to run OR dictionary of index keys (e.g., strategy_id, design_id)
+			with scenarios associated as values (uses AND operation to filter scenarios). If None, returns
+			all possible primary keys.
+
+		Keyword Arguments
+		-----------------
+		- return_to: specifies how to return output dataframe
+			* If pd.DataFrame, then will return a dataframe
+			* If sqlalchemy.engine.Engine, will return to a database FIGURE THIS OUT
+		- **kwargs: passed to SISEPUEDE.models.project(..., **kwargs)
+		"""
+
+		# check primary keys to run
+		if isinstance(primary_keys, dict):
+			primary_keys = sorted(list(
+					sf.subset_df(
+					self.attribute_primary.table,
+					primary_keys
+				)[self.attribute_primary.key]
+			))
+		elif isinstance(primary_keys, list):
+			primary_keys = sorted([x for x in primary_keys if x in self.attribute_primary.key_values])
+		elif primary_keys is None:
+			primary_keys = self.attribute_primary.key_values
+
+		# get designs
+		df_primary_keys = self.attribute_primary.table[
+			self.attribute_primary.table[self.key_primary].isin(primary_keys)
+		]
+		all_designs = sorted(list(set(df_primary_keys[self.key_design])))
+
+		# initialize output (TEMPORARY)
+		df_out = []
+
+
+		for region in self.regions:
+
+			# retrieve region specific future trajectories and lhs design
+			future_trajectories_cur = self.experimental_manager.dict_future_trajectories.get(region)
+			lhs_design_cur = self.experimental_manager.dict_lhs_design.get(region)
+			region_out = self.get_output_region(region)
+
+			for design in all_designs:
+
+				df_lhs_l, df_lhs_x = lhs_design_cur.retrieve_lhs_tables_by_design(design, return_type = pd.DataFrame)
+
+				# get reduced set of primary keys
+				df_primary_keys_cur_design = df_primary_keys[
+					df_primary_keys[self.key_design] == design
+				]
+				keep_futures = sorted(list(set(df_primary_keys_cur_design[self.key_future])))
+
+				# reduce lhs tables - LEs
+				df_lhs_l = df_lhs_l[
+					df_lhs_l[self.key_future].isin(keep_futures)
+				] if (df_lhs_l is not None) else df_lhs_l
+				# Xs
+				df_lhs_x = df_lhs_x[
+					df_lhs_x[self.key_future].isin(keep_futures)
+				] if (df_lhs_x is not None) else df_lhs_x
+
+
+				# next, loop over futures
+				#  Note that self.generate_future_from_lhs_vector() will return a table for all strategies
+				#  associated with the future, so we can prevent redundant calls by running all strategies
+				#  that need to be run for a given future
+
+				for future in keep_futures:
+
+					# determine if baseline future and fetch lhs rows
+					base_future_q = (future == self.baseline_future)
+					lhs_l = df_lhs_l[df_lhs_l[self.key_future] == future].iloc[0] if ((df_lhs_l is not None) and not base_future_q) else None
+					lhs_x = df_lhs_x[df_lhs_x[self.key_future] == future].iloc[0] if ((df_lhs_x is not None) and not base_future_q) else None
+
+
+					# generate the futures and get available strategies
+					df_input = future_trajectories_cur.generate_future_from_lhs_vector(
+						lhs_x,
+						df_row_lhc_sample_l = lhs_l,
+						future_id = future,
+						baseline_future_q = base_future_q
+					)
+					all_strategies = sorted(list(
+						set(df_input[self.key_strategy])
+					))
+
+					for strategy in all_strategies:
+
+						# get primary id
+						id_primary = df_primary_keys_cur_design[
+							(df_primary_keys_cur_design[self.key_future] == future) &
+							(df_primary_keys_cur_design[self.key_strategy] == strategy)
+						][self.key_primary]
+
+						id_primary = int(id_primary.iloc[0]) if (len(id_primary) > 0) else None
+
+						if id_primary in primary_keys:
+
+							# filter the data frame down
+							df_input_cur = df_input[
+								(df_input[self.key_strategy] == strategy)
+							].copy().reset_index(
+								drop = True
+							).sort_values(
+								by = [self.model_attributes.dim_time_period]
+							).drop(
+								[x for x in df_input.columns if x in self.keys_index], axis = 1
+							)
+
+							# try to run the model
+							try:
+								t0 = time.time()
+								df_output = self.models.project(df_input_cur, **kwargs)
+								df_output = sf.add_data_frame_fields_from_dict(
+									df_output,
+									{
+										self.field_region: region_out,
+										self.key_primary: id_primary
+									},
+									prepend_q = True
+								)
+								df_out.append(df_output)
+								t_elapse = sf.get_time_elapsed(t0)
+
+								self._log(f"Model run for {self.key_primary} = {id_primary} successfully completed in {t_elapse} seconds.", type_log = "info")
+
+							except Exception as e:
+
+								self._log(f"Model run for {self.key_primary} = {id_primary} failed with the following error: {e}", type_log = "error")
+
+		df_out = pd.concat(df_out, axis = 0).reset_index(drop = True)
+
+		return df_out

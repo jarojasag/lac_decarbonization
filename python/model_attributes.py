@@ -51,6 +51,7 @@ class Configuration:
             "length_units",
             "monetary_units",
             "nemomod_solver",
+            "output_method",
             "power_units",
             "region",
             "volume_units"
@@ -65,7 +66,7 @@ class Configuration:
             "global_warming_potential",
             "historical_back_proj_n_periods",
             "nemo_mod_time_periods",
-            "num_lhs_samples",
+            "num_lhc_samples",
             "random_seed",
             "time_period_u0"
         ]
@@ -172,13 +173,23 @@ class Configuration:
                         val_default = self.infer_types(attr_parameters_required.field_maps[f"{attr_parameters_required.key}_to_{field_default_val}"][k])
                         dict_conf.update({param_config: val_default})
 
+
+        ##  MODIFY SOME PARAMETERS BEFORE CHECKING
+
         # set parameters to return as a list and ensure type return is list
         params_list = ["region", "nemo_mod_time_periods"]
         for p in params_list:
             if not isinstance(dict_conf[p], list):
                 dict_conf.update({p: [dict_conf[p]]})
 
-        # check valid configuration values and update where appropriate
+        # set some to lower case
+        params_list = ["nemo_mod_solver", "output_method"]
+        for p in params_list:
+            dict_conf.update({p: str(dict_conf.get(p)).lower()})
+
+
+        ##  CHECK VALID CONFIGURATION VALUES AND UPDATE IF APPROPRIATE
+
         valid_area = self.get_valid_values_from_attribute_column(attr_area, "area_equivalent_", str, "unit_area_to_area")
         valid_energy = self.get_valid_values_from_attribute_column(attr_energy, "energy_equivalent_", str, "unit_energy_to_energy")
         valid_gwp = self.get_valid_values_from_attribute_column(attr_gas, "global_warming_potential_", int)
@@ -188,9 +199,10 @@ class Configuration:
         valid_length = self.get_valid_values_from_attribute_column(attr_length, "length_equivalent_", str, "unit_length_to_length")
         valid_mass = self.get_valid_values_from_attribute_column(attr_mass, "mass_equivalent_", str, "unit_mass_to_mass")
         valid_monetary = self.get_valid_values_from_attribute_column(attr_monetary, "monetary_equivalent_", str, "unit_monetary_to_monetary")
+        valid_output_method = ["csv", "sqlite"]
         valid_power = self.get_valid_values_from_attribute_column(attr_power, "power_equivalent_", str, "unit_power_to_power")
         valid_region = attr_region.key_values
-        valid_solvers = ["cbc", "clp", "cplex", "glpk", "gurobi"]
+        valid_solvers = ["cbc", "clp", "cplex", "gams_cplex", "glpk", "gurobi"]
         valid_time_period = attr_time_period.key_values
         valid_volume = self.get_valid_values_from_attribute_column(attr_volume, "volume_equivalent_", str)
         # map parameters to valid values
@@ -207,6 +219,7 @@ class Configuration:
             "monetary_units": valid_monetary,
             "nemo_mod_solver": valid_solvers,
             "nemo_mod_time_periods": valid_time_period,
+            "output_method": valid_output_method,
             "power_units": valid_power,
             "region": valid_region,
             "time_period_u0": valid_time_period,
@@ -229,7 +242,7 @@ class Configuration:
         # positive integer restriction
         dict_conf.update({
             "historical_back_proj_n_periods": max(dict_conf.get("historical_back_proj_n_periods"), 1),
-            "num_lhs_samples": max(dict_conf.get("num_lhs_samples"), 0),
+            "num_lhc_samples": max(dict_conf.get("num_lhc_samples", 0), 0),
             "random_seed": max(dict_conf.get("random_seed"), 1)
         })
 

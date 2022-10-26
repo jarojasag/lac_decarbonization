@@ -51,10 +51,16 @@ def _write_dataframes_to_db(
     preseve_table_schema: bool = True
 ):
     """
-        write a dictionary of tables to a data base
+        Write a dictionary of tables to an SQL data base.
+
+        Function Arguments
+        ------------------
         - dict_tables: dictionary of form {TABLENAME: pd.DataFrame, ...} used to write the table to the database
         - db_engine: an existing SQLAlchemy database engine or a file path to an SQLite database used to establish a connection
             * If a file path is specified, the connection will be opened and closed within the function
+
+        Keyword Arguments
+        -----------------
         - preseve_table_schema: preserve existing schema? If so, before writing new tables, rows in existing tables will be deleted and the table will be appended.
     """
 

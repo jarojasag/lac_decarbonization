@@ -669,11 +669,10 @@ class SamplingUnit:
 		lhs_trial_x = 1.0 if (lhs_trial_x is None) else lhs_trial_x
 		lhs_trial_l = 1.0 if (lhs_trial_l is None) else lhs_trial_l
 
-		# some checks
-		if (lhs_trial_x < 0):
-				raise ValueError(f"The value of lhs_trial_x = {lhs_trial_x} is invalid. lhs_trial_x must be >= 0.")
-		if (lhs_trial_l < 0):
-				raise ValueError(f"The value of lhs_trial_l = {lhs_trial_l} is invalid. lhs_trial_l must be >= 0.")
+		# some additional checks for potential negative numbers
+		baseline_future_q = True if (lhs_trial_x < 0) else baseline_future_q
+		lhs_trial_x = 1.0 if (lhs_trial_x < 0) else lhs_trial_x
+		lhs_trial_l = 1.0 if (lhs_trial_l < 0) else lhs_trial_l
 
 		# initialization
 		all_strats = self.dict_id_values.get(self.key_strategy)
@@ -1333,6 +1332,6 @@ class FutureTrajectories:
 			dict_sampling_units.update({sg: samp})
 
 		t_elapse = sf.get_time_elapsed(t0)
-		self._log(f"...	{n_sg} sampling units complete in {t_elapse} seconds.", type_log = "info")
+		self._log(f"\t{n_sg} sampling units complete in {t_elapse} seconds.", type_log = "info")
 
 		return n_sg, all_sample_groups, dict_sampling_units
