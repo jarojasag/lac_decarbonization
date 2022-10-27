@@ -420,7 +420,7 @@ class SISEPUEDEFileStructure:
 
 		# check existence
 		if not os.path.exists(self.dir_ingestion):
-			self._log(f"\tIngestion templates subdirectory '{self.dir_ingestion}' not found")
+			self._log(f"\tIngestion templates subdirectory '{self.dir_ingestion}' not found", type_log = "error")
 			self.dir_ingestion = None
 		else:
 			self.dict_data_mode_to_template_directory = dict(zip(
@@ -510,10 +510,15 @@ class SISEPUEDEFileStructure:
 		count_errors = 0
 		msg_error = ""
 
-		if self.dir_ref_nemo is not None:
+		if (self.dir_ref_nemo is not None) and (self.dir_jl is not None):
 
 			# nemo mod input files - specify required, run checks
-			model_electricity = ElectricEnergy(self.model_attributes, self.dir_ref_nemo)
+			model_electricity = ElectricEnergy(
+				self.model_attributes,
+				self.dir_jl,
+				self.dir_ref_nemo,
+				initialize_julia = False
+			)
 			self.required_reference_tables_nemomod = model_electricity.required_reference_tables
 
 			# initialize dictionary of file paths
@@ -590,6 +595,7 @@ class SISEPUEDEModels:
 	def __init__(self,
 		model_attributes: ModelAttributes,
 		allow_electricity_run: bool = True,
+		fp_julia: Union[str, None] = None,
 		fp_nemomod_reference_files: Union[str, None] = None,
 		fp_nemomod_temp_sqlite_db: Union[str, None] = None,
 		logger: Union[logging.Logger, None] = None
@@ -599,8 +605,10 @@ class SISEPUEDEModels:
 		self.model_attributes = model_attributes
 
 		# initialize sql path for electricity projection and path to electricity models
-		self._initialize_nemomod_reference_path(allow_electricity_run, fp_nemomod_reference_files)
-		self._initialize_nemomod_sql_path(fp_nemomod_temp_sqlite_db)
+		self._initialize_path_nemomod_reference(allow_electricity_run, fp_nemomod_reference_files)
+		self._initialize_path_nemomod_sql(fp_nemomod_temp_sqlite_db)
+		# initialize last--depends on self.allow_electricity_run
+		self._initialize_path_julia(fp_julia)
 
 		# initialize models
 		self._initialize_models()
@@ -657,14 +665,42 @@ class SISEPUEDEModels:
 
 		self.model_afolu = AFOLU(self.model_attributes)
 		self.model_circecon = CircularEconomy(self.model_attributes)
-		self.model_electricity = ElectricEnergy(self.model_attributes, self.fp_nemomod_reference_files) if self.allow_electricity_run else None
+		self.model_electricity = ElectricEnergy(
+			self.model_attributes,
+			self.fp_julia,
+			self.fp_nemomod_reference_files,
+			logger = self.logger
+		) if self.allow_electricity_run else None
 		self.model_energy = NonElectricEnergy(self.model_attributes)
 		self.model_ippu = IPPU(self.model_attributes)
 		self.model_socioeconomic = Socioeconomic(self.model_attributes)
 
 
 
-	def _initialize_nemomod_reference_path(self,
+	def _initialize_path_julia(self,
+		fp_julia: Union[str, None]
+	) -> None:
+		"""
+		Initialize the path to the NemoMod SQL database used to execute runs. Initializes
+			the following properties:
+
+			* self.fp_julia
+
+			NOTE: Will set `self.allow_electricity_run = False` if the path is not found.
+		"""
+
+		self.fp_julia = None
+		if isinstance(fp_julia, str):
+			if os.path.exists(fp_julia):
+				self.fp_julia = fp_julia
+				self._log(f"Set Julia directory for modules and environment to '{self.fp_julia}'.", type_log = "info")
+			else:
+				self.allow_electricity_run = False
+				self._log(f"Invalid path '{fp_julia}' specified for Julia reference modules and environment: the path does not exist. Setting self.allow_electricity_run = False.", type_log = "error")
+
+
+
+	def _initialize_path_nemomod_reference(self,
 		allow_electricity_run: bool,
 		fp_nemomod_reference_files: Union[str, None]
 	) -> None:
@@ -683,16 +719,17 @@ class SISEPUEDEModels:
 		"""
 
 		self.allow_electricity_run = False
+		self.fp_nemomod_reference_files = None
+
 		try:
 			self.fp_nemomod_reference_files = sf.check_path(fp_nemomod_reference_files, False)
 			self.allow_electricity_run = allow_electricity_run
 		except Exception as e:
-			self.fp_nemomod_reference_files = None
 			self._log(f"Path to NemoMod reference files '{fp_nemomod_reference_files}' not found. The Electricity model will be disallowed from running.", type_log = "warning")
 
 
 
-	def _initialize_nemomod_sql_path(self,
+	def _initialize_path_nemomod_sql(self,
 		fp_nemomod_temp_sqlite_db: Union[str, None]
 	) -> None:
 		"""
@@ -704,20 +741,23 @@ class SISEPUEDEModels:
 
 		valid_extensions = ["sqlite", "db"]
 
+		# initialize as temporary
+		fn_tmp = os.path.basename(tempfile.NamedTemporaryFile().name)
+		fn_tmp = f"{fn_tmp}.sqlite"
+		self.fp_nemomod_temp_sqlite_db = os.path.join(
+			os.getcwd(),
+			fn_tmp
+		)
+
 		if isinstance(fp_nemomod_temp_sqlite_db, str):
 			try_endings = [fp_nemomod_temp_sqlite_db.endswith(x) for x in valid_extensions]
 
 			if any(try_endings):
 				self.fp_nemomod_temp_sqlite_db = fp_nemomod_temp_sqlite_db
-			else:
-				fn_tmp = os.path.basename(tempfile.NamedTemporaryFile().name)
-				fn_tmp = f"{fn_tmp}.sqlite"
-				self.fp_nemomod_temp_sqlite_db = os.path.join(
-					os.getcwd(),
-					fn_tmp
-				)
+				self._log(f"Successfully initialized NemoMod temporary database path as {self.fp_nemomod_temp_sqlite_db}.", type_log = "info")
 
-				self._log(f"Invalid path '{fp_nemomod_temp_sqlite_db}' specified as fp_nemomod_temp_sqlite_db. Using temporary path {self.fp_nemomod_temp_sqlite_db}.")
+			else:
+				self._log(f"Invalid path '{fp_nemomod_temp_sqlite_db}' specified as fp_nemomod_temp_sqlite_db. Using temporary path {self.fp_nemomod_temp_sqlite_db}.", type_log = "info")
 
 
 
@@ -1108,7 +1148,7 @@ class SISEPUEDEExperimentalManager:
 		# verify input type
 		if not isinstance(attribute_design, AttributeTable):
 			tp = str(type(attribute_design))
-			self._log(f"Invalid type '{tp}' in specification of attribute_design: attribute_design should be an AttributeTable.")
+			self._log(f"Invalid type '{tp}' in specification of attribute_design: attribute_design should be an AttributeTable.", type_log = "error")
 
 		# check required fields (throw error if not present)
 		required_fields = [
@@ -1747,28 +1787,35 @@ class SISEPUEDE:
 
 
 	def _initialize_models(self,
+		dir_jl: Union[str, None] = None,
+		dir_nemomod_reference_files: Union[str, None] = None,
 		fp_sqlite_tmp_nemomod_intermediate: Union[str, None] = None
 	) -> None:
 		"""
 		Initialize models for SISEPUEDE. Sets the following properties:
 
+			* self.dir_jl
 			* self.dir_nemomod_reference_files
 			* self.fp_sqlite_tmp_nemomod_intermediate
 			* self.models
 
 		Optional Arguments
 		------------------
+		For the following arguments, entering = None will return the SISEPUEDE default
+		- dir_jl: file path to julia environment and supporting module directory
+		- dir_nemomod_reference_files: directory containing NemoMod reference files
 		- fp_nemomod_temp_sqlite_db: file name for temporary database used to run NemoMod
-			* If none, reverts to SISEPUEDE default
 		"""
 
-		dir_nemomod_reference_files = self.file_struct.dir_ref_nemo
+		dir_jl = self.file_struct.dir_jl if (dir_jl is None) else dir_jl
+		dir_nemomod_reference_files = self.file_struct.dir_ref_nemo if (dir_nemomod_reference_files is None) else dir_nemomod_reference_files
 		fp_sqlite_tmp_nemomod_intermediate = self.file_struct.fp_sqlite_tmp_nemomod_intermediate if (fp_sqlite_tmp_nemomod_intermediate is None) else fp_sqlite_tmp_nemomod_intermediate
 
 		try:
 			self.models = SISEPUEDEModels(
 				self.model_attributes,
 				allow_electricity_run = self.file_struct.allow_electricity_run,
+				fp_julia = dir_jl,
 				fp_nemomod_reference_files = dir_nemomod_reference_files,
 				fp_nemomod_temp_sqlite_db = fp_sqlite_tmp_nemomod_intermediate,
 				logger = self.logger
@@ -1782,6 +1829,7 @@ class SISEPUEDE:
 			self._log(f"Error trying to initialize models: {e}", type_log = "error")
 			raise RuntimeError()
 
+		self.dir_jl = dir_jl
 		self.dir_nemomod_reference_files = dir_nemomod_reference_files
 		self.fp_sqlite_tmp_nemomod_intermediate = fp_sqlite_tmp_nemomod_intermediate
 
