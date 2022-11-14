@@ -17,17 +17,6 @@ from typing import *
 
 ##  import the julia api
 from julia.api import Julia
-"""
-from julia import Base
-from julia import Pkg
-Pkg.activate(sa.dir_jl)
-from julia import NemoMod
-from julia import Cbc
-from julia import Clp
-from julia import GAMS
-from julia import Gurobi
-from julia import JuMP
-"""
 
 
 
@@ -455,8 +444,8 @@ class ElectricEnergy:
             * self.dict_solver_to_julia_package
             * self.dir_jl
             * self.fp_pyjulia_support_functions
-            * self.optimizer
             * self.solver
+            * self.solver_module
             * self.solver_package
 
         Function Arguments
@@ -548,28 +537,6 @@ class ElectricEnergy:
         # load
         try:
             self.solver_module = importlib.import_module(f"julia.{self.solver_package}")
-            """
-            if self.solver_package == "Cbc":
-                #from julia import Cbc
-                self.solver_module = importlib.import_module("julia.Cbc")
-                #self.optimizer = self.julia_jump.Model(self.solver_module.Optimizer)
-            elif self.solver_package == "Clp":
-                self.solver_module = importlib.import_module("julia.Clp")
-                #optimizer = self.julia_jump.Model(Clp.Optimizer)
-            elif self.solver_package == "GAMS":
-                from julia import GAMS
-                #self.optimizer = self.julia_jump.Model(GAMS.Optimizer)
-                self.julia_jump.set_optimizer_attribute(self.optimizer, "Solver", "cplex") if (self.solver == "gams_cplex") else None
-            elif self.solver_package == "GLPK":
-                from julia import GLPK
-                #self.optimizer = self.julia_jump.Model(GLPK.Optimizer)
-            elif self.solver_package == "Gurobi":
-                from julia import Gurobi
-                #self.optimizer = self.julia_jump.Model(Gurobi.Optimizer)
-            """
-            self.optimizer = self.julia_jump.Model(self.solver_module.Optimizer)
-            self.julia_jump.set_optimizer_attribute(self.optimizer, "Solver", "cplex") if (self.solver == "gams_cplex") else None
-
             self._log(f"Successfully initialized JuMP optimizer from solver module {self.solver_package}.", type_log = "info")
         except Exception as e:
             self._log(f"An error occured while trying to initialize the JuMP optimizer from package: {e}", type_log = "error")
@@ -891,8 +858,9 @@ class ElectricEnergy:
         # set sorting hierarchy, then drop original id field
         fields_sort_hierarchy = [x for x in self.fields_nemomod_sort_hierarchy if (x in fields_to_add) and (x != self.field_nemomod_id)]
         fields_sort_hierarchy = fields_sort_hierarchy + [field_id_rnm] if (field_id_rnm in df_input.columns) else fields_sort_hierarchy
-        df_input = df_input.sort_values(by = fields_sort_hierarchy).reset_index(drop = True)
+        df_input = df_input.sort_values(by = fields_sort_hierarchy).reset_index(drop = True) if (len(fields_sort_hierarchy) > 0) else df_input
         df_input.drop([field_id_rnm], axis = 1, inplace = True) if (field_id_rnm in df_input.columns) else None
+
         # add the final id field if necessary
         df_input = self.add_index_field_id(df_input) if (self.field_nemomod_id in fields_to_add) else df_input
         df_input = df_input[[x for x in self.fields_nemomod_sort_hierarchy if x in df_input.columns]]
@@ -1460,8 +1428,8 @@ class ElectricEnergy:
         # set some defaults
         subsector = self.model_attributes.get_variable_subsector(modvar, throw_error_q = False)
         if subsector is None:
-            # logger.log()
             return None
+
         attr = self.model_attributes.get_attribute_table(subsector)
         pycat = self.model_attributes.get_subsector_attribute(subsector, "pycategory_primary")
         # get the variable
@@ -2250,6 +2218,13 @@ class ElectricEnergy:
         # build output table
         df_out = attribute_nemomod_table.table[[attribute_nemomod_table.key]].copy().rename(columns = {attribute_nemomod_table.key: self.field_nemomod_table_name})
         df_out[self.field_nemomod_value] = df_out[self.field_nemomod_table_name].replace(dict_repl)
+        df_out = self.add_multifields_from_key_values(
+            df_out,
+            [
+                self.field_nemomod_id
+            ]
+        )
+
         dict_return = {self.model_attributes.table_nemomod_default_params: df_out}
 
         return dict_return
@@ -4603,19 +4578,20 @@ class ElectricEnergy:
 
         ##  1. PREPARE AND POPULATION THE DATABASE
 
-        str_prepend_sqlite = "sqlite:///"
         # check engine/fp_database
+        str_prepend_sqlite = "sqlite:///"
         if (engine is None) and (fp_database is None):
             raise RuntimeError(f"Error in ElectricEnergy.project(): either 'engine' or 'fp_database' must be specified.")
         elif (fp_database is None):
             fp_database = str(engine.url).replace(str_prepend_sqlite, "")
+
         # check path of NemoMod database and create if necessary
         recreate_engine_q = False
         if not os.path.exists(fp_database):
-            # ADD LOGGING HERE
-            self._log(f"\tPath to temporary NemoMod database '{fp_database}' not found. Creating...")
+            self._log(f"\tPath to temporary NemoMod database '{fp_database}' not found. Creating...", type_log = "info")
             self.julia_nemomod.createnemodb(fp_database)
             recreate_engine_q = True
+
         # check the engine and respecify if the original database, for whatever reason, no longer exists
         if (engine is None) or recreate_engine_q:
             engine = sqlalchemy.create_engine(f"{str_prepend_sqlite}{fp_database}")
@@ -4626,11 +4602,16 @@ class ElectricEnergy:
             dict_ref_tables[self.model_attributes.table_nemomod_capacity_factor],
             dict_ref_tables[self.model_attributes.table_nemomod_specified_demand_profile]
         )
-        # write the data to the database
-        sqlutil._write_dataframes_to_db(
-            dict_to_sql,
-            engine
-        )
+
+        try:
+            # write the data to the database
+            sqlutil._write_dataframes_to_db(
+                dict_to_sql,
+                engine
+            )
+        except Exception as e:
+            self._log(f"Error writing data to {fp_database}: {e}", type_log = "error")
+            return None
 
 
         ##  2. SET UP AND CALL NEMOMOD
@@ -4639,24 +4620,11 @@ class ElectricEnergy:
         attr_time_period = self.model_attributes.dict_attributes[f"dim_{self.model_attributes.dim_time_period}"]
         vector_calc_time_periods = self.model_attributes.configuration.get("nemo_mod_time_periods") if (vector_calc_time_periods is None) else [x for x in attr_time_period.key_values if x in vector_calc_time_periods]
         vector_calc_time_periods = self.transform_field_year_nemomod(vector_calc_time_periods)
-        # get the solver
-        """
-        solver = self.model_attributes.configuration.get("nemo_mod_solver") if (solver is None) else solver
-        sf.check_set_values([solver], self.model_attributes.configuration.valid_solver)
-        if solver == "cbc":
-            optimizer = JuMP.Model(Cbc.Optimizer)
-        elif solver == "clp":
-            optimizer = JuMP.Model(Clp.Optimizer)
-        elif solver == "gams_cplex":
-            optimizer = JuMP.Model(GAMS.Optimizer)
-            JuMP.set_optimizer_attribute(optimizer, "Solver", "cplex")
-        elif solver == "glpk":
-            optimizer = JuMP.Model(GLPK.Optimizer)
-        elif solver == "gurobi":
-            optimizer = JuMP.Model(Gurobi.Optimizer)
-        """
-        #self.solver_module = importlib.import_module(f"julia.{self.solver_package}")
-        self.optimizer = self.julia_jump.Model(self.solver_module.Optimizer)
+
+        # get the optimizer (must reset each time)
+        optimizer = self.julia_jump.Model(self.solver_module.Optimizer)
+        self.julia_jump.set_optimizer_attribute(optimizer, "Solver", "cplex") if (solver == "gams_cplex") else None
+
         # set up vars to save
         vars_to_save = ", ".join(self.required_nemomod_output_tables)
 
@@ -4664,7 +4632,7 @@ class ElectricEnergy:
             # call nemo mod
             result = self.julia_nemomod.calculatescenario(
                 fp_database,
-                jumpmodel = self.optimizer,
+                jumpmodel = optimizer,
                 numprocs = 1,
                 calcyears = vector_calc_time_periods,
                 reportzeros = False,
@@ -4688,6 +4656,7 @@ class ElectricEnergy:
                 df_out += [
                     self.retrieve_output_tables_from_sql(engine, df_elec_trajectories)
                 ]
+
         # if specified in output, create a uniformly-valued dataframe for runs that did not successfully complete
         if return_blank_df_on_error and not successful_run_q:
             modvars_instantiate = [
@@ -4708,10 +4677,9 @@ class ElectricEnergy:
                     modvar, n = len(df_elec_trajectories), blank_val = missing_vals_on_error
                 ) for modvar in modvars_instantiate
             ]
-        # temporary
-        print(result)
-        # LOG STATUS
-        # RECORD OUTPUT
+
+        msg = f"NemoMod ran successfully with the following status: {result}" if successful_run_q else f"NemoMod run failed with result {result}. Populating missing data with value {missing_vals_on_error}."
+        self._log(msg, type_log = "info")
 
 
         ##  ADD IN UNUSED FUEL

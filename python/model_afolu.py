@@ -440,7 +440,11 @@ class AFOLU:
 
     ###   AGRICULTURE
 
-    def check_cropland_fractions(self, df_in, frac_type = "initial", thresh_for_correction: float = 0.01):
+    def check_cropland_fractions(self,
+        df_in,
+        frac_type = "initial",
+        thresh_for_correction: float = 0.01
+    ):
 
             if frac_type not in ["initial", "calculated"]:
                 raise ValueError(f"Error in frac_type '{frac_type}': valid values are 'initial' and 'calculated'.")

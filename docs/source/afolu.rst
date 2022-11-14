@@ -28,6 +28,15 @@ Agriculture requires the following variables.
  |
  | These variables are used in Equations 11.6 and 11.7 (Volume 4) of the IPCC NGHGI to estimate :math:`\text{N}_2\text{O}`
 
+ Variables by Partial Category
+ -----------------------------
+
+ Agriculture includes some variables that apply only to a subset of categories. These variables are described below. The categories that variables apply to are described in the ``category`` column.
+
+ .. csv-table:: Trajectories of the following variables are needed for **some** categories `$CAT-AGRICULTURE`. If they are independent of categories, the category will show up as **none**.
+    :file: ./csvs/table_varreqs_by_partial_category_af_agrc.csv
+    :header-rows: 1
+
 Categories
 ----------
 

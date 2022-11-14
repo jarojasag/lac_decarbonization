@@ -2,7 +2,7 @@ import numpy as np
 import os, os.path
 import pandas as pd
 import support_functions as sf
-from typing import *
+from typing import Union
 
 
 ##  the AttributeTable class checks existence, keys, key values, and generates field maps
@@ -93,78 +93,3 @@ class AttributeTable:
         if key_value not in self.key_values:
             raise KeyError(f"Error: invalid AttributeTable key value {key_value}.")
         return self.key_values.index(key_value)
-
-
-
-###################################
-#    SOME SUPPORTING FUNCTIONS    #
-###################################
-
-def concatenate_attribute_tables(
-    key_shared: str,
-    *args,
-    fields_to_dict: Union[List, None] = None,
-    resolve_key_conflicts: Union[str, bool] = False,
-    **kwargs
-) -> AttributeTable:
-    """
-    Merge attribute tables to a shared key.
-
-    Function Arguments
-    ------------------
-    - key_shared: new key to use across attribute tables
-    * args: AttributeTables to concatenate
-
-    Keyword Arguments
-    -----------------
-    - fields_to_dict: fields to include in field maps.
-        * If None, attempts to create field maps for all fields
-    - resolve_key_conflicts: passed to pd.DataFrae.drop_duplicates()
-        to reconcile duplicate key entries. Options are detailed
-        below (from ?pd.DataFrame.drop_duplicates):
-
-        "
-        Determines which duplicates (if any) to keep.
-        - ``first``: Drop duplicates except for the first occurrence.
-        - ``last``: Drop duplicates except for the last occurrence.
-        - False: Drop all duplicates.
-        "
-    - **kwargs: passed to AttributeTable to initialize output table
-    """
-    att_out = []
-    header = None
-
-    for att in args:
-        if isinstance(att, AttributeTable):
-            tab_cur = att.table.copy().rename(columns = {att.key: key_shared})
-            header = list(tab_cur.columns) if (header is None) else header
-            if set(header).issubset(set(tab_cur.columns)):
-                att_out.append(tab_cur)
-
-    if len(att_out) == 0:
-        return None
-
-
-    # concatenate the table and drop any duplicate rows
-    att_out = pd.concat(
-        att_out, axis = 0
-    ).drop_duplicates().reset_index(
-        drop = True
-    )
-
-    # check key and drop
-    att_out.drop_duplicates(
-        subset = [key_shared],
-        keep = resolve_key_conflicts,
-        inplace = True
-    )
-
-    # create attribute table
-    att_out = AttributeTable(
-        att_out,
-        key_shared,
-        att_out,
-        **kwargs
-    )
-
-    return att_out

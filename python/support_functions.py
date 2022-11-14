@@ -3,7 +3,7 @@ import numpy as np
 import os, os.path
 import pandas as pd
 import time
-from typing import Union
+from typing import *
 import warnings
 
 
@@ -183,26 +183,78 @@ def check_fields(
 
 
 # check that a dictionary contains the required keys
-def check_keys(dict_in, keys: list):
+def check_keys(
+    dict_in: dict,
+    keys: list,
+    throw_error_q: bool = True
+) -> bool:
+    """
+    Check keys in `dict_in` to ensure that required keys `keys` are contained.
+
+    Function Arguments
+    ------------------
+    - dict_in: dictionary to check keys in
+    - keys: required keys
+
+    Keyword Arguments
+    -----------------
+    - throw_error_q: Throw an error if any required keys are not found?
+        * If `throw_error_q == True`, will throw an error if required keys
+            are not found
+        * If `throw_error_q == False`, returns False if required keys are
+            not found
+
+    """
     s_keys_dict = set(dict_in.keys())
     s_keys_check = set(keys)
     if s_keys_check.issubset(s_keys_dict):
         return True
     else:
         fields_missing = format_print_list(s_keys_check - s_keys_dict)
-        raise KeyError(f"Required keys {fields_missing} not found in the dictionary.")
+        msg = f"Required keys {fields_missing} not found in the dictionary."
+
+        if throw_error_q:
+            raise KeyError(msg)
+        else:
+            warnings.warn(msg)
+            return False
 
 
 
 ##  check path and create a directory if needed
-def check_path(fp, create_q = False):
+def check_path(
+    fp: str,
+    create_q: bool = False,
+    throw_error_q: bool = True
+) -> str:
+    """
+    Check a file path `fp` and create it if `create_q == True`
+
+    Function Arguments
+    ------------------
+    - fp: path (directory or file) to check
+    Keyword Arguments
+    -----------------
+    - create_q: create a directory if it does not exist?
+    - throw_error_q: Throw an error if any required keys are not found?
+        * If `throw_error_q == True`, will throw an error if required keys
+            are not found
+        * If `throw_error_q == False`, returns False if required keys are
+            not found
+    """
+
     if os.path.exists(fp):
         return fp
     elif create_q:
         os.makedirs(fp, exist_ok = True)
         return fp
     else:
-        raise ValueError(f"Path '{fp}' not found. It will not be created.")
+        msg = f"Path '{fp}' not found. It will not be created."
+        if not throw_error_q:
+            warnings.warn(msg)
+            return None
+        else:
+            raise RuntimeError(msg)
 
 
 
@@ -212,7 +264,7 @@ def check_row_sums(
     sum_restriction: float = 1,
     thresh_correction: float = 0.001,
     msg_pass: str = ""
-):
+) -> np.ndarray:
     sums = array.sum(axis = 1)
     max_diff = np.max(np.abs(sums - sum_restriction))
     if max_diff > thresh_correction:
@@ -223,7 +275,11 @@ def check_row_sums(
 
 
 ##  print a set difference; sorts to ensure easy reading for user
-def check_set_values(subset: set, superset: set, str_append: str = "") -> str:
+def check_set_values(
+    subset: set,
+    superset: set,
+    str_append: str = ""
+) -> str:
     if not set(subset).issubset(set(superset)):
         invalid_vals = list(set(subset) - set(superset))
         invalid_vals.sort()
@@ -233,7 +289,10 @@ def check_set_values(subset: set, superset: set, str_append: str = "") -> str:
 
 
 ##  clean names of an input table to eliminate spaces/unwanted characters
-def clean_field_names(nms, dict_repl: dict = {"  ": " ", " ": "_", "$": "", "\\": "", "\$": "", "`": "", "-": "_", ".": "_", "\ufeff": "", ":math:text": "", "{": "", "}": ""}):
+def clean_field_names(
+    nms: list,
+    dict_repl: dict = {"  ": " ", " ": "_", "$": "", "\\": "", "\$": "", "`": "", "-": "_", ".": "_", "\ufeff": "", ":math:text": "", "{": "", "}": ""}
+) -> list:
     # check return type
     return_df_q =  False
     if type(nms) in [pd.core.frame.DataFrame]:
@@ -330,8 +389,96 @@ def do_array_mult(
 
 
 ##  simple but often used function
-def format_print_list(list_in, delim = ","):
+def format_print_list(
+    list_in: list,
+    delim = ","
+) -> str:
     return ((f"{delim} ").join(["'%s'" for x in range(len(list_in))]))%tuple(list_in)
+
+
+
+def get_csv_subset(
+    fp_table: Union[str, None],
+    dict_subset: Union[Dict[str, List], None],
+    fields_extract: Union[List[str], None] = None,
+    chunk_size: int = 100000,
+    max_iter: Union[int, None] = None,
+    drop_duplicates: bool = True
+) -> pd.DataFrame:
+    """
+    Return a subset of a CSV written in persistent storage without loading
+        the entire file into memory (see PyTables for potential speed
+        improvement).
+
+    Function Arguments
+    ------------------
+    - fp_table: file path to CSV to read in
+    - dict_subset: dictionary of fields to subset on, e.g.,
+
+        dict_subset = {
+            field_a = [v_a1, v_a2, ..., v_am)],
+            field_b = [v_b1, v_b2, ..., v_bm)],
+            .
+            .
+            .
+        }
+
+        * NOTE: only accepts discrete values
+
+    Optional Arguments
+    ------------------
+    - fields_extract: fields to extract from the data frame.
+        * If None, extracts all fields
+
+    Keyword Arguments
+    -----------------
+    - fields_extract: fields to extract from the data frame.
+    - chunk_size: get_csv_subset operates as an iterator, reading in
+        chunks of data of length `chunk_size`. Larger values may be more
+        efficient on machines with higher memory.
+    - max_iter: optional specification of a maximum number of iterations.
+        Only should be used for sampling data or when the structure of rows
+        is known.
+    - drop_duplicates: drop duplicates in table?
+    """
+
+    df_obj = pd.read_csv(
+        fp_table,
+        iterator = True,
+        chunksize = chunk_size,
+        engine = "c",
+        usecols = fields_extract
+    )
+
+    df_out = []
+    keep_going = True
+    i = 0
+
+    while keep_going:
+
+        try:
+            df_chunk = df_obj.get_chunk()
+            df_chunk = subset_df(
+                df_chunk,
+                dict_subset
+            )
+
+            df_chunk.drop_duplicates(inplace = True) if drop_duplicates else None
+
+        except Exception as e:
+            keep_going = False
+            break
+
+        df_out.append(df_chunk) if (len(df_chunk) > 0) else None
+
+        i += 1
+
+        keep_going = False if (df_chunk is None) else keep_going
+        keep_going = keep_going & (True if (max_iter is None) else (i < max_iter))
+
+    df_out = pd.concat(df_out, axis = 0).reset_index(drop = True) if (len(df_out) > 0) else None
+
+    return df_out
 
 
 
@@ -363,6 +510,28 @@ def get_vector_growth_rates_from_first_element(arr: np.ndarray) -> np.ndarray:
     arr = np.cumprod(arr, axis = 0)
 
     return arr
+
+
+
+def list_dict_keys_with_same_values(self,
+    dict_in: dict,
+    delim: str = "; "
+) -> str:
+    """
+    Scan `dict_in` for keys associated with repeat values. Returns ""
+    if no two keys are associated with the same values.
+    """
+    combs = itertools.combinations(list(dict_in.keys()), 2)
+    str_out = []
+    for comb in combs:
+        comb_0 = dict_in.get(comb[0])
+        comb_1 = dict_in.get(comb[1])
+        if comb_0 == comb_1:
+            comb_out = f"'{comb_0}'" if isinstance(comb_0, str) else comb_0
+            str_out.append(f"{comb[0]} and {comb[1]} (both = {comb_out})")
+    str_out = delim.join(str_out) if (len(str_out) > 0) else ""
+
+    return str_out
 
 
 
@@ -566,10 +735,15 @@ def orient_df_by_reference_vector(
 
 
 
-##  print a set difference; sorts to ensure easy reading for user
-def print_setdiff(set_required: set, set_check: set) -> str:
-    missing_vals = list(set_required - set_check)
-    missing_vals.sort()
+##
+def print_setdiff(
+    set_required: set,
+    set_check: set
+) -> str:
+    """
+    Print a set difference; sorts to ensure easy reading for user.
+    """
+    missing_vals = sorted(list(set_required - set_check))
     return format_print_list(missing_vals)
 
 
@@ -691,7 +865,9 @@ def replace_numerical_column_from_merge(
 
 
 ##  quick function to reverse dictionaries
-def reverse_dict(dict_in: dict) -> dict:
+def reverse_dict(
+    dict_in: dict
+) -> dict:
     # check keys
     s_vals = set(dict_in.values())
     s_keys = set(dict_in.keys())
@@ -703,14 +879,22 @@ def reverse_dict(dict_in: dict) -> dict:
 
 
 ##  set a vector to element-wise stay within bounds
-def scalar_bounds(scalar, bounds: tuple):
+def scalar_bounds(
+    scalar: Union[float, int],
+    bounds: tuple
+) -> Union[float, int]:
     bounds = np.array(bounds).astype(float)
+
     return min([max([scalar, min(bounds)]), max(bounds)])
 
 
 
 ##  multiple string replacements using a dictionary
-def str_replace(str_in: str, dict_replace: dict) -> str:
+def str_replace(
+    str_in: str,
+    dict_replace: dict
+) -> str:
+
     for k in dict_replace.keys():
         str_in = str_in.replace(k, dict_replace[k])
     return str_in
@@ -718,14 +902,44 @@ def str_replace(str_in: str, dict_replace: dict) -> str:
 
 
 ##  subset a data frame using a dictionary
-def subset_df(df, dict_in):
+def subset_df(
+    df: pd.DataFrame,
+    dict_in: Union[Dict[str, List], None]
+) -> pd.DataFrame:
+    """
+    Function Arguments
+    ------------------
+    - df: data frame to reduce
+    = dict_in: dictionary used to reduce df that takes the following form:
+
+        dict_in = {
+            field_a = [v_a1, v_a2, v_a3, ... v_an],
+            field_b = v_b,
+            .
+            .
+            .
+        }
+
+        where `field_a` and `field_b` are fields in the data frame and
+
+            [v_a1, v_a2, v_a3, ... v_an]
+
+        is a list of acceptable values to filter on, and
+
+            v_b
+
+        is a single acceptable value for field_b.
+
+    """
+
+
+    dict_in = {} if not isinstance(dict_in, dict) else dict_in
+
     for k in dict_in.keys():
         if k in df.columns:
-            if type(dict_in[k]) != list:
-                val = [dict_in[k]]
-            else:
-                val = dict_in[k]
+            val = [dict_in.get(k)] if not isinstance(dict_in.get(k), list) else dict_in.get(k)
             df = df[df[k].isin(val)]
+
     return df
 
 

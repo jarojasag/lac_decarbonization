@@ -18,8 +18,9 @@ class SamplingUnit:
 
 	Initialization Arguments
 	------------------------
-	- df_variable_definition: DataFrame to
-	- dict_baseline_ids: dictionary mapping a string of a baseline id field to a baseline id value (integer)
+	- df_variable_definition: DataFrame used to define variable specifications
+	- dict_baseline_ids: dictionary mapping a string of a baseline id field to a
+		baseline id value (integer)
 	- time_period_u0: first time period with uncertainty
 
 	Keyword Arguments
@@ -30,11 +31,23 @@ class SamplingUnit:
 	- field_time_period: field used to denote the time period
 	- field_uniform_scaling_q: field used to identify whether or not a variable
 	- field_variable: field used to specify variables
-	- field_variable_trajgroup: field used to identify the trajectory group (integer)
-	- field_variable_trajgroup_type: field used to identify the trajectory group type (max, min, mix, or lhs)
+	- field_variable_trajgroup: field used to identify the trajectory group
+		(integer)
+	- field_variable_trajgroup_type: field used to identify the trajectory group
+		type (max, min, mix, or lhs)
 	- key_strategy: field used to identify the strategy (int)
-		* This field is important as uncertainty in strategies is assessed differently than uncetainty in other variables
-	- missing_flag_trajgroup: flag used to identify null trajgroups (default is -999)
+		* This field is important as uncertainty in strategies is assessed
+			differently than uncetainty in other variables
+	- missing_flag_trajgroup: flag used to identify null trajgroups (default is
+		-999)
+	- regex_id: regular expression used to identify id fields in the input
+		template
+	- regex_max: re.Pattern (compiled regular expression) used to match the
+		field storing the maximum scalar values at the final time period
+	- regex_min: re.Pattern used to match the field storing the minimum scalar
+		values at the final time period
+	- regex_tp: re.Pattern used to match the field storing data values for each
+		time period
 	"""
 	def __init__(self,
 		df_variable_definition: pd.DataFrame,
@@ -42,18 +55,24 @@ class SamplingUnit:
 		time_period_u0: int,
 		fan_function_specification: str = "linear",
 		field_time_period: str = "time_period",
+		field_trajgroup_no_vary_q: str = "trajgroup_no_vary_q",
 		field_uniform_scaling_q: str = "uniform_scaling_q",
 		field_variable_trajgroup: str = "variable_trajectory_group",
 		field_variable_trajgroup_type: str = "variable_trajectory_group_trajectory_type",
 		field_variable: str = "variable",
 		key_strategy: str = "strategy_id",
-		missing_trajgroup_flag: int = -999
+		missing_trajgroup_flag: int = -999,
+		regex_id: re.Pattern = re.compile("(\D*)_id$"),
+		regex_max: re.Pattern = re.compile("max_(\d*$)"),
+		regex_min: re.Pattern = re.compile("min_(\d*$)"),
+		regex_tp: re.Pattern = re.compile("(\d*$)")
 	):
 
 		##  set some attributes
 
 		# from function args
 		self.field_time_period = field_time_period
+		self.field_trajgroup_no_vary_q = field_trajgroup_no_vary_q
 		self.field_uniform_scaling_q = field_uniform_scaling_q
 		self.field_variable_trajgroup = field_variable_trajgroup
 		self.field_variable_trajgroup_type = field_variable_trajgroup_type
@@ -62,17 +81,20 @@ class SamplingUnit:
 		self.missing_trajgroup_flag = missing_trajgroup_flag
 		self.time_period_end_certainty = self.check_time_start_uncertainty(time_period_u0)
 		# others
-		self.set_parameters()
+		self._set_parameters()
+		self._set_attributes_from_table(
+			df_variable_definition,
+			regex_id,
+			regex_max,
+			regex_min,
+			regex_tp
+		)
 
-		# derive additional attributes
-		self.df_variable_definitions = self.check_input_data_frame(df_variable_definition)
-		self.fields_id = self.get_id_fields(self.df_variable_definitions)
-		self.field_min_scalar, self.field_max_scalar, self.time_period_scalar = self.get_scalar_time_period(self.df_variable_definitions)
-		self.fields_time_periods, self.time_periods = self.get_time_periods(self.df_variable_definitions)
-		self.variable_trajectory_group = self.get_trajgroup(self.df_variable_definitions)
+
 		self.uncertainty_fan_function_parameters = self.get_fan_function_parameters(fan_function_specification)
 		self.uncertainty_ramp_vector = self.build_ramp_vector(self.uncertainty_fan_function_parameters)
 
+		# set some properties around scenarios, variable specification, and more
 		self.data_table, self.df_id_coordinates, self.id_coordinates = self.check_scenario_variables(self.df_variable_definitions, self.fields_id)
 		self.dict_id_values, self.dict_baseline_ids = self.get_scenario_values(self.data_table, self.fields_id, dict_baseline_ids)
 		self.num_scenarios = len(self.id_coordinates)
@@ -94,7 +116,60 @@ class SamplingUnit:
 	#	INITIALIZATION FUNCTIONS	#
 	##################################
 
-	def set_parameters(self,):
+	# get attributes from the table
+	def _set_attributes_from_table(self,
+		df_variable_definition: pd.DataFrame,
+		regex_id: re.Pattern,
+		regex_max: re.Pattern,
+		regex_min: re.Pattern,
+		regex_tp: re.Pattern
+	) -> None:
+		"""
+		Set a range of attributes derived the input df_variable_definition.
+			Sets the following properties:
+
+			* self.df_variable_definitions
+			* self.fields_id
+			* self.required_fields
+
+		Function Arguments
+		------------------
+		- df_variable_definition: data frame used to set variable specifications
+		- regex_id: regular expression used to identify id fields in the input
+			template
+		- regex_max: re.Pattern (compiled regular expression) used to match the
+			field storing the maximum scalar values at the final time period
+		- regex_min: re.Pattern used to match the field storing the minimum scalar
+			values at the final time period
+		- regex_tp: re.Pattern used to match the field storing data values for
+			each time period
+
+		"""
+		self.df_variable_definitions, self.required_fields = self.check_input_data_frame(df_variable_definition)
+		self.fields_id = self.get_id_fields(regex_id)
+		self.field_min_scalar, self.field_max_scalar, self.time_period_scalar = self.get_scalar_time_period(
+			regex_max,
+			regex_min
+		)
+		self.fields_time_periods, self.time_periods = self.get_time_periods(regex_tp)
+		self.variable_trajectory_group = self.get_trajgroup()
+		self.variable_trajectory_group_vary_q = self.get_trajgroup_vary_q()
+
+
+
+	def _set_parameters(self,
+	) -> None:
+		"""
+		Set some key parameters.
+
+		* self.dict_required_tg_spec_fields
+		* self.key_mix_trajectory
+		* self.key_inf_traj_boundary
+		* self.key_sup_traj_boundary
+		* self.primary_key_id_coordinates
+		* self.required_tg_specs
+
+		"""
 
 		self.key_mix_trajectory = "mixing_trajectory"
 		self.key_inf_traj_boundary = "trajectory_boundary_0"
@@ -109,22 +184,37 @@ class SamplingUnit:
 		}
 		self.required_tg_specs = list(self.dict_required_tg_spec_fields.values())
 
-		return None
 
 
+	def check_input_data_frame(self,
+		df_in: pd.DataFrame
+	):
+		"""
+		Check df_in for required fields. Sets the following attributes:
 
-	def check_input_data_frame(self, df_in: pd.DataFrame):
+			* self.df_variable_definitions
+			* self.required_fields
+		"""
 		# some standardized fields to require
-		fields_req = [self.key_strategy, self.field_variable_trajgroup, self.field_variable_trajgroup_type, self.field_uniform_scaling_q, self.field_variable]
+		fields_req = [
+			self.key_strategy,
+			self.field_trajgroup_no_vary_q,
+			self.field_variable_trajgroup,
+			self.field_variable_trajgroup_type,
+			self.field_uniform_scaling_q,
+			self.field_variable
+		]
+
 		if len(set(fields_req) & set(df_in.columns)) < len(set(fields_req)):
 			fields_missing = list(set(fields_req) - (set(fields_req) & set(df_in.columns)))
 			fields_missing.sort()
 			str_missing = ", ".join([f"'{x}'" for x in fields_missing])
 			raise ValueError(f"Error: one or more columns are missing from the data frame. Columns {str_missing} not found")
+
 		elif (self.key_strategy in df_in.columns) and ("_id" not in self.key_strategy):
 			raise ValueError(f"Error: the strategy field '{self.key_strategy}' must contain the substring '_id'. Check to ensure this substring is specified.")
 
-		return df_in.drop_duplicates()
+		return df_in.drop_duplicates(), fields_req
 
 
 
@@ -151,7 +241,9 @@ class SamplingUnit:
 
 
 
-	def check_time_start_uncertainty(self, t0: int):
+	def check_time_start_uncertainty(self,
+		t0: int
+	) -> int:
 		return max(t0, 1)
 
 
@@ -165,9 +257,6 @@ class SamplingUnit:
 
 		"""
 		Generate an data frame long by time period and all id coordinates included in the sample unit.
-
-		Function Arguments
-		------------------
 
 		Keyword Arguments
 		-----------------
@@ -243,13 +332,31 @@ class SamplingUnit:
 
 
 	def get_id_fields(self,
-		df_in: pd.DataFrame
+		regex_id: re.Pattern,
+		df_in: Union[pd.DataFrame, None] = None
 	) -> List:
 		"""
-		Get all id fields associated with input template df_in
+		Get all id fields associated with input template df_in.
+
+		Function Arguments
+		------------------
+		- regex_id: regular expression used to identify id fields
+
+		Keyword Arguments
+		-----------------
+		- df_in: data frame to use to find id fields. If None, use
+			self.df_variable_definitions
+
 		"""
-		fields_out = [x for x in df_in.columns if ("_id" in x)]
-		fields_out.sort()
+
+		if not isinstance(regex_id, re.Pattern):
+			fields_out = []
+		else:
+			df_in = self.df_variable_definitions if (df_in is None) else df_in
+			fields_out = sorted(
+				[x for x in df_in.columns if (regex_id.match(x) is not None)]
+			)
+
 		if len(fields_out) == 0:
 			raise ValueError(f"No id fields found in data frame.")
 
@@ -279,7 +386,9 @@ class SamplingUnit:
 
 
 	def get_scalar_time_period(self,
-		df_in:pd.DataFrame
+		regex_max: re.Pattern,
+		regex_min: re.Pattern,
+		df_in:Union[pd.DataFrame, None] = None
 	) -> Tuple[str, str, int]:
 		"""
 		Determine final time period (tp_final) as well as the fields associated with the minimum
@@ -290,15 +399,29 @@ class SamplingUnit:
 			* field_max
 			* tp_final
 
+		Function Arguments
+		------------------
+		- regex_max: re.Pattern (compiled regular expression) used to match the
+			field storing the maximum scalar values at the final time period
+		- regex_min: re.Pattern used to match the field storing the minimum scalar
+			values at the final time period
+
+		Keyword Arguments
+		-----------------
+		- df_in: input data frame defining variable specifications. If None,
+			uses self.df_variable_definitions
 		"""
-		field_min = [x for x in df_in.columns if "min" in x]
+
+		df_in = self.df_variable_definitions if (df_in is None) else df_in
+
+		field_min = [x for x in df_in.columns if (regex_min.match(x) is not None)]
 		if len(field_min) == 0:
 			raise ValueError("No field associated with a minimum scalar value found in data frame.")
 		else:
 			field_min = field_min[0]
 
 		# determine max field/time period
-		field_max = [x for x in df_in.columns if "max" in x]
+		field_max = [x for x in df_in.columns if (regex_max.match(x) is not None)]
 		if len(field_max) == 0:
 			raise ValueError("No field associated with a maximum scalar value found in data frame.")
 		else:
@@ -363,23 +486,43 @@ class SamplingUnit:
 
 
 	def get_time_periods(self,
-		df_in: pd.DataFrame
+		regex_tp: re.Pattern,
+		df_in:Union[pd.DataFrame, None] = None
 	) -> Tuple[List, List]:
 		"""
-		Get fields associated with time periods in the template as well as time periods
-			defined in input template df_in. Returns the following elements:
+		Get fields associated with time periods in the template as well as time
+			periods defined in input template df_in. Returns the following
+			elements:
 
-			* fields_time_periods: nominal fields in df_in containing time periods
+			fields_time_periods, time_periods
+
+			where
+
+			* fields_time_periods: nominal fields in df_in containing time
+				periods
 			* time_periods: ordered list of integer time periods
+
+		Function Arguments
+		-----------------
+		- regex_tp: re.Pattern used to match the field storing data values for
+			each time period
+
+		Keyword Arguments
+		-----------------
+		- df_in: input data frame defining variable specifications. If None,
+			uses self.
+
 		"""
-		fields_time_periods = [x for x in df_in.columns if x.isnumeric()]
-		fields_time_periods = [x for x in fields_time_periods if int(x) == float(x)]
+
+		df_in = self.df_variable_definitions if (df_in is None) else df_in
+
+		#fields_time_periods = [x for x in df_in.columns if x.isnumeric()]
+		#fields_time_periods = [x for x in fields_time_periods if int(x) == float(x)]
+		fields_time_periods = [str(x) for x in df_in.columns if (regex_tp.match(str(x)) is not None)]
 		if len(fields_time_periods) == 0:
 			raise ValueError("No time periods found in data frame.")
-		else:
-			time_periods = [int(x) for x in fields_time_periods]
 
-		time_periods.sort()
+		time_periods = sorted([int(x) for x in fields_time_periods])
 		fields_time_periods = [str(x) for x in time_periods]
 
 		return fields_time_periods, time_periods
@@ -387,11 +530,19 @@ class SamplingUnit:
 
 
 	def get_trajgroup(self,
-		df_in: pd.DataFrame
+		df_in:Union[pd.DataFrame, None] = None
 	) -> Union[int, None]:
 		"""
-		Get the trajectory group for the sampling unit from df_in
+		Get the trajectory group for the sampling unit from df_in.
+
+		Keyword Arguments
+		-----------------
+		- df_in: input data frame defining variable specifications. If None,
+			uses self.
 		"""
+
+		df_in = self.df_variable_definitions if (df_in is None) else df_in
+
 		if not self.field_variable_trajgroup in df_in.columns:
 			raise ValueError(f"Field '{self.field_variable_trajgroup}' not found in data frame.")
 		# determine if this is associated with a trajectory group
@@ -399,6 +550,30 @@ class SamplingUnit:
 			return int(list(df_in[self.field_variable_trajgroup].unique())[0])
 		else:
 			return None
+
+
+
+	def get_trajgroup_vary_q(self,
+		df_in:Union[pd.DataFrame, None] = None
+	) -> Union[int, None]:
+		"""
+		Get the trajectory group for the sampling unit from df_in.
+
+		Keyword Arguments
+		-----------------
+		- df_in: input data frame defining variable specifications. If None,
+			uses self.
+		"""
+
+		df_in = self.df_variable_definitions if (df_in is None) else df_in
+
+		if not self.field_trajgroup_no_vary_q in df_in.columns:
+			raise ValueError(f"Field '{self.field_trajgroup_no_vary_q}' not found in data frame.")
+		# determine if this is associated with a trajectory group
+		out = (len(df_in[df_in[self.field_trajgroup_no_vary_q] == 1]) == 0)
+
+		return out
+
 
 
 
@@ -447,7 +622,9 @@ class SamplingUnit:
 
 
 	# determine if the sampling unit represents a strategy (L) or an uncertainty (X)
-	def infer_sampling_unit_type(self, thresh: float = (10**(-12))):
+	def infer_sampling_unit_type(self,
+		thresh: float = (10**(-12))
+	) -> Tuple[str, Dict[str, Any]]:
 		fields_id_no_strat = [x for x in self.fields_id if (x != self.key_strategy)]
 
 		strat_base = self.dict_baseline_ids[self.key_strategy]
@@ -492,7 +669,7 @@ class SamplingUnit:
 
 
 	############################
-	#	CORE FUNCTIONALITY	#
+	#    CORE FUNCTIONALITY    #
 	############################
 
 	def get_scalar_diff_arrays(self):
@@ -634,20 +811,13 @@ class SamplingUnit:
 
 
 
-	def build_futures(self,
-		n_samples: int,
-		random_seed: int
-	):
-		print(f"sampling {self.id_values}")
-
-
-
 	def generate_future(self,
 		lhs_trial_x: float,
 		lhs_trial_l: float = 1.0,
 		baseline_future_q: bool = False,
 		constraints_mix_tg: tuple = (0, 1),
-		flatten_output_array: bool = False
+		flatten_output_array: bool = False,
+		vary_q: Union[bool, None] = None
 	) -> Dict[str, np.ndarray]:
 		"""
 		Generate a dictionary mapping each variable specification to futures ordered by self.ordered_trajectory_arrays((vs, tg))["id_coordinates"]
@@ -662,7 +832,10 @@ class SamplingUnit:
 		- baseline_future_q: generate a baseline future? If so, lhs trials do not apply
 		- constraints_mix_tg: constraints on the mixing fraction for trajectory groups
 		- flatten_output_array: return a flattened output array (apply np.flatten())
+		- vary_q: does the future vary? if not, returns baseline
 		"""
+
+		vary_q = self.variable_trajectory_group_vary_q if not isinstance(vary_q, bool) else vary_q
 
 		# clean up some cases for None entries
 		baseline_future_q = True if (lhs_trial_x is None) else baseline_future_q
@@ -673,6 +846,9 @@ class SamplingUnit:
 		baseline_future_q = True if (lhs_trial_x < 0) else baseline_future_q
 		lhs_trial_x = 1.0 if (lhs_trial_x < 0) else lhs_trial_x
 		lhs_trial_l = 1.0 if (lhs_trial_l < 0) else lhs_trial_l
+
+		# set to baseline if not varying
+		baseline_future_q = baseline_future_q | (not vary_q)
 
 		# initialization
 		all_strats = self.dict_id_values.get(self.key_strategy)
@@ -781,7 +957,7 @@ class SamplingUnit:
 				if max(vec_unif_scalar) > 0:
 					vec_max_scalar = self.ordered_by_ota_from_fid_dict(dict_var_info["max_scalar"], (vs, None))
 					vec_min_scalar = self.ordered_by_ota_from_fid_dict(dict_var_info["min_scalar"], (vs, None))
-					vec_unif_scalar = vec_unif_scalar*(vec_min_scalar + lhs_trial_x*(vec_max_scalar - vec_min_scalar))
+					vec_unif_scalar = vec_unif_scalar*(vec_min_scalar + lhs_trial_x*(vec_max_scalar - vec_min_scalar)) if not baseline_future_q else np.ones(vec_unif_scalar.shape)
 
 				vec_unif_scalar = np.array([vec_unif_scalar]).transpose()
 				vec_base = np.array([vec_base]).transpose()
@@ -791,7 +967,9 @@ class SamplingUnit:
 				delta_diff = delta_max - delta_min
 				delta_val = delta_min + lhs_trial_x*delta_diff
 
+				# delta and uniform scalar don't apply if operating under baseline future
 				delta_vec = 0.0 if baseline_future_q else (rv * np.array([delta_val]).transpose())
+
 				arr_out = dict_ordered_traj_arrays.get("data") + delta_vec
 				arr_out = arr_out*vec_base + vec_unif_scalar*dict_ordered_traj_arrays.get("data")
 
@@ -852,6 +1030,7 @@ class FutureTrajectories:
 	- key_strategy: field used to identify the strategy (int)
 		* This field is important as uncertainty in strategies is assessed differently than uncetainty in other variables
 	- logger: optional logging.Logger object used to track generation of futures
+	- regex_id: regular expression used to identify id fields in the input template
 	- regex_trajgroup: Regular expression used to identify trajectory group variables in `field_variable` of `df_input_database`
 	- regex_trajmax: Regular expression used to identify trajectory maxima in variables and trajgroups specified in `field_variable` of `df_input_database`
 	- regex_trajmin: Regular expression used to identify trajectory minima in variables and trajgroups specified in `field_variable` of `df_input_database`
@@ -866,6 +1045,7 @@ class FutureTrajectories:
 		field_sample_unit_group: str = "sample_unit_group",
 		field_time_period: str = "time_period",
 		field_uniform_scaling_q: str = "uniform_scaling_q",
+		field_trajgroup_no_vary_q: str = "trajgroup_no_vary_q",
 		field_variable: str = "variable",
 		field_variable_trajgroup: str = "variable_trajectory_group",
 		field_variable_trajgroup_type: str = "variable_trajectory_group_trajectory_type",
@@ -873,7 +1053,11 @@ class FutureTrajectories:
 		key_strategy: str = "strategy_id",
 		# optional logger
 		logger: Union[logging.Logger, None] = None,
-		# regular expressions used to define trajectory group components in input database
+		# regular expressions used to define trajectory group components in input database and
+		regex_id: re.Pattern = re.compile("(\D*)_id$"),
+		regex_max: re.Pattern = re.compile("max_(\d*$)"),
+		regex_min: re.Pattern = re.compile("min_(\d*$)"),
+		regex_tp: re.Pattern = re.compile("(\d*$)"),
 		regex_trajgroup: re.Pattern = re.compile("trajgroup_(\d*)-(\D*$)"),
 		regex_trajmax: re.Pattern = re.compile("trajmax_(\D*$)"),
 		regex_trajmin: re.Pattern = re.compile("trajmin_(\D*$)"),
@@ -894,6 +1078,7 @@ class FutureTrajectories:
 		self.field_sample_unit_group = field_sample_unit_group
 		self.key_strategy = key_strategy
 		self.field_time_period = field_time_period
+		self.field_trajgroup_no_vary_q = field_trajgroup_no_vary_q
 		self.field_uniform_scaling_q = field_uniform_scaling_q
 		self.field_variable = field_variable
 		self.field_variable_trajgroup = field_variable_trajgroup
@@ -903,6 +1088,10 @@ class FutureTrajectories:
 		# missing values flag
 		self.missing_flag_int = -999
 		# default regular expressions
+		self.regex_id = regex_id
+		self.regex_max = regex_max
+		self.regex_min = regex_min
+		self.regex_tp = regex_tp
 		self.regex_trajgroup = regex_trajgroup
 		self.regex_trajmax = regex_trajmax
 		self.regex_trajmin = regex_trajmin
@@ -948,7 +1137,8 @@ class FutureTrajectories:
 
 
 
-	def _set_xl_sampling_units(self) -> None:
+	def _set_xl_sampling_units(self,
+	) -> None:
 		"""
 		Determine X/L sampling units--sets three properties:
 
@@ -987,7 +1177,6 @@ class FutureTrajectories:
 		Keyword Arguments
 		-----------------
 		- return_def: default return value if row is None
-
 		"""
 		out = return_def
 		if isinstance(row, pd.DataFrame):
@@ -1277,7 +1466,8 @@ class FutureTrajectories:
 
 		Keword Arguments
 		-----------------
-		- df_in: input database used to identify sampling units. Must include self.field_sample_unit_group
+		- df_in: input database used to identify sampling units. Must include
+			self.field_sample_unit_group
 		- fan_function: function specification to use for uncertainty fans
 		- **kwargs: passed to SamplingUnit initializtion
 		"""
@@ -1289,10 +1479,15 @@ class FutureTrajectories:
 		kwarg_keys = list(kwargs.keys())
 		field_time_period = self.field_time_period if ("field_time_period" not in kwarg_keys) else kwargs.get("field_time_period")
 		field_uniform_scaling_q = self.field_uniform_scaling_q if ("field_uniform_scaling_q" not in kwarg_keys) else kwargs.get("field_uniform_scaling_q")
+		field_trajgroup_no_vary_q = self.field_trajgroup_no_vary_q if ("field_trajgroup_no_vary_q" not in kwarg_keys) else kwargs.get("field_trajgroup_no_vary_q")
 		field_variable_trajgroup = self.field_variable_trajgroup if ("field_variable_trajgroup" not in kwarg_keys) else kwargs.get("field_variable_trajgroup")
 		field_variable_trajgroup_type = self.field_variable_trajgroup_type if ("field_variable_trajgroup_type" not in kwarg_keys) else kwargs.get("field_variable_trajgroup_type")
 		field_variable = self.field_variable if ("field_variable" not in kwarg_keys) else kwargs.get("field_variable")
 		key_strategy = self.key_strategy if ("key_strategy" not in kwarg_keys) else kwargs.get("key_strategy")
+		regex_id = self.regex_id if ("regex_id" not in kwarg_keys) else kwargs.get("regex_id")
+		regex_max = self.regex_max if ("regex_max" not in kwarg_keys) else kwargs.get("regex_max")
+		regex_min = self.regex_min if ("regex_min" not in kwarg_keys) else kwargs.get("regex_min")
+		regex_tp = self.regex_tp if ("regex_tp" not in kwarg_keys) else kwargs.get("regex_tp")
 
 		dict_sampling_units = {}
 
@@ -1321,11 +1516,16 @@ class FutureTrajectories:
 				fan_function_specification = fan_function,
 				field_time_period = field_time_period,
 				field_uniform_scaling_q = field_uniform_scaling_q,
+				field_trajgroup_no_vary_q = field_trajgroup_no_vary_q,
 				field_variable_trajgroup = field_variable_trajgroup,
 				field_variable_trajgroup_type = field_variable_trajgroup_type,
 				field_variable = field_variable,
 				key_strategy = key_strategy,
-				missing_trajgroup_flag = self.missing_flag_int
+				missing_trajgroup_flag = self.missing_flag_int,
+				regex_id = regex_id,
+				regex_max = regex_max,
+				regex_min = regex_min,
+				regex_tp = regex_tp
 			)
 
 			dict_sampling_units = dict(zip(all_sample_groups, [samp for x in range(n_sg)])) if (i == 0) else dict_sampling_units
