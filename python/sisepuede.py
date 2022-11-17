@@ -122,7 +122,7 @@ class SISEPUEDE:
 		attribute_design: Union[AttributeTable, None] = None,
 		dir_ingestion: Union[str, None] = None,
 		id_str: Union[str, None] = None,
-		logger: Union[logging.Logger, None]= None,
+		logger: Union[logging.Logger, None] = None,
 		regions: Union[List[str], None] = None,
 		regex_template_prepend: str = "sisepuede_run",
 		replace_output_dbs_on_init: bool = False
@@ -148,7 +148,7 @@ class SISEPUEDE:
 
 
 	##############################################
-	#    SUPPORT AND INITIALIZATION FUNCTIONS    #
+	#    INITIALIZATION FUNCTIONS    #
 	##############################################
 
 	def _initialize_attribute_design(self,
@@ -626,6 +626,38 @@ class SISEPUEDE:
 
 
 
+	def get_primary_keys(self,
+		primary_keys: Union[List[int], Dict[str, int], None]
+	) -> List[int]:
+		"""
+		Based on list of primary keys or subsetting dictioary, get a list of
+			primary keys. Used to support filtering in a number of contexts.
+
+
+		Function Arguments
+		------------------
+		- primary_keys: list of primary keys to run OR dictionary of index keys
+			(e.g., strategy_id, design_id) with scenarios associated as values
+			(uses AND operation to filter scenarios). If None, returns all
+			possible primary keys.
+		"""
+
+		if isinstance(primary_keys, dict):
+			primary_keys = sorted(list(
+				sf.subset_df(
+					self.attribute_primary.table,
+					primary_keys
+				)[self.attribute_primary.key]
+			))
+		elif isinstance(primary_keys, list):
+			primary_keys = sorted([x for x in primary_keys if x in self.attribute_primary.key_values])
+		elif primary_keys is None:
+			primary_keys = self.attribute_primary.key_values
+
+		return primary_keys
+
+
+
 	def _initialize_function_aliases(self,
 	) -> None:
 		"""
@@ -636,8 +668,84 @@ class SISEPUEDE:
 
 
 
+	def read_output(self,
+		primary_keys: Union[List[int], Dict[str, int], None],
+		**kwargs
+	) -> pd.DataFrame:
+		"""
+		Read output data generated after running .project_scenarios.
+
+		Function Arguments
+		------------------
+		- primary_keys: list of primary keys to run OR dictionary of index keys
+			(e.g., strategy_id, design_id) with scenarios associated as values
+			(uses AND operation to filter scenarios). If None, returns all
+			possible primary keys.
+
+		Optional Arguments
+		------------------
+		- dict_subset: dictionary with keys that are columns in the table and
+			values, given as a list, to subset the table. dict_subset is written
+			as:
+
+			dict_subset = {
+				field_a = [val_a1, val_a2, ..., val_am],
+				field_b = [val_b1, val_b2, ..., val_bn],
+				.
+				.
+				.
+			}
+
+			NOTE: dict_subset should NOT contain self.key_primary (it will be
+			removed if passed in dict_subset) since these are passed in the
+			`primary_keys` argument
+		- fields_select: fields to read in. Reducing the number of fields to read
+			can speed up the ingestion process and reduce the data frame's memory
+			footprint.
+
+		Keyword Arguments
+		-----------------
+		- drop_duplicates: drop duplicates in a CSV when reading? (only applies
+			if the database is initialized using CSVs)
+			* Default is False to improve speeds
+			* Set to True to ensure that only unique rows are read in
+		- query_logic: default is "and". Subsets table to as
+
+			where field_a in (val_a1, val_a2, ..., val_am) ~ field_b in (val_b1, val_b2, ..., val_bn)...
+
+			where `~ in ["and", "or"]`
+		"""
+
+		# get primary keys and initialize subset
+		primary_keys = self.get_primary_keys(primary_keys)
+		dict_subset = {
+			self.key_primary: primary_keys
+		}
+
+		# check for additional arguments passed and remove the subset dictionary if it is passed
+		dict_subset_kwargs = kwargs.get("dict_subset")
+		if isinstance(dict_subset_kwargs, dict):
+			dict_subset.update(
+				dict(
+					(k, v) for k, v in dict_subset_kwargs.items() if k not in dict_subset.keys()
+				)
+			)
+		if dict_subset_kwargs is not None:
+			del kwargs["dict_subset"]
+
+		df_out = self.database.read_table(
+			self.database.table_name_output,
+			dict_subset = dict_subset,
+			**kwargs
+		)
+
+		return df_out
+
+
+
 	def _write_chunk_to_output(self,
-		df_list: List[pd.DataFrame]
+		df_list: List[pd.DataFrame],
+		**kwargs
 	) -> pd.DataFrame:
 		"""
 		Write a chunk of data frames to output database.
@@ -645,12 +753,17 @@ class SISEPUEDE:
 		Function Arguments
 		------------------
 		- df_list: list of data frames to write
+
+		Keyword Arguments
+		-----------------
+		- **kwargs: passed to IterativeDatabaseTable._write_to_table
 		"""
 
 		df_out = pd.concat(df_list, axis = 0).reset_index(drop = True)
 		self.database._write_to_table(
 			self.database.table_name_output,
-			df_out
+			df_out,
+			**kwargs
 		)
 		df_out = []
 
@@ -683,29 +796,40 @@ class SISEPUEDE:
 
 			lhsd = self.experimental_manager.dict_lhs_design.get(region)
 			df_lhs_l, df_lhs_x = lhsd.retrieve_lhs_tables_by_design(None, return_type = pd.DataFrame)
+			region_out = self.get_output_region(region)
 
 			# lever effect LHS table
 			if (df_lhs_l is not None):
-				df_lhs_l = sf.add_data_frame_fields_from_dict(df_lhs_l, {self.field_region: region})
+				df_lhs_l = sf.add_data_frame_fields_from_dict(
+					df_lhs_l,
+					{
+						self.field_region: region_out
+					}
+				)
 				df_l.append(df_lhs_l)
 
 			# exogenous uncertainty LHS table
 			if (df_lhs_x is not None):
-				df_lhs_x = sf.add_data_frame_fields_from_dict(df_lhs_x, {self.field_region: region})
+				df_lhs_x = sf.add_data_frame_fields_from_dict(
+					df_lhs_x,
+					{
+						self.field_region: region_out
+					}
+				)
 				df_x.append(df_lhs_x)
 
 		df_l = pd.concat(df_l, axis = 0).reset_index(drop = True) if (len(df_l) > 0) else None
 		if (df_l is not None):
 			df_l.columns = [str(x) for x in df_l.columns]
-			fields_ord_l = [lhsd.field_lhs_key, self.field_region]
-			fields_ord_l += sorted([x for x in df_l.columns if x not in fields_ord_l])
+			fields_ord_l = [self.field_region, lhsd.field_lhs_key]
+			fields_ord_l += sf.sort_integer_strings([x for x in df_l.columns if x not in fields_ord_l])
 			df_l = df_l[fields_ord_l]
 
 		df_x = pd.concat(df_x, axis = 0).reset_index(drop = True) if (len(df_x) > 0) else None
 		if df_x is not None:
 			df_x.columns = [str(x) for x in df_x.columns]
-			fields_ord_x = [lhsd.field_lhs_key, self.field_region]
-			fields_ord_x += sorted([x for x in df_x.columns if x not in fields_ord_x])
+			fields_ord_x = [self.field_region, lhsd.field_lhs_key]
+			fields_ord_x += sf.sort_integer_strings([x for x in df_x.columns if x not in fields_ord_x])
 			df_x = df_x[fields_ord_x]
 
 		return df_l, df_x
@@ -849,6 +973,7 @@ class SISEPUEDE:
 	def project_scenarios(self,
 		primary_keys: Union[List[int], Dict[str, int], None],
 		chunk_size: int = 10,
+		force_overwrite_existing_primary_keys: bool = False,
 		**kwargs
 	) -> List[int]:
 		"""
@@ -863,24 +988,18 @@ class SISEPUEDE:
 
 		Keyword Arguments
 		-----------------
-		- return_to: specifies how to return output dataframe
-			* If pd.DataFrame, then will return a dataframe
-			* If sqlalchemy.engine.Engine, will return to a database FIGURE THIS OUT
+		- chunk_size: size of chunk to use to write to IterativeDatabaseTable.
+			If 1, updates table after every iteration; otherwise, stores chunks
+			in memory, aggregates, then writes to IterativeDatabaseTable.
+		- force_overwrite_existing_primary_keys: if the primary key is already found
+			in the output database table, should it be overwritten? Default is
+			False. It is recommended that iterations on the same scenarios be
+			undertaken using different AnalysisID structures. Otherwise, defaults
+			to initialization resolutsion (write_skip)
 		- **kwargs: passed to SISEPUEDE.models.project(..., **kwargs)
 		"""
 
-		# check primary keys to run
-		if isinstance(primary_keys, dict):
-			primary_keys = sorted(list(
-					sf.subset_df(
-					self.attribute_primary.table,
-					primary_keys
-				)[self.attribute_primary.key]
-			))
-		elif isinstance(primary_keys, list):
-			primary_keys = sorted([x for x in primary_keys if x in self.attribute_primary.key_values])
-		elif primary_keys is None:
-			primary_keys = self.attribute_primary.key_values
+		primary_keys = self.get_primary_keys(primary_keys)
 
 		# get designs
 		df_primary_keys = self.attribute_primary.table[
@@ -892,6 +1011,14 @@ class SISEPUEDE:
 		df_out = []
 		primary_keys_run = [None for x in primary_keys]
 		iterate = 0
+
+		# available indices and resolution
+		idt = self.database.db.dict_iterative_database_tables.get(
+			self.database.table_name_output
+		)
+		index_conflict_resolution = None
+		index_conflict_resolution = "write_replace" if (force_overwrite_existing_primary_keys or (idt.index_conflict_resolution == "write_replace")) else None
+		set_available_ids = idt.available_indices
 
 		for region in self.regions:
 
@@ -922,7 +1049,6 @@ class SISEPUEDE:
 					df_lhs_x[self.key_future].isin(keep_futures)
 				] if (df_lhs_x is not None) else df_lhs_x
 
-
 				# next, loop over futures
 				#  Note that self.generate_future_from_lhs_vector() will return a table for all strategies
 				#  associated with the future, so we can prevent redundant calls by running all strategies
@@ -947,6 +1073,8 @@ class SISEPUEDE:
 						set(df_input[self.key_strategy])
 					))
 
+
+
 					for strategy in all_strategies:
 
 						# get primary id
@@ -956,8 +1084,9 @@ class SISEPUEDE:
 						][self.key_primary]
 
 						id_primary = int(id_primary.iloc[0]) if (len(id_primary) > 0) else None
+						write_q = ((id_primary, ) not in set_available_ids) or (index_conflict_resolution != "write_replace")
 
-						if id_primary in primary_keys:
+						if (id_primary in primary_keys) and write_q:
 
 							# filter the data frame down
 							df_input_cur = df_input[
@@ -996,11 +1125,11 @@ class SISEPUEDE:
 							# if the model run is successful and the chunk size is appropriate, write to output
 							if success:
 								if (len(df_out)%chunk_size == 0) and (len(df_out) > 0):
-									df_out = self._write_chunk_to_output(df_out)
+									df_out = self._write_chunk_to_output(df_out, index_conflict_resolution = index_conflict_resolution)
 								# update primary keys that ran successfully
 								primary_keys_run[iterate] = id_primary
 								iterate += 1
 
-		self._write_chunk_to_output(df_out) if (len(df_out) > 0) else None
+		self._write_chunk_to_output(df_out, index_conflict_resolution = index_conflict_resolution) if (len(df_out) > 0) else None
 
 		return primary_keys_run[0:iterate]

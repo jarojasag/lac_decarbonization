@@ -1,12 +1,13 @@
 from attribute_table import AttributeTable
-import model_attributes as ma
+import logging
+from model_attributes import ModelAttributes
 from model_ippu import IPPU
 from model_socioeconomic import Socioeconomic
 import numpy as np
 import pandas as pd
 import support_functions as sf
 import time
-from typing import Union
+from typing import *
 
 
 ###########################
@@ -17,7 +18,12 @@ from typing import Union
 
 class NonElectricEnergy:
 
-    def __init__(self, attributes: ma.ModelAttributes):
+    def __init__(self,
+        attributes: ModelAttributes,
+        logger: Union[logging.Logger, None] = None
+    ):
+
+        self.logger = logger
 
         # some subector reference variables
         self.subsec_name_ccsq = "Carbon Capture and Sequestration"
@@ -287,7 +293,7 @@ class NonElectricEnergy:
         self.model_ippu = IPPU(self.model_attributes)
 
         # optional integration variables (uses calls to other model classes)
-        self.integration_variables_non_fgtv, self.integration_variables_fgtv = self.set_integrated_variables()
+        self._set_integrated_variables()
 
 
         ##  MISCELLANEOUS VARIABLES
@@ -298,7 +304,79 @@ class NonElectricEnergy:
 
 
 
-    ##  FUNCTIONS FOR MODEL ATTRIBUTE DIMENSIONS
+
+    ###########################
+    #    SUPPORT FUNCTIONS    #
+    ###########################
+
+    def _log(self,
+		msg: str,
+		type_log: str = "log",
+		**kwargs
+	) -> None:
+		"""
+		Clean implementation of sf._optional_log in-line using default logger. See
+			?sf._optional_log for more information.
+
+		Function Arguments
+		------------------
+		- msg: message to log
+
+		Keyword Arguments
+		-----------------
+		- type_log: type of log to use
+		- **kwargs: passed as logging.Logger.METHOD(msg, **kwargs)
+		"""
+		sf._optional_log(self.logger, msg, type_log = type_log, **kwargs)
+
+
+
+    def _set_integrated_variables(self,
+    ) -> None:
+        """
+        Sets integrated variables, including the following properties:
+
+            * self.integration_variables_non_fgtv
+            * self.integration_variables_fgtv
+        """
+        # set the integration variables
+        list_vars_required_for_integration = [
+            self.modvar_agrc_yield,
+            self.model_ippu.modvar_ippu_qty_total_production,
+            self.modvar_lvst_total_animal_mass
+        ]
+
+        # in Energy, update required variables
+        for modvar in list_vars_required_for_integration:
+            subsec = self.model_attributes.get_variable_subsector(modvar)
+            new_vars = self.model_attributes.build_varlist(subsec, modvar)
+            self.required_variables += new_vars
+
+        # sot required variables and ensure no double counting
+        self.required_variables = list(set(self.required_variables))
+        self.required_variables.sort()
+
+        # return variables required for secondary integrtion (i.e., for fugitive emissions only)
+        list_vars_required_for_integration_fgtv = [
+            self.modvar_enfu_energy_demand_by_fuel_ccsq,
+            self.modvar_enfu_energy_demand_by_fuel_elec,
+            self.modvar_enfu_energy_demand_by_fuel_inen,
+            self.modvar_enfu_energy_demand_by_fuel_scoe,
+            self.modvar_enfu_energy_demand_by_fuel_trns
+        ]
+
+
+        self.integration_variables_non_fgtv = list_vars_required_for_integration
+        self.integration_variables_fgtv = list_vars_required_for_integration_fgtv
+
+
+
+
+
+
+    ##################################################
+    #    FUNCTIONS FOR MODEL ATTRIBUTE DIMENSIONS    #
+    ##################################################
 
     def check_df_fields(self,
         df_neenergy_trajectories: pd.DataFrame,
@@ -320,6 +398,8 @@ class NonElectricEnergy:
             msg_prepend = msg_prepend if (msg_prepend is not None) else subsector
         sf.check_fields(df_neenergy_trajectories, check_fields, f"{msg_prepend} projection cannot proceed: fields ")
 
+
+
     def get_required_subsectors(self):
         ## TEMPORARY
         subsectors = [self.subsec_name_enfu, self.subsec_name_inen, self.subsec_name_trns, self.subsec_name_trde, self.subsec_name_scoe]#self.subsec_name_enfu,#self.model_attributes.get_setor_subsectors("Energy")
@@ -327,10 +407,14 @@ class NonElectricEnergy:
         subsectors += [self.subsec_name_econ, self.subsec_name_gnrl]
         return subsectors, subsectors_base
 
+
+
     def get_required_dimensions(self):
         ## TEMPORARY - derive from attributes later
         required_doa = [self.model_attributes.dim_time_period]
         return required_doa
+
+
 
     def get_neenergy_input_output_fields(self):
         required_doa = [self.model_attributes.dim_time_period]
@@ -375,36 +459,6 @@ class NonElectricEnergy:
         return list_out
 
 
-
-    # variables required to integration
-    def set_integrated_variables(self):
-        # set the integration variables
-        list_vars_required_for_integration = [
-            self.modvar_agrc_yield,
-            self.model_ippu.modvar_ippu_qty_total_production,
-            self.modvar_lvst_total_animal_mass
-        ]
-
-        # in Energy, update required variables
-        for modvar in list_vars_required_for_integration:
-            subsec = self.model_attributes.get_variable_subsector(modvar)
-            new_vars = self.model_attributes.build_varlist(subsec, modvar)
-            self.required_variables += new_vars
-
-        # sot required variables and ensure no double counting
-        self.required_variables = list(set(self.required_variables))
-        self.required_variables.sort()
-
-        # return variables required for secondary integrtion (i.e., for fugitive emissions only)
-        list_vars_required_for_integration_fgtv = [
-            self.modvar_enfu_energy_demand_by_fuel_ccsq,
-            self.modvar_enfu_energy_demand_by_fuel_elec,
-            self.modvar_enfu_energy_demand_by_fuel_inen,
-            self.modvar_enfu_energy_demand_by_fuel_scoe,
-            self.modvar_enfu_energy_demand_by_fuel_trns
-        ]
-
-        return list_vars_required_for_integration, list_vars_required_for_integration_fgtv
 
 
 
@@ -664,7 +718,7 @@ class NonElectricEnergy:
             arr_growth_demand = sf.project_growth_scalar_from_elasticity(arr_elastic_driver, arr_elasticity, False, "standard")
             arr_demand = sf.do_array_mult(arr_demand[0]*arr_growth_demand, arr_activity)
         else:
-            #warnings.warn("Missing elasticity information found in 'project_energy_consumption_by_fuel_from_effvars': using specified future demands.")
+            self._log("Missing elasticity information found in 'project_energy_consumption_by_fuel_from_effvars': using specified future demands.", type_log = "debug")
             arr_demand = sf.do_array_mult(arr_demand, arr_activity) if (arr_activity is not None) else arr_demand
 
         # calculate consumption
@@ -808,9 +862,7 @@ class NonElectricEnergy:
                     expand_to_all_cats = True
                 )
             except:
-                None
-                # LOGGING
-                print(f"Warning in project_enfu_production_and_demands: Variable '{modvar}' not found in the data frame. Its fuel demands will not be included.")
+                self._log(f"Warning in project_enfu_production_and_demands: Variable '{modvar}' not found in the data frame. Its fuel demands will not be included.", type_log = "warning")
 
             arr_tmp *= scalar
             arr_demands += arr_tmp

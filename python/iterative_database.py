@@ -131,8 +131,9 @@ class IterativeDatabaseTable:
 		Function Arguments
 		------------------
 		- df_addition: data frame with index columns present (self.fields_index)
-
 		"""
+
+		# case where table is not yet initiated (no tuple)
 		if (self.fields_index is None) and ((not self.exists) or (self.columns is None)):
 			return None
 
@@ -151,6 +152,10 @@ class IterativeDatabaseTable:
 				msg = f"Error in check_table_indices: columns {missing_cols} not found."
 				self._log(msg, type_log = "error")
 				return None, None
+
+		# case where table is initiated but does not have an index
+		if self.fields_index is None:
+			return None, None
 
 		# get new index values that may be updated and the intersection
 		new_indices = set(
@@ -577,8 +582,10 @@ class IterativeDatabaseTable:
 		"""
 
 		columns = list(df_write.columns) if not self.exists else self.columns
-		if not set(self.fields_index).issubset(columns):
-			missing_fields = sf.print_setdiff(set(self.fields_index), set(columns))
+		set_ind_check = set(self.fields_index) if (self.fields_index is not None) else set({})
+
+		if not set_ind_check.issubset(set(columns)):
+			missing_fields = sf.print_setdiff(set_ind_check, set(columns))
 			raise KeyError(f"Index fields {missing_fields} not found in df_write.")
 		else:
 			self.columns = columns
@@ -898,7 +905,7 @@ class IterativeDatabaseTable:
 				)
 
 				self.exists = True
-				self.available_indices.update(set_indices_to_write)
+				self.available_indices.update(set_indices_to_write) if (set_indices_to_write is not None) else None
 				self._log(f"Table {self.table_name} successfully {write_str} to database.", type_log = "info")
 
 			except Exception as e:
@@ -919,7 +926,7 @@ class IterativeDatabaseTable:
 				)
 
 				self.exists = True
-				self.available_indices.update(set_indices_to_write)
+				self.available_indices.update(set_indices_to_write) if (set_indices_to_write is not None) else None
 				self._log(f"Table {self.table_name} successfully {write_str} to {self.fp_table}.", type_log = "info")
 
 			except Exception as e:
@@ -1451,7 +1458,8 @@ class IterativeDatabase:
 		table_name: str,
 		df_write: pd.DataFrame,
 		append_q: bool = True,
-		verify: bool = True
+		verify: bool = True,
+		index_conflict_resolution: Union[str, None] = None
 	) -> None:
 		"""
 		Write a data frame to the table. Alias for
@@ -1468,6 +1476,19 @@ class IterativeDatabase:
 		- append_q: append to an existing table if found? Default is True.
 			* If False, REPLACES existing tables
 		- verify: verify table columns before each write
+		- index_conflict_resolution: string or None specifying approach to deal
+			with attempts to write new rows to a table that already contains
+			index values. Can take the following options:
+			* None: do nothing, write as is (not recommended)
+			* skip: write nothing to the table
+			* stop: stop the process if an index conflict is identified.
+			* write_replace (SQL only--same as `write_skip` for CSV): write all
+				rows associated with new index values and replace any rows
+				associated with those index values that already exist in the
+				table.
+			* write_skip: write all rows associated with new index values and
+				skip any rows associated with index value that are already
+				contained in the data frame.
 
 		"""
 
@@ -1476,10 +1497,13 @@ class IterativeDatabase:
 		if not isinstance(table, IterativeDatabaseTable):
 			return None
 
+		index_conflict_resolution = None if (index_conflict_resolution not in table.valid_resolutions) else index_conflict_resolution
+
 		table._write_to_table(
 			df_write,
 			append_q = append_q,
-			verify = verify
+			verify = verify,
+			index_conflict_resolution = index_conflict_resolution
 		)
 
 

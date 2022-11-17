@@ -2,6 +2,7 @@ import logging
 import numpy as np
 import os, os.path
 import pandas as pd
+import re
 import time
 from typing import *
 import warnings
@@ -948,6 +949,24 @@ def scalar_bounds(
     bounds = np.array(bounds).astype(float)
 
     return min([max([scalar, min(bounds)]), max(bounds)])
+
+
+
+def sort_integer_strings(
+	vector: List[str],
+	regex_int: re.Pattern = re.compile("(\d*$)")
+) -> List[str]:
+	"""
+	Sort the list `vector` of strings with respect to integer ordering.
+	"""
+
+	vector_int = sorted([int(x) for x in vector if regex_int.match(x) is not None])
+	vector_non_int = [x for x in vector if regex_int.match(x) is None]
+
+	vector_out = sorted(vector_non_int)
+	vector_out += [str(x) for x in vector_int]
+
+	return vector_out
 
 
 
