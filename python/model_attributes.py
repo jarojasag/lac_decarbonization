@@ -212,7 +212,7 @@ class Configuration:
         valid_output_method = ["csv", "sqlite"]
         valid_power = self.get_valid_values_from_attribute_column(attr_power, "power_equivalent_", str, "unit_power_to_power")
         valid_region = attr_region.key_values
-        valid_solvers = ["cbc", "clp", "cplex", "gams_cplex", "glpk", "gurobi"]
+        valid_solvers = ["cbc", "clp", "cplex", "gams_cplex", "glpk", "gurobi", "highs"]
         valid_time_period = attr_time_period.key_values
         valid_volume = self.get_valid_values_from_attribute_column(attr_volume, "volume_equivalent_", str)
         # map parameters to valid values

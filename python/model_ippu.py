@@ -1,5 +1,5 @@
 import support_functions as sf
-import model_attributes as ma
+from model_attributes import *
 from attribute_table import AttributeTable
 from model_socioeconomic import Socioeconomic
 import pandas as pd
@@ -16,7 +16,7 @@ import warnings
 
 class IPPU:
 
-    def __init__(self, attributes: ma.ModelAttributes):
+    def __init__(self, attributes: ModelAttributes):
 
         # some subector reference variables
         self.subsec_name_econ = "Economy"
@@ -447,7 +447,7 @@ class IPPU:
             # if recycling totals are passed from the waste model, convert to ippu categories
             cats_waso_recycle = self.model_attributes.get_variable_categories(modvar_waste_total_recycled)
             dict_repl = attr_waso.field_maps[f"{pycat_waso}_to_{pycat_ippu}"]
-            cats_ippu_recycle = [ma.clean_schema(dict_repl[x]) for x in cats_waso_recycle]
+            cats_ippu_recycle = [clean_schema(dict_repl[x]) for x in cats_waso_recycle]
             array_ippu_recycled_waste = self.model_attributes.merge_array_var_partial_cat_to_array_all_cats(
                 array_ippu_recycled[1],
                 None,
@@ -465,7 +465,7 @@ class IPPU:
 
             # next, check for industrial categories whose production is affected by recycling, then adjust downwards
             cats_ippu_to_recycle_ordered = self.model_attributes.get_ordered_category_attribute(self.subsec_name_ippu, "target_cat_industry_to_adjust_with_recycling")
-            vec_ippu_cats_to_adjust_from_recycling = [ma.clean_schema(x) for x in cats_ippu_to_recycle_ordered]
+            vec_ippu_cats_to_adjust_from_recycling = [clean_schema(x) for x in cats_ippu_to_recycle_ordered]
 
             # get indexes of of valid categories specified for recycling adjustments
             w = [i for i in range(len(vec_ippu_cats_to_adjust_from_recycling)) if (vec_ippu_cats_to_adjust_from_recycling[i] != "none") and (vec_ippu_cats_to_adjust_from_recycling[i] in attr_ippu.key_values)]

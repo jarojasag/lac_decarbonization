@@ -18,9 +18,11 @@ Historical Solid Waste Method,historical_solid_waste_method,back_project," | The
 Land Use Reallocation Exhaust Transition Probabilities Directionality,land_use_reallocation_max_out_directionality,decrease_only,"Approach to use for ""maxing out"" transition probabilities for land use classes that transition into pasture and cropland states. Acceptable options are ""decrease_only"", ""increase_only"", or ""decrease_and_increase"". See the SISEPUEDE documentation for additional information.",
 Length Units,length_units,km,Default units for length. Used in reporting quantities useful to costs and benefits in the Transportation Demand sector.,
 Monetary Units,monetary_units,mm_usd,"Default reporting units for costs and benefits, including NemoMod reports.",
-NemoMod Solver,nemo_mod_solver,clp," | Solver to use to run NemoMod. Default allowable values are: cbc, clp, cplex, glpk, gurobi.
+NemoMod Solver,nemo_mod_solver,highs," | Solver to use to run NemoMod. Currently allowable values are: cbc, clp, cplex, gams_clpex, glpk, gurobi, highs
  | 
- | **Note**: If using cplex or gurobi, ensure that Julia has access to these solvers in the environment (in directory ./julia) and that proper licenses are available.",
+ | **Note**: If using cplex or gurobi, ensure that Julia has access to these solvers in the environment (in directory ./julia) and that proper licenses are available.
+ | 
+ | **Note**: Among open source solvers and cursory examples, `HiGHS <https://highs.dev/>`_ has performed particularly well.",
 NemoMod Time Periods,nemo_mod_time_periods,all,"Set of time periods to run. Acceptable values are ""all"" (entered without quotes) or pipe-delimitted time periods, e.g., 0|1|2|…",
 Power Units,power_units,GW," | Default power units (defined in attribute_power.csv with an associted power*year value in attribute_energy.csv) for NemoMod
  | 

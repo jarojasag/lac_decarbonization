@@ -1,12 +1,12 @@
 import support_functions as sf
-import model_attributes as ma
+from model_attributes import *
 from attribute_table import AttributeTable
 import pandas as pd
 import numpy as np
 
 class Socioeconomic:
 
-    def __init__(self, attributes: ma.ModelAttributes):
+    def __init__(self, attributes: ModelAttributes):
 
         self.model_attributes = attributes
         self.required_dimensions = self.get_required_dimensions()

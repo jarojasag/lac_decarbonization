@@ -31,8 +31,6 @@ from julia.api import Julia
 
 class ElectricEnergy:
     """
-        About
-        -----
         Use ElectricEnergy to calculate emissions from electricity generation
             using NemoMod. Integrates with the SISEPUEDE integrated modeling
             framework.
@@ -60,7 +58,7 @@ class ElectricEnergy:
         - Julia 1.7+
         - Python PyJulia package
         - NemoMod (see https://sei-international.github.io/NemoMod.jl/stable/ for the latest stable release)
-        - Cbc, Clp, GPLK, CPLEX, GAMS (to access GAMS solvers), Gurobi (at least one)
+        - Cbc, Clp, GPLK, CPLEX, GAMS (to access GAMS solvers), Gurobi, HiGHS (at least one)
 
     """
 
@@ -524,7 +522,8 @@ class ElectricEnergy:
             "cplex": "CPLEX",
             "gams_cplex": "GAMS",
             "glpk": "GLPK",
-            "gurobi": "Gurobi"
+            "gurobi": "Gurobi",
+            "highs": "HiGHS"
         }
 
         # check solver

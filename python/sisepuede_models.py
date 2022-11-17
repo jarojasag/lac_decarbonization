@@ -120,7 +120,10 @@ class SISEPUEDEModels:
 			self.fp_nemomod_reference_files,
 			logger = self.logger
 		) if self.allow_electricity_run else None
-		self.model_energy = NonElectricEnergy(self.model_attributes)
+		self.model_energy = NonElectricEnergy(
+			self.model_attributes,
+			logger = self.logger
+		)
 		self.model_ippu = IPPU(self.model_attributes)
 		self.model_socioeconomic = Socioeconomic(self.model_attributes)
 

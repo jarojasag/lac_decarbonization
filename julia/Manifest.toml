@@ -2,7 +2,7 @@
 
 julia_version = "1.8.2"
 manifest_format = "2.0"
-project_hash = "c24b080fde853b059ae7774e5d2383ae9fa0c21d"
+project_hash = "b4fb75ed11f443078e20b240b506e452fcf093b4"
 
 [[deps.ASL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -254,6 +254,18 @@ deps = ["Libdl", "MathOptInterface", "Pkg"]
 git-tree-sha1 = "87c018cbd2fd33e6d2462d486abee53a27c91c91"
 uuid = "2e9cd046-0924-5485-92f1-d5272153d98b"
 version = "0.11.3"
+
+[[deps.HiGHS]]
+deps = ["HiGHS_jll", "MathOptInterface", "SparseArrays"]
+git-tree-sha1 = "d40a9e8db6438481915261a378fc2c8ca70bb63a"
+uuid = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
+version = "1.2.0"
+
+[[deps.HiGHS_jll]]
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "b3e24275666fcc2e24d1a58a9f02acd9d2e23d3a"
+uuid = "8fd58aa0-07eb-5a78-9b36-339c94fd15ea"
+version = "1.3.0+0"
 
 [[deps.InlineStrings]]
 deps = ["Parsers"]

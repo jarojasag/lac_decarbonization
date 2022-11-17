@@ -1,5 +1,5 @@
 import support_functions as sf
-import model_attributes as ma
+from model_attributes import *
 from attribute_table import AttributeTable
 from model_socioeconomic import Socioeconomic
 import pandas as pd
@@ -19,7 +19,7 @@ import time
 
 class CircularEconomy:
 
-    def __init__(self, attributes: ma.ModelAttributes):
+    def __init__(self, attributes: ModelAttributes):
 
         self.model_attributes = attributes
         self.required_dimensions = self.get_required_dimensions()
@@ -516,7 +516,7 @@ class CircularEconomy:
         # domestiic
         for cdw in cats_dom_ww:
             # get population category
-            cat_gnrl = ma.clean_schema(self.model_attributes.dict_attributes[pycat_wali].field_maps[f"{pycat_wali}_to_{pycat_gnrl}"][cdw])
+            cat_gnrl = clean_schema(self.model_attributes.dict_attributes[pycat_wali].field_maps[f"{pycat_wali}_to_{pycat_gnrl}"][cdw])
             ind_gnrl = attr_gnrl.get_key_value_index(cat_gnrl)
             # the associated vector of wastewater produced + bod produced
             vec_bod = array_wali_bod_total[:, ind_gnrl]

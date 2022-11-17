@@ -1,5 +1,5 @@
 import support_functions as sf
-import model_attributes as ma
+from model_attributes import *
 from attribute_table import AttributeTable
 from model_socioeconomic import Socioeconomic
 from model_energy import NonElectricEnergy
@@ -7,7 +7,7 @@ from model_ippu import IPPU
 import pandas as pd
 import numpy as np
 import time
-from typing import Union
+from typing import *
 
 ##########################
 ###                    ###
@@ -17,7 +17,9 @@ from typing import Union
 
 class AFOLU:
 
-    def __init__(self, attributes: ma.ModelAttributes):
+    def __init__(self,
+        attributes: ModelAttributes
+    ):
 
         # some subector reference variables
         self.subsec_name_agrc = "Agriculture"
@@ -947,7 +949,7 @@ class AFOLU:
         vec_agrc_avg_soc = 0.0
         for modvar in dict_soil_fracs_to_use_agrc.keys():
             # soil category
-            cat_soil = ma.clean_schema(self.model_attributes.get_variable_attribute(modvar, attr_soil.key))
+            cat_soil = clean_schema(self.model_attributes.get_variable_attribute(modvar, attr_soil.key))
             ind_soil = attr_soil.get_key_value_index(cat_soil)
             #
             vec_agrc_avg_soc_cur = np.sum(arr_agrc_crop_area*dict_soil_fracs_to_use_agrc[modvar], axis = 1)
@@ -975,7 +977,7 @@ class AFOLU:
 
         for modvar in dict_soil_fracs_to_use_frst.keys():
             # soil category
-            cat_soil = ma.clean_schema(self.model_attributes.get_variable_attribute(modvar, attr_soil.key))
+            cat_soil = clean_schema(self.model_attributes.get_variable_attribute(modvar, attr_soil.key))
             ind_soil = attr_soil.get_key_value_index(cat_soil)
             #
             arr_frst_avg_soc_cur = arr_lndu_area[:, inds_lndu]*dict_soil_fracs_to_use_frst[modvar][:, inds_frst]
@@ -997,7 +999,7 @@ class AFOLU:
 
         for modvar in dict_soil_fracs_to_use_lndu.keys():
             # soil category
-            cat_soil = ma.clean_schema(self.model_attributes.get_variable_attribute(modvar, attr_soil.key))
+            cat_soil = clean_schema(self.model_attributes.get_variable_attribute(modvar, attr_soil.key))
             ind_soil = attr_soil.get_key_value_index(cat_soil)
             # get soil management factor for grasslands
             arr_lndu_soil_management_factor_cur = (1 - vec_lndu_frac_grassland_pasture) + vec_lndu_frac_grassland_pasture*arr_lndu_factor_soil_management[:, inds_lndu].transpose()
@@ -2259,7 +2261,7 @@ class AFOLU:
         # get EF4 for land use categories based on dry/wet (only applies to grassland)
         arr_lndu_ef4_n_volatilisation = 0.0
         for modvar_lndu_frac_drywet in dict_arrs_lndu_frac_drywet.keys():
-            cat_soil = ma.clean_schema(self.model_attributes.get_variable_attribute(modvar_lndu_frac_drywet, pycat_soil))
+            cat_soil = clean_schema(self.model_attributes.get_variable_attribute(modvar_lndu_frac_drywet, pycat_soil))
             ind_soil = attr_soil.get_key_value_index(cat_soil)
             arr_lndu_ef4_n_volatilisation += (dict_arrs_lndu_frac_drywet[modvar_lndu_frac_drywet].transpose()*arr_soil_ef4_n_volatilisation[:, ind_soil]).transpose()
 
@@ -2324,7 +2326,7 @@ class AFOLU:
         arr_frst_emissions_co2_fires = 0.0
         for modvar in self.modvar_list_frst_frac_temptrop:
             # soil category
-            cat_soil = ma.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
+            cat_soil = clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
             ind_soil = attr_soil.get_key_value_index(cat_soil)
             self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_ef_ch4, True, "array_units_corrected")
             # get forest area
@@ -2485,7 +2487,7 @@ class AFOLU:
             arr_lsmm_fracs_by_lvst = dict_arrs_lsmm_frac_manure[var_lvst_mm_frac]
             arr_lsmm_total_nitrogen_cur = arr_lvst_nitrogen*arr_lsmm_fracs_by_lvst
             # retrive the livestock management category
-            cat_lsmm = ma.clean_schema(self.model_attributes.get_variable_attribute(var_lvst_mm_frac, pycat_lsmm))
+            cat_lsmm = clean_schema(self.model_attributes.get_variable_attribute(var_lvst_mm_frac, pycat_lsmm))
             index_cat_lsmm = attr_lsmm.get_key_value_index(cat_lsmm)
 
 
@@ -2724,7 +2726,7 @@ class AFOLU:
         vec_soil_n2odirectn_fsn_rice = 0.0
         # crop component
         for modvar in self.modvar_list_agrc_frac_drywet:
-            cat_soil = ma.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
+            cat_soil = clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
             ind_soil = attr_soil.get_key_value_index(cat_soil)
             # get current factors
             arr_agrc_cur_wetdry_fertilized_crop = dict_arrs_agrc_frac_drywet[modvar]*arr_agrc_crop_area
@@ -2747,7 +2749,7 @@ class AFOLU:
 
         # grassland component
         for modvar in self.modvar_list_lndu_frac_drywet:
-            cat_soil = ma.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
+            cat_soil = clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
             ind_soil = attr_soil.get_key_value_index(cat_soil)
             # get current factors
             vec_soil_cur_wetdry_fertilized_pstr = dict_arrs_lndu_frac_drywet[modvar]*arr_land_use_with_pastures_as_grassland
@@ -2845,7 +2847,7 @@ class AFOLU:
         vec_soil_n2odirectn_fcr_rice = vec_agrc_total_n_residue_rice*vec_soil_ef1_rice
         # loop over dry/wet
         for modvar in self.modvar_list_agrc_frac_drywet:
-            cat_soil = ma.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
+            cat_soil = clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
             ind_soil = attr_soil.get_key_value_index(cat_soil)
             vec_soil_n2odirectn_fcr += dict_agrc_modvar_to_n_residue[modvar]*arr_soil_ef1_organic[:, ind_soil]
 
@@ -2940,7 +2942,7 @@ class AFOLU:
         vec_soil_emission_co2_soil_carbon_organic = 0.0
         for modvar in self.modvar_list_agrc_frac_temptrop:
             # soil category
-            cat_soil = ma.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
+            cat_soil = clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
             ind_soil = attr_soil.get_key_value_index(cat_soil)
             # get land use category for soil carbon facto
             arr_soil_soc_crop_temptrop_cur = (arr_agrc_crop_area*dict_arrs_agrc_frac_temptrop[modvar]).transpose()
@@ -2995,7 +2997,7 @@ class AFOLU:
         # loop over dry/wet to estimate carbon stocks in crops
         for modvar in self.modvar_list_agrc_frac_temptrop:
             # soil category
-            cat_soil = ma.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
+            cat_soil = clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
             ind_soil = attr_soil.get_key_value_index(cat_soil)
             vec_soil_crop_temptrop_cur = np.sum(arr_agrc_crop_area*dict_arrs_agrc_frac_temptrop[modvar], axis = 1)
             vec_soil_crop_temptrop_cur *= arr_lndu_frac_organic_soils[:, self.ind_lndu_crop]*arr_soil_ef2[:, ind_soil]
@@ -3003,7 +3005,7 @@ class AFOLU:
         # loop over dry/wet to estimate carbon stocks in grassland
         for modvar in self.modvar_list_lndu_frac_temptrop:
             # soil category
-            cat_soil = ma.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
+            cat_soil = clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
             ind_soil = attr_soil.get_key_value_index(cat_soil)
             vec_soil_pstr_temptrop_cur = (arr_land_use*dict_arrs_lndu_frac_temptrop[modvar])[:, self.ind_lndu_grass]
             vec_soil_pstr_temptrop_cur *= arr_lndu_frac_organic_soils[:, self.ind_lndu_grass]*arr_soil_ef2[:, ind_soil]
@@ -3011,10 +3013,10 @@ class AFOLU:
         # loop over tropical/temperate NP/temperate NR
         for modvar in self.modvar_list_frst_frac_temptrop:
             # soil category
-            cat_soil = ma.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
+            cat_soil = clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
             ind_soil = attr_soil.get_key_value_index(cat_soil)
             # get land use category for soil carbon facto
-            cats_lndu = [ma.clean_schema(x) for x in self.model_attributes.get_ordered_category_attribute(self.subsec_name_frst, pycat_lndu)]
+            cats_lndu = [clean_schema(x) for x in self.model_attributes.get_ordered_category_attribute(self.subsec_name_frst, pycat_lndu)]
             inds_lndu = [attr_lndu.get_key_value_index(x) for x in cats_lndu]
             arr_soil_frst_temptrop_cur = np.sum(arr_area_frst*dict_arrs_frst_frac_temptrop[modvar]*arr_lndu_frac_organic_soils[:, inds_lndu], axis = 1)
             arr_soil_frst_temptrop_cur *= arr_soil_ef2[:, ind_soil]
@@ -3041,7 +3043,7 @@ class AFOLU:
         dict_soil_ppr_n_by_climate = {}
         for modvar in self.modvar_list_lndu_frac_drywet:
             # soil category
-            cat_soil = ma.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
+            cat_soil = clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
             ind_soil = attr_soil.get_key_value_index(cat_soil)
             vec_soil_frac_pstr_drywet_cur = (arr_land_use*dict_arrs_lndu_frac_drywet[modvar])[:, self.ind_lndu_grass]/arr_land_use[:, self.ind_lndu_grass]
             # add component to EF1 estimate for F_SOM
@@ -3070,7 +3072,7 @@ class AFOLU:
         vec_soil_n2on_indirect_volatilisation_gasm_ppr = 0.0
         for modvar in self.modvar_list_lndu_frac_drywet:
             # soil category
-            cat_soil = ma.clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
+            cat_soil = clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
             ind_soil = attr_soil.get_key_value_index(cat_soil)
             # GASF component--synthetic by urea/non-urea
             vec_soil_fert_sn_cur_non_urea = dict_soil_fertilizer_application_by_climate_synthetic[cat_soil].copy()

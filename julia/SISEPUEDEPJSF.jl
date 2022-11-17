@@ -12,6 +12,7 @@ rank_ordered_solver_list = Vector{String}([
     "CPLEX",
     "Gurobi",
     "GAMS",
+    "HiGHS",
     "Clp",
     "Cbc",
     "GLPK"
