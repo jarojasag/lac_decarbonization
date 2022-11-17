@@ -1,5 +1,4 @@
 ﻿Experimental Parameter,Configuration File Parameter,Default Value,Information,Notes
-Database Base Filename,database_base_filename,sisepuede_run,"Base file name for output databases; in general, the format of the output database will be ""{database_base_filename}_POSIXTIME"".",
 Number of LHS Trials,num_lhc_samples,1000,"Number of Latin Hypercube samples to generate for the experiment. This number governs the number of plausible futures that are generated, which are indexed in most cases as **future_id**.",
 Output Method,output_method,SQLite," | Acceptable values are *CSV* or *SQLite* (case insensitive). 
  | 

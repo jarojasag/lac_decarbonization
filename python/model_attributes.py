@@ -43,7 +43,6 @@ class Configuration:
         # set required parametrs by type
         self.params_string = [
             "area_units",
-            "database_base_filename",
             "energy_units",
             "energy_units_nemomod",
             "emissions_mass",
@@ -356,6 +355,31 @@ class Configuration:
                 dict_out.update({key: val})
 
         return dict_out
+
+
+
+    def to_data_frame(self,
+        list_delim: str = "|"
+    ) -> pd.DataFrame:
+        """
+        List all configuration parameters as a single-rows dataframe. Converts
+            lists to concatenated strings separated by the delimiter
+            `list_delim`.
+
+        Keyword Arguments
+        -----------------
+        - list_delim: delimiter to use to convert lists to concatenated strings
+            as elements in the data frame.
+        """
+        dict_df = {}
+        for key in self.dict_config.keys():
+            val = self.dict_config.get(key)
+            if isinstance(val, list):
+                val = list_delim.join([str(x) for x in val])
+
+            dict_df.update({key: [val]})
+
+        return pd.DataFrame(dict_df)
 
 
 

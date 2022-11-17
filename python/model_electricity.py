@@ -20,6 +20,9 @@ from julia.api import Julia
 
 
 
+
+
+
 ###########################
 ###                     ###
 ###     ENERGY MODEL    ###
@@ -3606,10 +3609,10 @@ class ElectricEnergy:
 
         dict_return = {}
         # get some scalars
-        scalar_total_annual_max_capacity_storage = self.model_attributes.get_scalar(self.modvar_entc_nemomod_total_annual_max_capacity, "power")
-        scalar_total_annual_max_capacity_investment_storage = self.model_attributes.get_scalar(self.modvar_entc_nemomod_total_annual_max_capacity_investment, "power")
-        scalar_total_annual_min_capacity_storage = self.model_attributes.get_scalar(self.modvar_entc_nemomod_total_annual_min_capacity, "power")
-        scalar_total_annual_min_capacity_investment_storage = self.model_attributes.get_scalar(self.modvar_entc_nemomod_total_annual_min_capacity_investment, "power")
+        scalar_total_annual_max_capacity_storage = self.model_attributes.get_scalar(self.modvar_enst_nemomod_total_annual_max_capacity_storage, "power")
+        scalar_total_annual_max_capacity_investment_storage = self.model_attributes.get_scalar(self.modvar_enst_nemomod_total_annual_max_capacity_investment_storage, "power")
+        scalar_total_annual_min_capacity_storage = self.model_attributes.get_scalar(self.modvar_enst_nemomod_total_annual_min_capacity_storage, "power")
+        scalar_total_annual_min_capacity_investment_storage = self.model_attributes.get_scalar(self.modvar_enst_nemomod_total_annual_min_capacity_investment_storage, "power")
 
         # TotalAnnualMaxCapacityStorage
         dict_return.update(

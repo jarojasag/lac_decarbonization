@@ -321,7 +321,15 @@ def clean_field_names(
 
 
 ##  export a dictionary of data frames to an excel
-def dict_to_excel(fp_out: str, dict_out: dict) -> None:
+def dict_to_excel(
+    fp_out: str,
+    dict_out: Dict[str, pd.DataFrame]
+) -> None:
+    """
+    Write a dictionary `dict_out` of dataframes to Excel file at path fp_out.
+        Keys in dict_out are sheet names.
+
+    """
     with pd.ExcelWriter(fp_out) as excel_writer:
         for k in dict_out.keys():
             dict_out[k].to_excel(excel_writer, sheet_name = str(k), index = False, encoding = "UTF-8")
@@ -329,7 +337,12 @@ def dict_to_excel(fp_out: str, dict_out: dict) -> None:
 
 
 ##  function to help fill in fields that are in another dataframe the same number of rows
-def df_get_missing_fields_from_source_df(df_target, df_source, side = "right", column_vector = None):
+def df_get_missing_fields_from_source_df(
+    df_target: pd.DataFrame,
+    df_source: pd.DataFrame,
+    side: str = "right",
+    column_vector: Union[List, None] = None
+) -> pd.DataFrame:
 
     if df_target.shape[0] != df_source.shape[0]:
         raise RuntimeError(f"Incompatible shape found in data frames; the target number of rows ({df_target.shape[0]}) should be the same as the source ({df_source.shape[0]}).")
@@ -385,6 +398,55 @@ def do_array_mult(
         return np.outer(arr_stable, arr_variable)
     else:
         raise ValueError(f"Error in do_array_mult: Incompatable shape {arr_variable.shape} in arr_variable. The stable array has shape {arr_stable.shape}.")
+
+
+
+def fill_df_rows_from_df(
+    df_target: pd.DataFrame,
+    df_source: pd.DataFrame,
+    fields_merge: list,
+    fields_subset: list
+) -> pd.DataFrame:
+    """
+    Fill missing rows in df_target with rows available in df_subset.
+
+    Function Arguments
+    ------------------
+    - df_target: data frame containing NAs to be filled from df_source
+    - df_source: data frame containing rows to use for filling NAs
+    - fields_merge: fields in df_target and df_source to use for merging rows
+        from df_source to df_target
+    - fields_subset: fields in df_target to source from df_source
+    """
+
+    # check specifications
+    set_fields_shared = set(df_target.columns) & set(df_source.columns)
+    fields_merge = [x for x in fields_merge if x in set_fields_shared]
+    fields_subset = [x for x in fields_subset if x in set_fields_shared]
+
+    # split by NA/not NA; NA rows will get replaced
+    filt_nas = df_target[fields_subset].isna().any(axis = 1)
+    df_target_keep = df_target[~filt_nas]
+    df_target_nas = df_target[filt_nas]
+
+    if len(df_target_nas) > 0:
+        # fields_diff are presumably the missing indices; merges fields_subset on fields_merge
+        fields_diff = [x for x in df_target_nas.columns if (x not in fields_merge + fields_subset)]
+
+        df_target_nas = pd.merge(
+            df_target_nas[fields_diff + fields_merge],
+            df_source[fields_merge + fields_subset],
+            how = "left"
+        )
+
+        df_out = pd.concat(
+            [df_target_keep, df_target_nas],
+            axis = 0
+        ).reset_index(drop = True)
+    else:
+        df_out = df_target_keep
+
+    return df_out
 
 
 

@@ -6,6 +6,17 @@ import pandas as pd
 import numpy as np
 import time
 
+
+
+
+
+
+#####################################
+###                               ###
+###     CIRCULAR ECONOMY MODEL    ###
+###                               ###
+#####################################
+
 class CircularEconomy:
 
     def __init__(self, attributes: ma.ModelAttributes):

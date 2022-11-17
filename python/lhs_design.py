@@ -81,6 +81,7 @@ class LHSDesign:
 		self._set_ignore_trial_flag(ignore_trial_flag)
 
 		# check parameters and set lhs tables to initialize
+
 		self.fields_factors_l = None
 		self.fields_factors_x = None
 		self.n_factors_l = None
@@ -144,13 +145,22 @@ class LHSDesign:
 
 		Keyword Arguments
 		------------------
-		Some arguments can be set at initialization and/or updated dynamically with ._set_lhs_tables(...)
-			- fields_factors_l: fields used to label lever effect output DataFrames retrieved using self.retrieve_lhs_tables_by_design() by factor
-			- fields_factors_x: fields used to label exogenous uncertainty output DataFrames retrieved using self.retrieve_lhs_tables_by_design() by factor
-			- n_factors_x: optional number of factors associated with exogenous uncertainties to set at initialization
-			- n_factors_l: optional number of factors associated with lever (strategy) uncertainties to set at initialization
+		Some arguments can be set at initialization and/or updated dynamically
+			with ._set_lhs_tables(...)
+			- fields_factors_l: fields used to label lever effect output
+				DataFrames retrieved using self.retrieve_lhs_tables_by_design()
+				by factor
+			- fields_factors_x: fields used to label exogenous uncertainty
+				output DataFrames retrieved using
+				self.retrieve_lhs_tables_by_design() by factor
+			- n_factors_x: optional number of factors associated with exogenous
+				uncertainties to set at initialization
+			- n_factors_l: optional number of factors associated with lever
+				(strategy) uncertainties to set at initialization
 			- n_trials: optional number of trials to set at initialization
-			- random_seed: optional random seed to specify in generation of tables (sequentially increases by one for ach additional LHS table)
+			- random_seed: optional random seed to specify in generation of
+				tables (sequentially increases by one for ach additional LHS
+				table)
 		"""
 
 		# get current values
@@ -311,7 +321,7 @@ class LHSDesign:
 
 
 	def retrieve_lhs_tables_by_design(self,
-		design_id: int,
+		design_id: Union[int, None],
 		arr_lhs_l: Union[np.ndarray, None] = None,
 		arr_lhs_x: Union[np.ndarray, None] = None,
 		attr_design_id: Union[AttributeTable, None] = None,
@@ -325,25 +335,34 @@ class LHSDesign:
 		Tuple[Union[None, np.ndarray], Union[None, np.ndarray]]
 	]:
 		"""
-		Retrieve LHS tables for a particular design (applies any necessary modifications to base LHS table)
+		Retrieve LHS tables for a particular design (applies any necessary
+			modifications to base LHS table)
 
 		Function Arguments
 		------------------
-		- design_id: design_id to retrieve table for
+		- design_id: design_id to retrieve table for. If None, returns raw LHC
+			samples.
 
 		Keyword Arguments
 		-----------------
-		- arr_lhs_l: np.ndarray of LHS samples used to explore around lever effects
+		- arr_lhs_l: np.ndarray of LHS samples used to explore around lever
+			effects
 			* If None, defaults to self.arr_lhs_l
-		- arr_lhs_x: np.ndarray of LHS samples used to explore around exogenous uncertainties
+		- arr_lhs_x: np.ndarray of LHS samples used to explore around exogenous
+			uncertainties
 			* If None, defaults to self.arr_lhs_x
 		- attr_design_id: AttributeTable used to determine design indexing
 			* If None, defaults to self.attribute_design_id
 		- ignore_trial_flag: flag to use for invalid trials
-		- field_lhs_key = self.field_lhs_key if (field_lhs_key is None) else field_lhs_key
-		- field_vary_l: field in attr_design_id.table denoting whether or not LEs vary under the design
-		- field_vary_x: field in attr_design_id.table denoting whether or not Xs vary under the design
-		- return_type: type of array to return. Valid types are pd.DataFrame or np.ndarray. If a data frame, adds index fields for design and field_lhs_key
+		- field_lhs_key = self.field_lhs_key if (field_lhs_key is None) else
+			field_lhs_key
+		- field_vary_l: field in attr_design_id.table denoting whether or not
+			LEs vary under the design
+		- field_vary_x: field in attr_design_id.table denoting whether or not
+			Xs vary under the design
+		- return_type: type of array to return. Valid types are pd.DataFrame or
+			np.ndarray. If a data frame, adds index fields for design and
+			field_lhs_key
 
 		Notes
 		-----
@@ -366,35 +385,42 @@ class LHSDesign:
 		# check return type
 		return_type = pd.DataFrame if (return_type not in [pd.DataFrame, np.ndarray]) else return_type
 
-		# get attribute table and check
-		attr_design_id = self.attribute_design_id if (attr_design_id is None) else attr_design_id
-		if design_id not in attr_design_id.key_values:
-			design_base_assumed = min(attr_design_id.key_values)
-			self._log(f"Error in retrieve_lhs_tables_by_design: invalid design_id '{design_id}'. Defaulting to design_id '{design_base_assumed}'.", type_log = "warning")
-			design_id = design_base_assumed
+		if design_id is None:
+			arr_lhs_out_l = arr_lhs_l
+			arr_lhs_out_x = arr_lhs_x
 
-		# initialize some variables for determining x/l
-		key_vary_l = f"{attr_design_id.key}_to_{field_vary_l}"
-		key_vary_x = f"{attr_design_id.key}_to_{field_vary_x}"
-		vary_l_q = bool(attr_design_id.field_maps.get(key_vary_l).get(design_id))
-		vary_x_q = bool(attr_design_id.field_maps.get(key_vary_x).get(design_id))
+		else:
+			# get attribute table and check
+			attr_design_id = self.attribute_design_id if (attr_design_id is None) else attr_design_id
+			if design_id not in attr_design_id.key_values:
+				design_base_assumed = min(attr_design_id.key_values)
+				self._log(f"Error in retrieve_lhs_tables_by_design: invalid design_id '{design_id}'. Defaulting to design_id '{design_base_assumed}'.", type_log = "warning")
+				design_id = design_base_assumed
 
-		# apply vectorization to get array for LEs if necessary
-		np_trans_strat = np.vectorize(self.transform_strategy_lhs_trial_from_design)
+			# initialize some variables for determining x/l
+			key_vary_l = f"{attr_design_id.key}_to_{field_vary_l}"
+			key_vary_x = f"{attr_design_id.key}_to_{field_vary_x}"
+			vary_l_q = bool(attr_design_id.field_maps.get(key_vary_l).get(design_id))
+			vary_x_q = bool(attr_design_id.field_maps.get(key_vary_x).get(design_id))
 
-		# get LE uncertainty array
-		arr_lhs_out_l = None
-		if arr_lhs_l is not None:
-			arr_lhs_out_l = np_trans_strat(arr_lhs_l, design_id, attr_design_id) if vary_l_q else np.ones(arr_lhs_l.shape)
+			# apply vectorization to get array for LEs if necessary
+			np_trans_strat = np.vectorize(self.transform_strategy_lhs_trial_from_design)
 
-		# get X uncertainty array
-		arr_lhs_out_x = None
-		if arr_lhs_x is not None:
-			arr_lhs_out_x = arr_lhs_x if vary_x_q else ignore_trial_flag*np.ones(arr_lhs_x.shape)
+			# get LE uncertainty array
+			arr_lhs_out_l = None
+			if arr_lhs_l is not None:
+				arr_lhs_out_l = np_trans_strat(arr_lhs_l, design_id, attr_design_id) if vary_l_q else np.ones(arr_lhs_l.shape)
+
+			# get X uncertainty array
+			arr_lhs_out_x = None
+			if arr_lhs_x is not None:
+				arr_lhs_out_x = arr_lhs_x if vary_x_q else ignore_trial_flag*np.ones(arr_lhs_x.shape)
+
 
 		if return_type == pd.DataFrame:
 
-			dict_keys = {field_lhs_key: self.vector_lhs_key_values, attr_design_id.key: design_id}
+			dict_keys = {field_lhs_key: self.vector_lhs_key_values}
+			dict_keys.update({attr_design_id.key: design_id}) if (design_id is not None) else None
 
 			arr_lhs_out_l = sf.add_data_frame_fields_from_dict(
 				pd.DataFrame(arr_lhs_out_l, columns = self.fields_factors_l),

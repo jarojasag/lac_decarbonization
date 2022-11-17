@@ -33,8 +33,12 @@ class AnalysisID:
 		regex_template: Union[str, None] = None
 	):
 		self.logger = logger
-		self._check_id(id_str)
+		self._check_id(
+			id_str = id_str,
+			regex_template = regex_template
+		)
 		self._set_file_string()
+
 
 
 	def _log(self,
@@ -67,26 +71,29 @@ class AnalysisID:
 		Set the runtime ID to distinguish between different analytical
 		 	runs. Sets the following properties:
 
+			* self.day
 			* self.default_regex_template
-			* self.regex_template
+			* self.hour
 			* self.id
 			* self.isoformat
-			* self.year
-			* self.month
-			* self.day
-			* self.hour
-			* self.minute
-			* self.second
 			* self.microsecond
+			* self.minute
+			* self.month
+			* self.new_init
+			* self.regex_template
+			* self.second
+			* self.year
 		"""
 
-		self.isoformat = None
 		self.default_regex_template = re.compile("analysis_run_(.+$)")
+		self.isoformat = None
+		self.new_init = True
 		self.regex_template = self.default_regex_template if not isinstance(regex_template, re.Pattern) else regex_template
 		# get regex substitution
+		date_info = None
 		str_regex_sub = [x for x in self.regex_template.split(self.regex_template.pattern) if (x != "")]
 		str_regex_sub = str_regex_sub[0] if (len(str_regex_sub) > 0) else None
-		date_info = None
+
 
 		# try to initialize from string if specified
 		if isinstance(id_str, str):
@@ -94,11 +101,12 @@ class AnalysisID:
 			if match is not None:
 				try:
 					date_info = datetime.datetime.fromisoformat(match.groups()[0])
-					self.isoformat = match.groups()[0]
 					self.id = id_str
+					self.isoformat = match.groups()[0]
+					self.new_init = False
 
 				except Exception as e:
-					self._log(f"Error in AnalysisID trying to initialize ID '{id_str}': {e}.\n\tDefaulting new ID.", type_log = None)
+					self._log(f"Error in AnalysisID trying to initialize ID '{id_str}': {e}.\n\tDefaulting new ID.", type_log = "warning")
 					id_str = None
 			else:
 				id_str = None

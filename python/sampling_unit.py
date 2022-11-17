@@ -1,4 +1,5 @@
 from attribute_table import AttributeTable
+import itertools
 import logging
 import math
 import numpy as np
@@ -90,25 +91,13 @@ class SamplingUnit:
 			regex_tp
 		)
 
+		# perform initializations
+		self._initialize_uncertainty_functional_form(fan_function_specification)
+		self._initialize_scenario_variables(dict_baseline_ids)
+		self._initialize_trajectory_arrays()
+		self._initialize_xl_type()
 
-		self.uncertainty_fan_function_parameters = self.get_fan_function_parameters(fan_function_specification)
-		self.uncertainty_ramp_vector = self.build_ramp_vector(self.uncertainty_fan_function_parameters)
 
-		# set some properties around scenarios, variable specification, and more
-		self.data_table, self.df_id_coordinates, self.id_coordinates = self.check_scenario_variables(self.df_variable_definitions, self.fields_id)
-		self.dict_id_values, self.dict_baseline_ids = self.get_scenario_values(self.data_table, self.fields_id, dict_baseline_ids)
-		self.num_scenarios = len(self.id_coordinates)
-		self.variable_specifications = self.get_all_vs(self.data_table)
-		self.dict_variable_info = self.get_variable_dictionary(
-			self.data_table,
-			self.variable_specifications
-		)
-		self.ordered_trajectory_arrays = self.get_ordered_trajectory_arrays(self.data_table, self.fields_id, self.fields_time_periods, self.variable_specifications)
-		self.scalar_diff_arrays = self.get_scalar_diff_arrays()
-
-		# important components for different design ids + assessing uncertainty in lever acheivement
-		self.fields_order_strat_diffs = [x for x in self.fields_id if (x != self.key_strategy)] + [self.field_variable, self.field_variable_trajgroup_type]
-		self.xl_type, self.dict_strategy_info = self.infer_sampling_unit_type()
 
 
 
@@ -218,12 +207,39 @@ class SamplingUnit:
 
 
 
-	def check_scenario_variables(self,
-		df_in: pd.DataFrame,
-		fields_id: list,
+	def _initialize_scenario_variables(self,
+		dict_baseline_ids: Dict[str, int],
+		df_in: Union[pd.DataFrame, None] = None,
+		fields_id: Union[list, None] = None,
 		field_merge_key: Union[str, None] = None
-	) -> Tuple[pd.DataFrame, pd.DataFrame, List[Tuple]]:
+	) -> None:
+		"""
+		Check inputs of the input data frame and id fields. Sets the following
+			properties:
 
+			* self.data_table
+			* self.df_id_coordinates
+			* self.dict_baseline_ids
+			* self.dict_id_values
+			* self.dict_variable_info
+			* self.id_coordinates
+			* self.num_scenarios
+			* self.variable_specifications
+
+
+		Function Arguments
+		------------------
+		- dict_baseline_ids: dictionary mapping each dimensional key to nominal
+			baseline
+
+		Keyword Arguments
+		-----------------
+		- df_in: input data frame used to specify variables
+		- fields_id: id fields included in df_in
+		- field_merge_key: scenario key
+		"""
+		df_in = self.df_variable_definitions if not isinstance(df_in, pd.DataFrame) else df_in
+		fields_id = self.fields_id if not isinstance(fields_id, list) else fields_id
 		field_merge_key = self.primary_key_id_coordinates if (field_merge_key is None) else field_merge_key
 		tups_id = set([tuple(x) for x in np.array(df_in[fields_id])])
 
@@ -231,13 +247,29 @@ class SamplingUnit:
 			df_check = df_in[df_in[self.field_variable_trajgroup_type] == tg_type]
 			for vs in list(df_check[self.field_variable].unique()):
 				tups_id = tups_id & set([tuple(x) for x in np.array(df_check[df_check[self.field_variable] == vs][fields_id])])
-
+		#
 		df_scen = pd.DataFrame(tups_id, columns = fields_id)
 		df_in = pd.merge(df_in, df_scen, how = "inner", on = fields_id)
 		df_scen[field_merge_key] = range(len(df_scen))
 		tups_id = sorted(list(tups_id))
 
-		return (df_in, df_scen, tups_id)
+		# id values and baseline ids
+		dict_id_values, dict_baseline_ids = self.get_scenario_values(
+			dict_baseline_ids,
+			df_in = df_in,
+			fields_id = fields_id
+		)
+		var_specs = self.get_all_vs(df_in)
+
+		self.data_table = df_in
+		self.df_id_coordinates = df_scen
+		self.dict_baseline_ids = dict_baseline_ids
+		self.dict_id_values = dict_id_values
+		self.dict_variable_info = self.get_variable_dictionary(df_in, var_specs)
+		self.id_coordinates = tups_id
+		self.num_scenarios = len(tups_id)
+		self.variable_specifications = var_specs
+
 
 
 
@@ -325,8 +357,8 @@ class SamplingUnit:
 		"""
 		if not self.field_variable in df_in.columns:
 			raise ValueError(f"Field '{self.field_variable}' not found in data frame.")
-		all_vs = list(df_in[self.field_variable].unique())
-		all_vs.sort()
+		all_vs = sorted(list(df_in[self.field_variable].unique()))
+
 		return all_vs
 
 
@@ -364,24 +396,75 @@ class SamplingUnit:
 
 
 
-	def get_ordered_trajectory_arrays(self,
-		df_in: pd.DataFrame,
-		fields_id: list,
-		fields_time_periods: list,
-		variable_specifications: list
+	def _initialize_trajectory_arrays(self,
+		df_in: Union[pd.DataFrame, None] = None,
+		fields_id: Union[list, None] = None,
+		fields_time_periods: Union[list, None] = None,
+		variable_specifications: Union[list, None] = None
 	) -> Dict[str, np.ndarray]:
-		# order trajectory arrays by id fields; used for quicker lhs application across id dimensions
-		dict_out = {}
-		for vs in variable_specifications:
-			df_cur_vs = df_in[df_in[self.field_variable].isin([vs])].sort_values(by = fields_id)
+		"""
+		Order trajectory arrays by id fields; used for quicker lhs application
+			across id dimensions. Sets the following properties:
 
-			if self.variable_trajectory_group == None:
-				dict_out.update({(vs, None): {"data": np.array(df_cur_vs[fields_time_periods]), "id_coordinates": df_cur_vs[fields_id]}})
-			else:
-				for tgs in self.required_tg_specs:
-					df_cur = df_cur_vs[df_cur_vs[self.field_variable_trajgroup_type] == tgs]
-					dict_out.update({(vs, tgs): {"data": np.array(df_cur[fields_time_periods]), "id_coordinates": df_cur[fields_id]}})
-		return dict_out
+			* self.ordered_trajectory_arrays
+			* self.scalar_diff_arrays
+
+		Keyword Arguments
+		-----------------
+		- df_in: variable specification data frame
+		- fields_id: id fields included in the specification of variables
+		- fields_time_periods: fields denoting time periods
+		- variable_specifications: list of variable specifications included in
+			df_in
+		"""
+
+		# initialize defaults
+		df_in = self.data_table if not isinstance(df_in, pd.DataFrame) else df_in
+		fields_id = self.fields_id if not isinstance(fields_id, list) else fields_id
+		fields_time_periods = self.fields_time_periods if not isinstance(fields_time_periods, list) else fields_time_periods
+		variable_specifications = self.variable_specifications if not isinstance(variable_specifications, list) else variable_specifications
+
+		# set some other variables
+		tp_end = self.fields_time_periods[-1]
+		dict_scalar_diff_arrays = {}
+		dict_ordered_traj_arrays = {}
+
+		for vs in variable_specifications:
+
+			df_cur_vs = df_in[df_in[self.field_variable].isin([vs])]
+			dfs_cur = [(None, df_cur_vs)] if (self.variable_trajectory_group is None) else df_cur_vs.groupby([self.field_variable_trajgroup_type])
+
+			for df_cur in dfs_cur:
+				tgs, df_cur = df_cur
+				df_cur.sort_values(by = fields_id, inplace = True)
+
+				# ORDERED TRAJECTORY ARRAYS
+				array_data = np.array(df_cur[fields_time_periods])
+				coords_id = df_cur[fields_id]
+				dict_ordered_traj_arrays.update(
+					{
+						(vs, tgs): {
+							"data": np.array(df_cur[fields_time_periods]),
+							"id_coordinates": df_cur[fields_id]
+						}
+					}
+				)
+
+				# SCALAR DIFFERENCE ARRAYS - order the max/min scalars
+				var_info = self.dict_variable_info.get((vs, tgs))
+				vec_scale_max = np.array([var_info.get("max_scalar")[tuple(x)] for x in np.array(coords_id)])
+				vec_scale_min = np.array([var_info.get("min_scalar")[tuple(x)] for x in np.array(coords_id)])
+
+				# difference, in final time period, between scaled value and baseline value-dimension is # of scenarios
+				dict_tp_end_delta = {
+					"max_tp_end_delta": array_data[:,-1]*(vec_scale_max - 1),
+					"min_tp_end_delta": array_data[:,-1]*(vec_scale_min - 1)
+				}
+
+				dict_scalar_diff_arrays.update({(vs, tgs): dict_tp_end_delta})
+
+		self.ordered_trajectory_arrays = dict_ordered_traj_arrays
+		self.scalar_diff_arrays = dict_scalar_diff_arrays
 
 
 
@@ -439,23 +522,33 @@ class SamplingUnit:
 
 
 	def get_scenario_values(self,
-		df_in: pd.DataFrame,
-		fields_id: list,
-		dict_baseline_ids: dict
+		dict_baseline_ids: Dict[str, int],
+		df_in: Union[pd.DataFrame, None] = None,
+		fields_id: Union[list, None] = None,
 	) -> Tuple[Dict, Dict]:
 		"""
-		Get scenario index values by scenario dimension and verifies baseline valies. Returns
-			a tuple of two dictionaries:
+		Get scenario index values by scenario dimension and verifies baseline
+			values. Returns a tuple:
 
-			* dict_id_values: maps each dimensional key (str) to a list of values
-			* dict_id_baselines: mapes each dimensional key (str) to a baseline scenario index
+			dict_id_values, dict_baseline_ids
+
+		where `dict_id_values` maps each dimensional key (str) to a list of
+			values and `dict_baseline_ids` maps each dimensional key (str) to a
+			baseline scenario index
 
 		Function Arguments
 		------------------
 		- df_in: data frame containing the input template
 		- fields_id: list of id fields
-		- dict_baseline_ids: dictionary mapping each dimensional key to nominal baseline
+		- dict_baseline_ids: dictionary mapping each dimensional key to nominal
+			baseline
+
+		Function Arguments
+		------------------
 		"""
+
+		df_in = self.data_table if not isinstance(df_in, pd.DataFrame) else df_in
+		fields_id = self.fields_id if not isinstance(fields_id, list) else fields_id
 		#
 		dict_id_values = {}
 		dict_id_baselines = dict_baseline_ids.copy()
@@ -576,8 +669,6 @@ class SamplingUnit:
 
 
 
-
-	# the variable dictionary includes information on sampling ranges for time period scalars, wether the variables should be scaled uniformly, and the trajectories themselves
 	def get_variable_dictionary(self,
 		df_in: pd.DataFrame,
 		variable_specifications: list,
@@ -585,9 +676,13 @@ class SamplingUnit:
 		field_max: str = None,
 		field_min: str = None,
 		fields_time_periods: list = None
-	):
+	) -> None:
 		"""
-		Retrieve a dictionary mapping a vs, tg pair to a list of
+		Retrieve a dictionary mapping a vs, tg pair to a list of information.
+			The variable dictionary includes information on sampling ranges for
+			time period scalars, wether the variables should be scaled
+			uniformly, and the trajectories themselves.
+
 		"""
 		fields_id = self.fields_id if (fields_id is None) else fields_id
 		field_max = self.field_max_scalar if (field_max is None) else field_max
@@ -595,11 +690,7 @@ class SamplingUnit:
 		fields_time_periods = self.fields_time_periods if (fields_time_periods is None) else fields_time_periods
 
 		dict_var_info = {}
-
-		if self.variable_trajectory_group != None:
-			tgs_loops = self.required_tg_specs
-		else:
-			tgs_loops = [None]
+		tgs_loops = self.required_tg_specs if (self.variable_trajectory_group is not None) else [None]
 
 		for vs in variable_specifications:
 
@@ -622,49 +713,73 @@ class SamplingUnit:
 
 
 	# determine if the sampling unit represents a strategy (L) or an uncertainty (X)
-	def infer_sampling_unit_type(self,
+	def _initialize_xl_type(self,
 		thresh: float = (10**(-12))
 	) -> Tuple[str, Dict[str, Any]]:
-		fields_id_no_strat = [x for x in self.fields_id if (x != self.key_strategy)]
+		"""
+		Infer the sampling unit type--strategy (L) or an uncertainty (X)--by
+			comparing variable specification trajectories across strategies.
+			Sets the following properties:
 
-		strat_base = self.dict_baseline_ids[self.key_strategy]
-		strats_not_base = [x for x in self.dict_id_values[self.key_strategy] if (x != strat_base)]
-		fields_ext = [self.field_variable, self.field_variable_trajgroup_type] + self.fields_id + self.fields_time_periods
-		fields_ext = [x for x in fields_ext if (x != self.key_strategy)]
-		fields_merge = [x for x in fields_ext if (x not in self.fields_time_periods)]
-		# get the baseline strategy specification + set a renaming dictionary for merges
-		df_base = self.data_table[self.data_table[self.key_strategy] == strat_base][fields_ext].sort_values(by = self.fields_order_strat_diffs).reset_index(drop = True)
-		arr_base = np.array(df_base[self.fields_time_periods])
-		fields_base = list(df_base.columns)
+			* self.fields_order_strat_diffs
+			* self.xl_type, self.dict_strategy_info
+
+		Keyword Arguments
+		-----------------
+		- thresh: threshold used to identify significant difference between
+			variable specification trajectories across strategies. If a
+			variable specification trajectory shows a difference of diff between
+			any strategy of diff > thresh, it is defined to be a strategy.
+ 		"""
+
+		# set some field variables
+		fields_id_no_strat = [x for x in self.fields_id if (x != self.key_strategy)]
+		fields_order_strat_diffs = fields_id_no_strat + [self.field_variable, self.field_variable_trajgroup_type]
+		fields_merge = [self.field_variable, self.field_variable_trajgroup_type] + fields_id_no_strat
+		fields_ext = fields_merge + self.fields_time_periods
+
+		# some strategy distinctions -- baseline vs. non- baseline
+		strat_base = self.dict_baseline_ids.get(self.key_strategy)
+		strats_not_base = [x for x in self.dict_id_values.get(self.key_strategy) if (x != strat_base)]
+
+		# pivot by strategy--sort by fields_order_strat_diffs for use in dict_strategy_info
+		df_pivot = pd.pivot(
+			self.data_table,
+			fields_merge,
+			[self.key_strategy],
+			self.fields_time_periods
+		).sort_values(by = fields_order_strat_diffs)
+		fields_base = [(x, strat_base) for x in self.fields_time_periods]
+
+		# get the baseline strategy specification + set a renaming dictionary for merges - pivot inclues columns names as indices, they resturn when calling to_flat_index()
+		df_base = df_pivot[fields_base].reset_index()
+		df_base.columns = [x[0] for x in df_base.columns.to_flat_index()]
+		arr_base = np.array(df_pivot[fields_base])
 
 		dict_out = {
 			"baseline_strategy_data_table": df_base,
 			"baseline_strategy_array": arr_base,
 			"difference_arrays_by_strategy": {}
 		}
-
 		dict_diffs = {}
 		strategy_q = False
 
 		for strat in strats_not_base:
 
-			df_base = pd.merge(df_base, self.data_table[self.data_table[self.key_strategy] == strat][fields_ext], how = "inner", on = fields_merge, suffixes = (None, "_y"))
-			df_base.sort_values(by = self.fields_order_strat_diffs, inplace = True)
-			arr_cur = np.array(df_base[[(x + "_y") for x in self.fields_time_periods]])
+			arr_cur = np.array(df_pivot[[(x, strat) for x in self.fields_time_periods]])
 			arr_diff = arr_cur - arr_base
 			dict_diffs.update({strat: arr_diff})
-			df_base = df_base[fields_base]
 
-			if max(np.abs(arr_diff.flatten())) > thresh:
-				strategy_q = True
+			strategy_q = (max(np.abs(arr_diff.flatten())) > thresh) | strategy_q
 
-		if strategy_q:
-			dict_out.update({"difference_arrays_by_strategy": dict_diffs})
-			type_out = "L"
-		else:
-			type_out = "X"
 
-		return type_out, dict_out
+		dict_out.update({"difference_arrays_by_strategy": dict_diffs}) if strategy_q else None
+		type_out = "L" if strategy_q else "X"
+
+		# set properties
+		self.dict_strategy_info = dict_out
+		self.fields_order_strat_diffs = fields_order_strat_diffs
+		self.xl_type = type_out
 
 
 
@@ -672,16 +787,21 @@ class SamplingUnit:
 	#    CORE FUNCTIONALITY    #
 	############################
 
-	def get_scalar_diff_arrays(self):
+	def get_scalar_diff_arrays(self,
+	) ->  None:
+		"""
+		Get the scalar difference arrays, which are arrays that are scaled
+			and added to the baseline to represent changes in future
+			trajectries. Sets the following properties:
 
+			* self.
+		"""
+
+		tgs_loops = self.required_tg_specs if (self.variable_trajectory_group is not None) else [None]
 		tp_end = self.fields_time_periods[-1]
 		dict_out = {}
 
 		for vs in self.variable_specifications:
-			if self.variable_trajectory_group != None:
-				tgs_loops = self.required_tg_specs
-			else:
-				tgs_loops = [None]
 
 			for tgs in tgs_loops:
 
@@ -743,10 +863,18 @@ class SamplingUnit:
 	## UNCERTAINY FAN FUNCTIONS
 
 	 # construct the "ramp" vector for uncertainties
-	def build_ramp_vector(self, tuple_param):
+	def build_ramp_vector(self,
+		tuple_param: Union[tuple, None] = None
+	) -> np.ndarray:
+		"""
+		Convert tuple_param to a vector for characterizing uncertainty.
 
-		if tuple_param == None:
-			tuple_param = self.get_f_fan_function_parameter_defaults(self.uncertainty_fan_function_type)
+		Keyword Arguments
+		-----------------
+		- tuple_param: tuple of parameters to pass to f_fan
+
+		"""
+		tuple_param = self.get_f_fan_function_parameter_defaults(self.uncertainty_fan_function_type) if (tuple_param is None) else tuple_param
 
 		if len(tuple_param) == 4:
 			tp_0 = self.time_period_end_certainty
@@ -773,14 +901,19 @@ class SamplingUnit:
 
 
 	# parameter defaults for the fan, based on the number of periods n
-	def get_f_fan_function_parameter_defaults(self, n: int, fan_type: str, return_type: str = "params"):
+	def get_f_fan_function_parameter_defaults(self,
+		n: int,
+		fan_type: str,
+		return_type: str = "params"
+	) -> list:
+
 		dict_ret = {
 			"linear": (0, 2, 1, n/2),
 			"sigmoid": (1, 0, math.e, n/2)
 		}
 
 		if return_type == "params":
-			return dict_ret[fan_type]
+			return dict_ret.get(fan_type)
 		elif return_type == "keys":
 			return list(dict_ret.keys())
 		else:
@@ -790,24 +923,73 @@ class SamplingUnit:
 
 
 	# verify fan function parameters
-	def get_fan_function_parameters(self, fan_type):
+	def _initialize_uncertainty_functional_form(self,
+		fan_type: Union[str, Tuple[Union[float, int]]],
+		default_fan_type: str = "linear"
+	) -> None:
+		"""
+		Set function parameters surrounding fan function. Sets the following
+			properties:
 
-		if type(fan_type) == str:
-			n = len(self.time_periods) - self.time_period_end_certainty
-			keys = self.get_f_fan_function_parameter_defaults(n, fan_type, "keys")
-			if fan_type in keys:
-				return self.get_f_fan_function_parameter_defaults(n, fan_type, "params")
+			* self.uncertainty_fan_function_parameters
+			* self.uncertainty_fan_function_type
+			* self.uncertainty_ramp_vector
+			* self.valid_fan_type_strs
+
+		Behavioral Notes
+		----------------
+		- Invalid types for fan_type will result in the default_fan_type.
+		- The dead default (if default_fan_type is invalid as a keyword) is
+			linear
+
+		Function Arguments
+		------------------
+		- fan_type: string specifying fan type OR tuple (4 values) specifying
+			arguments to
+
+		Keyword Arguments
+		-----------------
+		- default_fan_type: default fan function to use to describe uncertainty
+		"""
+
+		self.uncertainty_fan_function_parameters = None
+		self.uncertainty_fan_function_type = None
+		self.uncertainty_ramp_vector = None
+		self.valid_fan_type_strs = self.get_f_fan_function_parameter_defaults(0, "", return_type = "keys")
+
+		default_fan_type = "linear" if (default_fan_type not in self.valid_fan_type_strs) else default_fan_type
+		n_uncertain = len(self.time_periods) - self.time_period_end_certainty
+		params = None
+
+		# set to default if an invalid type is entered
+		if not (isinstance(fan_type, str) or isinstance(fan_type, typle)):
+			fan_type = default_fan_type
+
+		if isinstance(fan_type, tuple):
+			if len(fan_type) != 4:
+				#raise ValueError(f"Error: fan parameter specification {fan_type} invalid. 4 Parameters are required.")
+				fan_type = default_fan_type
+			elif not all(set([isinstance(x, int) or isinstance(x, float) for x in fan_type])):
+				#raise ValueError(f"Error: fan parameter specification {fan_type} contains invalid parameters. Ensure they are numeric (int or float)")
+				fan_type = default_fan_type
 			else:
-				str_avail_keys = ", ".join(keys)
-				raise ValueError(f"Error: no defaults specified for uncertainty fan function of type {fan_type}. Use a default or specify parameters a, b, c, and d. Default functional parameters are available for each of the following: {str_avail_keys}")
-		elif type(fan_type) == tuple:
-			if len(fan_type) == 4:
-				if set([type(x) for x in fan_type]).issubset({int, float}):
-					return fan_type
-				else:
-					raise ValueError(f"Error: fan parameter specification {fan_type} contains invalid parameters. Ensure they are numeric (int or float)")
-			else:
-				raise ValueError(f"Error: fan parameter specification {fan_type} invalid. 4 Parameters are required.")
+				fan_type = "custom"
+				params = fan_type
+
+		# only implemented if not otherwise set
+		if params is None:
+			fan_type = default_fan_type if (fan_type not in self.valid_fan_type_strs) else fan_type
+			params = self.get_f_fan_function_parameter_defaults(n_uncertain, fan_type, return_type = "params")
+
+		# build ramp vector
+		tp_0 = self.time_period_end_certainty
+		n = n_uncertain - 1
+		vector_ramp = np.array([int(i > tp_0)*self.f_fan(i - tp_0 , n, *params) for i in range(len(self.time_periods))])
+
+		#
+		self.uncertainty_fan_function_parameters = params
+		self.uncertainty_fan_function_type = fan_type
+		self.uncertainty_ramp_vector = vector_ramp
 
 
 
@@ -1012,6 +1194,16 @@ class FutureTrajectories:
 
 	Keyword Arguments
 	-----------------
+	- dict_all_dims: optional dictionary defining all values associated with
+		keys in dict_baseline_ids to pass to each SamplingUnit. If None
+		(default), infers from df_input_database. Takes the form
+		{
+			index_0: [id_val_00, id_val_01,... ],
+			index_1: [id_val_10, id_val_11,... ],
+			.
+			.
+			.
+		}
 	- fan_function_specification: type of uncertainty approach to use
 		* linear: linear ramp to time time T - 1
 		* sigmoid: sigmoid function that ramps to time T - 1
@@ -1041,6 +1233,7 @@ class FutureTrajectories:
 		df_input_database: pd.DataFrame,
 		dict_baseline_ids: Dict[str, int],
 		time_period_u0: int,
+		dict_all_dims: Union[Dict[str, List[int]], None] = None,
 		fan_function_specification: str = "linear",
 		field_sample_unit_group: str = "sample_unit_group",
 		field_time_period: str = "time_period",
@@ -1106,8 +1299,9 @@ class FutureTrajectories:
 
 		##  KEY INITIALIZATIONS
 
-		self.input_database = self.prepare_input_database(df_input_database)
-		self.n_su, self.all_sampling_units, self.dict_sampling_units = self.get_sampling_units()
+		self._initialize_input_database(df_input_database)
+		self._initialize_dict_all_dims(dict_all_dims)
+		self._initialize_sampling_units()
 		self._set_xl_sampling_units()
 
 
@@ -1115,6 +1309,51 @@ class FutureTrajectories:
 	###########################################################
 	#	SOME BASIC INITIALIZATIONS AND INTERNAL FUNCTIONS	#
 	###########################################################
+
+	def _initialize_dict_all_dims(self,
+		dict_all_dims: Union[Dict, None]
+	) -> None:
+		"""
+		Initialize the dictionary of all dimensional values to accomodate
+			for each sampling unit--ensures that each SamplingUnit has the
+			same dimensional values (either strategy or discrete baselines).
+			Sets the following properties:
+
+			* self.dict_all_dimensional_values
+
+		Function Arguments
+		------------------
+		- dict_all_dims: dictionary of all dimensional values to preserve.
+			Takes the form
+
+			{
+				index_0: [id_val_00, id_val_01,... ],
+				index_1: [id_val_10, id_val_11,... ],
+				.
+				.
+				.
+			}
+		"""
+
+		dict_all_dims_out = {}
+		self.dict_all_dimensional_values = None
+
+		# infer from input database if undefined
+		if dict_all_dims is None:
+			for k in self.dict_baseline_ids:
+				dict_all_dims_out.update({
+					k: sorted(list(self.input_database[k].unique()))
+				})
+
+		else:
+			# check that each dimension is defined in the baseline ids
+			for k in dict_all_dims.keys():
+				if k in self.dict_baseline_ids.keys():
+					dict_all_dims_out.update({k: dict_all_dims.get(k)})
+
+		self.dict_all_dimensional_values = dict_all_dims_out
+
+
 
 	def _log(self,
 		msg: str,
@@ -1189,8 +1428,162 @@ class FutureTrajectories:
 
 
 	####################################
-	#	PREPARE THE INPUT DATABASE	#
+	#    PREPARE THE INPUT DATABASE    #
 	####################################
+
+	def clean_sampling_unit_input_df(self,
+		df_su_input: pd.DataFrame,
+		dict_all_dims: Union[Dict[str, List], None] = None,
+		dict_baseline_ids: Union[Dict[str, int], None] = None,
+		dict_expand_vars: Union[Dict[str, List[str]], None] = None,
+		sample_unit_id: Any = None
+	) -> pd.DataFrame:
+		"""
+		Prepare an input data frame for initializing SamplingUnit within
+			FutureTrajectories. Ensures that all dimensions that are specified
+			in the global database are defined in the Sampling Unit. Replaces
+			missing dimensions with core baseline (e.g., (0, 0, 0)).
+
+		Function Arguments
+		------------------
+		- df_su_input: input data frame to SamplingUnit
+		- dict_all_dims: optional dictionary to pass that contains dimensions.
+			This dictionary is used to determine which dimensions *should* be
+			present. If any of the dimension sets specified in dict_all_dims
+			are not found in df_in, their values are replaced with associated
+			baselines.
+
+		Keyword Arguments
+		-----------------
+		- dict_baseline_ids: dictionary mapping index fields to baseline
+			values
+		- dict_expand_vars: dictionary of variable specification components to
+			expand. If none, expands along all uniquely defined values for
+			self.field_variable_trajgroup_type and self.variable
+		- sample_unit_id: optional id to pass for error troubleshooting
+		"""
+
+		dict_all_dims = self.dict_all_dimensional_values if (dict_all_dims is None) else dict_all_dims
+		if not isinstance(dict_all_dims, dict):
+			return df_su_input
+
+
+		##  CHECK BASELINES DEFINED
+
+		dict_baseline_ids = self.dict_baseline_ids if not isinstance(dict_baseline_ids, dict) else dict_baseline_ids
+		df_su_base = sf.subset_df(
+			df_su_input,
+			dict_baseline_ids
+		).drop_duplicates()
+
+		# add expansion variables
+		dict_expand_vars = {
+			self.field_variable_trajgroup_type: list(df_su_input[self.field_variable_trajgroup_type].unique()),
+			self.field_variable: list(df_su_input[self.field_variable].unique())
+		} if (dict_expand_vars is None) else dict_expand_vars
+		dict_all_dims.update(dict_expand_vars)
+
+		n_req_baseline = np.prod([len(v) for v in dict_expand_vars.values()])
+		if len(df_su_base) != n_req_baseline:
+			sg = "" if (sample_unit_id is not None) else f" {sample_unit_id}"
+			msg = f"Unable to initialize sample group{sg}: one or more variables and/or variable trajectory group types are missing. Check the input data frame."
+			self._log(msg, type_log = "error")
+			raise RuntimeError(msg)
+
+
+		##  BUILD EXPANDED DATAFRAME, MERGE IN AVAILABLE, THEN FILL IN ROWS
+
+		dims_expand = [x for x in df_su_input.columns if x in dict_all_dims.keys()]
+		vals_expand = [dict_all_dims.get(x) for x in dims_expand]
+		df_dims_req = pd.DataFrame(
+			list(itertools.product(*vals_expand)),
+			columns = dims_expand
+		)
+		df_dims_req = pd.merge(df_dims_req, df_su_input, how = "left")
+
+		# get merge fields (expansion fields that exclude baseline ids) and subset fields (data fields to replace)
+		fields_merge = list(dict_expand_vars.keys())
+		fields_subset = [x for x in df_dims_req.columns if x not in dims_expand]
+		df_out = sf.fill_df_rows_from_df(
+			df_dims_req,
+			df_su_base,
+			fields_merge,
+			fields_subset
+		)
+
+		return df_out[df_su_input.columns]
+
+
+
+	def generate_future_from_lhs_vector(self,
+		df_row_lhc_sample_x: Union[pd.Series, pd.DataFrame],
+		df_row_lhc_sample_l: Union[pd.Series, pd.DataFrame, None] = None,
+		future_id: Union[int, None] = None,
+		baseline_future_q: bool = False,
+		dict_optional_dimensions: Dict[str, int] = {}
+	) -> pd.DataFrame:
+		"""
+		Build a data frame of a single future for all sample units
+
+		Function Arguments
+		------------------
+		- df_row_lhc_sample_x: data frame row with column names as sample groups for all sample groups to vary with uncertainties
+
+		Keyword Arguments
+		-----------------
+		- df_row_lhc_sample_l: data frame row with column names as sample groups for all sample groups to vary with uncertainties
+			* If None, lhs_trial_l = 1 in all samples (constant strategy effect across all futures)
+		- future_id: optional future id to add to the dataframe using self.future_id
+		- baseline_future_q: generate the dataframe for the baseline future?
+		- dict_optional_dimensions: dictionary of optional dimensions to pass to the output data frame (form: {key_dimension: id_value})
+		"""
+
+		# check the specification of
+		if not (isinstance(df_row_lhc_sample_x, pd.DataFrame) or isinstance(df_row_lhc_sample_x, pd.Series) or (df_row_lhc_sample_x is None)):
+			tp = str(type(df_row_lhc_sample_x))
+			self._log(f"Invalid input type {tp} specified for df_row_lhc_sample_x in generate_future_from_lhs_vector: pandas Series or DataFrames (first row) are acceptable inputs. Returning baseline future.", type_log = "warning")
+			df_row_lhc_sample_x = None
+
+		# initialize outputs and iterate
+		dict_df = {}
+		df_out = []
+		for k in enumerate(self.all_sampling_units):
+			k, su = k
+			samp = self.dict_sampling_units.get(su)
+
+			if samp is not None:
+
+				# get LHC samples for X and L
+				lhs_x = self.get_df_row_element(df_row_lhc_sample_x, su)
+				lhs_l = self.get_df_row_element(df_row_lhc_sample_l, su, 1.0)
+
+				# note: if lhs_x is None, returns baseline future no matter what,
+				dict_fut = samp.generate_future(
+					lhs_x,
+					lhs_l,
+					baseline_future_q = baseline_future_q
+				)
+
+				dict_df.update(
+					dict((key, value.flatten()) for key, value in dict_fut.items())
+				)
+
+				# initialize indexing if necessary
+				if len(df_out) == 0:
+					dict_fields = None if (future_id is None) else {self.key_future: future_id}
+					df_out.append(
+						samp.generate_indexing_data_frame(
+							dict_additional_fields = dict_fields
+						)
+					)
+
+		df_out.append(pd.DataFrame(dict_df))
+		df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
+		df_out = sf.add_data_frame_fields_from_dict(df_out, dict_optional_dimensions) if isinstance(dict_optional_dimensions, dict) else df_out
+
+		return df_out
+
+
 
 	def get_trajgroup_and_variable_specification(self,
 		input_var_spec: str,
@@ -1244,7 +1637,7 @@ class FutureTrajectories:
 
 
 
-	def prepare_input_database(self,
+	def _initialize_input_database(self,
 		df_in: pd.DataFrame,
 		field_sample_unit_group: Union[str, None] = None,
 		field_variable: Union[str, None] = None,
@@ -1255,9 +1648,12 @@ class FutureTrajectories:
 		regex_trajmax: Union[re.Pattern, None] = None,
 		regex_trajmin: Union[re.Pattern, None] = None,
 		regex_trajmix: Union[re.Pattern, None] = None
-	) -> pd.DataFrame:
+	) -> None:
 		"""
-		Prepare the input database for sampling by adding sample unit group, cleaning up trajectory groups, etc.
+		Prepare the input database for sampling by adding sample unit group,
+			cleaning up trajectory groups, etc. Sets the following properties:
+
+			* self.input_database
 
 		Function Arguments
 		------------------
@@ -1376,105 +1772,51 @@ class FutureTrajectories:
 		)
 		df_in[field_sample_unit_group] = df_in[field_variable].replace(dict_var_to_su)
 
-		return df_in
+		self.input_database = df_in
 
 
 
-	def generate_future_from_lhs_vector(self,
-		df_row_lhc_sample_x: Union[pd.Series, pd.DataFrame],
-		df_row_lhc_sample_l: Union[pd.Series, pd.DataFrame, None] = None,
-		future_id: Union[int, None] = None,
-		baseline_future_q: bool = False,
-		dict_optional_dimensions: Dict[str, int] = {}
-	) -> pd.DataFrame:
-		"""
-		Build a data frame of a single future for all sample units
-
-		Function Arguments
-		------------------
-		- df_row_lhc_sample_x: data frame row with column names as sample groups for all sample groups to vary with uncertainties
-
-		Keyword Arguments
-		-----------------
-		- df_row_lhc_sample_l: data frame row with column names as sample groups for all sample groups to vary with uncertainties
-			* If None, lhs_trial_l = 1 in all samples (constant strategy effect across all futures)
-		- future_id: optional future id to add to the dataframe using self.future_id
-		- baseline_future_q: generate the dataframe for the baseline future?
-		- dict_optional_dimensions: dictionary of optional dimensions to pass to the output data frame (form: {key_dimension: id_value})
-		"""
-
-		# check the specification of
-		if not (isinstance(df_row_lhc_sample_x, pd.DataFrame) or isinstance(df_row_lhc_sample_x, pd.Series) or (df_row_lhc_sample_x is None)):
-			tp = str(type(df_row_lhc_sample_x))
-			self._log(f"Invalid input type {tp} specified for df_row_lhc_sample_x in generate_future_from_lhs_vector: pandas Series or DataFrames (first row) are acceptable inputs. Returning baseline future.", type_log = "warning")
-			df_row_lhc_sample_x = None
-
-		# initialize outputs and iterate
-		dict_df = {}
-		df_out = []
-		for k in enumerate(self.all_sampling_units):
-			k, su = k
-			samp = self.dict_sampling_units.get(su)
-
-			if samp is not None:
-
-				# get LHC samples for X and L
-				lhs_x = self.get_df_row_element(df_row_lhc_sample_x, su)
-				lhs_l = self.get_df_row_element(df_row_lhc_sample_l, su, 1.0)
-
-				# note: if lhs_x is None, returns baseline future no matter what,
-				dict_fut = samp.generate_future(
-					lhs_x,
-					lhs_l,
-					baseline_future_q = baseline_future_q
-				)
-
-				dict_df.update(
-					dict((key, value.flatten()) for key, value in dict_fut.items())
-				)
-
-				# initialize indexing if necessary
-				if len(df_out) == 0:
-					dict_fields = None if (future_id is None) else {self.key_future: future_id}
-					df_out.append(
-						samp.generate_indexing_data_frame(
-							dict_additional_fields = dict_fields
-						)
-					)
-
-
-		df_out.append(pd.DataFrame(dict_df))
-		df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
-		df_out = sf.add_data_frame_fields_from_dict(df_out, dict_optional_dimensions) if isinstance(dict_optional_dimensions, dict) else df_out
-
-		return df_out
-
-
-
-	# get the sampling units
-	def get_sampling_units(self,
+	def _initialize_sampling_units(self,
 		df_in: Union[pd.DataFrame, None] = None,
+		dict_all_dims: Union[Dict[str, List[int]], None] = None,
 		fan_function: Union[str, None] = None,
 		**kwargs
-	) -> dict:
+	) -> None:
 		"""
-		Instantiate all defined SamplingUnits from input database
+		Instantiate all defined SamplingUnits from input database. Sets the
+			following properties:
 
-		Function Arguments
-		------------------
+			* self.n_su
+			* self.all_sampling_units
+			* self.dict_sampling_units
 
+		Behavioral Notes
+		----------------
+		- _initialize_sampling_units() will try to identify the availablity of
+			dimensions specified in dict_all_dims within df_in. If a dimension
+			specified in dict_all_dims is not found within df_in, the funciton
+			will replace the value with the baseline strategy.
+		- If a product specified within self.dict_baseline_ids is missing in
+			the dataframe, then an error will occur.
 
 		Keword Arguments
 		-----------------
 		- df_in: input database used to identify sampling units. Must include
 			self.field_sample_unit_group
+		- dict_all_dims: optional dictionary to pass that contains dimensions.
+			This dictionary is used to determine which dimensions *should* be
+			present. If any of the dimension sets specified in dict_all_dims
+			are not found in df_in, their values are replaced with associated
+			baselines.
 		- fan_function: function specification to use for uncertainty fans
-		- **kwargs: passed to SamplingUnit initializtion
+		- **kwargs: passed to SamplingUnit initialization
 		"""
 
 		# get some defaults
 		df_in = self.input_database if (df_in is None) else df_in
 		fan_function = self.fan_function_specification if (fan_function is None) else fan_function
+		dict_all_dims = self.dict_all_dimensional_values if not isinstance(dict_all_dims, dict) else dict_all_dims
+
 		# setup inputs
 		kwarg_keys = list(kwargs.keys())
 		field_time_period = self.field_time_period if ("field_time_period" not in kwarg_keys) else kwargs.get("field_time_period")
@@ -1494,6 +1836,8 @@ class FutureTrajectories:
 		dfgroup_sg = df_in.groupby(self.field_sample_unit_group)
 		all_sample_groups = sorted(list(set(df_in[self.field_sample_unit_group])))
 		n_sg = len(dfgroup_sg)
+		if isinstance(dict_all_dims, dict):
+			dict_all_dims = dict((k, v) for k, v in dict_all_dims.items() if k in self.dict_baseline_ids.keys())
 
 
 		##  GENERATE SamplingUnit FROM DATABASE
@@ -1507,7 +1851,8 @@ class FutureTrajectories:
 			df_sg = df_sg[1]
 			sg = int(df_sg[self.field_sample_unit_group].iloc[0])
 
-			self._log(f"Iteration {i} complete.", type_log = "info") if (i%250 == 0) else None
+			# fill in missing values from baseline if dims are missing in input database
+			df_sg = self.clean_sampling_unit_input_df(df_sg, dict_all_dims = dict_all_dims) if (dict_all_dims is not None) else df_sg
 
 			samp = SamplingUnit(
 				df_sg.drop(self.field_sample_unit_group, axis = 1),
@@ -1531,7 +1876,11 @@ class FutureTrajectories:
 			dict_sampling_units = dict(zip(all_sample_groups, [samp for x in range(n_sg)])) if (i == 0) else dict_sampling_units
 			dict_sampling_units.update({sg: samp})
 
+			self._log(f"Iteration {i} complete.", type_log = "info") if (i%250 == 0) else None
+
 		t_elapse = sf.get_time_elapsed(t0)
 		self._log(f"\t{n_sg} sampling units complete in {t_elapse} seconds.", type_log = "info")
 
-		return n_sg, all_sample_groups, dict_sampling_units
+		self.n_su = n_sg
+		self.all_sampling_units = all_sample_groups
+		self.dict_sampling_units = dict_sampling_units
