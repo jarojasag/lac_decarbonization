@@ -276,3 +276,690 @@
 2022-11-17 15:31:14,901 - INFO - Fugitive Emissions from Energy model run successfully completed
 2022-11-17 15:31:14,904 - INFO - Model run for primary_id = 5476 successfully completed in 23.62 seconds.
 2022-11-17 15:31:15,357 - INFO - Table MODEL_OUTPUT successfully appended to database.
+2022-11-17 15:34:48,479 - DEBUG - findfont: Matching sans\-serif:style=normal:variant=normal:weight=normal:stretch=normal:size=10.0.
+2022-11-17 15:34:48,479 - DEBUG - findfont: score(<Font 'DejaVu Sans Display' (DejaVuSansDisplay.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,479 - DEBUG - findfont: score(<Font 'STIXSizeOneSym' (STIXSizOneSymBol.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,480 - DEBUG - findfont: score(<Font 'DejaVu Serif' (DejaVuSerif-Bold.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,480 - DEBUG - findfont: score(<Font 'DejaVu Serif' (DejaVuSerif-Italic.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,480 - DEBUG - findfont: score(<Font 'STIXSizeThreeSym' (STIXSizThreeSymBol.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,480 - DEBUG - findfont: score(<Font 'STIXNonUnicode' (STIXNonUniBol.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,480 - DEBUG - findfont: score(<Font 'cmmi10' (cmmi10.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,480 - DEBUG - findfont: score(<Font 'DejaVu Sans' (DejaVuSans-BoldOblique.ttf) oblique normal 700 normal>) = 1.335
+2022-11-17 15:34:48,480 - DEBUG - findfont: score(<Font 'DejaVu Sans Mono' (DejaVuSansMono-Bold.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,480 - DEBUG - findfont: score(<Font 'STIXNonUnicode' (STIXNonUni.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,480 - DEBUG - findfont: score(<Font 'STIXSizeFiveSym' (STIXSizFiveSymReg.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,480 - DEBUG - findfont: score(<Font 'DejaVu Sans Mono' (DejaVuSansMono-Oblique.ttf) oblique normal 400 normal>) = 11.05
+2022-11-17 15:34:48,480 - DEBUG - findfont: score(<Font 'DejaVu Sans' (DejaVuSans-Oblique.ttf) oblique normal 400 normal>) = 1.05
+2022-11-17 15:34:48,480 - DEBUG - findfont: score(<Font 'STIXSizeFourSym' (STIXSizFourSymReg.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,480 - DEBUG - findfont: score(<Font 'DejaVu Serif Display' (DejaVuSerifDisplay.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,480 - DEBUG - findfont: score(<Font 'STIXSizeTwoSym' (STIXSizTwoSymReg.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,480 - DEBUG - findfont: score(<Font 'STIXSizeFourSym' (STIXSizFourSymBol.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,481 - DEBUG - findfont: score(<Font 'STIXGeneral' (STIXGeneralItalic.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,481 - DEBUG - findfont: score(<Font 'STIXGeneral' (STIXGeneralBol.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,481 - DEBUG - findfont: score(<Font 'STIXNonUnicode' (STIXNonUniIta.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,481 - DEBUG - findfont: score(<Font 'cmtt10' (cmtt10.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,481 - DEBUG - findfont: score(<Font 'DejaVu Sans Mono' (DejaVuSansMono.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,481 - DEBUG - findfont: score(<Font 'STIXSizeThreeSym' (STIXSizThreeSymReg.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,481 - DEBUG - findfont: score(<Font 'cmr10' (cmr10.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,481 - DEBUG - findfont: score(<Font 'STIXSizeOneSym' (STIXSizOneSymReg.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,481 - DEBUG - findfont: score(<Font 'DejaVu Serif' (DejaVuSerif.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,481 - DEBUG - findfont: score(<Font 'STIXGeneral' (STIXGeneral.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,481 - DEBUG - findfont: score(<Font 'DejaVu Sans' (DejaVuSans-Bold.ttf) normal normal 700 normal>) = 0.33499999999999996
+2022-11-17 15:34:48,481 - DEBUG - findfont: score(<Font 'DejaVu Sans' (DejaVuSans.ttf) normal normal 400 normal>) = 0.05
+2022-11-17 15:34:48,481 - DEBUG - findfont: score(<Font 'cmss10' (cmss10.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,481 - DEBUG - findfont: score(<Font 'cmsy10' (cmsy10.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,481 - DEBUG - findfont: score(<Font 'STIXNonUnicode' (STIXNonUniBolIta.ttf) italic normal 700 normal>) = 11.335
+2022-11-17 15:34:48,482 - DEBUG - findfont: score(<Font 'cmb10' (cmb10.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,482 - DEBUG - findfont: score(<Font 'DejaVu Sans Mono' (DejaVuSansMono-BoldOblique.ttf) oblique normal 700 normal>) = 11.335
+2022-11-17 15:34:48,482 - DEBUG - findfont: score(<Font 'STIXSizeTwoSym' (STIXSizTwoSymBol.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,482 - DEBUG - findfont: score(<Font 'DejaVu Serif' (DejaVuSerif-BoldItalic.ttf) italic normal 700 normal>) = 11.335
+2022-11-17 15:34:48,482 - DEBUG - findfont: score(<Font 'cmex10' (cmex10.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,482 - DEBUG - findfont: score(<Font 'STIXGeneral' (STIXGeneralBolIta.ttf) italic normal 700 normal>) = 11.335
+2022-11-17 15:34:48,482 - DEBUG - findfont: score(<Font 'Menlo' (Menlo.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,482 - DEBUG - findfont: score(<Font 'STIXNonUnicode' (STIXNonUniIta.otf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,482 - DEBUG - findfont: score(<Font 'Noto Sans Egyptian Hieroglyphs' (NotoSansEgyptianHieroglyphs-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,482 - DEBUG - findfont: score(<Font 'Baskerville' (Baskerville.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,482 - DEBUG - findfont: score(<Font '.SF NS Display Condensed' (SFNSDisplayCondensed-Thin.otf) normal normal 400 condensed>) = 10.25
+2022-11-17 15:34:48,482 - DEBUG - findfont: score(<Font 'Noto Sans Tai Tham' (NotoSansTaiTham-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,482 - DEBUG - findfont: score(<Font 'Futura Std' (FuturaStd-BookOblique.otf) oblique normal 400 normal>) = 11.05
+2022-11-17 15:34:48,482 - DEBUG - findfont: score(<Font 'Bodoni 72 Oldstyle' (Bodoni 72 OS.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,482 - DEBUG - findfont: score(<Font 'Constantia' (Constantia Italic.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,482 - DEBUG - findfont: score(<Font 'Times New Roman' (Times New Roman Bold.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,483 - DEBUG - findfont: score(<Font 'Times New Roman' (Times New Roman Italic.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,483 - DEBUG - findfont: score(<Font 'Kannada MN' (Kannada MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,483 - DEBUG - findfont: score(<Font '.SF NS Display Condensed' (SFNSDisplayCondensed-Bold.otf) normal normal 800 condensed>) = 10.629999999999999
+2022-11-17 15:34:48,483 - DEBUG - findfont: score(<Font 'Rockwell' (Rockwell.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,483 - DEBUG - findfont: score(<Font 'Arial' (Arial Italic.ttf) italic normal 400 normal>) = 7.413636363636363
+2022-11-17 15:34:48,483 - DEBUG - findfont: score(<Font 'Hiragino Sans' (ヒラギノ角ゴシック W1.ttc) normal normal 200 normal>) = 10.24
+2022-11-17 15:34:48,483 - DEBUG - findfont: score(<Font 'Tw Cen MT' (Tw Cen MT Italic.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,483 - DEBUG - findfont: score(<Font 'Meiryo' (Meiryo Bold Italic.ttf) italic normal 700 normal>) = 11.335
+2022-11-17 15:34:48,483 - DEBUG - findfont: score(<Font 'Avenir' (Avenir.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,483 - DEBUG - findfont: score(<Font 'Gill Sans MT' (Gill Sans MT Bold.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,483 - DEBUG - findfont: score(<Font 'Papyrus' (Papyrus.ttc) normal normal 400 condensed>) = 10.25
+2022-11-17 15:34:48,483 - DEBUG - findfont: score(<Font 'Apple Braille' (Apple Braille Pinpoint 6 Dot.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,483 - DEBUG - findfont: score(<Font 'Noto Sans Old Turkic' (NotoSansOldTurkic-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,483 - DEBUG - findfont: score(<Font 'Noto Sans Hanunoo' (NotoSansHanunoo-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,483 - DEBUG - findfont: score(<Font 'Tw Cen MT' (Tw Cen MT.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,483 - DEBUG - findfont: score(<Font 'Mishafi Gold' (Mishafi Gold.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,484 - DEBUG - findfont: score(<Font 'Times New Roman' (Times New Roman.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,484 - DEBUG - findfont: score(<Font 'Batang' (Batang.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,484 - DEBUG - findfont: score(<Font 'Beirut' (Beirut.ttc) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,484 - DEBUG - findfont: score(<Font 'American Typewriter' (AmericanTypewriter.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,484 - DEBUG - findfont: score(<Font 'Malayalam MN' (Malayalam MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,484 - DEBUG - findfont: score(<Font 'SignPainter' (SignPainter.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,484 - DEBUG - findfont: score(<Font 'Calibri' (Calibri.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,484 - DEBUG - findfont: score(<Font 'Phosphate' (Phosphate.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,484 - DEBUG - findfont: score(<Font 'Noto Sans Oriya' (NotoSansOriya.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,484 - DEBUG - findfont: score(<Font 'Noto Sans New Tai Lue' (NotoSansNewTaiLue-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,484 - DEBUG - findfont: score(<Font 'Noto Sans Old Italic' (NotoSansOldItalic-Regular.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,484 - DEBUG - findfont: score(<Font 'Franklin Gothic Book' (Franklin Gothic Book Italic.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,484 - DEBUG - findfont: score(<Font 'MS PGothic' (MS PGothic.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,484 - DEBUG - findfont: score(<Font 'Tw Cen MT' (Tw Cen MT Bold.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,484 - DEBUG - findfont: score(<Font 'Tamil Sangam MN' (Tamil Sangam MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,484 - DEBUG - findfont: score(<Font 'Adobe Garamond Pro' (AGaramondPro-Italic.otf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,484 - DEBUG - findfont: score(<Font 'STIXIntegralsD' (STIXIntDBol.otf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,484 - DEBUG - findfont: score(<Font 'Waseem' (Waseem.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,485 - DEBUG - findfont: score(<Font 'Hiragino Sans' (ヒラギノ角ゴシック W9.ttc) normal normal 900 normal>) = 10.525
+2022-11-17 15:34:48,485 - DEBUG - findfont: score(<Font 'Nadeem' (Nadeem.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,485 - DEBUG - findfont: score(<Font 'Hiragino Maru Gothic Pro' (ヒラギノ丸ゴ ProN W4.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,485 - DEBUG - findfont: score(<Font 'Noto Sans Saurashtra' (NotoSansSaurashtra-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,485 - DEBUG - findfont: score(<Font 'Gurmukhi MT' (Gurmukhi.ttf) normal normal 500 normal>) = 10.145
+2022-11-17 15:34:48,485 - DEBUG - findfont: score(<Font 'Noto Sans Buhid' (NotoSansBuhid-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,485 - DEBUG - findfont: score(<Font 'Corbel' (Corbel Bold Italic.ttf) italic normal 700 normal>) = 11.335
+2022-11-17 15:34:48,485 - DEBUG - findfont: score(<Font 'Verdana' (Verdana Italic.ttf) italic normal 400 normal>) = 4.6863636363636365
+2022-11-17 15:34:48,485 - DEBUG - findfont: score(<Font 'AppleGothic' (AppleGothic.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,485 - DEBUG - findfont: score(<Font 'Noto Sans Osmanya' (NotoSansOsmanya-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,485 - DEBUG - findfont: score(<Font 'Hiragino Sans' (ヒラギノ角ゴシック W4.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,485 - DEBUG - findfont: score(<Font 'Noteworthy' (Noteworthy.ttc) normal normal 300 normal>) = 10.145
+2022-11-17 15:34:48,485 - DEBUG - findfont: score(<Font 'Gurmukhi Sangam MN' (Gurmukhi Sangam MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,485 - DEBUG - findfont: score(<Font 'Oriya MN' (Oriya MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,485 - DEBUG - findfont: score(<Font 'Trattatello' (Trattatello.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,485 - DEBUG - findfont: score(<Font 'Helvetica' (Helvetica.ttc) normal normal 400 normal>) = 7.322727272727273
+2022-11-17 15:34:48,485 - DEBUG - findfont: score(<Font 'Arial Narrow' (Arial Narrow.ttf) normal normal 400 condensed>) = 10.25
+2022-11-17 15:34:48,486 - DEBUG - findfont: score(<Font 'STIXGeneral' (STIXGeneralBol.otf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,486 - DEBUG - findfont: score(<Font 'Telugu Sangam MN' (Telugu Sangam MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,486 - DEBUG - findfont: score(<Font 'Noto Sans Coptic' (NotoSansCoptic-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,486 - DEBUG - findfont: score(<Font 'Cambria' (Cambria Italic.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,486 - DEBUG - findfont: score(<Font 'Palatino Linotype' (Palatino Linotype.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,486 - DEBUG - findfont: score(<Font 'MS Reference Sans Serif' (MS Reference Sans Serif.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,486 - DEBUG - findfont: score(<Font 'Noto Sans Mandaic' (NotoSansMandaic-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,486 - DEBUG - findfont: score(<Font 'Wingdings 2' (Wingdings 2.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,486 - DEBUG - findfont: score(<Font 'Noto Sans Ugaritic' (NotoSansUgaritic-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,486 - DEBUG - findfont: score(<Font '.SF Compact Text' (SFCompactTextItalic.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,486 - DEBUG - findfont: score(<Font 'Songti SC' (Songti.ttc) normal normal 900 normal>) = 10.525
+2022-11-17 15:34:48,486 - DEBUG - findfont: score(<Font 'MingLiU' (MingLiU.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,486 - DEBUG - findfont: score(<Font 'Noto Sans Chakma' (NotoSansChakma-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,486 - DEBUG - findfont: score(<Font '.SF NS Text Condensed' (SFNSTextCondensed-Regular.otf) normal normal 400 condensed>) = 10.25
+2022-11-17 15:34:48,486 - DEBUG - findfont: score(<Font 'Kohinoor Telugu' (KohinoorTelugu.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,486 - DEBUG - findfont: score(<Font 'Apple Symbols' (Apple Symbols.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,486 - DEBUG - findfont: score(<Font 'Comic Sans MS' (Comic Sans MS Bold.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,487 - DEBUG - findfont: score(<Font 'STIXSizeFiveSym' (STIXSizFiveSymReg.otf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,487 - DEBUG - findfont: score(<Font 'Noto Sans Tagbanwa' (NotoSansTagbanwa-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,487 - DEBUG - findfont: score(<Font '.SF NS Mono' (SFNSMonoItalic.ttf) italic normal 300 normal>) = 11.145
+2022-11-17 15:34:48,487 - DEBUG - findfont: score(<Font 'Kohinoor Bangla' (KohinoorBangla.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,487 - DEBUG - findfont: score(<Font 'Arial Hebrew' (ArialHB.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,487 - DEBUG - findfont: score(<Font 'Franklin Gothic Book' (Franklin Gothic Book.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,487 - DEBUG - findfont: score(<Font 'Arial' (Arial.ttf) normal normal 400 normal>) = 6.413636363636363
+2022-11-17 15:34:48,487 - DEBUG - findfont: score(<Font 'DecoType Naskh' (DecoTypeNaskh.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,487 - DEBUG - findfont: score(<Font 'Tahoma' (Tahoma Bold.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,487 - DEBUG - findfont: score(<Font 'Didot' (Didot.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,487 - DEBUG - findfont: score(<Font 'PT Serif' (PTSerif.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,487 - DEBUG - findfont: score(<Font 'STIXNonUnicode' (STIXNonUniBolIta.otf) italic normal 700 normal>) = 11.335
+2022-11-17 15:34:48,487 - DEBUG - findfont: score(<Font 'Noto Sans Armenian' (NotoSansArmenian.ttc) normal normal 900 normal>) = 10.525
+2022-11-17 15:34:48,487 - DEBUG - findfont: score(<Font 'PT Mono' (PTMono.ttc) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,487 - DEBUG - findfont: score(<Font 'Euphemia UCAS' (EuphemiaCAS.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,487 - DEBUG - findfont: score(<Font 'Candara' (Candara Bold.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,487 - DEBUG - findfont: score(<Font 'Muna' (Muna.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,487 - DEBUG - findfont: score(<Font 'Bodoni 72 Smallcaps' (Bodoni 72 Smallcaps Book.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,488 - DEBUG - findfont: score(<Font 'Andale Mono' (Andale Mono.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,488 - DEBUG - findfont: score(<Font 'SimSun-ExtB' (SimSun-ExtB.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,488 - DEBUG - findfont: score(<Font 'Malayalam Sangam MN' (Malayalam Sangam MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,488 - DEBUG - findfont: score(<Font 'Noto Sans Gothic' (NotoSansGothic-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,488 - DEBUG - findfont: score(<Font 'Arial' (Arial Italic.ttf) italic normal 400 normal>) = 7.413636363636363
+2022-11-17 15:34:48,488 - DEBUG - findfont: score(<Font 'Plantagenet Cherokee' (PlantagenetCherokee.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,488 - DEBUG - findfont: score(<Font 'Georgia' (Georgia Italic.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,488 - DEBUG - findfont: score(<Font '.Arabic UI Text' (ArabicUIText.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,488 - DEBUG - findfont: score(<Font 'Webdings' (Webdings.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,488 - DEBUG - findfont: score(<Font '.SF Compact Rounded' (SFCompactRounded.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,488 - DEBUG - findfont: score(<Font 'Gill Sans MT' (Gill Sans MT.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,488 - DEBUG - findfont: score(<Font 'Microsoft Tai Le' (taile.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,488 - DEBUG - findfont: score(<Font 'Wingdings 3' (Wingdings 3.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,488 - DEBUG - findfont: score(<Font 'Impact' (Impact.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,488 - DEBUG - findfont: score(<Font 'Noto Sans Carian' (NotoSansCarian-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,488 - DEBUG - findfont: score(<Font 'Meiryo' (Meiryo Italic.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,488 - DEBUG - findfont: score(<Font 'Consolas' (Consolas Italic.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,489 - DEBUG - findfont: score(<Font 'Heiti TC' (STHeiti Medium.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,489 - DEBUG - findfont: score(<Font 'Georgia' (Georgia Bold.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,489 - DEBUG - findfont: score(<Font 'Mshtakan' (Mshtakan.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,489 - DEBUG - findfont: score(<Font 'Gujarati Sangam MN' (Gujarati Sangam MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,489 - DEBUG - findfont: score(<Font 'Noto Sans Thaana' (NotoSansThaana-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,489 - DEBUG - findfont: score(<Font 'Arial Black' (Arial Black.ttf) normal normal 900 normal>) = 10.525
+2022-11-17 15:34:48,489 - DEBUG - findfont: score(<Font 'Thonburi' (Thonburi.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,489 - DEBUG - findfont: score(<Font 'Myanmar Sangam MN' (Myanmar Sangam MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,489 - DEBUG - findfont: score(<Font 'System Font' (SFNSItalic.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,489 - DEBUG - findfont: score(<Font 'Noto Sans Tai Le' (NotoSansTaiLe-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,489 - DEBUG - findfont: score(<Font 'Kohinoor Devanagari' (Kohinoor.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,489 - DEBUG - findfont: score(<Font 'Noto Nastaliq Urdu' (NotoNastaliq.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,489 - DEBUG - findfont: score(<Font 'Hiragino Mincho ProN' (ヒラギノ明朝 ProN.ttc) normal normal 300 normal>) = 10.145
+2022-11-17 15:34:48,489 - DEBUG - findfont: score(<Font 'Diwan Thuluth' (Diwan Thuluth.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,489 - DEBUG - findfont: score(<Font 'Corbel' (Corbel Bold.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,489 - DEBUG - findfont: score(<Font 'System Font' (SFNS.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,489 - DEBUG - findfont: score(<Font 'Consolas' (Consolas Bold.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,489 - DEBUG - findfont: score(<Font 'Bookshelf Symbol 7' (Bookshelf Symbol 7.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,490 - DEBUG - findfont: score(<Font 'Franklin Gothic Medium' (Franklin Gothic Medium.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,490 - DEBUG - findfont: score(<Font 'Times New Roman' (Times New Roman.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,490 - DEBUG - findfont: score(<Font 'Perpetua' (Perpetua.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,490 - DEBUG - findfont: score(<Font 'Noto Sans Lisu' (NotoSansLisu-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,490 - DEBUG - findfont: score(<Font 'STIXGeneral' (STIXGeneralBolIta.otf) italic normal 700 normal>) = 11.335
+2022-11-17 15:34:48,490 - DEBUG - findfont: score(<Font 'PingFang HK' (PingFang.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,490 - DEBUG - findfont: score(<Font 'Noto Sans Ogham' (NotoSansOgham-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,490 - DEBUG - findfont: score(<Font 'Noto Sans Mongolian' (NotoSansMongolian-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,490 - DEBUG - findfont: score(<Font 'Wingdings' (Wingdings.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,490 - DEBUG - findfont: score(<Font 'STIXSizeTwoSym' (STIXSizTwoSymReg.otf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,490 - DEBUG - findfont: score(<Font 'Hiragino Sans' (ヒラギノ角ゴシック W5.ttc) normal normal 500 normal>) = 10.145
+2022-11-17 15:34:48,490 - DEBUG - findfont: score(<Font 'STIXIntegralsSm' (STIXIntSmReg.otf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,490 - DEBUG - findfont: score(<Font 'Al Bayan' (AlBayan.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,490 - DEBUG - findfont: score(<Font 'Heiti TC' (STHeiti Light.ttc) normal normal 300 normal>) = 10.145
+2022-11-17 15:34:48,490 - DEBUG - findfont: score(<Font 'Avenir Next' (Avenir Next.ttc) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,490 - DEBUG - findfont: score(<Font 'Noto Sans Sundanese' (NotoSansSundanese-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,490 - DEBUG - findfont: score(<Font 'Noto Sans Kharoshthi' (NotoSansKharoshthi-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,490 - DEBUG - findfont: score(<Font 'Noto Sans Syloti Nagri' (NotoSansSylotiNagri-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,491 - DEBUG - findfont: score(<Font 'STIXNonUnicode' (STIXNonUni.otf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,491 - DEBUG - findfont: score(<Font 'MS Reference Specialty' (MS Reference Specialty.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,491 - DEBUG - findfont: score(<Font 'Verdana' (Verdana Bold.ttf) normal normal 700 normal>) = 3.9713636363636367
+2022-11-17 15:34:48,491 - DEBUG - findfont: score(<Font 'Mishafi' (Mishafi.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,491 - DEBUG - findfont: score(<Font 'Apple Chancery' (Apple Chancery.ttf) normal normal 0 normal>) = 10.43
+2022-11-17 15:34:48,491 - DEBUG - findfont: score(<Font 'Noto Sans Limbu' (NotoSansLimbu-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,491 - DEBUG - findfont: score(<Font 'MingLiU_HKSCS-ExtB' (MingLiU_HKSCS-ExtB.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,491 - DEBUG - findfont: score(<Font 'Noto Sans Yi' (NotoSansYi-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,491 - DEBUG - findfont: score(<Font 'Gill Sans' (GillSans.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,491 - DEBUG - findfont: score(<Font 'STIXSizeFourSym' (STIXSizFourSymReg.otf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,491 - DEBUG - findfont: score(<Font 'STIXIntegralsUpSm' (STIXIntUpSmBol.otf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,491 - DEBUG - findfont: score(<Font 'Iowan Old Style' (Iowan Old Style.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,491 - DEBUG - findfont: score(<Font 'STIXIntegralsUpSm' (STIXIntUpSmReg.otf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,491 - DEBUG - findfont: score(<Font 'Hoefler Text' (Hoefler Text.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,491 - DEBUG - findfont: score(<Font 'Apple Braille' (Apple Braille.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,491 - DEBUG - findfont: score(<Font 'DIN Alternate' (DIN Alternate Bold.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,491 - DEBUG - findfont: score(<Font '.SF NS Display Condensed' (SFNSDisplayCondensed-Black.otf) normal normal 900 condensed>) = 10.725
+2022-11-17 15:34:48,491 - DEBUG - findfont: score(<Font 'Bradley Hand' (Bradley Hand Bold.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,492 - DEBUG - findfont: score(<Font 'Brush Script MT' (Brush Script.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,492 - DEBUG - findfont: score(<Font 'Lucida Grande' (LucidaGrande.ttc) normal normal 500 normal>) = 2.872272727272727
+2022-11-17 15:34:48,492 - DEBUG - findfont: score(<Font 'Hiragino Sans' (ヒラギノ角ゴシック W2.ttc) normal normal 250 normal>) = 10.1925
+2022-11-17 15:34:48,492 - DEBUG - findfont: score(<Font 'Perpetua' (Perpetua Bold.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,492 - DEBUG - findfont: score(<Font 'Constantia' (Constantia Bold Italic.ttf) italic normal 700 normal>) = 11.335
+2022-11-17 15:34:48,492 - DEBUG - findfont: score(<Font '.SF NS Display Condensed' (SFNSDisplayCondensed-Regular.otf) normal normal 600 condensed>) = 10.44
+2022-11-17 15:34:48,492 - DEBUG - findfont: score(<Font 'Al Tarikh' (Al Tarikh.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,492 - DEBUG - findfont: score(<Font '.Keyboard' (Keyboard.ttf) normal normal 100 normal>) = 10.335
+2022-11-17 15:34:48,492 - DEBUG - findfont: score(<Font 'Noto Sans Bamum' (NotoSansBamum-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,492 - DEBUG - findfont: score(<Font 'Hiragino Sans' (ヒラギノ角ゴシック W0.ttc) normal normal 100 normal>) = 10.335
+2022-11-17 15:34:48,492 - DEBUG - findfont: score(<Font 'Microsoft Yi Baiti' (msyi.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,492 - DEBUG - findfont: score(<Font 'STIXSizeOneSym' (STIXSizOneSymReg.otf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,492 - DEBUG - findfont: score(<Font 'MS PMincho' (MS PMincho.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,492 - DEBUG - findfont: score(<Font '.SF NS Display Condensed' (SFNSDisplayCondensed-Heavy.otf) normal normal 800 condensed>) = 10.629999999999999
+2022-11-17 15:34:48,492 - DEBUG - findfont: score(<Font 'STIXGeneral' (STIXGeneral.otf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,492 - DEBUG - findfont: score(<Font 'Noto Sans Inscriptional Parthian' (NotoSansInscriptionalParthian-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,492 - DEBUG - findfont: score(<Font 'Noto Sans Old South Arabian' (NotoSansOldSouthArabian-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,492 - DEBUG - findfont: score(<Font 'Tw Cen MT' (Tw Cen MT Bold Italic.ttf) italic normal 700 normal>) = 11.335
+2022-11-17 15:34:48,493 - DEBUG - findfont: score(<Font 'MS Mincho' (MS Mincho.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,493 - DEBUG - findfont: score(<Font 'Raanana' (Raanana.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,493 - DEBUG - findfont: score(<Font 'Hiragino Sans' (ヒラギノ角ゴシック W3.ttc) normal normal 300 normal>) = 10.145
+2022-11-17 15:34:48,493 - DEBUG - findfont: score(<Font 'Noto Sans Cham' (NotoSansCham-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,493 - DEBUG - findfont: score(<Font 'Chalkduster' (Chalkduster.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,493 - DEBUG - findfont: score(<Font 'Apple Braille' (Apple Braille Outline 8 Dot.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,493 - DEBUG - findfont: score(<Font 'Verdana' (Verdana Bold Italic.ttf) italic normal 700 normal>) = 4.971363636363637
+2022-11-17 15:34:48,493 - DEBUG - findfont: score(<Font '.SF NS Rounded' (SFNSRounded.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,493 - DEBUG - findfont: score(<Font '.New York' (NewYorkItalic.ttf) italic normal 425 normal>) = 11.07375
+2022-11-17 15:34:48,493 - DEBUG - findfont: score(<Font 'SimHei' (SimHei.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,493 - DEBUG - findfont: score(<Font 'Marion' (Marion.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,493 - DEBUG - findfont: score(<Font 'Tamil MN' (Tamil MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,493 - DEBUG - findfont: score(<Font 'Comic Sans MS' (Comic Sans MS.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,493 - DEBUG - findfont: score(<Font 'Al Nile' (Al Nile.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,493 - DEBUG - findfont: score(<Font 'Microsoft Sans Serif' (Microsoft Sans Serif.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,493 - DEBUG - findfont: score(<Font 'Noto Sans Shavian' (NotoSansShavian-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,493 - DEBUG - findfont: score(<Font '.SF NS Text Condensed' (SFNSTextCondensed-Semibold.otf) normal normal 600 condensed>) = 10.44
+2022-11-17 15:34:48,493 - DEBUG - findfont: score(<Font 'Palatino' (Palatino.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,493 - DEBUG - findfont: score(<Font 'Mongolian Baiti' (monbaiti.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,494 - DEBUG - findfont: score(<Font 'Copperplate' (Copperplate.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,494 - DEBUG - findfont: score(<Font 'Sana' (Sana.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,494 - DEBUG - findfont: score(<Font 'Gujarati MT' (GujaratiMT.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,494 - DEBUG - findfont: score(<Font 'Lao Sangam MN' (Lao Sangam MN.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,494 - DEBUG - findfont: score(<Font 'Noto Sans Linear B' (NotoSansLinearB-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,494 - DEBUG - findfont: score(<Font 'Savoye LET' (Savoye LET.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,494 - DEBUG - findfont: score(<Font 'Arial Unicode MS' (Arial Unicode.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,494 - DEBUG - findfont: score(<Font 'Perpetua' (Perpetua Bold Italic.ttf) italic normal 700 normal>) = 11.335
+2022-11-17 15:34:48,494 - DEBUG - findfont: score(<Font 'Big Caslon' (BigCaslon.ttf) normal normal 500 normal>) = 10.145
+2022-11-17 15:34:48,494 - DEBUG - findfont: score(<Font 'STIXIntegralsSm' (STIXIntSmBol.otf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,494 - DEBUG - findfont: score(<Font 'Chalkboard SE' (ChalkboardSE.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,494 - DEBUG - findfont: score(<Font 'Noto Sans Imperial Aramaic' (NotoSansImperialAramaic-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,494 - DEBUG - findfont: score(<Font 'Bodoni 72' (Bodoni 72.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,494 - DEBUG - findfont: score(<Font 'Khmer Sangam MN' (Khmer Sangam MN.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,494 - DEBUG - findfont: score(<Font 'Calibri' (Calibril.ttf) normal normal 300 normal>) = 10.145
+2022-11-17 15:34:48,494 - DEBUG - findfont: score(<Font 'Hiragino Sans' (ヒラギノ角ゴシック W7.ttc) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,494 - DEBUG - findfont: score(<Font 'Trebuchet MS' (Trebuchet MS Italic.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,494 - DEBUG - findfont: score(<Font 'Noto Sans Kaithi' (NotoSansKaithi-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,495 - DEBUG - findfont: score(<Font 'Arial' (Arial Bold Italic.ttf) italic normal 700 normal>) = 7.698636363636363
+2022-11-17 15:34:48,495 - DEBUG - findfont: score(<Font 'Farisi' (Farisi.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,495 - DEBUG - findfont: score(<Font 'Galvji' (Galvji.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,495 - DEBUG - findfont: score(<Font 'Palatino Linotype' (Palatino Linotype Bold.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,495 - DEBUG - findfont: score(<Font 'Wingdings' (Wingdings.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,495 - DEBUG - findfont: score(<Font 'PMingLiU-ExtB' (PMingLiU-ExtB.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,495 - DEBUG - findfont: score(<Font 'Tahoma' (Tahoma.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,495 - DEBUG - findfont: score(<Font 'Georgia' (Georgia.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,495 - DEBUG - findfont: score(<Font 'Noto Serif Myanmar' (NotoSerifMyanmar.ttc) normal normal 900 normal>) = 10.525
+2022-11-17 15:34:48,495 - DEBUG - findfont: score(<Font 'Kokonor' (Kokonor.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,495 - DEBUG - findfont: score(<Font 'Noto Sans Glagolitic' (NotoSansGlagolitic-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,495 - DEBUG - findfont: score(<Font 'Arial Unicode MS' (Arial Unicode.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,495 - DEBUG - findfont: score(<Font '.SF NS Mono' (SFNSMono.ttf) normal normal 300 normal>) = 10.145
+2022-11-17 15:34:48,495 - DEBUG - findfont: score(<Font 'Corbel' (Corbel.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,495 - DEBUG - findfont: score(<Font 'STIXIntegralsUp' (STIXIntUpBol.otf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,495 - DEBUG - findfont: score(<Font 'Lucida Console' (Lucida Console.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,495 - DEBUG - findfont: score(<Font '.SF NS Display Condensed' (SFNSDisplayCondensed-Medium.otf) normal normal 600 condensed>) = 10.44
+2022-11-17 15:34:48,495 - DEBUG - findfont: score(<Font 'Noto Serif Balinese' (NotoSerifBalinese-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,495 - DEBUG - findfont: score(<Font 'Avenir Next Condensed' (Avenir Next Condensed.ttc) normal normal 700 condensed>) = 10.535
+2022-11-17 15:34:48,496 - DEBUG - findfont: score(<Font '.SF NS Display Condensed' (SFNSDisplayCondensed-Semibold.otf) normal normal 700 condensed>) = 10.535
+2022-11-17 15:34:48,496 - DEBUG - findfont: score(<Font 'Noto Sans Avestan' (NotoSansAvestan-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,496 - DEBUG - findfont: score(<Font 'Noto Sans Lycian' (NotoSansLycian-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,496 - DEBUG - findfont: score(<Font 'Times New Roman' (Times New Roman Bold Italic.ttf) italic normal 700 normal>) = 11.335
+2022-11-17 15:34:48,496 - DEBUG - findfont: score(<Font 'Hiragino Sans GB' (Hiragino Sans GB.ttc) normal normal 300 normal>) = 10.145
+2022-11-17 15:34:48,496 - DEBUG - findfont: score(<Font 'Sathu' (Sathu.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,496 - DEBUG - findfont: score(<Font 'Trebuchet MS' (Trebuchet MS Bold Italic.ttf) italic normal 700 normal>) = 11.335
+2022-11-17 15:34:48,496 - DEBUG - findfont: score(<Font 'Microsoft Tai Le' (TaiLeb.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,496 - DEBUG - findfont: score(<Font 'Noto Sans Syriac' (NotoSansSyriac-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,496 - DEBUG - findfont: score(<Font 'Optima' (Optima.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,496 - DEBUG - findfont: score(<Font 'Futura Std' (FuturaStd-HeavyOblique.otf) oblique normal 650 normal>) = 11.2875
+2022-11-17 15:34:48,496 - DEBUG - findfont: score(<Font 'Times New Roman' (Times New Roman Bold.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,496 - DEBUG - findfont: score(<Font 'Microsoft Himalaya' (himalaya.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,496 - DEBUG - findfont: score(<Font 'PT Serif Caption' (PTSerifCaption.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,496 - DEBUG - findfont: score(<Font 'Palatino Linotype' (Palatino Linotype Italic.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,496 - DEBUG - findfont: score(<Font 'Noto Sans Cuneiform' (NotoSansCuneiform-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,496 - DEBUG - findfont: score(<Font 'Noto Sans Rejang' (NotoSansRejang-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,496 - DEBUG - findfont: score(<Font 'Perpetua' (Perpetua Italic.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,496 - DEBUG - findfont: score(<Font 'STIXVariants' (STIXVar.otf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,497 - DEBUG - findfont: score(<Font 'Noto Sans Myanmar' (NotoSansMyanmar.ttc) normal normal 900 normal>) = 10.525
+2022-11-17 15:34:48,497 - DEBUG - findfont: score(<Font 'Candara' (Candara Bold Italic.ttf) italic normal 700 normal>) = 11.335
+2022-11-17 15:34:48,497 - DEBUG - findfont: score(<Font 'Gulim' (Gulim.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,497 - DEBUG - findfont: score(<Font 'Noto Sans Tifinagh' (NotoSansTifinagh-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,497 - DEBUG - findfont: score(<Font 'Adobe Garamond Pro' (AGaramondPro-Regular.otf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,497 - DEBUG - findfont: score(<Font 'Verdana' (Verdana Bold.ttf) normal normal 700 normal>) = 3.9713636363636367
+2022-11-17 15:34:48,497 - DEBUG - findfont: score(<Font 'Diwan Kufi' (Diwan Kufi.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,497 - DEBUG - findfont: score(<Font 'Apple SD Gothic Neo' (AppleSDGothicNeo.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,497 - DEBUG - findfont: score(<Font '.SF NS Text Condensed' (SFNSTextCondensed-Heavy.otf) normal normal 800 condensed>) = 10.629999999999999
+2022-11-17 15:34:48,497 - DEBUG - findfont: score(<Font 'Courier New' (Courier New.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,497 - DEBUG - findfont: score(<Font 'Verdana' (Verdana Italic.ttf) italic normal 400 normal>) = 4.6863636363636365
+2022-11-17 15:34:48,497 - DEBUG - findfont: score(<Font 'Skia' (Skia.ttf) normal normal 5 normal>) = 10.42525
+2022-11-17 15:34:48,497 - DEBUG - findfont: score(<Font 'Devanagari MT' (DevanagariMT.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,497 - DEBUG - findfont: score(<Font 'Constantia' (Constantia Bold.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,497 - DEBUG - findfont: score(<Font 'Myanmar MN' (Myanmar MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,497 - DEBUG - findfont: score(<Font '.SF NS Text Condensed' (SFNSTextCondensed-Bold.otf) normal normal 700 condensed>) = 10.535
+2022-11-17 15:34:48,497 - DEBUG - findfont: score(<Font 'Mukta Mahee' (MuktaMahee.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,497 - DEBUG - findfont: score(<Font 'Times New Roman' (Times New Roman Italic.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,498 - DEBUG - findfont: score(<Font 'PT Sans' (PTSans.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,498 - DEBUG - findfont: score(<Font 'Oriya Sangam MN' (Oriya Sangam MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,498 - DEBUG - findfont: score(<Font 'Charter' (Charter.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,498 - DEBUG - findfont: score(<Font 'Noto Sans Buginese' (NotoSansBuginese-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,498 - DEBUG - findfont: score(<Font '.SF NS Text Condensed' (SFNSTextCondensed-Light.otf) normal normal 300 condensed>) = 10.344999999999999
+2022-11-17 15:34:48,498 - DEBUG - findfont: score(<Font 'Helvetica Neue' (HelveticaNeue.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,498 - DEBUG - findfont: score(<Font 'Verdana' (Verdana.ttf) normal normal 400 normal>) = 3.6863636363636365
+2022-11-17 15:34:48,498 - DEBUG - findfont: score(<Font 'Hiragino Sans' (ヒラギノ角ゴシック W8.ttc) normal normal 800 normal>) = 10.43
+2022-11-17 15:34:48,498 - DEBUG - findfont: score(<Font 'Palatino Linotype' (Palatino Linotype Bold Italic.ttf) italic normal 700 normal>) = 11.335
+2022-11-17 15:34:48,498 - DEBUG - findfont: score(<Font 'Apple Braille' (Apple Braille Pinpoint 8 Dot.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,498 - DEBUG - findfont: score(<Font 'Meiryo' (Meiryo Bold.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,498 - DEBUG - findfont: score(<Font 'Cambria' (Cambria.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,498 - DEBUG - findfont: score(<Font 'Calibri' (Calibri Bold.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,498 - DEBUG - findfont: score(<Font 'Kailasa' (Kailasa.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,498 - DEBUG - findfont: score(<Font 'Adobe Garamond Pro' (AGaramondPro-Bold.otf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,498 - DEBUG - findfont: score(<Font 'Noto Sans Ol Chiki' (NotoSansOlChiki-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,498 - DEBUG - findfont: score(<Font '.Aqua Kana' (AquaKana.ttc) normal normal 300 normal>) = 10.145
+2022-11-17 15:34:48,498 - DEBUG - findfont: score(<Font 'Noto Sans Javanese' (NotoSansJavanese-Regular.otf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,498 - DEBUG - findfont: score(<Font 'Candara' (Candara Italic.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,499 - DEBUG - findfont: score(<Font 'PMingLiU' (PMingLiU.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,499 - DEBUG - findfont: score(<Font 'DIN Condensed' (DIN Condensed Bold.ttf) normal normal 700 condensed>) = 10.535
+2022-11-17 15:34:48,499 - DEBUG - findfont: score(<Font 'Shree Devanagari 714' (Shree714.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,499 - DEBUG - findfont: score(<Font 'Franklin Gothic Medium' (Franklin Gothic Medium Italic.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,499 - DEBUG - findfont: score(<Font 'STIXIntegralsUpD' (STIXIntUpDBol.otf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,499 - DEBUG - findfont: score(<Font 'Zapfino' (Zapfino.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,499 - DEBUG - findfont: score(<Font 'AppleMyungjo' (AppleMyungjo.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,499 - DEBUG - findfont: score(<Font 'Noto Sans Batak' (NotoSansBatak-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,499 - DEBUG - findfont: score(<Font 'Calibri' (Calibri Bold Italic.ttf) italic normal 700 normal>) = 11.335
+2022-11-17 15:34:48,499 - DEBUG - findfont: score(<Font 'Times New Roman' (Times New Roman Bold Italic.ttf) italic normal 700 normal>) = 11.335
+2022-11-17 15:34:48,499 - DEBUG - findfont: score(<Font 'Noto Sans Phoenician' (NotoSansPhoenician-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,499 - DEBUG - findfont: score(<Font 'Futura Std' (FuturaStd-Book.otf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,499 - DEBUG - findfont: score(<Font 'Courier New' (Courier New Bold.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,499 - DEBUG - findfont: score(<Font 'Corsiva Hebrew' (Corsiva.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,499 - DEBUG - findfont: score(<Font 'InaiMathi' (InaiMathi-MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,499 - DEBUG - findfont: score(<Font '.SF Compact Display' (SFCompactDisplay.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,499 - DEBUG - findfont: score(<Font 'Georgia' (Georgia Bold Italic.ttf) italic normal 700 normal>) = 11.335
+2022-11-17 15:34:48,499 - DEBUG - findfont: score(<Font 'Arial Rounded MT Bold' (Arial Rounded Bold.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,500 - DEBUG - findfont: score(<Font 'Gabriola' (Gabriola.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,500 - DEBUG - findfont: score(<Font 'STIXSizeThreeSym' (STIXSizThreeSymReg.otf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,500 - DEBUG - findfont: score(<Font 'Courier New' (Courier New Italic.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,500 - DEBUG - findfont: score(<Font 'Meiryo' (Meiryo.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,500 - DEBUG - findfont: score(<Font 'Bangla Sangam MN' (Bangla Sangam MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,500 - DEBUG - findfont: score(<Font 'Geeza Pro' (GeezaPro.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,500 - DEBUG - findfont: score(<Font 'Noto Sans Vai' (NotoSansVai-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,500 - DEBUG - findfont: score(<Font 'Krungthep' (Krungthep.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,500 - DEBUG - findfont: score(<Font 'Silom' (Silom.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,500 - DEBUG - findfont: score(<Font 'Kohinoor Gujarati' (KohinoorGujarati.ttc) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,500 - DEBUG - findfont: score(<Font 'Brush Script MT' (Brush Script.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,500 - DEBUG - findfont: score(<Font 'Snell Roundhand' (SnellRoundhand.ttc) normal normal 500 normal>) = 10.145
+2022-11-17 15:34:48,500 - DEBUG - findfont: score(<Font 'Gill Sans MT' (Gill Sans MT Italic.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,500 - DEBUG - findfont: score(<Font 'Bangla MN' (Bangla MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,500 - DEBUG - findfont: score(<Font 'STIXIntegralsD' (STIXIntDReg.otf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,500 - DEBUG - findfont: score(<Font 'Gill Sans MT' (Gill Sans MT Bold Italic.ttf) italic normal 700 normal>) = 11.335
+2022-11-17 15:34:48,500 - DEBUG - findfont: score(<Font 'Zapf Dingbats' (ZapfDingbats.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,500 - DEBUG - findfont: score(<Font 'Cambria' (Cambria Bold.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,500 - DEBUG - findfont: score(<Font 'Trebuchet MS' (Trebuchet MS Bold.ttf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,500 - DEBUG - findfont: score(<Font 'Noto Sans Lepcha' (NotoSansLepcha-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,501 - DEBUG - findfont: score(<Font 'Luminari' (Luminari.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,501 - DEBUG - findfont: score(<Font 'STIXSizeTwoSym' (STIXSizTwoSymBol.otf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,501 - DEBUG - findfont: score(<Font 'Constantia' (Constantia.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,501 - DEBUG - findfont: score(<Font 'Baghdad' (Baghdad.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,501 - DEBUG - findfont: score(<Font 'Ayuthaya' (Ayuthaya.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,501 - DEBUG - findfont: score(<Font 'Arial' (Arial Bold Italic.ttf) italic normal 700 normal>) = 7.698636363636363
+2022-11-17 15:34:48,501 - DEBUG - findfont: score(<Font 'Noto Sans Tagalog' (NotoSansTagalog-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,501 - DEBUG - findfont: score(<Font 'Marlett' (Marlett.ttf) normal normal 500 normal>) = 10.145
+2022-11-17 15:34:48,501 - DEBUG - findfont: score(<Font '.SF NS Display Condensed' (SFNSDisplayCondensed-Light.otf) normal normal 500 condensed>) = 10.344999999999999
+2022-11-17 15:34:48,501 - DEBUG - findfont: score(<Font 'Sinhala MN' (Sinhala MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,501 - DEBUG - findfont: score(<Font 'Khmer MN' (Khmer MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,501 - DEBUG - findfont: score(<Font 'Arial' (Arial Bold.ttf) normal normal 700 normal>) = 6.698636363636363
+2022-11-17 15:34:48,501 - DEBUG - findfont: score(<Font 'Seravek' (Seravek.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,501 - DEBUG - findfont: score(<Font 'Arial' (Arial Bold.ttf) normal normal 700 normal>) = 6.698636363636363
+2022-11-17 15:34:48,501 - DEBUG - findfont: score(<Font 'Bodoni Ornaments' (Bodoni Ornaments.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,501 - DEBUG - findfont: score(<Font 'Futura' (Futura.ttc) normal normal 500 normal>) = 10.145
+2022-11-17 15:34:48,501 - DEBUG - findfont: score(<Font 'Verdana' (Verdana.ttf) normal normal 400 normal>) = 3.6863636363636365
+2022-11-17 15:34:48,501 - DEBUG - findfont: score(<Font 'STIXSizeThreeSym' (STIXSizThreeSymBol.otf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,502 - DEBUG - findfont: score(<Font 'SimSun' (SimSun.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,502 - DEBUG - findfont: score(<Font 'Sinhala Sangam MN' (Sinhala Sangam MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,502 - DEBUG - findfont: score(<Font 'Hoefler Text' (Hoefler Text Ornaments.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,502 - DEBUG - findfont: score(<Font '.Arabic UI Display' (ArabicUIDisplay.ttc) normal normal 900 normal>) = 10.525
+2022-11-17 15:34:48,502 - DEBUG - findfont: score(<Font 'Symbol' (Symbol.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,502 - DEBUG - findfont: score(<Font 'Lucida Sans Unicode' (Lucida Sans Unicode.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,502 - DEBUG - findfont: score(<Font 'MS Gothic' (MS Gothic.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,502 - DEBUG - findfont: score(<Font 'STIXIntegralsUp' (STIXIntUpReg.otf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,502 - DEBUG - findfont: score(<Font 'Wingdings 3' (Wingdings 3.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,502 - DEBUG - findfont: score(<Font 'Athelas' (Athelas.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,502 - DEBUG - findfont: score(<Font 'Adobe Garamond Pro' (AGaramondPro-BoldItalic.otf) italic normal 700 normal>) = 11.335
+2022-11-17 15:34:48,502 - DEBUG - findfont: score(<Font 'Chalkboard' (Chalkboard.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,502 - DEBUG - findfont: score(<Font 'Telugu MN' (Telugu MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,502 - DEBUG - findfont: score(<Font 'Noto Sans Kannada' (NotoSansKannada.ttc) normal normal 900 normal>) = 10.525
+2022-11-17 15:34:48,502 - DEBUG - findfont: score(<Font 'Marker Felt' (MarkerFelt.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,502 - DEBUG - findfont: score(<Font 'Cambria' (Cambria Bold Italic.ttf) italic normal 700 normal>) = 11.335
+2022-11-17 15:34:48,502 - DEBUG - findfont: score(<Font 'Noto Sans NKo' (NotoSansNKo-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,502 - DEBUG - findfont: score(<Font 'Noto Sans Brahmi' (NotoSansBrahmi-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,502 - DEBUG - findfont: score(<Font 'STIXSizeFourSym' (STIXSizFourSymBol.otf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,503 - DEBUG - findfont: score(<Font 'STIXSizeOneSym' (STIXSizOneSymBol.otf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,503 - DEBUG - findfont: score(<Font 'Arial Narrow' (Arial Narrow Italic.ttf) italic normal 400 condensed>) = 11.25
+2022-11-17 15:34:48,503 - DEBUG - findfont: score(<Font 'Lao MN' (Lao MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,503 - DEBUG - findfont: score(<Font 'Calibri' (Calibri Italic.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,503 - DEBUG - findfont: score(<Font 'Kefa' (Kefa.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,503 - DEBUG - findfont: score(<Font 'Noto Sans Inscriptional Pahlavi' (NotoSansInscriptionalPahlavi-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,503 - DEBUG - findfont: score(<Font '.SF NS Display Condensed' (SFNSDisplayCondensed-Ultralight.otf) normal normal 400 condensed>) = 10.25
+2022-11-17 15:34:48,503 - DEBUG - findfont: score(<Font 'Noto Sans Kayah Li' (NotoSansKayahLi-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,503 - DEBUG - findfont: score(<Font 'Courier New' (Courier New Bold Italic.ttf) italic normal 700 normal>) = 11.335
+2022-11-17 15:34:48,503 - DEBUG - findfont: score(<Font 'Noto Sans PhagsPa' (NotoSansPhagsPa-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,503 - DEBUG - findfont: score(<Font 'Noto Sans Cypriot' (NotoSansCypriot-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,503 - DEBUG - findfont: score(<Font 'Verdana' (Verdana Bold Italic.ttf) italic normal 700 normal>) = 4.971363636363637
+2022-11-17 15:34:48,503 - DEBUG - findfont: score(<Font 'Arial Narrow' (Arial Narrow Bold Italic.ttf) italic normal 700 condensed>) = 11.535
+2022-11-17 15:34:48,503 - DEBUG - findfont: score(<Font 'Herculanum' (Herculanum.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,503 - DEBUG - findfont: score(<Font 'Cambria Math' (Cambria Math.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,503 - DEBUG - findfont: score(<Font 'Superclarendon' (SuperClarendon.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,503 - DEBUG - findfont: score(<Font 'Farah' (Farah.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,503 - DEBUG - findfont: score(<Font 'Noto Sans Runic' (NotoSansRunic-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,503 - DEBUG - findfont: score(<Font 'ITF Devanagari' (ITFDevanagari.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,503 - DEBUG - findfont: score(<Font 'Corbel' (Corbel Italic.ttf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,504 - DEBUG - findfont: score(<Font '.SF Compact Text' (SFCompactText.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,504 - DEBUG - findfont: score(<Font 'Arial Narrow' (Arial Narrow Bold.ttf) normal normal 700 condensed>) = 10.535
+2022-11-17 15:34:48,504 - DEBUG - findfont: score(<Font 'KufiStandardGK' (KufiStandardGK.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,504 - DEBUG - findfont: score(<Font 'Apple Braille' (Apple Braille Outline 6 Dot.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,504 - DEBUG - findfont: score(<Font '.SF NS Text Condensed' (SFNSTextCondensed-Medium.otf) normal normal 500 condensed>) = 10.344999999999999
+2022-11-17 15:34:48,504 - DEBUG - findfont: score(<Font '.Helvetica Neue DeskInterface' (HelveticaNeueDeskInterface.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,504 - DEBUG - findfont: score(<Font 'STIXVariants' (STIXVarBol.otf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,504 - DEBUG - findfont: score(<Font 'Candara' (Candara.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,504 - DEBUG - findfont: score(<Font 'Hiragino Sans' (ヒラギノ角ゴシック W6.ttc) normal normal 600 normal>) = 10.24
+2022-11-17 15:34:48,504 - DEBUG - findfont: score(<Font 'Trebuchet MS' (Trebuchet MS.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,504 - DEBUG - findfont: score(<Font 'Noto Sans Tai Viet' (NotoSansTaiViet-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,504 - DEBUG - findfont: score(<Font 'Cochin' (Cochin.ttc) normal normal 500 normal>) = 10.145
+2022-11-17 15:34:48,504 - DEBUG - findfont: score(<Font 'Noto Sans Samaritan' (NotoSansSamaritan-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,504 - DEBUG - findfont: score(<Font 'Gurmukhi MN' (Gurmukhi MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,504 - DEBUG - findfont: score(<Font 'MingLiU_HKSCS' (mingliu_hkscs.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,504 - DEBUG - findfont: score(<Font 'Damascus' (Damascus.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,504 - DEBUG - findfont: score(<Font 'Consolas' (Consolas.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,504 - DEBUG - findfont: score(<Font 'Noto Sans Meetei Mayek' (NotoSansMeeteiMayek-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,504 - DEBUG - findfont: score(<Font 'Sukhumvit Set' (SukhumvitSet.ttc) normal normal 250 normal>) = 10.1925
+2022-11-17 15:34:48,505 - DEBUG - findfont: score(<Font 'Consolas' (Consolas Bold Italic.ttf) italic normal 700 normal>) = 11.335
+2022-11-17 15:34:48,505 - DEBUG - findfont: score(<Font 'New Peninim MT' (NewPeninimMT.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,505 - DEBUG - findfont: score(<Font 'Arial' (Arial.ttf) normal normal 400 normal>) = 6.413636363636363
+2022-11-17 15:34:48,505 - DEBUG - findfont: score(<Font 'Devanagari Sangam MN' (Devanagari Sangam MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,505 - DEBUG - findfont: score(<Font 'Noto Sans Old Persian' (NotoSansOldPersian-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,505 - DEBUG - findfont: score(<Font 'STIXIntegralsUpD' (STIXIntUpDReg.otf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,505 - DEBUG - findfont: score(<Font 'STIXGeneral' (STIXGeneralItalic.otf) italic normal 400 normal>) = 11.05
+2022-11-17 15:34:48,505 - DEBUG - findfont: score(<Font 'Futura Std' (FuturaStd-Heavy.otf) normal normal 650 normal>) = 10.2875
+2022-11-17 15:34:48,505 - DEBUG - findfont: score(<Font 'Kannada Sangam MN' (Kannada Sangam MN.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,505 - DEBUG - findfont: score(<Font 'Wingdings 2' (Wingdings 2.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,505 - DEBUG - findfont: score(<Font 'STIXNonUnicode' (STIXNonUniBol.otf) normal normal 700 normal>) = 10.335
+2022-11-17 15:34:48,505 - DEBUG - findfont: score(<Font 'Noto Sans Lydian' (NotoSansLydian-Regular.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,505 - DEBUG - findfont: score(<Font 'MingLiU-ExtB' (MingLiU-ExtB.ttf) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,505 - DEBUG - findfont: score(<Font '.New York' (NewYork.ttf) normal normal 425 normal>) = 10.07375
+2022-11-17 15:34:48,505 - DEBUG - findfont: score(<Font 'Times' (Times.ttc) normal normal 400 normal>) = 10.05
+2022-11-17 15:34:48,505 - DEBUG - findfont: Matching sans\-serif:style=normal:variant=normal:weight=normal:stretch=normal:size=10.0 to DejaVu Sans ('/Users/jsyme/anaconda3/lib/python3.8/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSans.ttf') with score of 0.050000.
+2022-11-21 12:10:47,804 - INFO - Running AFOLU model
+2022-11-21 12:10:48,739 - INFO - AFOLU model run successfully completed
+2022-11-21 12:10:48,739 - INFO - Running CircularEconomy model
+2022-11-21 12:10:49,000 - INFO - CircularEconomy model run successfully completed
+2022-11-21 12:10:49,002 - INFO - Running IPPU model
+2022-11-21 12:10:49,238 - INFO - IPPU model run successfully completed
+2022-11-21 12:10:49,239 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-11-21 12:10:49,333 - DEBUG - Missing elasticity information found in 'project_energy_consumption_by_fuel_from_effvars': using specified future demands.
+2022-11-21 12:10:49,606 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-11-21 12:10:49,607 - INFO - Running Energy model (Electricity: trying to call Julia)
+2022-11-21 12:10:52,615 - DEBUG - exception occured? None
+2022-11-21 12:10:52,628 - DEBUG - exception occured? None
+2022-11-21 12:10:52,628 - DEBUG - exception occured? None
+2022-11-21 12:10:52,641 - DEBUG - exception occured? None
+2022-11-21 12:10:52,643 - DEBUG - exception occured? None
+2022-11-21 12:10:52,644 - DEBUG - exception occured? None
+2022-11-21 12:10:52,841 - DEBUG - exception occured? None
+2022-11-21 12:10:52,844 - DEBUG - exception occured? None
+2022-11-21 12:10:52,844 - DEBUG - exception occured? None
+2022-11-21 12:11:41,658 - INFO - NemoMod ran successfully with the following status: <PyCall.jlwrap OPTIMAL>
+2022-11-21 12:11:41,692 - INFO - ElectricEnergy model run successfully completed
+2022-11-21 12:11:41,861 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-11-21 12:11:41,867 - INFO - Model run for primary_id = 3003 successfully completed in 54.07 seconds.
+2022-11-21 12:11:41,878 - INFO - Running AFOLU model
+2022-11-21 12:11:42,396 - INFO - AFOLU model run successfully completed
+2022-11-21 12:11:42,397 - INFO - Running CircularEconomy model
+2022-11-21 12:11:42,553 - INFO - CircularEconomy model run successfully completed
+2022-11-21 12:11:42,554 - INFO - Running IPPU model
+2022-11-21 12:11:42,719 - INFO - IPPU model run successfully completed
+2022-11-21 12:11:42,720 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-11-21 12:11:42,792 - DEBUG - Missing elasticity information found in 'project_energy_consumption_by_fuel_from_effvars': using specified future demands.
+2022-11-21 12:11:42,999 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-11-21 12:11:43,000 - INFO - Running Energy model (Electricity: trying to call Julia)
+2022-11-21 12:11:45,223 - DEBUG - exception occured? None
+2022-11-21 12:11:45,224 - DEBUG - exception occured? None
+2022-11-21 12:11:45,225 - DEBUG - exception occured? None
+2022-11-21 12:11:45,226 - DEBUG - exception occured? None
+2022-11-21 12:11:45,227 - DEBUG - exception occured? None
+2022-11-21 12:11:45,228 - DEBUG - exception occured? None
+2022-11-21 12:11:45,231 - DEBUG - exception occured? None
+2022-11-21 12:11:45,232 - DEBUG - exception occured? None
+2022-11-21 12:11:45,233 - DEBUG - exception occured? None
+2022-11-21 12:12:12,699 - INFO - NemoMod ran successfully with the following status: <PyCall.jlwrap OPTIMAL>
+2022-11-21 12:12:12,726 - INFO - ElectricEnergy model run successfully completed
+2022-11-21 12:12:12,840 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-11-21 12:12:12,845 - INFO - Model run for primary_id = 4004 successfully completed in 30.97 seconds.
+2022-11-21 12:12:12,954 - WARNING - Warning: index tuples (4004,), (3003,) found in table MODEL_OUTPUT.
+2022-11-21 12:12:12,955 - WARNING - Running conflict resolution 'write_skip' for table MODEL_OUTPUT.
+2022-11-21 12:12:12,965 - WARNING - Stash failed
+2022-11-21 12:12:13,396 - INFO - Table MODEL_OUTPUT successfully appended to database.
+2022-11-21 12:12:13,402 - INFO - Running AFOLU model
+2022-11-21 12:12:13,898 - INFO - AFOLU model run successfully completed
+2022-11-21 12:12:13,899 - INFO - Running CircularEconomy model
+2022-11-21 12:12:14,062 - INFO - CircularEconomy model run successfully completed
+2022-11-21 12:12:14,063 - INFO - Running IPPU model
+2022-11-21 12:12:14,256 - INFO - IPPU model run successfully completed
+2022-11-21 12:12:14,256 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-11-21 12:12:14,330 - DEBUG - Missing elasticity information found in 'project_energy_consumption_by_fuel_from_effvars': using specified future demands.
+2022-11-21 12:12:14,526 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-11-21 12:12:14,526 - INFO - Running Energy model (Electricity: trying to call Julia)
+2022-11-21 12:12:16,552 - DEBUG - exception occured? None
+2022-11-21 12:12:16,552 - DEBUG - exception occured? None
+2022-11-21 12:12:16,553 - DEBUG - exception occured? None
+2022-11-21 12:12:16,553 - DEBUG - exception occured? None
+2022-11-21 12:12:16,553 - DEBUG - exception occured? None
+2022-11-21 12:12:16,553 - DEBUG - exception occured? None
+2022-11-21 12:12:16,554 - DEBUG - exception occured? None
+2022-11-21 12:12:16,554 - DEBUG - exception occured? None
+2022-11-21 12:12:16,555 - DEBUG - exception occured? None
+2022-11-21 12:12:44,930 - INFO - NemoMod ran successfully with the following status: <PyCall.jlwrap OPTIMAL>
+2022-11-21 12:12:44,965 - INFO - ElectricEnergy model run successfully completed
+2022-11-21 12:12:45,100 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-11-21 12:12:45,109 - INFO - Model run for primary_id = 5005 successfully completed in 31.71 seconds.
+2022-11-21 12:12:45,535 - INFO - Running AFOLU model
+2022-11-21 12:12:46,031 - INFO - AFOLU model run successfully completed
+2022-11-21 12:12:46,032 - INFO - Running CircularEconomy model
+2022-11-21 12:12:46,196 - INFO - CircularEconomy model run successfully completed
+2022-11-21 12:12:46,197 - INFO - Running IPPU model
+2022-11-21 12:12:46,368 - INFO - IPPU model run successfully completed
+2022-11-21 12:12:46,368 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-11-21 12:12:46,438 - DEBUG - Missing elasticity information found in 'project_energy_consumption_by_fuel_from_effvars': using specified future demands.
+2022-11-21 12:12:46,650 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-11-21 12:12:46,651 - INFO - Running Energy model (Electricity: trying to call Julia)
+2022-11-21 12:12:48,746 - DEBUG - exception occured? None
+2022-11-21 12:12:48,747 - DEBUG - exception occured? None
+2022-11-21 12:12:48,747 - DEBUG - exception occured? None
+2022-11-21 12:12:48,747 - DEBUG - exception occured? None
+2022-11-21 12:12:48,747 - DEBUG - exception occured? None
+2022-11-21 12:12:48,747 - DEBUG - exception occured? None
+2022-11-21 12:12:48,748 - DEBUG - exception occured? None
+2022-11-21 12:12:48,749 - DEBUG - exception occured? None
+2022-11-21 12:12:48,749 - DEBUG - exception occured? None
+2022-11-21 12:13:16,385 - INFO - NemoMod ran successfully with the following status: <PyCall.jlwrap OPTIMAL>
+2022-11-21 12:13:16,414 - INFO - ElectricEnergy model run successfully completed
+2022-11-21 12:13:16,535 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-11-21 12:13:16,540 - INFO - Model run for primary_id = 3474 successfully completed in 31.0 seconds.
+2022-11-21 12:13:19,247 - WARNING - Warning: index tuples (3474,), (5005,) found in table MODEL_OUTPUT.
+2022-11-21 12:13:19,249 - WARNING - Running conflict resolution 'write_skip' for table MODEL_OUTPUT.
+2022-11-21 12:13:19,264 - WARNING - Stash failed
+2022-11-21 12:13:19,722 - INFO - Table MODEL_OUTPUT successfully appended to database.
+2022-11-21 12:13:19,729 - INFO - Running AFOLU model
+2022-11-21 12:13:20,262 - INFO - AFOLU model run successfully completed
+2022-11-21 12:13:20,263 - INFO - Running CircularEconomy model
+2022-11-21 12:13:20,447 - INFO - CircularEconomy model run successfully completed
+2022-11-21 12:13:20,448 - INFO - Running IPPU model
+2022-11-21 12:13:20,650 - INFO - IPPU model run successfully completed
+2022-11-21 12:13:20,651 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-11-21 12:13:20,727 - DEBUG - Missing elasticity information found in 'project_energy_consumption_by_fuel_from_effvars': using specified future demands.
+2022-11-21 12:13:20,953 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-11-21 12:13:20,953 - INFO - Running Energy model (Electricity: trying to call Julia)
+2022-11-21 12:13:22,882 - DEBUG - exception occured? None
+2022-11-21 12:13:22,882 - DEBUG - exception occured? None
+2022-11-21 12:13:22,882 - DEBUG - exception occured? None
+2022-11-21 12:13:22,883 - DEBUG - exception occured? None
+2022-11-21 12:13:22,883 - DEBUG - exception occured? None
+2022-11-21 12:13:22,884 - DEBUG - exception occured? None
+2022-11-21 12:13:22,884 - DEBUG - exception occured? None
+2022-11-21 12:13:22,885 - DEBUG - exception occured? None
+2022-11-21 12:13:22,885 - DEBUG - exception occured? None
+2022-11-21 12:13:46,126 - INFO - NemoMod ran successfully with the following status: <PyCall.jlwrap OPTIMAL>
+2022-11-21 12:13:46,156 - INFO - ElectricEnergy model run successfully completed
+2022-11-21 12:13:46,283 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-11-21 12:13:46,287 - INFO - Model run for primary_id = 4475 successfully completed in 26.56 seconds.
+2022-11-21 12:13:46,292 - INFO - Running AFOLU model
+2022-11-21 12:13:46,788 - INFO - AFOLU model run successfully completed
+2022-11-21 12:13:46,789 - INFO - Running CircularEconomy model
+2022-11-21 12:13:46,943 - INFO - CircularEconomy model run successfully completed
+2022-11-21 12:13:46,944 - INFO - Running IPPU model
+2022-11-21 12:13:47,111 - INFO - IPPU model run successfully completed
+2022-11-21 12:13:47,112 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-11-21 12:13:47,177 - DEBUG - Missing elasticity information found in 'project_energy_consumption_by_fuel_from_effvars': using specified future demands.
+2022-11-21 12:13:47,379 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-11-21 12:13:47,379 - INFO - Running Energy model (Electricity: trying to call Julia)
+2022-11-21 12:13:49,381 - DEBUG - exception occured? None
+2022-11-21 12:13:49,382 - DEBUG - exception occured? None
+2022-11-21 12:13:49,382 - DEBUG - exception occured? None
+2022-11-21 12:13:49,382 - DEBUG - exception occured? None
+2022-11-21 12:13:49,383 - DEBUG - exception occured? None
+2022-11-21 12:13:49,383 - DEBUG - exception occured? None
+2022-11-21 12:13:49,384 - DEBUG - exception occured? None
+2022-11-21 12:13:49,385 - DEBUG - exception occured? None
+2022-11-21 12:13:49,385 - DEBUG - exception occured? None
+2022-11-21 12:14:16,592 - INFO - NemoMod ran successfully with the following status: <PyCall.jlwrap OPTIMAL>
+2022-11-21 12:14:16,621 - INFO - ElectricEnergy model run successfully completed
+2022-11-21 12:14:16,740 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-11-21 12:14:16,745 - INFO - Model run for primary_id = 5476 successfully completed in 30.45 seconds.
+2022-11-21 12:14:16,822 - WARNING - Warning: index tuples (4475,), (5476,) found in table MODEL_OUTPUT.
+2022-11-21 12:14:16,823 - WARNING - Running conflict resolution 'write_skip' for table MODEL_OUTPUT.
+2022-11-21 12:14:16,829 - WARNING - Stash failed
+2022-11-21 12:14:17,245 - INFO - Table MODEL_OUTPUT successfully appended to database.
+2022-11-21 12:14:17,501 - INFO - Running AFOLU model
+2022-11-21 12:14:17,964 - INFO - AFOLU model run successfully completed
+2022-11-21 12:14:17,966 - INFO - Running CircularEconomy model
+2022-11-21 12:14:18,113 - INFO - CircularEconomy model run successfully completed
+2022-11-21 12:14:18,114 - INFO - Running IPPU model
+2022-11-21 12:14:18,292 - INFO - IPPU model run successfully completed
+2022-11-21 12:14:18,293 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-11-21 12:14:18,361 - DEBUG - Missing elasticity information found in 'project_energy_consumption_by_fuel_from_effvars': using specified future demands.
+2022-11-21 12:14:18,567 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-11-21 12:14:18,568 - INFO - Running Energy model (Electricity: trying to call Julia)
+2022-11-21 12:14:20,504 - DEBUG - exception occured? None
+2022-11-21 12:14:20,505 - DEBUG - exception occured? None
+2022-11-21 12:14:20,505 - DEBUG - exception occured? None
+2022-11-21 12:14:20,505 - DEBUG - exception occured? None
+2022-11-21 12:14:20,506 - DEBUG - exception occured? None
+2022-11-21 12:14:20,506 - DEBUG - exception occured? None
+2022-11-21 12:14:20,507 - DEBUG - exception occured? None
+2022-11-21 12:14:20,507 - DEBUG - exception occured? None
+2022-11-21 12:14:20,507 - DEBUG - exception occured? None
+2022-11-21 12:14:48,217 - INFO - NemoMod ran successfully with the following status: <PyCall.jlwrap OPTIMAL>
+2022-11-21 12:14:48,253 - INFO - ElectricEnergy model run successfully completed
+2022-11-21 12:14:48,405 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-11-21 12:14:48,415 - INFO - Model run for primary_id = 3907 successfully completed in 30.91 seconds.
+2022-11-21 12:14:48,421 - INFO - Running AFOLU model
+2022-11-21 12:14:48,963 - INFO - AFOLU model run successfully completed
+2022-11-21 12:14:48,964 - INFO - Running CircularEconomy model
+2022-11-21 12:14:49,149 - INFO - CircularEconomy model run successfully completed
+2022-11-21 12:14:49,150 - INFO - Running IPPU model
+2022-11-21 12:14:49,341 - INFO - IPPU model run successfully completed
+2022-11-21 12:14:49,341 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-11-21 12:14:49,411 - DEBUG - Missing elasticity information found in 'project_energy_consumption_by_fuel_from_effvars': using specified future demands.
+2022-11-21 12:14:49,621 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-11-21 12:14:49,622 - INFO - Running Energy model (Electricity: trying to call Julia)
+2022-11-21 12:14:51,947 - DEBUG - exception occured? None
+2022-11-21 12:14:51,948 - DEBUG - exception occured? None
+2022-11-21 12:14:51,948 - DEBUG - exception occured? None
+2022-11-21 12:14:51,948 - DEBUG - exception occured? None
+2022-11-21 12:14:51,949 - DEBUG - exception occured? None
+2022-11-21 12:14:51,950 - DEBUG - exception occured? None
+2022-11-21 12:14:51,951 - DEBUG - exception occured? None
+2022-11-21 12:14:51,951 - DEBUG - exception occured? None
+2022-11-21 12:14:51,952 - DEBUG - exception occured? None
+2022-11-21 12:15:13,447 - INFO - NemoMod ran successfully with the following status: <PyCall.jlwrap OPTIMAL>
+2022-11-21 12:15:13,474 - INFO - ElectricEnergy model run successfully completed
+2022-11-21 12:15:13,579 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-11-21 12:15:13,583 - INFO - Model run for primary_id = 4908 successfully completed in 25.16 seconds.
+2022-11-21 12:15:14,089 - INFO - Table MODEL_OUTPUT successfully appended to database.
+2022-11-21 12:15:14,095 - INFO - Running AFOLU model
+2022-11-21 12:15:14,523 - INFO - AFOLU model run successfully completed
+2022-11-21 12:15:14,524 - INFO - Running CircularEconomy model
+2022-11-21 12:15:14,655 - INFO - CircularEconomy model run successfully completed
+2022-11-21 12:15:14,656 - INFO - Running IPPU model
+2022-11-21 12:15:14,784 - INFO - IPPU model run successfully completed
+2022-11-21 12:15:14,785 - INFO - Running Energy model (NonElectricEnergy without Fugitive Emissions)
+2022-11-21 12:15:14,833 - DEBUG - Missing elasticity information found in 'project_energy_consumption_by_fuel_from_effvars': using specified future demands.
+2022-11-21 12:15:14,971 - INFO - NonElectricEnergy without Fugitive Emissions model run successfully completed
+2022-11-21 12:15:14,972 - INFO - Running Energy model (Electricity: trying to call Julia)
+2022-11-21 12:15:16,517 - DEBUG - exception occured? None
+2022-11-21 12:15:16,517 - DEBUG - exception occured? None
+2022-11-21 12:15:16,518 - DEBUG - exception occured? None
+2022-11-21 12:15:16,518 - DEBUG - exception occured? None
+2022-11-21 12:15:16,519 - DEBUG - exception occured? None
+2022-11-21 12:15:16,519 - DEBUG - exception occured? None
+2022-11-21 12:15:16,520 - DEBUG - exception occured? None
+2022-11-21 12:15:16,520 - DEBUG - exception occured? None
+2022-11-21 12:15:16,520 - DEBUG - exception occured? None
+2022-11-21 12:15:37,981 - INFO - NemoMod ran successfully with the following status: <PyCall.jlwrap OPTIMAL>
+2022-11-21 12:15:38,010 - INFO - ElectricEnergy model run successfully completed
+2022-11-21 12:15:38,140 - INFO - Fugitive Emissions from Energy model run successfully completed
+2022-11-21 12:15:38,144 - INFO - Model run for primary_id = 5909 successfully completed in 24.05 seconds.
+2022-11-21 12:15:38,798 - INFO - Table MODEL_OUTPUT successfully appended to database.

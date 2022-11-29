@@ -1,9 +1,10 @@
-import support_functions as sf
-from model_attributes import *
 from attribute_table import AttributeTable
+import logging
+from model_attributes import *
 from model_socioeconomic import Socioeconomic
-import pandas as pd
 import numpy as np
+import pandas as pd
+import support_functions as sf
 import time
 
 
@@ -18,8 +19,15 @@ import time
 #####################################
 
 class CircularEconomy:
+    """
+    NonElectricEnergy DOCSTRING to go here
 
-    def __init__(self, attributes: ModelAttributes):
+    """
+    def __init__(
+        self,
+        attributes: ModelAttributes,
+        logger: Union[logging.Logger, None] = None
+    ):
 
         self.model_attributes = attributes
         self.required_dimensions = self.get_required_dimensions()
@@ -169,9 +177,17 @@ class CircularEconomy:
 
 
 
-    ##  FUNCTIONS FOR MODEL ATTRIBUTE DIMENSIONS
 
-    def check_df_fields(self, df_ce_trajectories, check_fields = None):
+
+
+    ##################################
+    #    INITIALIZATION FUNCTIONS    #
+    ##################################
+
+    def check_df_fields(self,
+        df_ce_trajectories,
+        check_fields = None
+    ) -> None:
         if check_fields == None:
             check_fields = self.required_variables
         # check for required variables
@@ -180,18 +196,28 @@ class CircularEconomy:
             set_missing = sf.format_print_list(set_missing)
             raise KeyError(f"Circular Economy projection cannot proceed: The fields {set_missing} are missing.")
 
-    def get_required_subsectors(self):
+
+
+    def get_required_subsectors(self,
+    ):
         subsectors = self.model_attributes.get_sector_subsectors("Circular Economy")
         subsectors_base = subsectors.copy()
         subsectors += ["Economy", "General"]
         return subsectors, subsectors_base
 
-    def get_required_dimensions(self):
+
+
+    def get_required_dimensions(self,
+    ) -> list:
         ## TEMPORARY - derive from attributes later
         required_doa = [self.model_attributes.dim_time_period]
         return required_doa
 
-    def get_ce_input_output_fields(self, subsectors = None):
+
+
+    def get_ce_input_output_fields(self,
+        subsectors = None
+    ) -> Tuple:
         if subsectors == None:
             subsectors = self.required_subsectors
         required_doa = [self.model_attributes.dim_time_period]
@@ -199,7 +225,9 @@ class CircularEconomy:
         return required_vars + self.get_required_dimensions(), output_vars
 
 
-    def set_integrated_variables(self):
+
+    def set_integrated_variables(self,
+    ) -> None:
         list_vars_required_for_integration = [
         # DROP FIRST THREE
             # TEMP INCLUDE
@@ -211,6 +239,38 @@ class CircularEconomy:
 		]
 
         return list_vars_required_for_integration
+
+
+
+
+
+
+    ###########################
+    #    UTILITY FUNCTIONS    #
+    ###########################
+
+    def _log(self,
+        msg: str,
+        type_log: str = "log",
+        **kwargs
+    ) -> None:
+        """
+        Clean implementation of sf._optional_log in-line using default logger. See ?sf._optional_log for more information
+
+        Function Arguments
+        ------------------
+        - msg: message to log
+
+        Keyword Arguments
+        -----------------
+        - type_log: type of log to use
+        - **kwargs: passed as logging.Logger.METHOD(msg, **kwargs)
+        """
+        sf._optional_log(self.logger, msg, type_log = type_log, **kwargs)
+
+
+
+
 
 
     #####################################

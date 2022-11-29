@@ -466,6 +466,7 @@ class ElectricEnergy:
         if not initialize_julia:
             return None
 
+
         ##  CHECK DIRECTORIES AND REQUIRED FILES
 
         self.dir_jl = dir_jl
@@ -482,35 +483,38 @@ class ElectricEnergy:
 
 
         ##  LOAD SOME PACKAGES
-        #self
-        #from julia.api import Julia
-        #self.julia = importlib.import_module("julia.api.Julia")
-        self.api = importlib.import_module("julia", package = "api")
-        self.jl = self.api.Julia(compiled_modules = False)
-        #self.jl = Julia(compiled_modules = False)
 
-        #from julia import Main
-        #from julia import Pkg
+        self._log(f"Calling Julia API...", type_log = "info")
+        self.api = importlib.import_module("julia", package = "api")
+
+        self.jl = self.api.Julia(compiled_modules = False)
+        self._log(f"\tSuccessfully activated Julia with compiled_modules = False", type_log = "debug")
+
         self.julia_base = importlib.import_module("julia.Base")
+        self._log(f"\tSuccessfully imported julia.Base", type_log = "debug")
+
         self.julia_main = importlib.import_module("julia.Main")
+        self._log(f"\tSuccessfully imported julia.Main", type_log = "debug")
+
         self.julia_pkg = importlib.import_module("julia.Pkg")
+        self._log(f"\tSuccessfully imported julia.Pkg", type_log = "debug")
+
+        avail_packages = self.julia_main.collect(self.julia_main.keys(self.julia_pkg.project().dependencies))
+        logstr = sf.format_print_list(avail_packages, delim = "\n\t\t")
+        self._log(f"\tAvailable Packages:\n\t\t{logstr}", type_log = "debug")
 
         try:
             self.julia_pkg.activate(self.dir_jl)
+            self._log(f"Successfully activated Julia environment at '{self.dir_jl}'", type_log = "info")
+
         except Exception as e:
             self._log(f"Error activating the Julia environment at '{self.dir_jl}': {e}", type_log = "error")
-        # import NemoMod
+
         try:
-            #from julia import NemoMod
-            #from julia import JuMP
             self.julia_nemomod = importlib.import_module("julia.NemoMod")
             self.julia_jump = importlib.import_module("julia.JuMP")
         except Exception as e:
             self._log(f"Error activating NemoMod/JuMP packages: {e}", type_log = "error")
-
-        # set properties
-        #self.julia_nemomod = NemoMod
-        #self.julia_jump = JuMP
 
 
         ##  CHECK AND LOAD SOLVER

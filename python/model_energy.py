@@ -17,7 +17,10 @@ from typing import *
 ###########################
 
 class NonElectricEnergy:
+    """
+    NonElectricEnergy DOCSTRING to go here
 
+    """
     def __init__(self,
         attributes: ModelAttributes,
         logger: Union[logging.Logger, None] = None
