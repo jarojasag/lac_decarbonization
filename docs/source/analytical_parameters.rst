@@ -1,13 +1,22 @@
-=====================
+========================
+Configuration Parameters
+========================
+
 Analytical Parameters
 =====================
 
-The **MODELNAMEHERE** is an Integrated Assessment Model (IAM) used to facilitate exploratory analyses. It is based on simple mathematical equations, leveraging an ability to explore a wide range of uncertainty to understand how different policy transformations affect future emissions, costs, and co-benefits.
+Each run is based on a set of analytical parameters. These parameters are defined in the ``sisepuede.config`` configuration file.
 
-Fundamentally, the **MODELNAMEHERE** modeling system is follows a conceptual Directed Acyclic Graph (DAG) (ADD REFERENCES).
-
-Each run is based on a set of analytical parameters. These parameters are governed in a configuration file. The analytical parameters differ from model input variables in some key ways...
-
-.. csv-table:: Analytical Parameters delineated in **CONFIGNAME.config**.
+.. csv-table:: Analytical Parameters delineated in **sisepuede.config**.
    :file: ./csvs/analytical_parameters.csv
+   :header-rows: 1
+
+
+Experimental Parameters
+=======================
+
+SISEPUEDE experiments are governed by additional experimental parameters. These parameters are governed in the ``sisepuede.config`` configuration file.
+
+.. csv-table:: Experimental Parameters delineated in **sisepuede.config**.
+   :file: ./csvs/experimental_parameters.csv
    :header-rows: 1

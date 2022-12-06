@@ -2,8 +2,11 @@
 SISEPUEDE - Model Concept
 =========================
 
+Integrated Modeling Framework (IMF)
 
-(DESCRIPTION OF SISEPUEDE)
+.. image:: img/diagram_integrated.jpg
 
 
-(INTEGRATION DIAGRAMS)
+
+SISEPUEDE Directed Acyclic Graph (DAG)
+======================================

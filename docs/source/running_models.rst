@@ -1,6 +1,6 @@
-=====================
-Running MODELNAMEHERE
-=====================
+=================
+Running SISEPUEDE
+=================
 
 Info on the structure of the model, components, etc.
 

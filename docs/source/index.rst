@@ -30,7 +30,16 @@ These two documents are often abbreviated as **V##, C## IPCC GNGHGI** in attribu
 Metavariables and Constructing Input Parameters
 -----------------------------------------------
 
-This document makes use of the ``$VARNAME$`` notation to denote metavariables as components of variable schema. These variable schema are used to store data in the ``model_input_variables.csv`` file.
+The SISEPUEDE integrated modeling framework makes use of a generalizable variable schematic to define input variables for models. There are two components to this naming system:
+
+#. **Model Variables** These are conceptual variables--for example, `Crop Yield Factor`--that are used to group
+
+#. **Input Variables** These are direct inputs to the SISEPUEDE models, entered as fields in a data frame. For example, the input variables associated with `Crop Yield Factor` include
+
+-
+
+
+ the ``$VARNAME$`` notation to denote metavariables as components of variable schema. These variable schema are used to store data in the ``model_input_variables.csv`` file.
 
 For example, model input variables used to denote agricultural activity emission factors by crop type and gas in ``model_input_variables.csv`` may have the following structure:
 ``ef_agactivity_$CAT-AGRICULTURE$_$UNIT-MASS$_$EMISSION-GAS$_$UNIT-AREA$``, where
@@ -53,12 +62,12 @@ Contents
 .. https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html
 
 .. toctree::
-   :caption:  Getting Started
+   :caption: Getting Started
    :hidden:
+
    quick_start
    sisepuede_concept
    analytical_parameters
-
 
 .. toctree::
    :caption: Variables, Categories, and Data
@@ -73,7 +82,9 @@ Contents
    socioeconomic
 
 .. toctree::
-   :caption: SISEPUEDE Experiments
+   :caption: Managing Experiments
+   :hidden:
+
    dimensions_of_analysis
    running_models
 

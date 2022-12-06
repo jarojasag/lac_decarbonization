@@ -16,7 +16,7 @@ See `Chapter 7, Section 6.1 of the IPCC Sixth Assessment Report (AR6) <https://w
 
 
 Units - Area
---------------
+------------
 The standard reporting output for area (e.g., energy demand) can be set in the configuration file (see the in the `Analytical Parameters <../analytical_parameters.html>`_ section for more information about configuration parameters). The default unit of area for reporting is ha (hectares).
 
    .. csv-table:: Area units defined in the model and relationships between them.
@@ -54,7 +54,7 @@ The emissions accounting mass can be set in the configuration file (see the in t
 
 
 Units - Volume
-------------
+--------------
 The standard output volume for output volume units can be set in the configuration file (see the in the `Analytical Parameters <../analytical_parameters.html>`_ section for more information about configuration parameters). The default unit of volume for reporting volumes (such as wastewater) is :math:`m^3` (cubic meters).
 
    .. csv-table:: Volume units defined in the model and relationships between them.
