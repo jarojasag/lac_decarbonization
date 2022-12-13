@@ -69,39 +69,6 @@ class SISEPUEDEModels:
 	#	SUPPORT AND INITIALIZATION FUNCTIONS	#
 	##############################################
 
-	# get sector specifications
-	def get_projection_sectors(self,
-		sectors_project: Union[list, str, None] = None,
-		delim: str = "|"
-	) -> list:
-		"""
-			Check and retrieve valid projection subsectors to run in SISEPUEDEModels.project()
-
-			Keyword Arguments
-			------------------
-			- sectors_project: list or string of sectors to run. If None, will run all valid sectors.
-				* NOTE: sectors or sector abbreviations are accepted as valid inputs
-			- delim: delimiter to use in input strings
-		"""
-		# get subsector attribute
-		attr_sec = self.model_attributes.dict_attributes.get("abbreviation_sector")
-		dict_map = attr_sec.field_maps.get(f"{attr_sec.key}_to_sector")
-		valid_sectors_project = [dict_map.get(x) for x in attr_sec.key_values]
-
-		# convert input to list
-		if (sectors_project is None):
-			list_out = valid_sectors_project
-		elif isinstance(sectors_project, str):
-			list_out = sectors_project.split(delim)
-		elif isinstance(sectors_project, list) or isinstance(sectors_project, np.ndarray):
-			list_out = list(sectors_project)
-		# check values
-		list_out = [dict_map.get(x, x) for x in list_out if dict_map.get(x, x) in valid_sectors_project]
-
-		return list_out
-
-
-
 	def _initialize_models(self,
 	) -> None:
 		"""
@@ -275,7 +242,7 @@ class SISEPUEDEModels:
 		"""
 
 		df_return = []
-		models_run = self.get_projection_sectors(models_run)
+		models_run = self.model_attributes.get_sector_list_from_projection_input(models_run)
 
 		##  1. Run AFOLU and collect output
 

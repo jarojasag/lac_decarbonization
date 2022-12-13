@@ -8,7 +8,8 @@ import pandas as pd
 from sisepuede_experimental_manager import *
 from sisepuede_file_structure import *
 from sisepuede_models import *
-from sisepuede_output_database import *
+#from sisepuede_output_database import *
+import sisepuede_output_database as sod
 import support_functions as sf
 import tempfile
 import time
@@ -57,20 +58,25 @@ class SISEPUEDE:
 
 	Optional Arguments
 	------------------
-	Optional arguments are used to pass values to SISEPUEDE outside of the configuaration framework.
-		This can be a desireable approach for iterative modeling or determining a suitable data
-		pipeline.
+	Optional arguments are used to pass values to SISEPUEDE outside of the
+		configuaration framework. This can be a desireable approach for
+		iterative modeling or determining a suitable data pipeline.
 
-	- attribute_design: optional AttributeTable object used to specify the design_id.
-		* Note: If None, will attempt to find a table within the ModelAttributes object with key
-		"dim_design_id". If none is found, will assume a single design where:
-			(a) exogenous uncertainties vary at ranges specified in input templates; and
+	- attribute_design: optional AttributeTable object used to specify the
+		design_id.
+		* Note: If None, will attempt to find a table within the ModelAttributes
+			object with key "dim_design_id". If none is found, will assume a
+			single design where:
+
+			(a) exogenous uncertainties vary at ranges specified in input
+				templates; and
 			(b) lever effects are fixed.
 
 	- dir_ingestion: directory storing SISEPUEDE templates for ingestion
-		* Note: if running outside of demo mode, the directory should contain subdirectories dor each
-			region, with each region including input templates for each of the 5 SISEPUEDE sectors. For
-			example, the directory should have the following tree structure:
+		* Note: if running outside of demo mode, the directory should contain
+			subdirectories dor each region, with each region including input
+			templates for each of the 5 SISEPUEDE sectors. For example, the
+			directory should have the following tree structure:
 
 			* dir_ingestion
 				|_ calibrated
@@ -109,8 +115,8 @@ class SISEPUEDE:
 		* If None, creates a unique ID for the session (used in output file
 			names)
 	- logger: Optional logging.Logger object to use for logging
-	- regions: list of regions to include in the experiment. [NOTE, in v1.0, this shuld be limited to a
-		single region]
+	- regions: list of regions to include in the experiment. [NOTE, in v1.0,
+		this should be limited to a single region]
 	- replace_output_dbs_on_init: default is set to false; if True, will
 		destroy exisiting output tables if an AnalysisID is specified.
 	- regex_template_prepend: string to prepend to output files tagged with the
@@ -146,10 +152,9 @@ class SISEPUEDE:
 		self._initialize_base_database_tables()
 
 
-
-	##############################################
+	##################################
 	#    INITIALIZATION FUNCTIONS    #
-	##############################################
+	##################################
 
 	def _initialize_attribute_design(self,
 		attribute_design: Union[AttributeTable, None] = None,
@@ -360,7 +365,6 @@ class SISEPUEDE:
 		)
 		self.baseline_future = self.experimental_manager.baseline_future
 		self.baseline_strategy = self.experimental_manager.baseline_strategy
-		self.field_region = self.experimental_manager.field_region
 		self.n_trials = self.experimental_manager.n_trials
 		self.random_seed = self.experimental_manager.random_seed
 		self.regions = self.experimental_manager.regions
@@ -441,7 +445,9 @@ class SISEPUEDE:
 			* self.key_design
 			* self.key_future
 			* self.key_primary
+			* self.key_region
 			* self.key_strategy
+			* self.key_time_period
 			* self.keys_index
 
 		NOTE: these keys are initialized separately within
@@ -453,12 +459,15 @@ class SISEPUEDE:
 		self.key_design = self.attribute_design.key
 		self.key_future = self.model_attributes.dim_future_id
 		self.key_primary = self.model_attributes.dim_primary_id
+		self.key_region = self.model_attributes.dim_region
 		self.key_strategy = self.model_attributes.dim_strategy_id
+		self.key_time_period = self.model_attributes.dim_time_period
 
 		self.keys_index = [
 			self.key_design,
 			self.key_future,
 			self.key_primary,
+			self.key_region,
 			self.key_strategy
 		]
 
@@ -541,12 +550,13 @@ class SISEPUEDE:
 		self.database = None
 
 		try:
-			self.database = SISEPUEDEOutputDatabase(
+			self.database = sod.SISEPUEDEOutputDatabase(
 				db_type,
 				{
 					"design": self.key_design,
 					"future": self.key_future,
 					"primary": self.key_primary,
+					"region": self.key_region,
 					"strategy": self.key_strategy,
 					"time_series": None
 				},
@@ -557,11 +567,6 @@ class SISEPUEDE:
 				replace_on_init = False
 			)
 
-			self._log(
-				f"Successfully initialized database with:\n\ttype:\t{db_type}\n\tanalysis id:\t{self.id}\n\tfp_base_output:\t{self.fp_base_output_raw}",
-				type_log = "info"
-			)
-
 		except Exception as e:
 			msg = f"Error initializing SISEPUEDEOutputDatabase: {e}"
 			self._log(msg, type_log = "error")
@@ -569,6 +574,12 @@ class SISEPUEDE:
 
 		if self.database is None:
 			return None
+
+		# log if successful
+		self._log(
+			f"Successfully initialized database with:\n\ttype:\t{db_type}\n\tanalysis id:\t{self.id}\n\tfp_base_output:\t{self.fp_base_output_raw}",
+			type_log = "info"
+		)
 
 
 		##  COMPLETE SOME ADDITIONAL INITIALIZATIONS
@@ -803,7 +814,7 @@ class SISEPUEDE:
 				df_lhs_l = sf.add_data_frame_fields_from_dict(
 					df_lhs_l,
 					{
-						self.field_region: region_out
+						self.key_region: region_out
 					}
 				)
 				df_l.append(df_lhs_l)
@@ -813,7 +824,7 @@ class SISEPUEDE:
 				df_lhs_x = sf.add_data_frame_fields_from_dict(
 					df_lhs_x,
 					{
-						self.field_region: region_out
+						self.key_region: region_out
 					}
 				)
 				df_x.append(df_lhs_x)
@@ -821,14 +832,14 @@ class SISEPUEDE:
 		df_l = pd.concat(df_l, axis = 0).reset_index(drop = True) if (len(df_l) > 0) else None
 		if (df_l is not None):
 			df_l.columns = [str(x) for x in df_l.columns]
-			fields_ord_l = [self.field_region, lhsd.field_lhs_key]
+			fields_ord_l = [self.key_region, lhsd.field_lhs_key]
 			fields_ord_l += sf.sort_integer_strings([x for x in df_l.columns if x not in fields_ord_l])
 			df_l = df_l[fields_ord_l]
 
 		df_x = pd.concat(df_x, axis = 0).reset_index(drop = True) if (len(df_x) > 0) else None
 		if df_x is not None:
 			df_x.columns = [str(x) for x in df_x.columns]
-			fields_ord_x = [self.field_region, lhsd.field_lhs_key]
+			fields_ord_x = [self.key_region, lhsd.field_lhs_key]
 			fields_ord_x += sf.sort_integer_strings([x for x in df_x.columns if x not in fields_ord_x])
 			df_x = df_x[fields_ord_x]
 
@@ -958,7 +969,7 @@ class SISEPUEDE:
 			sf.add_data_frame_fields_from_dict(
 				df_input,
 				{
-					self.field_region: region_out,
+					self.key_region: region_out,
 					self.key_primary: primary_key
 				},
 				prepend_q = True
@@ -1009,8 +1020,8 @@ class SISEPUEDE:
 
 		# initializations
 		df_out = []
-		primary_keys_run = [None for x in primary_keys]
-		iterate = 0
+		dict_primary_keys_run = dict((x, [None for x in primary_keys]) for x in self.regions)
+		iterate_outer = 0
 
 		# available indices and resolution
 		idt = self.database.db.dict_iterative_database_tables.get(
@@ -1021,6 +1032,8 @@ class SISEPUEDE:
 		set_available_ids = idt.available_indices
 
 		for region in self.regions:
+
+			iterate_inner = 0
 
 			# retrieve region specific future trajectories and lhs design
 			future_trajectories_cur = self.experimental_manager.dict_future_trajectories.get(region)
@@ -1061,7 +1074,6 @@ class SISEPUEDE:
 					lhs_l = df_lhs_l[df_lhs_l[self.key_future] == future].iloc[0] if ((df_lhs_l is not None) and not base_future_q) else None
 					lhs_x = df_lhs_x[df_lhs_x[self.key_future] == future].iloc[0] if ((df_lhs_x is not None) and not base_future_q) else None
 
-
 					# generate the futures and get available strategies
 					df_input = future_trajectories_cur.generate_future_from_lhs_vector(
 						lhs_x,
@@ -1072,7 +1084,6 @@ class SISEPUEDE:
 					all_strategies = sorted(list(
 						set(df_input[self.key_strategy])
 					))
-
 
 
 					for strategy in all_strategies:
@@ -1100,6 +1111,7 @@ class SISEPUEDE:
 							)
 
 							success = False
+
 							# try to run the model
 							try:
 								t0 = time.time()
@@ -1107,7 +1119,7 @@ class SISEPUEDE:
 								df_output = sf.add_data_frame_fields_from_dict(
 									df_output,
 									{
-										self.field_region: region_out,
+										self.key_region: region_out,
 										self.key_primary: id_primary
 									},
 									prepend_q = True
@@ -1122,14 +1134,23 @@ class SISEPUEDE:
 
 								self._log(f"Model run for {self.key_primary} = {id_primary} failed with the following error: {e}", type_log = "error")
 
-							# if the model run is successful and the chunk size is appropriate, write to output
+
+							# if the model run is successful and the chunk size is appropriate, update primary keys that ran successfully and write to output
 							if success:
 								if (len(df_out)%chunk_size == 0) and (len(df_out) > 0):
-									df_out = self._write_chunk_to_output(df_out, index_conflict_resolution = index_conflict_resolution)
-								# update primary keys that ran successfully
-								primary_keys_run[iterate] = id_primary
-								iterate += 1
+									df_out = self._write_chunk_to_output(
+										df_out,
+										index_conflict_resolution = index_conflict_resolution
+									)
+
+								dict_primary_keys_run[region][iterate_inner] = id_primary
+
+								iterate_inner += 1 # number of iterations for this region
+								iterate_outer += 1 # number of total iterations
+
+			# reduce length after running
+			dict_primary_keys_run[region] = dict_primary_keys_run[region][0:iterate_inner]
 
 		self._write_chunk_to_output(df_out, index_conflict_resolution = index_conflict_resolution) if (len(df_out) > 0) else None
 
-		return primary_keys_run[0:iterate]
+		return dict_primary_keys_run

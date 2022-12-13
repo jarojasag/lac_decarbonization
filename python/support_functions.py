@@ -368,25 +368,31 @@ def df_get_missing_fields_from_source_df(
 
 
 
-##  allows for multiplication of np.arrays that might be of the same shape or row-wise similar
+##
 def do_array_mult(
     arr_stable: np.ndarray,
     arr_variable: np.ndarray,
     allow_outer: bool = True
 ) -> np.ndarray:
     """
-        multiply arrays while allowing for different shapes of arr_variable
+    Multiply arrays while allowing for different shapes of arr_variable. Allows
+        for multiplication of np.arrays that might be of the same shape or
+        row-wise similar
 
-        Function Arguments
-        ------------------
-        - arr_stable: array with base shape
-        - arr_variable:
-            * if arr_stable is 2d, arr_variable can have shapes arr_stable.shape or (arr_stable[1], )
-            * if arr_stable is 1d, arr_variable can have shapes arr_stable.shape OR if allow_outer == True, returns np.outer(arr_stable, arr_variable)
+    Function Arguments
+    ------------------
+    - arr_stable: array with base shape
+    - arr_variable:
+        * if arr_stable is 2d, arr_variable can have shapes
+            arr_stable.shape or (arr_stable[1], )
+        * if arr_stable is 1d, arr_variable can have shapes arr_stable.shape
+            OR if allow_outer == True, returns
+            `np.outer(arr_stable, arr_variable)`
 
-        Keyword Arguments
-        -----------------
-        - allow_outer: if arrays are mismatched in shape, allow an outer product (returns np.outer(arr_stable, arr_variable))
+    Keyword Arguments
+    -----------------
+    - allow_outer: if arrays are mismatched in shape, allow an outer product
+        (returns np.outer(arr_stable, arr_variable))
     """
     if (arr_variable.shape == arr_stable.shape):
         return arr_variable*arr_stable
@@ -399,6 +405,73 @@ def do_array_mult(
         return np.outer(arr_stable, arr_variable)
     else:
         raise ValueError(f"Error in do_array_mult: Incompatable shape {arr_variable.shape} in arr_variable. The stable array has shape {arr_stable.shape}.")
+
+
+
+def explode_merge(
+    df_x: pd.DataFrame,
+    df_y: pd.DataFrame,
+    field_dummy: str = "DUMMY_MERGE",
+    sort_ordering: Union[List, None] = None,
+    suffix_x: str = "_x",
+    suffix_y: str = "_y"
+) -> pd.DataFrame:
+    """
+    Explode two dataframes (direct product of data frame rows)
+
+    Function Arguments
+    ------------------
+    - df_x: first data frame
+    - df_y: second data frame
+
+    Keyword Arguments
+    -----------------
+    - field_dummy: dummy field to use for temporary merge
+    - sort_ordering: optional list of hierarchical fields to sort by. If None,
+        no sorting is performed.
+    """
+
+    val_merge = 1
+
+    ##  CHECK DATA FRAME FIELDS
+
+    dict_rnm_x = {}
+    dict_rnm_y = {}
+
+    # check for dummy fields
+    if field_dummy in df_x.columns:
+        dict_rnm_x.update({field_dummy: f"{field_dummy}{suffix_x}"})
+    if field_dummy in df_y.columns:
+        dict_rnm_y.update({field_dummy: f"{field_dummy}{suffix_y}"})
+
+    # check for shared fields
+    fields_shared = list(set(df_x.columns) & set(df_y.columns))
+    if len(fields_shared) > 0:
+        dict_rnm_x = dict([(x, f"{x}{append_x}") for x in fields_shared])
+        dict_rnm_y = dict([(x, f"{x}{append_y}") for x in fields_shared])
+
+
+    ##  DO JOIN
+
+    # copy and rename data frames to merge
+    df_a = df_x.copy().rename(dict_rnm_x)
+    df_a[field_dummy] = val_merge
+    df_b = df_y.copy().rename(dict_rnm_y)
+    df_b[field_dummy] = val_merge
+
+    df_out = pd.merge(
+        df_a,
+        df_b,
+        on = [field_dummy]
+    ).drop([field_dummy], axis = 1)
+
+    if isinstance(sort_ordering, list):
+        sort_vals = [x for x in sort_ordering if x in df_out.columns]
+        df_out.sort_values(by = sort_vals, inplace = True) if (len(sort_vals) > 0) else None
+
+    df_out.reset_index(drop = True, inplace = True)
+
+    return df_out
 
 
 
@@ -576,6 +649,71 @@ def get_vector_growth_rates_from_first_element(arr: np.ndarray) -> np.ndarray:
 
 
 
+def filter_df_on_reference_df_rows(
+    df_filter: pd.DataFrame,
+    df_reference: pd.DataFrame,
+    fields_index: List[str],
+    fields_compare: List[str],
+    filter_method: str = "any"
+) -> pd.DataFrame:
+    """
+    Compare two data frames and drop rows from df_filter that are contained in
+        df_reference. Merges on fields_index and filters based on
+        fields_compare. In each row, values associated with fields_index in
+        df_filter are compared to rows in df_reference with the same index rows.
+        If the values are different, then the row is kep in df_filter. If the
+        same, it is dropped.
+
+    Function Arguments
+    ------------------
+    - df_filter: DataFrame to filter based on rows from df_reference
+    - df_reference: DataFrame to use as a reference.
+    - fields_index: fields in both to use for indexing
+    - fields_compare: fields to use for comparison
+
+    Keyword Arguments
+    -----------------
+    - filter_method: "all" or "any"
+        * Set to "any" to keep rows where *any* field contained in
+            fields_compare is different.
+        * Set to "any" to keep rows where *all* fields contained in
+            fields_compare are different.
+    """
+    # check field specifications
+    set_fields_both = set(df_filter.columns) & set(df_reference.columns)
+    fields_index = [x for x in fields_index if x in set_fields_both]
+    fields_compare = [x for x in fields_compare if x in set_fields_both]
+
+    # special return cases
+    if min(len(fields_index), len(fields_compare)) == 0:
+        return None
+    if not isinstance(df_filter, pd.DataFrame):
+        return None
+    if not isinstance(df_reference, pd.DataFrame):
+        return df_filter
+
+
+    ##  MERGE AND RENAME
+
+    dict_rnm = dict([(x, f"{x}_compare") for x in fields_compare])
+    dict_rnm_rev = reverse_dict(dict_rnm)
+    fields_compare_ref = [dict_rnm.get(x) for x in fields_compare]
+
+    df_compare = pd.merge(
+        df_filter,
+        df_reference[fields_index + fields_compare].rename(columns = dict_rnm),
+        on = fields_index
+    )
+
+    df_check = (df_compare[fields_compare] != df_compare[fields_compare_ref].rename(columns = dict_rnm_rev))
+    series_keep = df_check.any(axis = 1) if (filter_method == "any") else df_check.all(axis = 1)
+
+    df_compare = df_compare[series_keep][df_filter.columns].reset_index(drop = True)
+
+    return df_compare
+
+
+
 def list_dict_keys_with_same_values(self,
     dict_in: dict,
     delim: str = "; "
@@ -607,17 +745,20 @@ def match_df_to_target_df(
     fillna_value: Union[int, float, str] = 0.0
 ) -> pd.DataFrame:
     """
-        Merge df_source to df_target, overwriting data fields in df_target with those in df_source
+        Merge df_source to df_target, overwriting data fields in df_target with
+            those in df_source
 
         Function Arguments
         ------------------
-        - df_target: target data frame, which will have values replaced with values in df_source
+        - df_target: target data frame, which will have values replaced with
+            values in df_source
         - df_source: source data to use to replace
         - fields_index: list of index fields
 
         Keyword Arguments
         -----------------
-        - fields_to_replace: fields to replace in merge. If None, defaults to all available.
+        - fields_to_replace: fields to replace in merge. If None, defaults to
+            all available.
         - fillna_value: value to use to fill nas in data frame
     """
 
@@ -706,7 +847,8 @@ def _optional_log(
 
     Function Arguments
     ------------------
-    - logger: logging.Logger object used to log events. If None, no action is taken
+    - logger: logging.Logger object used to log events. If None, no action is
+        taken
     - msg: msg to pass in log
 
     Keyword Arguments
@@ -721,7 +863,8 @@ def _optional_log(
     - warn_if_none: pass a message through warnings.warn() if logger is None
     - **kwargs: passed as logger.METHOD(msg, **kwargs)
 
-    See https://docs.python.org/3/library/logging.html for more information on Logger methods and calls
+    See https://docs.python.org/3/library/logging.html for more information on
+        Logger methods and calls
     """
     if isinstance(logger, logging.Logger):
 
@@ -765,7 +908,9 @@ def orient_df_by_reference_vector(
     drop_field_compare: bool = False
 ) -> pd.DataFrame:
     """
-        Ensure that a data frame's field is ordered properly (in the same ordering as df_in[field_compare]). Returns adata frame with the correct ordering.
+        Ensure that a data frame's field is ordered properly (in the same
+            ordering as df_in[field_compare]). Returns adata frame with the
+            correct ordering.
 
         Function Arguments
         ------------------
@@ -775,12 +920,14 @@ def orient_df_by_reference_vector(
 
         Keyword Arguments
         -----------------
-        - field_merge_tmp: temporary field to use for sorting. Should not be in df_in.columns
+        - field_merge_tmp: temporary field to use for sorting. Should not be in
+            df_in.columns
         - drop_field_compare: drop the comparison field after orienting
 
         Note
         ----
-        * Should only be used if field_compare is the only field in df_in to be sorted on. Additional sorting is not supported.
+        * Should only be used if field_compare is the only field in df_in to be
+            sorted on. Additional sorting is not supported.
     """
 
     # check reference
@@ -798,7 +945,45 @@ def orient_df_by_reference_vector(
 
 
 
-##
+def pivot_df_clean(
+    df_pivot: pd.DataFrame,
+    fields_column: List[str],
+    fields_value: List[str]
+) -> pd.DataFrame:
+    """
+    Perform a pivot that resets indices and names columns. Assumes all
+        fields not pass as column or value are indices.
+
+    Function Arguments
+    ------------------
+    - df_pivot: DataFrame to pivot
+    - fields_column: fields to pass to pd.pivot() as `columns`
+    - fields_value: fields to pass to pd.pivot() as `value`
+    """
+    # check fields
+    fields_column = [x for x in fields_column if x in df_pivot.columns]
+    fields_value = [x for x in fields_value if x in df_pivot.columns]
+    fields_ind = [x for x in df_pivot.columns if x not in fields_column + fields_value]
+    # return if empty
+    if min([len(x) for x in [fields_column, fields_ind, fields_value]]) == 0:
+        return None
+
+    # pivot and clean indices
+    df_piv = pd.pivot(
+        df_pivot,
+        fields_ind,
+        fields_column,
+        fields_value
+    ).reset_index()
+
+    df_piv.columns = [
+        x[0] if (x[1] == "") else x[1] for x in df_piv.columns.to_flat_index()
+    ]
+
+    return df_piv
+
+
+
 def print_setdiff(
     set_required: set,
     set_check: set
@@ -819,18 +1004,26 @@ def project_growth_scalar_from_elasticity(
     elasticity_type = "standard"
 ):
     """
-        Project a vector of growth scalars from a vector of growth rates and elasticities
+        Project a vector of growth scalars from a vector of growth rates and
+            elasticities
 
         Function Arguments
         ------------------
-        - vec_rates: a vector of growth rates, where the ith entry is the growth rate of the driver from i to i + 1. If rates_are_factors = False (default), rates are proportions (e.g., 0.02). If rates_are_factors = True, then rates are scalars (e.g., 1.02)
+        - vec_rates: a vector of growth rates, where the ith entry is the growth
+            rate of the driver from i to i + 1. If rates_are_factors = False
+            (default), rates are proportions (e.g., 0.02). If
+            rates_are_factors = True, then rates are scalars (e.g., 1.02)
         - vec_elasticity: a vector of elasticities.
 
         Keyword Arguments
         -----------------
-        - rates_are_factors: Default = False. If True, rates are treated as growth factors (e.g., a 2% growth rate is entered as 1.02). If False, rates are growth rates (e.g., 2% growth rate is 0.02).
-        - elasticity_type: Default = "standard"; acceptable options are "standard" or "log"
-            * If standard, the growth in the demand is 1 + r*e, where r = is the growth rate of the driver and e is the elasiticity.
+        - rates_are_factors: Default = False. If True, rates are treated as
+            growth factors (e.g., a 2% growth rate is entered as 1.02). If
+            False, rates are growth rates (e.g., 2% growth rate is 0.02).
+        - elasticity_type: Default = "standard"; acceptable options are
+            "standard" or "log"
+            * If standard, the growth in the demand is 1 + r*e, where r = is
+                the growth rate of the driver and e is the elasiticity.
             * If log, the growth in the demand is (1 + r)^e
     """
     # CHEKCS
@@ -889,11 +1082,13 @@ def replace_numerical_column_from_merge(
     field_temporary: str = "NEWFIELDTMP"
 ):
     """
-    Replace values in field_to_replace in df_source associated with values in df_replacement and shared index fields
+    Replace values in field_to_replace in df_source associated with values in
+        df_replacement and shared index fields
 
     Function Arguments
     ------------------
-    - df_target: target data frame, which will have values replaced with values in df_source
+    - df_target: target data frame, which will have values replaced with values
+        in df_source
     - df_source: source data to use to replace
     - field_to_replace: field to replace in merge
 
@@ -903,7 +1098,8 @@ def replace_numerical_column_from_merge(
 
     Notes
     -----
-    * all fields in df_source must be contained in df_target. Only works for numerical methods at the moment.
+    * all fields in df_source must be contained in df_target. Only works for
+        numerical methods at the moment.
     """
     check_fields(df_target, list(df_source.columns))
     check_fields(df_source, [field_to_replace])
@@ -1037,11 +1233,15 @@ def vec_bounds(
         Function Arguments
         ------------------
         - vec: list or np.ndarray of values to bound
-        - bounds: tuple (single bound) or list vec specifying element-wise bounds (NOTE: only works if vec.shape = (len(vec), ) == (len(bounds), ))
+        - bounds: tuple (single bound) or list vec specifying element-wise
+            bounds. NOTE: only works if
+
+            vec.shape = (len(vec), ) == (len(bounds), )
 
         Keyword Arguments
         -----------------
-        - cycle_vector_bounds_q: cycle bounds if there is a mismatch and the bounds are entered as a vector
+        - cycle_vector_bounds_q: cycle bounds if there is a mismatch and the
+            bounds are entered as a vector
     """
     # initialize bools -- using paried vector + is there a vector of bounds?
     paired_vector_check = False # later depends on use_bounding_vec

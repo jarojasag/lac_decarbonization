@@ -386,7 +386,8 @@ class Configuration:
 
 class ModelAttributes:
     """
-    Create a centralized object for managing inter-sectoral objects, dimensions, attributes, and variables.
+    Create a centralized object for managing inter-sectoral objects, dimensions,
+        attributes, and variables.
 
     INFO HERE
     """
@@ -399,141 +400,13 @@ class ModelAttributes:
         #    INITIALIZE SHARED CLASS PROPERTIES    #
         ############################################
 
-        # initialize dimensions of analysis - later, check for presence
-        self.dim_design_id = "design_id"
-        self.dim_future_id = "future_id"
-        self.dim_mode = "mode"
-        self.dim_region = "region"
-        self.dim_strategy_id = "strategy_id"
-        self.dim_time_period = "time_period"
-        self.dim_time_series_id = "time_series_id"
-        self.dim_primary_id = "primary_id"
-        # ordered by sort hierarchy
-        self.sort_ordered_dimensions_of_analysis = [
-            self.dim_primary_id,
-            self.dim_design_id,
-            self.dim_region,
-            self.dim_time_series_id,
-            self.dim_strategy_id,
-            self.dim_future_id,
-            self.dim_time_period
-        ]
-
-        # some common shared fields
-        self.field_dim_year = "year"
-        self.field_emissions_total_flag = "emissions_total_by_gas_component"
-
-        # set some basic properties
-        self.attribute_file_extension = ".csv"
-        self.delim_multicats = "|"
-        self.matchstring_landuse_to_forests = "forests_"
-        self.substr_analytical_parameters = "analytical_parameters"
-        self.substr_experimental_parameters = "experimental_parameters"
-        self.substr_dimensions = "attribute_dim_"
-        self.substr_categories = "attribute_"
-        self.substr_varreqs = "table_varreqs_by_"
-        self.substr_varreqs_allcats = f"{self.substr_varreqs}category_"
-        self.substr_varreqs_partialcats = f"{self.substr_varreqs}partial_category_"
-
-        # set some subsector names
-        self.subsec_name_agrc = "Agriculture"
-        self.subsec_name_frst = "Forest"
-        self.subsec_name_lndu = "Land Use"
-        self.subsec_name_lsmm = "Livestock Manure Management"
-        self.subsec_name_lvst = "Livestock"
-        self.subsec_name_soil = "Soil Management"
-        self.subsec_name_wali = "Liquid Waste"
-        self.subsec_name_waso = "Solid Waste"
-        self.subsec_name_trww = "Wastewater Treatment"
-        self.subsec_name_ccsq = "Carbon Capture and Sequestration"
-        self.subsec_name_enfu = "Energy Fuels"
-        self.subsec_name_enst = "Energy Storage"
-        self.subsec_name_entc = "Energy Technology"
-        self.subsec_name_fgtv = "Fugitive Emissions"
-        self.subsec_name_inen = "Industrial Energy"
-        self.subsec_name_scoe = "Stationary Combustion and Other Energy"
-        self.subsec_name_trns = "Transportation"
-        self.subsec_name_trde = "Transportation Demand"
-        self.subsec_name_ippu = "IPPU"
-        self.subsec_name_econ = "Economy"
-        self.subsec_name_gnrl = "General"
-
-        # nemomod shared tables - dimensions
-        self.table_nemomod_emission = "EMISSION"
-        self.table_nemomod_fuel = "FUEL"
-        self.table_nemomod_mode_of_operation = "MODE_OF_OPERATION"
-        self.table_nemomod_node = "NODE"
-        self.table_nemomod_region = "REGION"
-        self.table_nemomod_storage = "STORAGE"
-        self.table_nemomod_technology = "TECHNOLOGY"
-        self.table_nemomod_time_slice = "TIMESLICE"
-        self.table_nemomod_ts_group_1 = "TSGROUP1"
-        self.table_nemomod_ts_group_2 = "TSGROUP2"
-        self.table_nemomod_year = "YEAR"
-        # nemomod shared tables - parameters
-        self.table_nemomod_annual_emission_limit = "AnnualEmissionLimit"
-        self.table_nemomod_capacity_factor = "CapacityFactor"
-        self.table_nemomod_capacity_to_activity_unit = "CapacityToActivityUnit"
-        self.table_nemomod_capital_cost = "CapitalCost"
-        self.table_nemomod_capital_cost_storage = "CapitalCostStorage"
-        self.table_nemomod_default_params = "DefaultParams"
-        self.table_nemomod_discount_rate = "DiscountRate"
-        self.table_nemomod_emissions_activity_ratio = "EmissionActivityRatio"
-        self.table_nemomod_fixed_cost = "FixedCost"
-        self.table_nemomod_input_activity_ratio = "InputActivityRatio"
-        self.table_nemomod_min_storage_charge = "MinStorageCharge"
-        self.table_nemomod_model_period_emission_limit = "ModelPeriodEmissionLimit"
-        self.table_nemomod_model_period_exogenous_emission = "ModelPeriodExogenousEmission"
-        self.table_nemomod_operational_life = "OperationalLife"
-        self.table_nemomod_operational_life_storage = "OperationalLifeStorage"
-        self.table_nemomod_output_activity_ratio = "OutputActivityRatio"
-        self.table_nemomod_residual_capacity = "ResidualCapacity"
-        self.table_nemomod_residual_storage_capacity = "ResidualStorageCapacity"
-        self.table_nemomod_re_tag_technology = "RETagTechnology"
-        self.table_nemomod_reserve_margin = "ReserveMargin"
-        self.table_nemomod_reserve_margin_tag_fuel = "ReserveMarginTagFuel"
-        self.table_nemomod_reserve_margin_tag_technology = "ReserveMarginTagTechnology"
-        self.table_nemomod_specified_demand_profile = "SpecifiedDemandProfile"
-        self.table_nemomod_specified_annual_demand = "SpecifiedAnnualDemand"
-        self.table_nemomod_storage_level_start = "StorageLevelStart"
-        self.table_nemomod_technology_from_storage = "TechnologyFromStorage"
-        self.table_nemomod_technology_to_storage = "TechnologyToStorage"
-        self.table_nemomod_time_slice_group_assignment = "LTsGroup"
-        self.table_nemomod_total_annual_max_capacity = "TotalAnnualMaxCapacity"
-        self.table_nemomod_total_annual_max_capacity_investment = "TotalAnnualMaxCapacityInvestment"
-        self.table_nemomod_total_annual_max_capacity_storage = "TotalAnnualMaxCapacityStorage"
-        self.table_nemomod_total_annual_max_capacity_investment_storage = "TotalAnnualMaxCapacityInvestmentStorage"
-        self.table_nemomod_total_annual_min_capacity = "TotalAnnualMinCapacity"
-        self.table_nemomod_total_annual_min_capacity_investment = "TotalAnnualMinCapacityInvestment"
-        self.table_nemomod_total_annual_min_capacity_storage = "TotalAnnualMinCapacityStorage"
-        self.table_nemomod_total_annual_min_capacity_investment_storage = "TotalAnnualMinCapacityInvestmentStorage"
-        self.table_nemomod_total_technology_annual_activity_lower_limit = "TotalTechnologyAnnualActivityLowerLimit"
-        self.table_nemomod_total_technology_annual_activity_upper_limit = "TotalTechnologyAnnualActivityUpperLimit"
-        self.table_nemomod_specified_annual_demand = "SpecifiedAnnualDemand"
-        self.table_nemomod_variable_cost = "VariableCost"
-        self.table_nemomod_year_split = "YearSplit"
-        # nemomod shared tables - output variables
-        self.table_nemomod_annual_emissions_by_technology = "vannualtechnologyemission"
-        self.table_nemomod_capital_investment = "vcapitalinvestment"
-        self.table_nemomod_capital_investment_discounted = "vdiscountedcapitalinvestment"
-        self.table_nemomod_capital_investment_storage = "vcapitalinvestmentstorage"
-        self.table_nemomod_capital_investment_storage_discounted = "vdiscountedcapitalinvestmentstorage"
-        self.table_nemomod_new_capacity = "vnewcapacity"
-        self.table_nemomod_operating_cost = "voperatingcost"
-        self.table_nemomod_operating_cost_discounted = "vdiscountedoperatingcost"
-        self.table_nemomod_production_by_technology = "vproductionbytechnologyannual"
-        self.table_nemomod_total_annual_capacity = "vtotalcapacityannual"
-        self.table_nemomod_use_by_technology = "vusebytechnologyannual"
-
-        # temporary - but read from table at some point
-        self.varchar_str_emission_gas = "$EMISSION-GAS$"
-        self.varchar_str_unit_area = "$UNIT-AREA$"
-        self.varchar_str_unit_energy = "$UNIT-ENERGY$"
-        self.varchar_str_unit_length = "$UNIT-LENGTH$"
-        self.varchar_str_unit_mass = "$UNIT-MASS$"
-        self.varchar_str_unit_monetary = "$UNIT-MONETARY$"
-        self.varchar_str_unit_power = "$UNIT-POWER$"
-        self.varchar_str_unit_volume = "$UNIT-VOLUME$"
+        # initialize "basic" properties--properties that are explicitly set in each initialization function
+        self._initialize_basic_dimensions_of_analysis()
+        self._initialize_basic_other_properties()
+        self._initialize_basic_subsector_names()
+        self._initialize_basic_table_names_nemomod()
+        self._initialize_basic_template_substrings()
+        self._initialize_basic_varchar_components()
 
         # initialize some properties and elements (ordered)
         self._initialize_attribute_tables(dir_attributes)
@@ -725,6 +598,309 @@ class ModelAttributes:
         self.dict_varreqs = dict_varreqs
         self.table_name_attr_sector = table_name_attr_sector
         self.table_name_attr_subsector = table_name_attr_subsector
+
+
+
+    def _initialize_basic_dimensions_of_analysis(self,
+    ) -> None:
+        """
+        Initialize dimensions of anlaysis. Sets the following properties:
+
+            * self.dim_design_id
+            * self.dim_future_id
+            * self.dim_mode
+            * self.dim_region
+            * self.dim_strategy_id
+            * self.dim_time_period
+            * self.dim_time_series_id
+            * self.dim_primary_id
+            * self.field_dim_year
+            * self.sort_ordered_dimensions_of_analysis
+
+        """
+        # initialize dimensions of analysis - later, check for presence
+        self.dim_design_id = "design_id"
+        self.dim_future_id = "future_id"
+        self.dim_mode = "mode"
+        self.dim_region = "region"
+        self.dim_strategy_id = "strategy_id"
+        self.dim_time_period = "time_period"
+        self.dim_time_series_id = "time_series_id"
+        self.dim_primary_id = "primary_id"
+        # ordered by sort hierarchy
+        self.sort_ordered_dimensions_of_analysis = [
+            self.dim_primary_id,
+            self.dim_design_id,
+            self.dim_region,
+            self.dim_time_series_id,
+            self.dim_strategy_id,
+            self.dim_future_id,
+            self.dim_time_period
+        ]
+
+        # some common shared fields
+        self.field_dim_year = "year"
+
+
+
+    def _initialize_basic_other_properties(self,
+    ) -> None:
+        """
+        Set some additional properties that are not set in other basic
+            initialization functions. Sets the following properties:
+
+            * self.attribute_file_extension
+            * self.delim_multicats
+            * self.field_emissions_total_flag
+            * self.matchstring_landuse_to_forests
+        """
+        self.attribute_file_extension = ".csv"
+        self.delim_multicats = "|"
+        self.field_emissions_total_flag = "emissions_total_by_gas_component"
+        self.matchstring_landuse_to_forests = "forests_"
+
+
+
+    def _initialize_basic_table_names_nemomod(self,
+    ) -> None:
+        """
+        Initialize table names used in NemoMod. Sets the following properties:
+
+            * self.table_nemomod_annual_emission_limit
+            * self.table_nemomod_annual_emissions_by_technology
+            * self.table_nemomod_capacity_factor
+            * self.table_nemomod_capacity_to_activity_unit
+            * self.table_nemomod_capital_cost
+            * self.table_nemomod_capital_cost_storage
+            * self.table_nemomod_capital_investment
+            * self.table_nemomod_capital_investment_discounted
+            * self.table_nemomod_capital_investment_storage
+            * self.table_nemomod_capital_investment_storage_discounted
+            * self.table_nemomod_default_params
+            * self.table_nemomod_discount_rate
+            * self.table_nemomod_emission
+            * self.table_nemomod_emissions_activity_ratio
+            * self.table_nemomod_fixed_cost
+            * self.table_nemomod_fuel
+            * self.table_nemomod_input_activity_ratio
+            * self.table_nemomod_min_storage_charge
+            * self.table_nemomod_mode_of_operation
+            * self.table_nemomod_model_period_emission_limit
+            * self.table_nemomod_model_period_exogenous_emission
+            * self.table_nemomod_new_capacity
+            * self.table_nemomod_node
+            * self.table_nemomod_operating_cost
+            * self.table_nemomod_operating_cost_discounted
+            * self.table_nemomod_operational_life
+            * self.table_nemomod_operational_life_storage
+            * self.table_nemomod_output_activity_ratio
+            * self.table_nemomod_production_by_technology
+            * self.table_nemomod_re_tag_technology
+            * self.table_nemomod_region
+            * self.table_nemomod_reserve_margin
+            * self.table_nemomod_reserve_margin_tag_fuel
+            * self.table_nemomod_reserve_margin_tag_technology
+            * self.table_nemomod_residual_capacity
+            * self.table_nemomod_residual_storage_capacity
+            * self.table_nemomod_specified_annual_demand
+            * self.table_nemomod_specified_annual_demand
+            * self.table_nemomod_specified_demand_profile
+            * self.table_nemomod_storage
+            * self.table_nemomod_storage_level_start
+            * self.table_nemomod_technology
+            * self.table_nemomod_technology_from_storage
+            * self.table_nemomod_technology_to_storage
+            * self.table_nemomod_time_slice
+            * self.table_nemomod_time_slice_group_assignment
+            * self.table_nemomod_total_annual_capacity
+            * self.table_nemomod_total_annual_max_capacity
+            * self.table_nemomod_total_annual_max_capacity_investment
+            * self.table_nemomod_total_annual_max_capacity_investment_storage
+            * self.table_nemomod_total_annual_max_capacity_storage
+            * self.table_nemomod_total_annual_min_capacity
+            * self.table_nemomod_total_annual_min_capacity_investment
+            * self.table_nemomod_total_annual_min_capacity_investment_storage
+            * self.table_nemomod_total_annual_min_capacity_storage
+            * self.table_nemomod_total_technology_annual_activity_lower_limit
+            * self.table_nemomod_total_technology_annual_activity_upper_limit
+            * self.table_nemomod_ts_group_1
+            * self.table_nemomod_ts_group_2
+            * self.table_nemomod_use_by_technology
+            * self.table_nemomod_variable_cost
+            * self.table_nemomod_year
+            * self.table_nemomod_year_split
+        """
+        # nemomod shared tables - dimensions
+        self.table_nemomod_emission = "EMISSION"
+        self.table_nemomod_fuel = "FUEL"
+        self.table_nemomod_mode_of_operation = "MODE_OF_OPERATION"
+        self.table_nemomod_node = "NODE"
+        self.table_nemomod_region = "REGION"
+        self.table_nemomod_storage = "STORAGE"
+        self.table_nemomod_technology = "TECHNOLOGY"
+        self.table_nemomod_time_slice = "TIMESLICE"
+        self.table_nemomod_ts_group_1 = "TSGROUP1"
+        self.table_nemomod_ts_group_2 = "TSGROUP2"
+        self.table_nemomod_year = "YEAR"
+        # nemomod shared tables - parameters
+        self.table_nemomod_annual_emission_limit = "AnnualEmissionLimit"
+        self.table_nemomod_capacity_factor = "CapacityFactor"
+        self.table_nemomod_capacity_to_activity_unit = "CapacityToActivityUnit"
+        self.table_nemomod_capital_cost = "CapitalCost"
+        self.table_nemomod_capital_cost_storage = "CapitalCostStorage"
+        self.table_nemomod_default_params = "DefaultParams"
+        self.table_nemomod_discount_rate = "DiscountRate"
+        self.table_nemomod_emissions_activity_ratio = "EmissionActivityRatio"
+        self.table_nemomod_fixed_cost = "FixedCost"
+        self.table_nemomod_input_activity_ratio = "InputActivityRatio"
+        self.table_nemomod_min_storage_charge = "MinStorageCharge"
+        self.table_nemomod_model_period_emission_limit = "ModelPeriodEmissionLimit"
+        self.table_nemomod_model_period_exogenous_emission = "ModelPeriodExogenousEmission"
+        self.table_nemomod_operational_life = "OperationalLife"
+        self.table_nemomod_operational_life_storage = "OperationalLifeStorage"
+        self.table_nemomod_output_activity_ratio = "OutputActivityRatio"
+        self.table_nemomod_residual_capacity = "ResidualCapacity"
+        self.table_nemomod_residual_storage_capacity = "ResidualStorageCapacity"
+        self.table_nemomod_re_tag_technology = "RETagTechnology"
+        self.table_nemomod_reserve_margin = "ReserveMargin"
+        self.table_nemomod_reserve_margin_tag_fuel = "ReserveMarginTagFuel"
+        self.table_nemomod_reserve_margin_tag_technology = "ReserveMarginTagTechnology"
+        self.table_nemomod_specified_demand_profile = "SpecifiedDemandProfile"
+        self.table_nemomod_specified_annual_demand = "SpecifiedAnnualDemand"
+        self.table_nemomod_storage_level_start = "StorageLevelStart"
+        self.table_nemomod_technology_from_storage = "TechnologyFromStorage"
+        self.table_nemomod_technology_to_storage = "TechnologyToStorage"
+        self.table_nemomod_time_slice_group_assignment = "LTsGroup"
+        self.table_nemomod_total_annual_max_capacity = "TotalAnnualMaxCapacity"
+        self.table_nemomod_total_annual_max_capacity_investment = "TotalAnnualMaxCapacityInvestment"
+        self.table_nemomod_total_annual_max_capacity_storage = "TotalAnnualMaxCapacityStorage"
+        self.table_nemomod_total_annual_max_capacity_investment_storage = "TotalAnnualMaxCapacityInvestmentStorage"
+        self.table_nemomod_total_annual_min_capacity = "TotalAnnualMinCapacity"
+        self.table_nemomod_total_annual_min_capacity_investment = "TotalAnnualMinCapacityInvestment"
+        self.table_nemomod_total_annual_min_capacity_storage = "TotalAnnualMinCapacityStorage"
+        self.table_nemomod_total_annual_min_capacity_investment_storage = "TotalAnnualMinCapacityInvestmentStorage"
+        self.table_nemomod_total_technology_annual_activity_lower_limit = "TotalTechnologyAnnualActivityLowerLimit"
+        self.table_nemomod_total_technology_annual_activity_upper_limit = "TotalTechnologyAnnualActivityUpperLimit"
+        self.table_nemomod_specified_annual_demand = "SpecifiedAnnualDemand"
+        self.table_nemomod_variable_cost = "VariableCost"
+        self.table_nemomod_year_split = "YearSplit"
+        # nemomod shared tables - output variables
+        self.table_nemomod_annual_emissions_by_technology = "vannualtechnologyemission"
+        self.table_nemomod_capital_investment = "vcapitalinvestment"
+        self.table_nemomod_capital_investment_discounted = "vdiscountedcapitalinvestment"
+        self.table_nemomod_capital_investment_storage = "vcapitalinvestmentstorage"
+        self.table_nemomod_capital_investment_storage_discounted = "vdiscountedcapitalinvestmentstorage"
+        self.table_nemomod_new_capacity = "vnewcapacity"
+        self.table_nemomod_operating_cost = "voperatingcost"
+        self.table_nemomod_operating_cost_discounted = "vdiscountedoperatingcost"
+        self.table_nemomod_production_by_technology = "vproductionbytechnologyannual"
+        self.table_nemomod_total_annual_capacity = "vtotalcapacityannual"
+        self.table_nemomod_use_by_technology = "vusebytechnologyannual"
+
+
+
+    def _initialize_basic_subsector_names(self,
+    ) -> None:
+        """
+        Set properties associated with subsector names. Sets the following
+            properties:
+
+            * self.subsec_name_agrc
+            * self.subsec_name_ccsq
+            * self.subsec_name_econ
+            * self.subsec_name_enfu
+            * self.subsec_name_enst
+            * self.subsec_name_entc
+            * self.subsec_name_fgtv
+            * self.subsec_name_frst
+            * self.subsec_name_gnrl
+            * self.subsec_name_inen
+            * self.subsec_name_ippu
+            * self.subsec_name_lndu
+            * self.subsec_name_lsmm
+            * self.subsec_name_lvst
+            * self.subsec_name_scoe
+            * self.subsec_name_soil
+            * self.subsec_name_trde
+            * self.subsec_name_trns
+            * self.subsec_name_trww
+            * self.subsec_name_wali
+            * self.subsec_name_waso
+        """
+        # set some subsector names
+        self.subsec_name_agrc = "Agriculture"
+        self.subsec_name_frst = "Forest"
+        self.subsec_name_lndu = "Land Use"
+        self.subsec_name_lsmm = "Livestock Manure Management"
+        self.subsec_name_lvst = "Livestock"
+        self.subsec_name_soil = "Soil Management"
+        self.subsec_name_wali = "Liquid Waste"
+        self.subsec_name_waso = "Solid Waste"
+        self.subsec_name_trww = "Wastewater Treatment"
+        self.subsec_name_ccsq = "Carbon Capture and Sequestration"
+        self.subsec_name_enfu = "Energy Fuels"
+        self.subsec_name_enst = "Energy Storage"
+        self.subsec_name_entc = "Energy Technology"
+        self.subsec_name_fgtv = "Fugitive Emissions"
+        self.subsec_name_inen = "Industrial Energy"
+        self.subsec_name_scoe = "Stationary Combustion and Other Energy"
+        self.subsec_name_trns = "Transportation"
+        self.subsec_name_trde = "Transportation Demand"
+        self.subsec_name_ippu = "IPPU"
+        self.subsec_name_econ = "Economy"
+        self.subsec_name_gnrl = "General"
+
+
+
+    def _initialize_basic_template_substrings(self,
+    ) -> None:
+        """
+        Set properties related to substrings used to identify input template
+            fields for SISEPUEDE. Sets the following properties:
+
+            * self.substr_analytical_parameters
+            * self.substr_categories
+            * self.substr_dimensions
+            * self.substr_experimental_parameters
+            * self.substr_varreqs
+            * self.substr_varreqs_allcats
+            * self.substr_varreqs_partialcats
+        """
+        self.substr_analytical_parameters = "analytical_parameters"
+        self.substr_experimental_parameters = "experimental_parameters"
+        self.substr_dimensions = "attribute_dim_"
+        self.substr_categories = "attribute_"
+        self.substr_varreqs = "table_varreqs_by_"
+        self.substr_varreqs_allcats = f"{self.substr_varreqs}category_"
+        self.substr_varreqs_partialcats = f"{self.substr_varreqs}partial_category_"
+
+
+
+    def _initialize_basic_varchar_components(self,
+    ) -> None:
+        """
+        Set variable character substrings used in variable schema--e.g.,
+            $EMISSION-GAS$--used to substitute in known components. Sets the
+            following properties:
+
+            * self.varchar_str_emission_gas
+            * self.varchar_str_unit_area
+            * self.varchar_str_unit_energy
+            * self.varchar_str_unit_length
+            * self.varchar_str_unit_mass
+            * self.varchar_str_unit_monetary
+            * self.varchar_str_unit_power
+            * self.varchar_str_unit_volume
+        """
+        # temporary - but read from table at some point
+        self.varchar_str_emission_gas = "$EMISSION-GAS$"
+        self.varchar_str_unit_area = "$UNIT-AREA$"
+        self.varchar_str_unit_energy = "$UNIT-ENERGY$"
+        self.varchar_str_unit_length = "$UNIT-LENGTH$"
+        self.varchar_str_unit_mass = "$UNIT-MASS$"
+        self.varchar_str_unit_monetary = "$UNIT-MONETARY$"
+        self.varchar_str_unit_power = "$UNIT-POWER$"
+        self.varchar_str_unit_volume = "$UNIT-VOLUME$"
 
 
 
@@ -2547,6 +2723,7 @@ class ModelAttributes:
         return df_out
 
 
+
     ##  function for converting an array to a variable out dataframe (used in sector models)
     def array_to_df(self,
         arr_in: np.ndarray,
@@ -2593,6 +2770,7 @@ class ModelAttributes:
             raise ValueError(f"Array shape mismatch for fields {flds_print}: the array only has {arr_in.shape[1]} columns.")
 
         return pd.DataFrame(arr_in*scalar_em*scalar_me, columns = fields)
+
 
 
     ##  function to assign keys (e.g., variables in a variable table) based on collections of attribute fields (e.g., a secondary category)
@@ -2667,13 +2845,25 @@ class ModelAttributes:
 
         return dict_out, dict_vals_unassigned
 
-    ##  support function for assign_keys_from_attribute_fields
-    def get_vars_by_assigned_class_from_akaf(self, dict_in: dict, var_class: str) -> list:
-         return [x.get(var_class) for x in dict_in.values() if (x.get(var_class) is not None)]
 
 
-    ##  function to build a sampling range dataframe from defaults
-    def build_default_sampling_range_df(self):
+    def get_vars_by_assigned_class_from_akaf(self,
+        dict_in: dict,
+        var_class: str
+    ) -> list:
+        """
+        Support function for assign_keys_from_attribute_fields
+        """
+        return [x.get(var_class) for x in dict_in.values() if (x.get(var_class) is not None)]
+
+
+
+    def build_default_sampling_range_df(self
+    ) -> pd.DataFrame:
+        """
+        Build a sampling range dataframe from defaults contained in
+            AttributeTables.
+        """
         df_out = []
         # set field names
         pd_max = max(self.get_time_periods()[0])
@@ -2695,11 +2885,85 @@ class ModelAttributes:
 
                         df_out.append(pd.DataFrame({"variable": mvs, field_max: [max_ftp_scalar for x in mvs], field_min: [min_ftp_scalar for x in mvs]}))
 
-        return pd.concat(df_out, axis = 0).reset_index(drop = True)
+        df_out = pd.concat(df_out, axis = 0).reset_index(drop = True)
+
+        return df_out
 
 
-    ##  function for bulding a basic variable list from the (no complexitiies)
-    def build_vars_basic(self, dict_vr_varschema: dict, dict_vars_to_cats: dict, category_to_replace: str) -> list:
+
+    def build_variable_dataframe_by_sector(self,
+        sectors_build: Union[List[str], str, None],
+        field_subsector: str = "subsector",
+        field_variable: str = "variable",
+        include_time_periods: bool = True,
+        vartype: str = "input"
+    ) -> pd.DataFrame:
+        """
+        Build a data frame of all variables long by subsector and variable.
+            Optional includion of time_periods.
+
+        Function Arguments
+        ------------------
+        - sectors_build: sectors to include subsectors for
+
+        Keyword Arguments
+        -----------------
+        - field_subsector: subsector field for output data frame
+        - field_variable: variable field for output data frame
+        - include_time_periods: include time periods? If True, makes data frame
+            long by time period
+        - vartype: "input" or "output"
+        """
+        df_out = []
+        sectors_build = self.get_sector_list_from_projection_input(sectors_build)
+
+        # loop over sectors/subsectors to construct subsector and all variables
+        for sector in sectors_build:
+            subsectors = self.get_sector_subsectors(sector)
+
+            for subsector in subsectors:
+                modvars_cur = self.get_subsector_variables(
+                    subsector,
+                    var_type = vartype
+                )[1]
+
+                vars_cur = sum([self.dict_model_variables_to_variables.get(x) for x in modvars_cur], [])
+                df_out += [(subsector, x) for x in vars_cur]
+
+        # convert to data frame and return
+        df_out = pd.DataFrame(
+            df_out,
+            columns = [field_subsector, field_variable]
+        )
+        fields_sort = [field_subsector, field_variable]
+
+        if include_time_periods:
+            time_period = self.dim_time_period
+            df_out = sf.explode_merge(
+                df_out,
+                self.dict_attributes.get("dim_time_period").table[[time_period]]
+            )
+
+            fields_sort += [time_period]
+
+        df_out.sort_values(
+            by = fields_sort
+        ).reset_index(
+            drop = True
+        );
+
+        return df_out
+
+
+
+    def build_vars_basic(self,
+        dict_vr_varschema: dict,
+        dict_vars_to_cats: dict,
+        category_to_replace: str
+    ) -> List[str]:
+        """
+        Build a basic variable list from varible schema
+        """
         # dict_vars_to_loop has keys that are variables to loop over that map to category values
         vars_out = []
         vars_loop = list(set(dict_vr_varschema.keys()) & set(dict_vars_to_cats.keys()))
@@ -2719,6 +2983,8 @@ class ModelAttributes:
                 raise ValueError(error_str)
 
         return vars_out
+
+
 
     ##  function to build variables that rely on the outer product (e.g., transition probabilities)
     def build_vars_outer(self, dict_vr_varschema: dict, dict_vars_to_cats: dict, category_to_replace: str, appendstr_i: str = "-I", appendstr_j: str = "-J") -> list:
@@ -3042,6 +3308,178 @@ class ModelAttributes:
 
 
 
+    ##  function to extract a variable (with applicable categories from an input data frame)
+    def get_standard_variables(self,
+        df_in: pd.DataFrame,
+        modvar: str,
+        override_vector_for_single_mv_q: bool = False,
+        return_type: str = "data_frame",
+        var_bounds = None,
+        force_boundary_restriction: bool = True,
+        expand_to_all_cats: bool = False,
+        all_cats_missing_val: float = 0.0,
+        return_num_type: type = np.float64
+    ) -> pd.DataFrame:
+
+        """
+            Retrieve an array or data frame of input variables. If return_type == "array_units_corrected", then the ModelAttributes will re-scale emissions factors to reflect the desired output emissions mass (as defined in the configuration).
+
+            - df_in: data frame containing input variables
+            - modvar: variable name to retrieve
+            - override_vector_for_single_mv_q: default is False. Set to True to return an array if the dimension of the variable is 1; otherwise, a vector will be returned (if not a dataframe).
+            - return_type: valid values are "data_frame", "array_base" (np.ndarray not corrected for configuration emissions), or "array_units_corrected" (emissions corrected for configuration)
+            - var_bounds: Default is None (no bounds). Otherwise, gives boundaries to enforce variables that are retrieved. For example, some variables may be restricted to the range (0, 1). Use a list-like structure to pass a minimum and maximum bound (np.inf can be used to as no bound).
+            - force_boundary_restriction: default is True. Set to True to enforce the boundaries on the variable. If False, a variable that is out of bounds will raise an error.
+            - expand_to_all_cats: default is False. If True, return the variable in the shape of all categories.
+            - all_cats_missing_val: default is 0. If expand_to_all_cats == True, categories not associated with modvar with be filled with this value.
+        """
+
+        if (modvar is None) or (df_in is None):
+            return None
+
+        if modvar not in self.dict_model_variables_to_variables.keys():
+            raise ValueError(f"Invalid variable specified in get_standard_variables: variable '{modvar}' not found.")
+        else:
+            flds = self.dict_model_variables_to_variables[modvar]
+            flds = flds[0] if ((len(flds) == 1) and not override_vector_for_single_mv_q) else flds
+
+        # check some types
+        self.check_restricted_value_argument(
+            return_type,
+            ["data_frame", "array_base", "array_units_corrected", "array_units_corrected_gas"],
+            "return_type", "get_standard_variables"
+        )
+        self.check_restricted_value_argument(
+            return_num_type,
+            [float, int, np.float64, np.int64],
+            "return_num_type", "get_standard_variables"
+        )
+
+        # initialize output, apply various common transformations based on type
+        out = np.array(df_in[flds]).astype(return_num_type)
+        if return_type == "array_units_corrected":
+            out *= self.get_scalar(modvar, "total")
+        elif return_type == "array_units_corrected_gas":
+            out *= self.get_scalar(modvar, "gas")
+
+        if type(var_bounds) in [tuple, list, np.ndarray]:
+            # get numeric values and check
+            var_bounds = [x for x in var_bounds if type(x) in [int, float]]
+            if len(var_bounds) <= 1:
+                raise ValueError(f"Invalid specification of variable bounds '{var_bounds}': there must be a maximum and a minimum numeric value specified.")
+
+            # ensure array
+            out = np.array(out)
+            b_0, b_1 = np.min(var_bounds), np.max(var_bounds)
+            m_0, m_1 = np.min(out), np.max(out)
+
+            # check bounds
+            if m_1 > b_1:
+                str_warn = f"Invalid maximum value of '{modvar}': specifed value of {m_1} exceeds bound {b_1}."
+                if force_boundary_restriction:
+                    warnings.warn(str_warn + "\nForcing maximum value in trajectory.")
+                else:
+                    raise ValueError(str_warn)
+            # check min
+            if m_0 < b_0:
+                str_warn = f"Invalid minimum value of '{modvar}': specifed value of {m_0} below bound {b_0}."
+                if force_boundary_restriction:
+                    warnings.warn(str_warn + "\nForcing minimum value in trajectory.")
+                else:
+                    raise ValueError(str_warn)
+
+            if force_boundary_restriction:
+                out = sf.vec_bounds(out, var_bounds)
+
+
+        # merge output to all categories?
+        if expand_to_all_cats:
+            out = np.array([out]).transpose() if (len(out.shape) == 1) else out
+            out = self.merge_array_var_partial_cat_to_array_all_cats(np.array(out), modvar, missing_vals = all_cats_missing_val)
+            if return_type == "data_frame":
+                sec = self.get_variable_subsector(modvar)
+                flds = self.get_attribute_table(sec).key_values
+
+        # convert back to data frame if necessary
+        if (return_type == "data_frame"):
+            flds = [flds] if (not type(flds) in [list, np.ndarray]) else flds
+            out = pd.DataFrame(out, columns = flds)
+
+        return out
+
+
+
+    def get_sector_list_from_projection_input(self,
+        sectors_project: Union[list, str, None] = None,
+        delim: str = "|"
+    ) -> list:
+        """
+        Check and retrieve valid projection subsectors to from input
+            `sectors_project`
+
+        Keyword Arguments
+        ------------------
+        - sectors_project: list or string of sectors to run. If None, will run
+            all valid sectors defined in model attributes.
+            * NOTE: sectors or sector abbreviations are accepted as valid inputs
+        - delim: delimiter to use in input strings
+        """
+        # get subsector attribute
+        attr_sec = self.dict_attributes.get("abbreviation_sector")
+        dict_map = attr_sec.field_maps.get(f"{attr_sec.key}_to_sector")
+        valid_sectors_project = [dict_map.get(x) for x in attr_sec.key_values]
+
+        # convert input to list
+        if (sectors_project is None):
+            list_out = valid_sectors_project
+        elif isinstance(sectors_project, str):
+            list_out = sectors_project.split(delim)
+        elif isinstance(sectors_project, list) or isinstance(sectors_project, np.ndarray):
+            list_out = list(sectors_project)
+
+        # check values
+        list_out = [dict_map.get(x, x) for x in list_out if dict_map.get(x, x) in valid_sectors_project]
+
+        return list_out
+
+
+
+    def get_subsector_variables(self,
+        subsector: str,
+        var_type = None
+    ) -> list:
+        """
+        Get all variables associated with a subsector (will not function if
+            there is no primary category)
+        """
+
+        # get some information used
+        category = self.dict_attributes[self.table_name_attr_subsector].field_maps["abbreviation_subsector_to_primary_category"][self.get_subsector_attribute(subsector, "abv_subsector")].replace("`", "")
+        category_ij_tuple = self.format_category_for_outer(category, "-I", "-J")
+
+        # initialize output list, dictionary of variable to categorization (all or partial), and loop
+        vars_by_subsector = []
+        dict_var_type = {}
+
+        for key_type in ["key_varreqs_all", "key_varreqs_partial"]:
+            dicts = self.separate_varreq_dict_for_outer(
+                subsector,
+                key_type,
+                category_ij_tuple,
+                variable_type = var_type
+            )
+
+            for x in dicts:
+                l_vars = list(x.keys())
+                vars_by_subsector += l_vars
+                dict_var_type.update(
+                    dict(zip(l_vars, [key_type.replace("key_varreqs_", "") for x in l_vars]))
+                )
+
+        return dict_var_type, vars_by_subsector
+
+
+
     ##  function for retrieving the variable schema associated with a variable
     def get_variable_attribute(self, variable: str, attribute: str) -> str:
         """
@@ -3188,126 +3626,6 @@ class ModelAttributes:
 
 
 
-    ##  function to extract a variable (with applicable categories from an input data frame)
-    def get_standard_variables(self,
-        df_in: pd.DataFrame,
-        modvar: str,
-        override_vector_for_single_mv_q: bool = False,
-        return_type: str = "data_frame",
-        var_bounds = None,
-        force_boundary_restriction: bool = True,
-        expand_to_all_cats: bool = False,
-        all_cats_missing_val: float = 0.0,
-        return_num_type: type = np.float64
-    ) -> pd.DataFrame:
-
-        """
-            Retrieve an array or data frame of input variables. If return_type == "array_units_corrected", then the ModelAttributes will re-scale emissions factors to reflect the desired output emissions mass (as defined in the configuration).
-
-            - df_in: data frame containing input variables
-            - modvar: variable name to retrieve
-            - override_vector_for_single_mv_q: default is False. Set to True to return an array if the dimension of the variable is 1; otherwise, a vector will be returned (if not a dataframe).
-            - return_type: valid values are "data_frame", "array_base" (np.ndarray not corrected for configuration emissions), or "array_units_corrected" (emissions corrected for configuration)
-            - var_bounds: Default is None (no bounds). Otherwise, gives boundaries to enforce variables that are retrieved. For example, some variables may be restricted to the range (0, 1). Use a list-like structure to pass a minimum and maximum bound (np.inf can be used to as no bound).
-            - force_boundary_restriction: default is True. Set to True to enforce the boundaries on the variable. If False, a variable that is out of bounds will raise an error.
-            - expand_to_all_cats: default is False. If True, return the variable in the shape of all categories.
-            - all_cats_missing_val: default is 0. If expand_to_all_cats == True, categories not associated with modvar with be filled with this value.
-        """
-
-        if (modvar is None) or (df_in is None):
-            return None
-
-        if modvar not in self.dict_model_variables_to_variables.keys():
-            raise ValueError(f"Invalid variable specified in get_standard_variables: variable '{modvar}' not found.")
-        else:
-            flds = self.dict_model_variables_to_variables[modvar]
-            flds = flds[0] if ((len(flds) == 1) and not override_vector_for_single_mv_q) else flds
-
-        # check some types
-        self.check_restricted_value_argument(
-            return_type,
-            ["data_frame", "array_base", "array_units_corrected", "array_units_corrected_gas"],
-            "return_type", "get_standard_variables"
-        )
-        self.check_restricted_value_argument(
-            return_num_type,
-            [float, int, np.float64, np.int64],
-            "return_num_type", "get_standard_variables"
-        )
-
-        # initialize output, apply various common transformations based on type
-        out = np.array(df_in[flds]).astype(return_num_type)
-        if return_type == "array_units_corrected":
-            out *= self.get_scalar(modvar, "total")
-        elif return_type == "array_units_corrected_gas":
-            out *= self.get_scalar(modvar, "gas")
-
-        if type(var_bounds) in [tuple, list, np.ndarray]:
-            # get numeric values and check
-            var_bounds = [x for x in var_bounds if type(x) in [int, float]]
-            if len(var_bounds) <= 1:
-                raise ValueError(f"Invalid specification of variable bounds '{var_bounds}': there must be a maximum and a minimum numeric value specified.")
-
-            # ensure array
-            out = np.array(out)
-            b_0, b_1 = np.min(var_bounds), np.max(var_bounds)
-            m_0, m_1 = np.min(out), np.max(out)
-
-            # check bounds
-            if m_1 > b_1:
-                str_warn = f"Invalid maximum value of '{modvar}': specifed value of {m_1} exceeds bound {b_1}."
-                if force_boundary_restriction:
-                    warnings.warn(str_warn + "\nForcing maximum value in trajectory.")
-                else:
-                    raise ValueError(str_warn)
-            # check min
-            if m_0 < b_0:
-                str_warn = f"Invalid minimum value of '{modvar}': specifed value of {m_0} below bound {b_0}."
-                if force_boundary_restriction:
-                    warnings.warn(str_warn + "\nForcing minimum value in trajectory.")
-                else:
-                    raise ValueError(str_warn)
-
-            if force_boundary_restriction:
-                out = sf.vec_bounds(out, var_bounds)
-
-
-        # merge output to all categories?
-        if expand_to_all_cats:
-            out = np.array([out]).transpose() if (len(out.shape) == 1) else out
-            out = self.merge_array_var_partial_cat_to_array_all_cats(np.array(out), modvar, missing_vals = all_cats_missing_val)
-            if return_type == "data_frame":
-                sec = self.get_variable_subsector(modvar)
-                flds = self.get_attribute_table(sec).key_values
-
-        # convert back to data frame if necessary
-        if (return_type == "data_frame"):
-            flds = [flds] if (not type(flds) in [list, np.ndarray]) else flds
-            out = pd.DataFrame(out, columns = flds)
-
-        return out
-
-
-
-    ##  function to get all variables associated with a subsector (will not function if there is no primary category)
-    def get_subsector_variables(self, subsector: str, var_type = None) -> list:
-        # get some information used
-        category = self.dict_attributes[self.table_name_attr_subsector].field_maps["abbreviation_subsector_to_primary_category"][self.get_subsector_attribute(subsector, "abv_subsector")].replace("`", "")
-        category_ij_tuple = self.format_category_for_outer(category, "-I", "-J")
-        # initialize output list, dictionary of variable to categorization (all or partial), and loop
-        vars_by_subsector = []
-        dict_var_type = {}
-        for key_type in ["key_varreqs_all", "key_varreqs_partial"]:
-            dicts = self.separate_varreq_dict_for_outer(subsector, key_type, category_ij_tuple, variable_type = var_type)
-            for x in dicts:
-                l_vars = list(x.keys())
-                vars_by_subsector += l_vars
-                dict_var_type.update(dict(zip(l_vars, [key_type.replace("key_varreqs_", "") for x in l_vars])))
-
-        return dict_var_type, vars_by_subsector
-
-
-
     # return a list of variables by sector
     def get_variables_by_sector(self, sector: str, return_var_type: str = "input") -> list:
         df_attr_sec = self.dict_attributes[self.table_name_attr_subsector].table
@@ -3349,9 +3667,7 @@ class ModelAttributes:
 
 
 
-    # separate a variable requirement dictionary into those associated with simple vars and those with outer
-    def separate_varreq_dict_for_outer(
-        self,
+    def separate_varreq_dict_for_outer(self,
         subsector: str,
         key_type: str,
         category_outer_tuple: tuple,
@@ -3360,17 +3676,29 @@ class ModelAttributes:
         variable = None,
         variable_type = None
     ) -> tuple:
-        # field_to_split_on gives the field from the attribute table to use to split between outer and unidim
-        # target field is the field to return in the dictionary
-        # key_type = key_varreqs_all, key_varreqs_partial
+        """
+        separate a variable requirement dictionary into those associated with
+            simple vars and those with outer
+
+        Function Arguments
+        ------------------
+        - key_type: key_varreqs_all, key_varreqs_partial
+
+        Keyword Arguments
+        -----------------
+        - field_to_split_on: gives the field from the attribute table to use to
+            split between outer and unidim
+        - target_field: the field to return in the dictionary
+
+        """
         key_attribute = self.get_subsector_attribute(subsector, key_type)
-        if key_attribute != None:
+        if key_attribute is not None:
             dict_vr_vvs = self.dict_varreqs[self.get_subsector_attribute(subsector, key_type)].field_maps[f"variable_to_{field_to_split_on}"].copy()
             dict_vr_vtf = self.dict_varreqs[self.get_subsector_attribute(subsector, key_type)].field_maps[f"variable_to_{target_field}"].copy()
 
             # filter on variable type if specified
-            if variable_type != None:
-                if variable != None:
+            if variable_type is not None:
+                if variable is not None:
                     warnings.warn(f"variable and variable_type both specified in separate_varreq_dict_for_outer: the variable assignment is higher priority, and variable_type will be ignored.")
                 else:
                     dict_var_types = self.dict_varreqs[self.get_subsector_attribute(subsector, key_type)].field_maps[f"variable_to_variable_type"]
@@ -3399,6 +3727,7 @@ class ModelAttributes:
             dict_vr_vtf_outer = {}
 
         return dict_vr_vtf, dict_vr_vtf_outer
+
 
 
     ##  swap columns in an array based on categories
@@ -3475,6 +3804,7 @@ class ModelAttributes:
             return array_in
 
 
+
     # returns ordered variable (by attribute key) with categories replaced
     def switch_variable_category(self, source_subsector: str, target_variable: str, attribute_field: str, cats_to_switch = None, dict_force_override = None) -> list:
         """
@@ -3529,6 +3859,7 @@ class ModelAttributes:
             raise ValueError(f"Invalid return_type '{return_type}'. Please specify 'fields' or 'category_values'.")
 
 
+
     ##  useful function for calculating simple driver*emission factor emissions
     def get_simple_input_to_output_emission_arrays(
         self,
@@ -3575,6 +3906,7 @@ class ModelAttributes:
         return df_out
 
 
+
     ##  function to add a variable based on components
     def manage_internal_variable_to_df(self,
         df_in:pd.DataFrame,
@@ -3605,12 +3937,15 @@ class ModelAttributes:
                 df_in[field_check] = df_in[fields_sum].sum(axis = 1).astype(return_type)
 
 
+
     ##  manage internal variables in data frames
     def manage_gdp_to_df(self, df_in: pd.DataFrame, action: str = "add"):
         return self.manage_internal_variable_to_df(df_in, "Economy", "GDP", "Value Added", "gdp_component", action, float)
+
+
+
     def manage_pop_to_df(self, df_in: pd.DataFrame, action: str = "add"):
         return self.manage_internal_variable_to_df(df_in, "General", "Total Population", "Population", "total_population_component", action, int)
-
 
 
 

@@ -9,24 +9,29 @@ import re
 import setup_analysis as sa
 import support_functions as sf
 import time
-from typing import Union
+from typing import *
 import warnings
 
 
 #
 class InputTemplate:
 	"""
-		The InputTemplate class is used to ingest an input data template and format it for the SISEPUEDE DAG.
+		The InputTemplate class is used to ingest an input data template and
+			format it for the SISEPUEDE DAG.
 
-		See https://sisepuede.readthedocs.io for more information on the input template.
+		See https://sisepuede.readthedocs.io for more information on the input
+			template.
 
 		Initialization Arguments
 		------------------------
-		- template: The InputTemplate can be initialized using a file path to an Excel file or a dictionary of
-			* path: if initializing using a path, the template should point to an Excel workbook containing the
-				input data template. A description of the workbook's format is found below under "Template
-				Formatting".
-			* dict: if initializing using a dictionary, the dictionary should have the following structure:
+		- template: The InputTemplate can be initialized using a file path to an
+			Excel file or a dictionary of
+			* path: if initializing using a path, the template should point to
+				an Excel workbook containing the input data template. A
+				description of the workbook's format is found below under
+				"Template Formatting".
+			* dict: if initializing using a dictionary, the dictionary should
+				have the following structure:
 				{
 					"strategy_id-X0": pd.DataFrame(),
 					"strategy_id-X1": pd.DataFrame()...
@@ -34,40 +39,60 @@ class InputTemplate:
 
 				I.e., keys should follow the
 
-		- model_attributes: a ModelAttributes data structure used to coordinate variables and inputs
-		- subsec: subsectors to instantiate
+		- model_attributes: a ModelAttributes data structure used to coordinate
+			variables and inputs
 
 		Optional Arguments
 		------------------
-		- attribute_strategy: AttributeTable used to define input strategies and filter undefined.
-			* If None (default), try to read from the model_attributes.dict_attributes
-			* If AttributeTable, checks key against ModelAttributes.dim_strategy_id
-				* If either check is unsuccessful, will turn off filtering of undefined strategies and set
+		- attribute_strategy: AttributeTable used to define input strategies and
+			filter undefined.
+			* If None (default), try to read from the
+				model_attributes.dict_attributes
+			* If AttributeTable, checks key against
+				ModelAttributes.dim_strategy_id
+				* If either check is unsuccessful, will turn off filtering of
+					undefined strategies and set
 					InputTemplate.attribute_strategy = None
 
 		Keyword Arguments
 		-----------------
-		- field_prepend_req_attr_baseline_scenario: prepandage applied to AttributeTable key to generate field required
-			in attribute tables to specify a baseline scenario. E.g., field_prepend_req_attr_baseline_scenario = "baseline_"
-			means that the baseline strategy_id is stored in field "baseline_strategy" in the attribute_strategy
-			attribute table.
+		- field_prepend_req_attr_baseline_scenario: prepandage applied to
+			AttributeTable key to generate field required in attribute tables to
+			specify a baseline scenario. E.g.,
+			field_prepend_req_attr_baseline_scenario = "baseline_" means that
+			the baseline strategy_id is stored in field "baseline_strategy" in
+			the attribute_strategyattribute table.
 			* Only applies for attributes not passed through ModelAttributes
-		- field_req_normalize_group: Required field used to specify whether or not to normalize a group (ensures
-			always sums to 1)
-		- field_req_subsector: Required field used to define the ubsector associated with a variable
-		- field_req_trajgroup_no_vary_q: Required field used to determine whether or not a trajectory group may vary
+		- field_req_normalize_group: Required field used to specify whether or
+			not to normalize a group (ensures always sums to 1)
+		- field_req_subsector: Required field used to define the ubsector
+			associated with a variable
+		- field_req_trajgroup_no_vary_q: Required field used to determine
+			whether or not a trajectory group may vary
 			* Note: all values in the same trajectory group must be the same
-		- field_req_uniform_scaling_q: Required field used to determine whether or not a variable trjaectory should
-			be scaled uniformly over all time periods
-			* E.g., many biophysical parameters may be uncertain but not change over time
+		- field_req_uniform_scaling_q: Required field used to determine whether
+			or not a variable trjaectory should be scaled uniformly over all
+			time periods
+			* E.g., many biophysical parameters may be uncertain but not change
+				over time
 		- field_req_variable: Required field used name the variable
-			* Trajectory groups require special naming convention used to define all parts:
+			* Trajectory groups require special naming convention used to define
+				all parts:
 				(INFO HERE)
-		- field_req_variable_trajectory_group: Field used to explicitly add trajectory group (added after import)
-		- field_req_variable_trajectory_group_trajectory_type: Field used to explicitly add trajectory group type
-			for variables in a trajectory group (added after import)
-		- filter_invalid_strategies: filter strategies that aren't defined in an attribute table
+		- field_req_variable_trajectory_group: Field used to explicitly add
+			trajectory group (added after import)
+		- field_req_variable_trajectory_group_trajectory_type: Field used to
+			explicitly add trajectory group type for variables in a trajectory
+			group (added after import)
+		- filter_invalid_strategies: filter strategies that aren't defined in an
+			attribute table
 		- logger: optional logging object to pass
+		- regex_max: re.Pattern (compiled regular expression) used to match the
+			field storing the maximum scalar values at the final time period
+		- regex_min: re.Pattern used to match the field storing the minimum
+			scalar values at the final time period
+		- regex_tp: re.Pattern used to match the field storing data values for
+			each time period
 
 
 		Template Formatting
@@ -78,9 +103,8 @@ class InputTemplate:
 
 	"""
 	def __init__(self,
-		template: Union[str, dict],
+		template: Union[str, dict, None],
 		model_attributes: ma.ModelAttributes,
-		subsec: Union[str, None],
 		attribute_strategy: Union[AttributeTable, str, None] = None,
 		field_prepend_req_attr_baseline_scenario: str = "baseline_",
 		field_req_normalize_group: str = "normalize_group",
@@ -91,55 +115,258 @@ class InputTemplate:
 		field_req_variable_trajectory_group: str = "variable_trajectory_group",
 		field_req_variable_trajectory_group_trajectory_type: str = "variable_trajectory_group_trajectory_type",
 		filter_invalid_strategies: bool = True,
-		logger: Union[logging.Logger, None] = None
+		logger: Union[logging.Logger, None] = None,
+		regex_max: re.Pattern = re.compile("max_(\d*$)"),
+		regex_min: re.Pattern = re.compile("min_(\d*$)"),
+		regex_tp: re.Pattern = re.compile("(\d*$)")
 	):
 		# initialize some base properties
 		self.filter_invalid_strategies = filter_invalid_strategies
 		self.logger = logger
-		self.model_attributes = model_attributes
 
-		# set characteristics of the template (can be modified if needed)
-		self.field_prepend_req_attr_baseline_scenario = field_prepend_req_attr_baseline_scenario
-		self.field_req_normalize_group = field_req_normalize_group
-		self.field_req_subsector = field_req_subsector
-		self.field_req_trajgroup_no_vary_q = field_req_trajgroup_no_vary_q
-		self.field_req_uniform_scaling_q = field_req_uniform_scaling_q
-		self.field_req_variable = field_req_variable
-		self.field_req_variable_trajectory_group = field_req_variable_trajectory_group
-		self.field_req_variable_trajectory_group_trajectory_type = field_req_variable_trajectory_group_trajectory_type
-		self.list_fields_required_base = [
-			self.field_req_normalize_group,
-			self.field_req_subsector,
-			self.field_req_trajgroup_no_vary_q,
-			self.field_req_uniform_scaling_q,
-			self.field_req_variable,
-			self.field_req_variable_trajectory_group,
-			self.field_req_variable_trajectory_group_trajectory_type
-		]
-		self.list_fields_required_binary = [
-			self.field_req_normalize_group,
-			self.field_req_trajgroup_no_vary_q,
-			self.field_req_uniform_scaling_q
-		]
+		self._initialize_model_attributes(model_attributes)
+		self._initialize_basic_required_fields(
+			field_prepend_req_attr_baseline_scenario,
+			field_req_normalize_group,
+			field_req_subsector,
+			field_req_trajgroup_no_vary_q,
+			field_req_uniform_scaling_q,
+			field_req_variable,
+			field_req_variable_trajectory_group,
+			field_req_variable_trajectory_group_trajectory_type
+		)
 
 		# initialize additional key elements
+		self._initialize_regex_patterns(
+			regex_max,
+			regex_min,
+			regex_tp
+		)
 		self._initialize_attribute_strategy(attribute_strategy)
 		self._set_regex_sheet_name()
+		self._initialize_template(template)
 
-		(
-			self.dict_strategy_id_to_sheet,
-			self.dict_strategy_id_to_strategy_sheet,
-			self.field_max,
-			self.field_min,
-			self.fields_tp
-		) = self.read_template(template)
+
+
+	def template_from_inputs(self,
+		df_input: pd.DataFrame,
+		df_variable_information: pd.DataFrame,
+		sectors: Union[str, List[str], None],
+		field_key_strategy: Union[str, None] = None,
+		field_req_normalize_group: Union[str, None] = None,
+		field_req_subsector: Union[str, None] = None,
+		field_req_trajgroup_no_vary_q: Union[str, None] = None,
+		field_req_uniform_scaling_q: Union[str, None] = None,
+		field_req_variable: Union[str, None] = None,
+		field_req_variable_trajectory_group: Union[str, None] = None,
+		field_req_variable_trajectory_group_trajectory_type: Union[str, None] = None,
+		regex_max: Union[re.Pattern, None] = None,
+		regex_min: Union[re.Pattern, None] = None,
+		regex_tp: Union[re.Pattern, None] = None,
+	) -> Dict[str, pd.DataFrame]:
+		"""
+		Convert an input DataFrame to a template dictionary that can be written
+			to Excel as a template.
+
+		Function Arguments
+		------------------
+		- df_input: data frame containing inputs to templatize.
+		- variable_ranges: input ranges for sampling to use in template.
+		- sectors: list of sectors to include (also allows for pipe-delimitted
+			string or None; if is None, applies for all valid sectors)
+
+		Keyword Arguments
+		-----------------
+		- field_key_strategy: strategy key included in df_input--used to pivot
+			templates (template sheets are indexed by strategy key when defined)
+		- field_prepend_req_attr_baseline_scenario: prepandage applied to
+			AttributeTable key to generate field required in attribute tables to
+			specify a baseline scenario. E.g.,
+			field_prepend_req_attr_baseline_scenario = "baseline_" means that
+			the baseline strategy_id is stored in field "baseline_strategy" in
+			the attribute_strategyattribute table.
+			* Only applies for attributes not passed through ModelAttributes
+		- field_req_normalize_group: Required field used to specify whether or
+			not to normalize a group (ensures always sums to 1)
+		- field_req_subsector: Required field used to define the ubsector
+			associated with a variable
+		- field_req_trajgroup_no_vary_q: Required field used to determine
+			whether or not a trajectory group may vary
+			* Note: all values in the same trajectory group must be the same
+		- field_req_uniform_scaling_q: Required field used to determine whether
+			or not a variable trjaectory should be scaled uniformly over all
+			time periods
+			* E.g., many biophysical parameters may be uncertain but not change
+				over time
+		- field_req_variable: Required field used name the variable
+		- field_req_variable_trajectory_group: Field used to explicitly add
+			trajectory group (added after import)
+		- field_req_variable_trajectory_group_trajectory_type: Field used to
+			explicitly add trajectory group type for variables in a trajectory
+			group (added after import)
+		- filter_invalid_strategies: filter strategies that aren't defined in an
+			attribute table
+		- regex_max: re.Pattern (compiled regular expression) used to match the
+			field storing the maximum scalar values at the final time period
+		- regex_min: re.Pattern used to match the field storing the minimum
+			scalar values at the final time period
+		- regex_tp: re.Pattern used to match the field storing data values for
+			each time period
+		"""
+		# attributes
+		pydim_time_period = self.model_attributes.get_dimensional_attribute(self.model_attributes.dim_time_period, "pydim")
+		attr_tp = self.model_attributes.dict_attributes.get(pydim_time_period)
+		# fields
+		field_key_strategy = self.attribute_strategy.key if (field_key_strategy is None) else field_key_strategy
+		field_req_normalize_group = self.field_req_normalize_group if (field_req_normalize_group is None) else field_req_normalize_group
+		field_req_subsector = self.field_req_subsector if (field_req_subsector is None) else field_req_subsector
+		field_req_trajgroup_no_vary_q = self.field_req_trajgroup_no_vary_q if (field_req_trajgroup_no_vary_q is None) else field_req_trajgroup_no_vary_q
+		field_req_uniform_scaling_q = self.field_req_uniform_scaling_q if (field_req_uniform_scaling_q is None) else field_req_uniform_scaling_q
+		field_req_variable = self.field_req_variable if (field_req_variable is None) else field_req_variable
+		field_req_variable_trajectory_group = self.field_req_variable_trajectory_group if (field_req_variable_trajectory_group is None) else field_req_variable_trajectory_group
+		field_req_variable_trajectory_group_trajectory_type = self.field_req_variable_trajectory_group_trajectory_type if (field_req_variable_trajectory_group_trajectory_type is None) else field_req_variable_trajectory_group_trajectory_type
+		field_time_period = self.model_attributes.dim_time_period
+		# regular expressions
+		regex_max = self.regex_template_max if not isinstance(regex_max, re.Pattern) else regex_max
+		regex_min = self.regex_template_min if not isinstance(regex_min, re.Pattern) else regex_min
+		regex_tp = self.regex_template_time_period if not isinstance(regex_tp, re.Pattern) else regex_tp
+
+
+		##  BUILD BASE DATA FRAME
+
+		# initialize base variables
+		field_melted_value = "value"
+		df_base = self.model_attributes.build_variable_dataframe_by_sector(
+			sectors,
+			field_subsector = field_req_subsector,
+			field_variable = field_req_variable,
+			include_time_periods = True
+		)
+		global dfb
+		dfb = df_base
+
+		# melt input dataframe to long and filter
+		fields_id = [x for x in df_input.columns if x in [field_key_strategy, field_time_period]]
+		df_input_merge = pd.melt(
+			df_input,
+			id_vars = fields_id,
+			var_name = field_req_variable
+		)
+		df_input_merge = df_input_merge[
+			df_input_merge[field_req_variable].isin(list(df_base[field_req_variable]))
+		].reset_index(drop = True)
+
+		# add baseline strategy
+		if (field_key_strategy not in df_input_merge.columns):
+			df_input_merge[field_key_strategy] = self.baseline_strategy
+		all_strategies = sorted(list(df_input_merge[field_key_strategy]))
+
+		# split up by strategy
+		dict_inputs_by_strat = {}
+		df_input_merge = df_input_merge.groupby([field_key_strategy])
+
+		global dfi
+		dfi = df_input_merge
+
+		for df in df_input_merge:
+			strat, df = df
+
+			# keep all rows if baseline--otherwise, only keep those that are defined
+			df = pd.merge(df_base, df, how = "left") if (
+				strat == self.baseline_strategy
+			) else pd.merge(df_base, df, how = "inner")
+
+			# clean some integer fields
+			for field in [field_key_strategy, field_time_period]:
+				df[field] = df[field].astype(int)
+
+			if len(df) > 0:
+				df.drop([field_key_strategy], axis = 1, inplace = True)
+				dict_inputs_by_strat.update({strat: df})
+
+
+		##  CHECK THE VARIABLE INFORMATION DATA FRAME AND ADD COLUMNS
+
+		df_var_info = df_base[[field_req_variable, field_time_period]].drop_duplicates()
+
+		# set max/min fields (based on input time periods)
+		max_time_period = max(attr_tp.key_values)
+		field_max = self.name_field_maxmin_from_index(max_time_period, "max")
+		field_min = self.name_field_maxmin_from_index(max_time_period, "min")
+
+		# check validity of df_variable_information
+		if isinstance(df_variable_information, pd.DataFrame):
+			# get existing ield_max/field_min contained in df_variable_information (if exist)
+			field_max_nms = [x for x in df_variable_information.columns if (regex_max.match(str(x)) is not None)]
+			field_max_nms = field_max_nms[0] if (len(field_max_nms) > 0) else None
+			field_min_nms = [x for x in df_variable_information.columns if (regex_min.match(str(x)) is not None)]
+			field_min_nms = field_min_nms[0] if (len(field_min_nms) > 0) else None
+
+			# update extraction fields to pull from df_variable_information
+			nms = [x for x in df_variable_information.columns if (x in self.list_fields_required_base)]
+			nms += [field_max_nms] if (field_max_nms is not None) else []
+			nms += [field_min_nms] if (field_min_nms is not None) else []
+
+			# merge in available fields from df_variable_information
+			df_var_info = pd.merge(
+				df_var_info,
+				df_variable_information[nms],
+				how = "left"
+			) if (len(nms) > 0) else df_var_info
+
+			# rename to ensure max/min defined properly
+			dict_rnm = {}
+			dict_rnm.update({field_max_nms: field_max}) if (field_max_nms in df_var_info.columns) else None
+			dict_rnm.update({field_min_nms: field_min}) if (field_min_nms in df_var_info.columns) else None
+			df_var_info.rename(columns = dict_rnm, inplace = True)
+
+		# add empty columns if not defined in df_var_info
+		for x in self.list_fields_required_base + [field_max, field_min]:
+			if x not in df_var_info.columns:
+				df_var_info[x] = None if (x in self.list_fields_required_base) else 1
+
+
+		##  CLEAN SHEETS AND DEFINE ANEW USING SHEET NAME
+
+		# clean data frames to filter out repeat rows in non-baseline strategies
+		sheet_names = []
+		fields_index = [field_req_subsector, field_req_variable, field_time_period]
+		keys_iterate = list(dict_inputs_by_strat.keys())
+
+		for strat in keys_iterate:
+			#
+			sheet_name = self.name_sheet_from_index(strat)
+			sheet_names.append(sheet_name)
+			df_cur = dict_inputs_by_strat.get(strat)
+
+			if strat != self.baseline_strategy:
+				df_cur = sf.filter_df_on_reference_df_rows(
+					df_cur,
+					dict_inputs_by_strat.get(self.baseline_strategy),
+					fields_index,
+					[field_melted_value]
+				)
+
+			# add in variable info and pivot to wide by time period
+			df_cur = pd.merge(df_cur, df_var_info, how = "left")
+			df_cur = sf.pivot_df_clean(
+				df_cur,
+				[field_time_period],
+				[field_melted_value]
+			)
+
+			dict_inputs_by_strat.update({sheet_name: df_cur})
+
+		dict_inputs_by_strat = dict((k, v) for k, v in dict_inputs_by_strat.items() if k in sheet_names)
+
+		return dict_inputs_by_strat
 
 
 
 
 
 	##################################
-	#	INITIALIZATION FUNCTIONS	#
+	#    INITIALIZATION FUNCTIONS    #
 	##################################
 
 	def _initialize_attribute_strategy(self,
@@ -193,6 +420,157 @@ class InputTemplate:
 			out = None
 
 		self.attribute_strategy = out
+
+
+
+	def _initialize_basic_required_fields(self,
+		field_prepend_req_attr_baseline_scenario: str,
+		field_req_normalize_group: str,
+		field_req_subsector: str,
+		field_req_trajgroup_no_vary_q: str,
+		field_req_uniform_scaling_q: str,
+		field_req_variable: str,
+		field_req_variable_trajectory_group: str,
+		field_req_variable_trajectory_group_trajectory_type: str
+	) -> None:
+		"""
+		Initialize required fields (explicitly assigned within the
+			function). Sets the following properties:
+
+			* self.field_prepend_req_attr_baseline_scenario
+			* self.field_req_normalize_group
+			* self.field_req_subsector
+			* self.field_req_trajgroup_no_vary_q
+			* self.field_req_uniform_scaling_q
+			* self.field_req_variable
+			* self.field_req_variable_trajectory_group
+			* self.field_req_variable_trajectory_group_trajectory_type
+			* self.list_fields_required_base
+			* self.list_fields_required_binary
+
+		Function Arguments
+		------------------
+		- field_prepend_req_attr_baseline_scenario: prepandage applied to AttributeTable key to generate field required
+			in attribute tables to specify a baseline scenario. E.g., field_prepend_req_attr_baseline_scenario = "baseline_"
+			means that the baseline strategy_id is stored in field "baseline_strategy" in the attribute_strategy
+			attribute table.
+			* Only applies for attributes not passed through ModelAttributes
+		- field_req_normalize_group: Required field used to specify whether or not to normalize a group (ensures
+			always sums to 1)
+		- field_req_subsector: Required field used to define the ubsector associated with a variable
+		- field_req_trajgroup_no_vary_q: Required field used to determine whether or not a trajectory group may vary
+			* Note: all values in the same trajectory group must be the same
+		- field_req_uniform_scaling_q: Required field used to determine whether or not a variable trjaectory should
+			be scaled uniformly over all time periods
+			* E.g., many biophysical parameters may be uncertain but not change over time
+		- field_req_variable: Required field used name the variable
+			* Trajectory groups require special naming convention used to define all parts:
+				(INFO HERE)
+		- field_req_variable_trajectory_group: Field used to explicitly add trajectory group (added after import)
+		- field_req_variable_trajectory_group_trajectory_type: Field used to explicitly add trajectory group type
+			for variables in a trajectory group (added after import)
+
+		"""
+		# set characteristics of the template (can be modified if needed)
+		self.field_prepend_req_attr_baseline_scenario = field_prepend_req_attr_baseline_scenario
+		self.field_req_normalize_group = field_req_normalize_group
+		self.field_req_subsector = field_req_subsector
+		self.field_req_trajgroup_no_vary_q = field_req_trajgroup_no_vary_q
+		self.field_req_uniform_scaling_q = field_req_uniform_scaling_q
+		self.field_req_variable = field_req_variable
+		self.field_req_variable_trajectory_group = field_req_variable_trajectory_group
+		self.field_req_variable_trajectory_group_trajectory_type = field_req_variable_trajectory_group_trajectory_type
+		self.list_fields_required_base = [
+			self.field_req_normalize_group,
+			self.field_req_subsector,
+			self.field_req_trajgroup_no_vary_q,
+			self.field_req_uniform_scaling_q,
+			self.field_req_variable,
+			self.field_req_variable_trajectory_group,
+			self.field_req_variable_trajectory_group_trajectory_type
+		]
+		self.list_fields_required_binary = [
+			self.field_req_normalize_group,
+			self.field_req_trajgroup_no_vary_q,
+			self.field_req_uniform_scaling_q
+		]
+
+
+
+	def _initialize_model_attributes(self,
+		model_attributes: ma.ModelAttributes
+	) -> None:
+		"""
+		Initialize model attributes. Sets the following properties:
+
+			* self.model_attributes=
+
+		Function Arguments
+		------------------
+		- model_attributes: ModelAttributes object used to organize variables
+			and model structure.
+		"""
+		self.model_attributes = None
+
+		# set model attributes
+		if not isinstance(model_attributes, ma.ModelAttributes):
+			tp = str(type(model_attributes))
+			msg = f"Error initializing InputTemplate: invalid type of model_attributes '{tp}'"
+			self._log(msg, type_log = "error")
+			raise RuntimeError(msg)
+		self.model_attributes = model_attributes
+
+
+
+	def _initialize_regex_patterns(self,
+		regex_max: re.Pattern = re.compile("max_(\d*$)"),
+		regex_min: re.Pattern = re.compile("min_(\d*$)"),
+		regex_tp: re.Pattern = re.compile("(\d*$)")
+	) -> None:
+		"""
+		Initialize some regular expressions used in the templates. Sets the
+			following properties:
+
+			* self.regex_template_max
+			* self.regex_template_min
+			* self.regex_template_time_period
+		"""
+		self.regex_template_max = regex_max if isinstance(regex_max, re.Pattern) else re.compile("max_(\d*$)")
+		self.regex_template_min = regex_min if isinstance(regex_min, re.Pattern) else re.compile("min_(\d*$)")
+		self.regex_template_time_period = regex_tp if isinstance(regex_tp, re.Pattern) else re.compile("(\d*$)")
+
+
+
+	def _initialize_template(self,
+		template: Union[str, dict, None]
+	) -> None:
+		"""
+		Initialize template components. Sets the following properties:
+
+			* self.dict_strategy_id_to_sheet
+			* self.dict_strategy_id_to_strategy_sheet
+			* self.field_max
+			* self.field_min
+			* self.fields_tp
+		"""
+
+		# initialize as None
+		self.dict_strategy_id_to_sheet = None
+		self.dict_strategy_id_to_strategy_sheet = None
+		self.field_max = None
+		self.field_min = None
+		self.fields_tp = None
+
+		# try reading the template tuple
+		template_tuple = self.read_template(template)
+		if template_tuple is not None:
+			(
+				self.dict_strategy_id_to_sheet,
+				self.dict_strategy_id_to_strategy_sheet,
+				self.field_max,
+				self.field_min,
+				self.fields_tp
+			) = template_tuple
 
 
 
@@ -254,6 +632,58 @@ class InputTemplate:
 			out = {sheet_name: id} if (return_type == dict) else id
 
 		return out
+
+
+
+	def name_field_maxmin_from_index(self,
+		index: int,
+		regex: Union[re.Pattern, str, None] = None
+	) -> str:
+		"""
+		Substitute index into the match pattern contained in regex.
+
+		Function Arguments
+		------------------
+		- index: integer index to use for field max
+
+		Keyword Arguments
+		-----------------
+		- regex: regular expression (re.Pattern) used to define field for
+			scalars at time t_max or t_min. Optional values include:
+			* "max": use default regular expression for field_max
+			* "min": use default regular expression for field_min
+			* re.Pattern: use a different pattern
+			* None: return str(index)
+		"""
+		out = None
+		if not isinstance(index, int):
+			return out
+
+		if regex in ["max", "min"]:
+			regex = self.regex_template_max if (regex == "max") else self.regex_template_min
+
+		if isinstance(regex, re.Pattern):
+			str_prepend = regex.pattern.split("(")[0]
+			out = f"{str_prepend}{index}"
+
+		return out
+
+
+
+	def name_sheet_from_index(self,
+		index: int
+	) -> str:
+		"""
+		Using the regular expression template self.regex_sheet_name, build a
+			sheet name in a template.
+
+		Function Arguments
+		------------------
+		- index: integer index to use in sheet naming
+		"""
+		prepend = self.regex_sheet_name.pattern.split("(")[0]
+
+		return f"{prepend}{index}"
 
 
 
@@ -412,9 +842,9 @@ class InputTemplate:
 	##  check specification of time periods on an input template sheet, then return any valid fields + a cleaned pd.DataFrame
 	def verify_and_return_sheet_time_periods(self,
 		df_in: pd.DataFrame,
-		regex_max: re.Pattern = re.compile("max_(\d*$)"),
-		regex_min: re.Pattern = re.compile("min_(\d*$)"),
-		regex_tp: re.Pattern = re.compile("(\d*$)")
+		regex_max: Union[re.Pattern, None] = None,
+		regex_min: Union[re.Pattern, None] = None,
+		regex_tp: Union[re.Pattern, None] = None
 	) -> tuple:
 		"""
 		Get time periods in a sheet in addition to min/max specification fields.
@@ -428,25 +858,32 @@ class InputTemplate:
 
 		- dict_field_tp_to_tp:
 		- df_in: cleaned DataFrame that excludes invalid time periods
-		- field_min: field that stores the minimum scalar for the final time period in the template
-		- field_max: field that stores the maximum scalar for the final time period in the template
+		- field_min: field that stores the minimum scalar for the final time
+			period in the template
+		- field_max: field that stores the maximum scalar for the final time
+			period in the template
 		- fields_tp: fields denoting time periods
 
 
 		Function Arguments
 		------------------
-
 		- df_in: Input data frame storing template values
 
 
 		Keyword Arguments
 		-----------------
-
-		- regex_max: re.Pattern (compiled regular expression) used to match the field storing the maximum scalar values at the final time period
-		- regex_min: re.Pattern used to match the field storing the minimum scalar values at the final time period
-		- regex_tp: re.Pattern used to match the field storing data values for each time period
-
+		- regex_max: re.Pattern (compiled regular expression) used to match the
+			field storing the maximum scalar values at the final time period
+		- regex_min: re.Pattern used to match the field storing the minimum
+			scalar values at the final time period
+		- regex_tp: re.Pattern used to match the field storing data values for
+			each time period
 		"""
+		# initialize some variables
+		regex_max = self.regex_template_max if not isinstance(regex_max, re.Pattern) else regex_max
+		regex_min = self.regex_template_min if not isinstance(regex_min, re.Pattern) else regex_min
+		regex_tp = self.regex_template_time_period if not isinstance(regex_tp, re.Pattern) else regex_tp
+
 
 		##  GET MIN/MAX AT FINAL TIME PERIOD
 
@@ -647,10 +1084,12 @@ class BaseInputDatabase:
 
 
 	##################################
-	#	INITIALIZATION FUNCTIONS	#
+	#    INITIALIZATION FUNCTIONS    #
 	##################################
 
-	def get_regions(self, regions: Union[str,  None]) -> list:
+	def get_regions(self,
+		regions: Union[str,  None]
+	) -> list:
 		"""
 		Import regions for the BaseInputDatabase class from BaseInputDatabase
 		"""
@@ -752,8 +1191,7 @@ class BaseInputDatabase:
 							sector,
 							**kwargs
 						),
-						sa.model_attributes,
-						None,
+						self.model_attributes,
 						attribute_strategy = self.attribute_strategy,
 						field_req_normalize_group = self.field_req_normalize_group,
 						field_req_subsector = self.field_req_subsector,
@@ -776,17 +1214,18 @@ class BaseInputDatabase:
 					self._log(f"Warning in generate_database--template read for sector '{sector}' in region '{region}' failed. The following error was returned: {e}", type_log = "warning")
 					df_template_db = None
 
-				# check time period fields
-				set_template_cols = set(df_template_db.columns)
-				if all_fields is not None:
-					if not set(df_template_db.columns).issubset(all_fields):
-						self._log(f"Error in sector '{sector}', region '{region}': encountered inconsistent definition of template fields. Dropping...", type_log = "warning")
-						df_template_db = None
+				if df_template_db is not None:
+					# check time period fields
+					set_template_cols = set(df_template_db.columns)
+					if all_fields is not None:
+						if not set(df_template_db.columns).issubset(all_fields):
+							self._log(f"Error in sector '{sector}', region '{region}': encountered inconsistent definition of template fields. Dropping...", type_log = "warning")
+							df_template_db = None
+						else:
+							fields_drop = list(set_template_cols - all_fields)
+							df_template_db.drop(fields_drop, axis = 1, inplace = True) if (len(fields_drop) > 0) else None
 					else:
-						fields_drop = list(set_template_cols - all_fields)
-						df_template_db.drop(fields_drop, axis = 1, inplace = True) if (len(fields_drop) > 0) else None
-				else:
-					all_fields = set_template_cols
+						all_fields = set_template_cols
 
 				# update dataframe list
 				if (len(df_out_region) == 0) and (df_template_db is not None):
@@ -795,7 +1234,13 @@ class BaseInputDatabase:
 					df_out_region[j] = df_template_db
 
 			# add region
-			df_out_region = pd.concat(df_out_region, axis = 0).reset_index(drop = True) if (len(df_out_region) > 0) else None
+			df_out_region = pd.concat(
+				df_out_region,
+				axis = 0
+			).reset_index(
+				drop = True
+			) if (len(df_out_region) > 0) else None
+
 			df_out_region = self.model_attributes.add_index_fields(
 				df_out_region,
 				region = region
@@ -862,6 +1307,7 @@ class BaseInputDatabase:
 			region_str = f"_{region_lower}"
 		else:
 			region_str = ""
+			dir_exp = self.fp_templates
 
 		# check appendage
 		if append_base_directory:
@@ -873,4 +1319,4 @@ class BaseInputDatabase:
 
 		fn_out = f"{template_base_str}{region_str}_{abv_sector}{append_str}.xlsx"
 
-		return os.path.join(self.fp_templates, fn_out)
+		return os.path.join(dir_exp, fn_out)

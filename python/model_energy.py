@@ -750,17 +750,29 @@ class NonElectricEnergy:
     ) -> np.ndarray:
 
         """
-            Project energy consumption--in terms of units of the input vector vec_consumption_initial--given changing demand fractions and efficiency factors
+        Project energy consumption--in terms of units of the input vector
+            vec_consumption_initial--given changing demand fractions and
+            efficiency factors
 
-            Function Arguments
-            ------------------
-            - df_neenergy_trajectories: Dataframe of input variables
-            - vec_consumption_intensity_initial: array giving initial consumption (for initial time period only)
-            - arr_driver: driver of demand--either shape of (n_projection_time_periods, len(vec_consumption_intensity_initial)) or (n_projection_time_periods, )
-            - modvar_fuel_efficiency: string model variable for enfu fuel efficiency
-            - dict_fuel_fracs: dictionary mapping each fuel fraction variable to its fraction of energy.
-                * Each key must be a key in dict_fuel_frac_to_eff.
-            - dict_fuel_frac_to_fuel_cat: dictionary mapping fuel fraction variable to its associated fuel category
+        Function Arguments
+        ------------------
+        - df_neenergy_trajectories: Dataframe of input variables
+        - vec_consumption_intensity_initial: array giving initial consumption
+            (for initial time period only)
+        - arr_driver: driver of demand--either shape of
+
+            (n_projection_time_periods, len(vec_consumption_intensity_initial))
+
+            or
+
+            (n_projection_time_periods, )
+
+        - modvar_fuel_efficiency: string model variable for enfu fuel efficiency
+        - dict_fuel_fracs: dictionary mapping each fuel fraction variable to its
+            fraction of energy.
+            * Each key must be a key in dict_fuel_frac_to_eff.
+        - dict_fuel_frac_to_fuel_cat: dictionary mapping fuel fraction variable
+            to its associated fuel category
         """
 
         ##  estimate demand at point of use (account for heat delivery efficiency)
@@ -774,13 +786,14 @@ class NonElectricEnergy:
         for modvar_fuel_frac in dict_fuel_fracs.keys():
             cat_fuel = dict_fuel_frac_to_fuel_cat.get(modvar_fuel_frac)
             index_enfu_fuel = attr_enfu.get_key_value_index(cat_fuel)
+
             # get efficiency, then fuel fractions
             vec_efficiency = arr_enfu_efficiency[:, index_enfu_fuel]
             arr_frac = dict_fuel_fracs.get(modvar_fuel_frac)
             arr_frac_norm += np.nan_to_num(arr_frac.transpose()/vec_efficiency, 0.0)
-        # transpose again
+
+        # transpose again and project demand forward
         arr_frac_norm = arr_frac_norm.transpose()
-        # project demand forward
         arr_demand = np.nan_to_num(vec_consumption_intensity_initial/arr_frac_norm[0], 0.0)
         arr_demand = sf.do_array_mult(arr_driver, arr_demand)
 
@@ -789,9 +802,11 @@ class NonElectricEnergy:
         for modvar_fuel_frac in dict_fuel_fracs.keys():
             cat_fuel = dict_fuel_frac_to_fuel_cat.get(modvar_fuel_frac)
             index_enfu_fuel = attr_enfu.get_key_value_index(cat_fuel)
+
             # get efficiency, then fuel fractions
             vec_efficiency = arr_enfu_efficiency[:, index_enfu_fuel]
             arr_frac = dict_fuel_fracs.get(modvar_fuel_frac)
+
             # use consumption by fuel type and efficiency to get output demand for each fuel (in output energy units specified in config)
             arr_consumption_fuel = np.nan_to_num((arr_demand*arr_frac).transpose()/vec_efficiency, 0.0).transpose()
             dict_consumption_by_fuel_out.update({modvar_fuel_frac: arr_consumption_fuel})

@@ -1,5 +1,5 @@
 from attribute_table import AttributeTable
-import model_attributes as ma
+from model_attributes import *
 import numpy as np
 import os, os.path
 import pandas as pd
@@ -24,7 +24,7 @@ dir_tmp = sf.check_path(os.path.join(dir_proj, "tmp"), True)
 dir_docs = sf.check_path(os.path.join(os.path.dirname(dir_py), "docs", "source"), False)
 dir_attribute_tables = sf.check_path(os.path.join(dir_docs, "csvs"), False)
 # get model attributes
-model_attributes = ma.ModelAttributes(dir_attribute_tables, fp_config)
+model_attributes = ModelAttributes(dir_attribute_tables, fp_config)
 
 
 ##  INGESTION DATA STRUCTURE (DEPENDS ON ATTRIBUTES)

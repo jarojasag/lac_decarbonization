@@ -1,5 +1,6 @@
 from analysis_id import AnalysisID
-from iterative_database import *
+#from iterative_database import *
+import iterative_database as idb
 import logging
 from model_attributes import ModelAttributes
 import pandas as pd
@@ -131,6 +132,7 @@ class SISEPUEDEOutputDatabase:
 				"design": key_design,
 				"future": key_future,
 				"primary": key_primary,
+				"region": key_region,
 				"strategy": key_strategy,
 				"time_series": key_time_series
 			}
@@ -370,6 +372,7 @@ class SISEPUEDEOutputDatabase:
 					"design": key_design,
 					"future": key_future,
 					"primary": key_primary,
+					"region": key_region,
 					"strategy": key_strategy,
 					"time_series": key_time_series
 				}
@@ -386,6 +389,7 @@ class SISEPUEDEOutputDatabase:
 			"design",
 			"future",
 			"primary",
+			"region",
 			"strategy",
 			"time_series"
 		]
@@ -407,6 +411,7 @@ class SISEPUEDEOutputDatabase:
 		self.key_design = self.dict_dimensional_keys.get("design")
 		self.key_future = self.dict_dimensional_keys.get("future")
 		self.key_primary = self.dict_dimensional_keys.get("primary")
+		self.key_region = self.dict_dimensional_keys.get("region")
 		self.key_strategy = self.dict_dimensional_keys.get("strategy")
 		self.key_time_series = self.dict_dimensional_keys.get("time_series")
 
@@ -471,7 +476,7 @@ class SISEPUEDEOutputDatabase:
 		self._write_to_table = None
 
 		try:
-			self.db = IterativeDatabase(
+			self.db = idb.IterativeDatabase(
 				engine,
 				self.dict_all_tables,
 				**kwargs
@@ -588,10 +593,10 @@ class SISEPUEDEOutputDatabase:
 				str_fields_index_param: self.key_design
 			},
 			table_name_attribute_lhs_l: {
-				str_fields_index_param: self.key_future
+				str_fields_index_param: (self.key_region + self.key_future)
 			},
 			table_name_attribute_lhs_x: {
-				str_fields_index_param: self.key_future
+				str_fields_index_param: (self.key_region + self.key_future)
 			},
 			table_name_attribute_primary: {
 				str_fields_index_param: self.key_primary
@@ -599,12 +604,14 @@ class SISEPUEDEOutputDatabase:
 			table_name_attribute_strategy: {
 				str_fields_index_param: self.key_strategy
 			},
-			table_name_base_input: None,
+			table_name_base_input: {
+				str_fields_index_param: self.key_region
+			},
 			table_name_input: {
-				str_fields_index_param: self.key_primary
+				str_fields_index_param: (self.key_region + self.key_primary)
 			},
 			table_name_output: {
-				str_fields_index_param: self.key_primary
+				str_fields_index_param: (self.key_region + self.key_primary)
 			}
 		}
 
