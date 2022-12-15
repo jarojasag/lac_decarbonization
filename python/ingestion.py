@@ -242,8 +242,8 @@ class InputTemplate:
 			field_variable = field_req_variable,
 			include_time_periods = True
 		)
-		global dfb
-		dfb = df_base
+		#global dfb
+		#dfb = df_base
 
 		# melt input dataframe to long and filter
 		fields_id = [x for x in df_input.columns if x in [field_key_strategy, field_time_period]]
@@ -259,7 +259,7 @@ class InputTemplate:
 		# add baseline strategy
 		if (field_key_strategy not in df_input_merge.columns):
 			df_input_merge[field_key_strategy] = self.baseline_strategy
-		all_strategies = sorted(list(df_input_merge[field_key_strategy]))
+		all_strategies = sorted(list(set(df_input_merge[field_key_strategy])))
 
 		# split up by strategy
 		dict_inputs_by_strat = {}
@@ -284,6 +284,8 @@ class InputTemplate:
 				df.drop([field_key_strategy], axis = 1, inplace = True)
 				dict_inputs_by_strat.update({strat: df})
 
+		global dict_is
+		dict_is = dict_inputs_by_strat
 
 		##  CHECK THE VARIABLE INFORMATION DATA FRAME AND ADD COLUMNS
 
@@ -344,7 +346,8 @@ class InputTemplate:
 					df_cur,
 					dict_inputs_by_strat.get(self.baseline_strategy),
 					fields_index,
-					[field_melted_value]
+					[field_melted_value],
+					fields_groupby = [field_req_variable]
 				)
 
 			# add in variable info and pivot to wide by time period
@@ -1010,41 +1013,54 @@ class InputTemplate:
 
 class BaseInputDatabase:
 	"""
-		The BaseInputDatabase class is used to combine InputTemplates from multiple sectors into a single input for
+		The BaseInputDatabase class is used to combine InputTemplates from
+			multiple sectors into a single input for
 
 		Initialization Arguments
 		------------------------
 		- fp_templates: file path to directory containing input Excel templates
-		- model_attributes: ModelAttributes object used to define sectors and check templates
+		- model_attributes: ModelAttributes object used to define sectors and
+			check templates
 		- regions: regions to include
 			* If None, then try to initialize all input regions
 
 		Optional Arguments
 		--------=---------
 		- demo_q: whether or not the database is run as a demo
-			* If run as demo, then `fp_templates` does not need to include subdirectories for each region specified
+			* If run as demo, then `fp_templates` does not need to include
+				subdirectories for each region specified
 		- sectors: sectors to include
 			* If None, then try to initialize all input sectors
-		- attribute_strategy: strategy attribute used to filter out invalid or undefined strategies
+		- attribute_strategy: strategy attribute used to filter out invalid or
+			undefined strategies
 
 		Keyword Arguments
 		-----------------
-		The following keyword arguments are passed to the InputTemplate classes used to Instantiate a BaseInputDatabase
-		- field_req_normalize_group: Required field used to specify whether or not to normalize a group (ensures
-			always sums to 1)
-		- field_req_subsector: Required field used to define the ubsector associated with a variable
-		- field_req_trajgroup_no_vary_q: Required field used to determine whether or not a trajectory group may vary
+		The following keyword arguments are passed to the InputTemplate classes
+			used to Instantiate a BaseInputDatabase
+		- field_req_normalize_group: Required field used to specify whether or
+			not to normalize a group (ensures always sums to 1)
+		- field_req_subsector: Required field used to define the subsector
+			associated with a variable
+		- field_req_trajgroup_no_vary_q: Required field used to determine
+			whether or not a trajectory group may vary
 			* Note: all values in the same trajectory group must be the same
-		- field_req_uniform_scaling_q: Required field used to determine whether or not a variable trjaectory should
-			be scaled uniformly over all time periods
-			* E.g., many biophysical parameters may be uncertain but not change over time
+		- field_req_uniform_scaling_q: Required field used to determine whether
+			or not a variable trjaectory should be scaled uniformly over all
+			time periods
+			* E.g., many biophysical parameters may be uncertain but not change
+				over time
 		- field_req_variable: Required field used name the variable
-			* Trajectory groups require special naming convention used to define all parts:
+			* Trajectory groups require special naming convention used to define
+				all parts:
 				(INFO HERE)
-		- field_req_variable_trajectory_group: Field used to explicitly add trajectory group (added after import)
-		- field_req_variable_trajectory_group_trajectory_type: Field used to explicitly add trajectory group type
+		- field_req_variable_trajectory_group: Field used to explicitly add
+			trajectory group (added after import)
+		- field_req_variable_trajectory_group_trajectory_type: Field used to
+			explicitly add trajectory group type
 			for variables in a trajectory group (added after import)
-		- filter_invalid_strategies: filter strategies that are not defined in the attribute_strategy input table
+		- filter_invalid_strategies: filter strategies that are not defined in
+			the attribute_strategy input table
 		- logger: optional logging object to pass
 	"""
 	def __init__(self,

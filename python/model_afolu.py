@@ -1777,7 +1777,12 @@ class AFOLU:
             # get the enfu attrbute table and use it to retrieve the biomass fuel demand
             attr_enfu = self.model_attributes.get_attribute_table(self.subsec_name_enfu)
             ind_biomass = attr_enfu.get_key_value_index(self.cat_enfu_biomass)
-            vec_scoe_biomass_fuel_demand = self.model_attributes.get_standard_variables(df_scoe, self.model_energy.modvar_enfu_energy_demand_by_fuel_scoe, False, "array_base")
+            vec_scoe_biomass_fuel_demand = self.model_attributes.get_standard_variables(
+                df_scoe,
+                self.model_energy.modvar_enfu_energy_demand_by_fuel_scoe,
+                False,
+                "array_base"
+            )
             vec_scoe_biomass_fuel_demand = vec_scoe_biomass_fuel_demand[:, ind_biomass]
             # calculate the change and growth rate
             vec_scoe_biomass_fuel_demand_change = np.nan_to_num(vec_scoe_biomass_fuel_demand[1:]/vec_scoe_biomass_fuel_demand[0:-1], 1.0, posinf = 1.0)
@@ -1791,12 +1796,29 @@ class AFOLU:
             vec_frst_harvested_wood_domestic *= vec_hh
 
         # get half-life factors for FOD model
-        vec_frst_k_hwp_paper = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_hwp_half_life_paper, False, "array_base")
+        vec_frst_k_hwp_paper = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories,
+            self.modvar_frst_hwp_half_life_paper,
+            False,
+            "array_base"
+        )
         vec_frst_k_hwp_paper = np.log(2)/vec_frst_k_hwp_paper
-        vec_frst_k_hwp_wood = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_hwp_half_life_wood, False, "array_base")
+        vec_frst_k_hwp_wood = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories,
+            self.modvar_frst_hwp_half_life_wood,
+            False,
+            "array_base"
+        )
         vec_frst_k_hwp_wood = np.log(2)/vec_frst_k_hwp_wood
+
         # totals
-        vec_frst_ef_c = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_ef_c_per_hwp, False, "array_base", var_bounds = (0, np.inf))
+        vec_frst_ef_c = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories,
+            self.modvar_frst_ef_c_per_hwp,
+            False,
+            "array_base",
+            var_bounds = (0, np.inf)
+        )
         vec_frst_c_paper = vec_frst_harvested_wood_industrial_paper*vec_frst_ef_c
         vec_frst_c_wood = (vec_frst_harvested_wood_industrial_wood + vec_frst_harvested_wood_domestic)*vec_frst_ef_c
         self.vec_frst_c_wood = vec_frst_c_wood

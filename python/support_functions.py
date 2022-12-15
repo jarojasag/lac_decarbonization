@@ -18,8 +18,10 @@ def add_data_frame_fields_from_dict(
 ) -> pd.DataFrame:
     """
     Inplace operator for adding fields to a dataframe.
-        * New fields are entered as a key in `dict_field_vals`, and new values for the dataframe are entered as values
-        * Values may be passed as a single value (e.g., str, int, float) or a vector (list/np.array)
+        * New fields are entered as a key in `dict_field_vals`, and new values
+            for the dataframe are entered as values
+        * Values may be passed as a single value (e.g., str, int, float) or a
+            vector (list/np.array)
 
     Function Arguments
     ------------------
@@ -28,8 +30,10 @@ def add_data_frame_fields_from_dict(
 
     Keyword Arguments
     -----------------
-    - field_hierarchy: field hierachy (ordering) for new fields. Only used if `prepend_q` = True. If None, default to sorted()
-    - overwrite_fields: for key in dict_field_vals.keys(), overwrite field `key` if present in `df`?
+    - field_hierarchy: field hierachy (ordering) for new fields. Only used if
+        `prepend_q` = True. If None, default to sorted()
+    - overwrite_fields: for key in dict_field_vals.keys(), overwrite field `key`
+        if present in `df`?
     - prepend_q: prepend the new fields to the data frame (ordered fields)
     """
 
@@ -108,8 +112,10 @@ def build_dict(
 ) -> dict:
 
     """
-    Build a dictionary to map row-wise elements of df_in to other row-wise elements.
-        * If dims is None, then df_in will map the first n - 1 columns (as a tuple) to the nth column
+    Build a dictionary to map row-wise elements of df_in to other row-wise
+        elements.
+        * If dims is None, then df_in will map the first n - 1 columns (as a
+            tuple) to the nth column
 
     Function Arguments
     ------------------
@@ -118,7 +124,8 @@ def build_dict(
     Keyword Arguments
     -----------------
     - dims: dims used to build dictionary
-        * e.g., in 4-column data frame, can enter (2, 2) to map the first two columns [as a tuple] to the next two columns (as a tuple))
+        * e.g., in 4-column data frame, can enter (2, 2) to map the first two
+            columns [as a tuple] to the next two columns (as a tuple))
     - force_tuple: if True, force an individual element as a tuple
 
     """
@@ -654,6 +661,7 @@ def filter_df_on_reference_df_rows(
     df_reference: pd.DataFrame,
     fields_index: List[str],
     fields_compare: List[str],
+    fields_groupby: Union[List[str], None] = None,
     filter_method: str = "any"
 ) -> pd.DataFrame:
     """
@@ -673,6 +681,9 @@ def filter_df_on_reference_df_rows(
 
     Keyword Arguments
     -----------------
+    - fields_groupby: fields that group rows; if any (or all) rows differ within
+        this group, the group will be kept. If they are all the same, the group
+        will be dropped.
     - filter_method: "all" or "any"
         * Set to "any" to keep rows where *any* field contained in
             fields_compare is different.
@@ -705,12 +716,30 @@ def filter_df_on_reference_df_rows(
         on = fields_index
     )
 
-    df_check = (df_compare[fields_compare] != df_compare[fields_compare_ref].rename(columns = dict_rnm_rev))
-    series_keep = df_check.any(axis = 1) if (filter_method == "any") else df_check.all(axis = 1)
+    fields_groupby = [x for x in fields_groupby if x in fields_index]
+    fields_groupby = None if (len(fields_groupby) == 0) else fields_groupby
 
-    df_compare = df_compare[series_keep][df_filter.columns].reset_index(drop = True)
+    if fields_groupby is None:
+        df_check = (df_compare[fields_compare] != df_compare[fields_compare_ref].rename(columns = dict_rnm_rev))
+        series_keep = df_check.any(axis = 1) if (filter_method == "any") else df_check.all(axis = 1)
+        df_return = df_compare[series_keep][df_filter.columns].reset_index(drop = True)
 
-    return df_compare
+    else:
+        df_return = []
+        df_group = df_compare.groupby(fields_groupby)
+
+        for i in df_group:
+            i, df = i
+
+            df_check = (df[fields_compare] != df[fields_compare_ref].rename(columns = dict_rnm_rev))
+            series_keep = df_check.any(axis = 1) if (filter_method == "any") else df_check.all(axis = 1)
+            append_df = any(list(series_keep))
+
+            df_return.append(df) if append_df else None
+
+        df_return = pd.concat(df_return, axis = 0).reset_index(drop = True) if (len(df_return) > 0) else None
+
+    return df_return
 
 
 

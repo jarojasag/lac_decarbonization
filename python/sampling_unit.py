@@ -243,11 +243,13 @@ class SamplingUnit:
 		field_merge_key = self.primary_key_id_coordinates if (field_merge_key is None) else field_merge_key
 		tups_id = set([tuple(x) for x in np.array(df_in[fields_id])])
 
+
 		for tg_type in self.required_tg_specs:
 			df_check = df_in[df_in[self.field_variable_trajgroup_type] == tg_type]
 			for vs in list(df_check[self.field_variable].unique()):
 				tups_id = tups_id & set([tuple(x) for x in np.array(df_check[df_check[self.field_variable] == vs][fields_id])])
 		#
+		tups_id = sorted(list(tups_id))
 		df_scen = pd.DataFrame(tups_id, columns = fields_id)
 		df_in = pd.merge(df_in, df_scen, how = "inner", on = fields_id)
 		df_scen[field_merge_key] = range(len(df_scen))
@@ -1157,17 +1159,25 @@ class SamplingUnit:
 
 				if self.xl_type == "L":
 					# get series of strategies
-					series_strats = dict_ordered_traj_arrays.get("id_coordinates")[self.key_strategy]
+					series_strats = list(dict_ordered_traj_arrays.get("id_coordinates")[self.key_strategy])
 					w = np.where(np.array(series_strats) == strat_base)[0]
 					# get strategy adjustments
 					lhs_mult_deltas = 1.0 if baseline_future_q else lhs_trial_l
+					vec_alt = np.zeros((1, len(self.time_periods)))
 					array_strat_deltas = np.concatenate(
-						series_strats.apply(
-							self.dict_strategy_info["difference_arrays_by_strategy"].get,
-							args = (np.zeros((1, len(self.time_periods))), )
-						)
-					)*lhs_mult_deltas
+						[
+							self.dict_strategy_info["difference_arrays_by_strategy"].get(x, vec_alt)
+							for x in series_strats
+						]
+					)
+					#array_strat_deltas = np.concatenate(
+					#	series_strats.apply(
+					#		self.dict_strategy_info["difference_arrays_by_strategy"].get,
+					#		args = (np.zeros((1, len(self.time_periods))), )
+					#	)
+					#)*lhs_mult_deltas
 
+					array_strat_deltas *= lhs_mult_deltas
 					arr_out = (array_strat_deltas + arr_out[w, :]) if (len(w) > 0) else arr_out
 
 				arr_out = arr_out.flatten() if flatten_output_array else arr_out
