@@ -1071,32 +1071,53 @@ class CircularEconomy:
 
 
     ##  primary method for integrated liquid/solid waste
-    def project(self, df_ce_trajectories: pd.DataFrame) -> pd.DataFrame:
+    def project(self,
+        df_ce_trajectories: pd.DataFrame
+    ) -> pd.DataFrame:
 
         """
-            The project() method takes a data frame of input variables (ordered by time series) and returns a data frame of output variables (model projections for liquid and solid waste) the same order.
+        The project() method takes a data frame of input variables (ordered by
+            time series) and returns a data frame of output variables (model
+            projections for liquid and solid waste) the same order.
 
-            Function Arguments
-            ------------------
-            df_ce_trajectories: pd.DataFrame with all required input fields as columns. The model will not run if any required variables are missing, but errors will detail which fields are missing.
+        Function Arguments
+        ------------------
+        - df_ce_trajectories: pd.DataFrame with all required input fields as
+            columns. The model will not run if any required variables are
+            missing, but errors will detail which fields are missing.
 
-            Notes
-            -----
-            - The .project() method is designed to be parallelized or called from command line via __main__ in run_sector_models.py.
-            - df_ce_trajectories should have all input fields required (see the CircularEconomy.required_variables property for a list of variables to be defined)
-            - the df_ce_trajectories.project method will run on valid time periods from 1 .. k, where k <= n (n is the number of time periods). By default, it drops invalid time periods. If there are missing time_periods between the first and maximum, data are interpolated.
+        Notes
+        -----
+        - The .project() method is designed to be parallelized or called from
+            command line via __main__ in run_sector_models.py.
+        - df_ce_trajectories should have all input fields required (see the
+            CircularEconomy.required_variables property for a list of variables
+            to be defined)
+        - the df_ce_trajectories.project method will run on valid time periods
+            from 1 .. k, where k <= n (n is the number of time periods). By
+            default, it drops invalid time periods. If there are missing
+            time_periods between the first and maximum, data are interpolated.
         """
 
         ##  CHECKS
 
         # make sure socioeconomic variables are added and
         df_ce_trajectories, df_se_internal_shared_variables = self.model_socioeconomic.project(df_ce_trajectories)
+
         # check that all required fields are contained—assume that it is ordered by time period
         self.check_df_fields(df_ce_trajectories)
         dict_dims, df_ce_trajectories, n_projection_time_periods, projection_time_periods = self.model_attributes.check_projection_input_df(df_ce_trajectories, True, True, True)
 
-        # initialize by running waste, then build input data frame for solid waste, which includes sludge totals that are reported from liquid waste
-        df_out = [self.project_waste_liquid(df_ce_trajectories, df_se_internal_shared_variables, dict_dims, n_projection_time_periods, projection_time_periods)]
+        # initialize by running liquid waste/wastewater treatment, then build input data frame for solid waste, which includes sludge totals that are reported from liquid waste
+        df_out = [
+            self.project_waste_liquid(
+                df_ce_trajectories,
+                df_se_internal_shared_variables,
+                dict_dims,
+                n_projection_time_periods,
+                projection_time_periods
+            )
+        ]
         df_waso_sludge = self.model_attributes.get_optional_or_integrated_standard_variable(
             df_out[0],
             self.modvar_trww_sludge_produced,
@@ -1104,9 +1125,18 @@ class CircularEconomy:
             override_vector_for_single_mv_q = True,
             return_type = "data_frame"
         )
-        df_in = pd.concat([df_ce_trajectories, df_waso_sludge[1]], axis = 1) if df_waso_sludge else df_ce_trajectories
+
         # project solid waste
-        df_out += [self.project_waste_solid(df_in, df_se_internal_shared_variables, dict_dims, n_projection_time_periods, projection_time_periods)]
+        df_in = pd.concat([df_ce_trajectories, df_waso_sludge[1]], axis = 1) if df_waso_sludge else df_ce_trajectories
+        df_out += [
+            self.project_waste_solid(
+                df_in,
+                df_se_internal_shared_variables,
+                dict_dims,
+                n_projection_time_periods,
+                projection_time_periods
+            )
+        ]
 
         # concatenate and add subsector emission totals
         df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")

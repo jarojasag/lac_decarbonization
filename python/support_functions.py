@@ -108,7 +108,9 @@ def back_project_array(
 def build_dict(
     df_in: pd.DataFrame,
     dims = None,
-    force_tuple = False
+    force_tuple = False,
+    nan_to_none_keys = False,
+    nan_to_none_vals = False
 ) -> dict:
 
     """
@@ -127,7 +129,8 @@ def build_dict(
         * e.g., in 4-column data frame, can enter (2, 2) to map the first two
             columns [as a tuple] to the next two columns (as a tuple))
     - force_tuple: if True, force an individual element as a tuple
-
+    - nan_to_none_keys: convert NaNs to None if True in keys
+    - nan_to_none_vals: convert NaNs to None if True in values
     """
 
     if (len(df_in.columns) == 2) and not force_tuple:
@@ -144,16 +147,77 @@ def build_dict(
         if (n_key == 1) and not force_tuple:
             keys = df_in.iloc[:, 0]
         else:
-            keys = [tuple(x) for x in np.array(df_in[list(df_in.columns)[0:n_key]])]
+            keys_in = np.array(df_in[list(df_in.columns)[0:n_key]])
+            if nan_to_none_keys:
+                keys = [None for x in range(keys_in.shape[0])]
+                for i in range(len(keys)):
+                    key = keys_in[i, :]
+                    keys[i] = tuple([(None if (isinstance(x, float) and np.isnan(x)) else x) for x in key])
+
+            else:
+                keys = [tuple(x) for x in keys_in]
+
         # values to zip
         if n_val == 1:
             vals = np.array(df_in.iloc[:, len(df_in.columns) - 1])
         else:
             vals = [np.array(x) for x in np.array(df_in[list(df_in.columns)[n_key:(n_key + n_val)]])]
+        #
+        if nan_to_none_vals:
+            vals = [(None if np.isnan(x) else x) for x in vals]
 
         dict_out = dict([x for x in zip(keys, vals)])
 
     return dict_out
+
+
+
+def build_repeating_vec(
+    vec: Union[list, np.ndarray],
+    n_repetitions_inner: Union[int, None],
+    n_repetitions_outer: Union[int, None],
+    keep_index: Union[List[int], None] = None
+) -> np.ndarray:
+    """
+    Build an array of repeating values, repeating elements an inner number of
+        times (within the cycle) and an outer number of times (number of times
+        to cycle).
+
+    Function Arguments
+    ------------------
+    - vec: list or np.ndarray of values to repeat
+    - n_repetitions_inner: number of inner repetitions. E.g., for a vector
+        vec = [0, 1, 2], if n_repetitions_inner = 3, then the inner component
+        (the component that is repeated an outer # of times) would be
+
+        vec_inner = [0, 0, 0, 1, 1, 1, 2, 2, 2]
+
+    - n_repetitions_outer: number of outer repetitions. E.g., for vec_inner from
+        above, if n_repetitions_outer = 3, then the final output component would
+        be
+
+        vec = [0, 0, 0, 1, 1, 1, 2, 2, 2, 0, 0, 0, 1, 1, 1, 2, 2, 2, 0, 0, 0, 1, 1, 1, 2, 2, 2]
+
+    Keyword Arguments
+    -----------------
+    - keep_index: optional argument specifying indices of the vector to keep
+        (e.g., [0, 1, 5]). If None (default), returns entire vector).
+    """
+
+    try:
+        vec = np.array(vec)
+    except Exception as e:
+        raise RuntimeException(f"Error trying to set vec in build_repeating_vec(): {e}")
+
+    vec = vec if (len(vec.shape) == 1) else vec.flatten()
+    vec_inner = np.repeat(vec, n_repetitions_inner)
+    vec_outer = np.repeat(np.array([vec_inner]), n_repetitions_outer, axis = 0).flatten()
+
+    if keep_index is not None:
+        keep_index = [x for x in keep_index if x < len(vec_outer)]
+        vec_outer = vec_outer[keep_index]
+
+    return vec_outer
 
 
 
@@ -328,19 +392,26 @@ def clean_field_names(
 
 
 
-##  export a dictionary of data frames to an excel
-def dict_to_excel(
-    fp_out: str,
-    dict_out: Dict[str, pd.DataFrame]
-) -> None:
+def df_to_tuples(
+    df_in: pd.DataFrame,
+    nan_to_none: bool = False
+) -> List[Tuple]:
     """
-    Write a dictionary `dict_out` of dataframes to Excel file at path fp_out.
-        Keys in dict_out are sheet names.
+    Convert a data frame to tuples. Set nan_to_none = True to replace nans with
+        None in the tuples.
+    """
 
-    """
-    with pd.ExcelWriter(fp_out) as excel_writer:
-        for k in dict_out.keys():
-            dict_out[k].to_excel(excel_writer, sheet_name = str(k), index = False, encoding = "UTF-8")
+    arr = np.array(df_in)
+    if nan_to_none:
+        list_out = [None for x in range(len(df_in))]
+        for i in range(len(list_out)):
+            list_out[i] = tuple(
+                [(None if (isinstance(x, float) and np.isnan(x)) else x) for x in arr[i, :]]
+            )
+    else:
+        list_out = [tuple(x) for x in arr]
+
+    return list_out
 
 
 
@@ -375,7 +446,21 @@ def df_get_missing_fields_from_source_df(
 
 
 
-##
+def dict_to_excel(
+    fp_out: str,
+    dict_out: Dict[str, pd.DataFrame]
+) -> None:
+    """
+    Write a dictionary `dict_out` of dataframes to Excel file at path fp_out.
+        Keys in dict_out are sheet names.
+
+    """
+    with pd.ExcelWriter(fp_out) as excel_writer:
+        for k in dict_out.keys():
+            dict_out[k].to_excel(excel_writer, sheet_name = str(k), index = False, encoding = "UTF-8")
+
+
+
 def do_array_mult(
     arr_stable: np.ndarray,
     arr_variable: np.ndarray,
@@ -531,6 +616,20 @@ def fill_df_rows_from_df(
 
 
 
+def filter_tuple(
+    tup: Tuple,
+    ignore_inds: Union[List[int], int]
+) -> Tuple[Any]:
+    """
+    Filter a tuple to ignore indices at ignore_inds. Accepts a list of
+        integers or a single integer.
+    """
+    ignore_inds = [ignore_inds] if isinstance(ignore_inds, int) else ignore_inds
+    n = len(tup)
+    return tuple(tup[x] for x in range(n) if (x not in ignore_inds))
+
+
+
 ##  simple but often used function
 def format_print_list(
     list_in: list,
@@ -622,6 +721,58 @@ def get_csv_subset(
     df_out = pd.concat(df_out, axis = 0).reset_index(drop = True) if (len(df_out) > 0) else None
 
     return df_out
+
+
+
+def get_repeating_vec_element_inds(
+    inds: Union[list, np.ndarray],
+    n_elements: int,
+    n_repetitions_inner: Union[int, None],
+    n_repetitions_outer: Union[int, None]
+) -> np.ndarray:
+    """
+    Get indices for elements specified from an input indexing vector, which
+        indexes a vector that has been repeated an inner number of times
+        (within the cycle) and an outer number of times (number of times to
+        cycle).
+
+    Function Arguments
+    ------------------
+    - inds: indices to extract from an np.ndarray of values that is repeated
+        using build_repeating_vec.
+    - n_elements: number of elements contained in the original array
+    - n_repetitions_inner: number of inner repetitions. E.g., for a vector
+        vec = [0, 1, 2], if n_repetitions_inner = 3, then the inner component
+        (the component that is repeated an outer # of times) would be
+
+        vec_inner = [0, 0, 0, 1, 1, 1, 2, 2, 2]
+
+    - n_repetitions_outer: number of outer repetitions. E.g., for vec_inner from
+        above, if n_repetitions_outer = 3, then the final output component would
+        be
+
+        vec = [0, 0, 0, 1, 1, 1, 2, 2, 2, 0, 0, 0, 1, 1, 1, 2, 2, 2, 0, 0, 0, 1, 1, 1, 2, 2, 2]
+    """
+    try:
+        inds = np.array([x for x in inds if x < n_elements])
+    except Exception as e:
+        raise RuntimeException(f"Error trying to set inds in get_repeating_vec_element_inds(): {e}")
+    inds = inds if (len(inds.shape) == 1) else inds.flatten()
+
+    # generate indices for the desired elements in the inner vector
+    inds_inner = (
+        np.repeat([inds], n_repetitions_inner, axis = 0
+    ).transpose()*n_repetitions_inner + np.arange(n_repetitions_inner)).flatten()
+
+    # get length of inner "potential" space
+    n_inner = n_repetitions_inner*n_elements
+
+    # expand and generate indices for desired elements
+    inds_ext = (
+        np.repeat([inds_inner], n_repetitions_outer, axis = 0).transpose() + np.arange(n_repetitions_outer)*n_inner
+    ).transpose().flatten()
+
+    return inds_ext
 
 
 

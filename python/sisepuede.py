@@ -204,7 +204,6 @@ class SISEPUEDE:
 			* self.database.table_name_attribute_design
 			* self.database.table_name_attribute_lhs_l
 			* self.database.table_name_attribute_lhs_x
-			* self.database.table_name_attribute_primary
 			* self.database.table_name_attribute_strategy
 			* self.database.table_name_base_input
 		"""
@@ -215,7 +214,6 @@ class SISEPUEDE:
 			df_analysis_metadata = self.model_attributes.configuration.to_data_frame()
 			df_attribute_design = self.attribute_design.table
 			df_lhs_l, df_lhs_x = self.build_lhs_tables()
-			df_attribute_primary = self.attribute_primary.table
 			df_attribute_strategy = self.attribute_strategy.table
 			df_base_input = self.experimental_manager.base_input_database.database
 
@@ -241,11 +239,6 @@ class SISEPUEDE:
 				self.database.table_name_attribute_lhs_x,
 				df_lhs_x
 			) if (df_lhs_x is not None) else None
-
-			self.database._write_to_table(
-				self.database.table_name_attribute_primary,
-				df_attribute_primary
-			)
 
 			self.database._write_to_table(
 				self.database.table_name_attribute_strategy,
@@ -304,11 +297,11 @@ class SISEPUEDE:
 			to set the number of trials and the start year of uncertainty. Sets the following
 			properties:
 
-			* self.attribute_primary
 			* self.baseline_future
 			* self.baseline_strategy
 			* self.experimental_manager
 			* self.n_trials
+			* self.odpt_primary
 			* self.random_seed
 			* self.regions
 			* self.time_period_u0
@@ -358,11 +351,7 @@ class SISEPUEDE:
 
 
 		self.attribute_strategy = self.experimental_manager.attribute_strategy
-		self.attribute_primary = AttributeTable(
-			self.experimental_manager.primary_key_database,
-			self.experimental_manager.key_primary,
-			[]
-		)
+		self.odpt_primary = self.experimental_manager.primary_key_database
 		self.baseline_future = self.experimental_manager.baseline_future
 		self.baseline_strategy = self.experimental_manager.baseline_strategy
 		self.n_trials = self.experimental_manager.n_trials
@@ -655,15 +644,15 @@ class SISEPUEDE:
 
 		if isinstance(primary_keys, dict):
 			primary_keys = sorted(list(
-				sf.subset_df(
-					self.attribute_primary.table,
-					primary_keys
-				)[self.attribute_primary.key]
+				self.odpt_primary.get_indexing_dataframe(
+					key_values = primary_keys,
+					keys_return = [self.odpt_primary.key_primary]
+				)[self.odpt_primary.key_primary]
 			))
 		elif isinstance(primary_keys, list):
-			primary_keys = sorted([x for x in primary_keys if x in self.attribute_primary.key_values])
+			primary_keys = sorted([x for x in primary_keys if x in self.odpt_primary.range_key_primary])
 		elif primary_keys is None:
-			primary_keys = self.attribute_primary.key_values
+			primary_keys = self.odpt_primary.range_key_primary
 
 		return primary_keys
 
@@ -731,7 +720,7 @@ class SISEPUEDE:
 		primary_keys = self.get_primary_keys(primary_keys)
 		dict_subset = {
 			self.key_primary: primary_keys
-		}
+		} if not isinstance(primary_keys, range) else {}
 
 		# check for additional arguments passed and remove the subset dictionary if it is passed
 		dict_subset_kwargs = kwargs.get("dict_subset")
@@ -754,8 +743,10 @@ class SISEPUEDE:
 
 
 
-	def _write_chunk_to_output(self,
+	def _write_chunk_to_table(self,
 		df_list: List[pd.DataFrame],
+		check_duplicates: bool = False,
+		table_name: Union[str, None] = None,
 		**kwargs
 	) -> pd.DataFrame:
 		"""
@@ -767,12 +758,19 @@ class SISEPUEDE:
 
 		Keyword Arguments
 		-----------------
+		= check_duplicates: check for duplicate rows?
+		- table_name: table name to write to. Default is
+			self.database.table_name_output
 		- **kwargs: passed to IterativeDatabaseTable._write_to_table
 		"""
 
+		table_name = self.database.table_name_output if (table_name is None) else table_name
+
 		df_out = pd.concat(df_list, axis = 0).reset_index(drop = True)
+		df_out.drop_duplicates(inplace = True) if check_duplicates else None
+
 		self.database._write_to_table(
-			self.database.table_name_output,
+			table_name,
 			df_out,
 			**kwargs
 		)
@@ -880,7 +878,7 @@ class SISEPUEDE:
 		"""
 
 		# check primary keys to run
-		if (primary_key not in self.attribute_primary.key_values):
+		if (primary_key not in self.odpt_primary.range_key_primary):
 			self._log(f"Error in generate_scenario_database_from_primary_key: {self.key_primary} = {primary_key} not found.", type_log = "error")
 			return None
 
@@ -893,10 +891,10 @@ class SISEPUEDE:
 			return None
 
 		# get designs
-		df_primary_keys = self.attribute_primary.table[
-			self.attribute_primary.table[self.key_primary].isin([primary_key])
-		]
-		all_designs = sorted(list(set(df_primary_keys[self.key_design])))
+		dict_primary_keys = self.odpt_primary.get_dims_from_key(
+			primary_key,
+			return_type = "dict"
+		)
 
 		# initialize output (TEMPORARY)
 		dict_return = {}
@@ -911,18 +909,13 @@ class SISEPUEDE:
 
 			##  GET DIMENSIONS
 
-			df_primary_keys_cur_design = sf.subset_df(
-				df_primary_keys,
-				{
-					self.key_primary: primary_key
-				}
-			)
-			design = int(df_primary_keys_cur_design[self.key_design].iloc[0])
-			future = int(df_primary_keys_cur_design[self.key_future].iloc[0])
-			strategy = int(df_primary_keys_cur_design[self.key_strategy].iloc[0])
+			design = dict_primary_keys.get(self.key_design) # int(df_primary_keys_cur_design[self.key_design].iloc[0])
+			future = dict_primary_keys.get(self.key_future) # int(df_primary_keys_cur_design[self.key_future].iloc[0])
+			strategy = dict_primary_keys.get(self.key_strategy) # int(df_primary_keys_cur_design[self.key_strategy].iloc[0])
 
 
 			##  GET LHS TABLES AND FILTER
+
 			df_lhs_l, df_lhs_x = lhs_design_cur.retrieve_lhs_tables_by_design(design, return_type = pd.DataFrame)
 
 			# reduce lhs tables - LEs
@@ -1013,13 +1006,14 @@ class SISEPUEDE:
 		primary_keys = self.get_primary_keys(primary_keys)
 
 		# get designs
-		df_primary_keys = self.attribute_primary.table[
-			self.attribute_primary.table[self.key_primary].isin(primary_keys)
-		]
+		df_primary_keys = self.odpt_primary.get_indexing_dataframe(
+			key_values = primary_keys
+		)
 		all_designs = sorted(list(set(df_primary_keys[self.key_design])))
 
 		# initializations
 		df_out = []
+		df_out_primary = []
 		dict_primary_keys_run = dict((x, [None for x in primary_keys]) for x in self.regions)
 		iterate_outer = 0
 
@@ -1088,12 +1082,13 @@ class SISEPUEDE:
 
 					for strategy in all_strategies:
 
-						# get primary id
-						id_primary = df_primary_keys_cur_design[
+						# get primary id info
+						df_primary_keys_cur_design_fs = df_primary_keys_cur_design[
 							(df_primary_keys_cur_design[self.key_future] == future) &
 							(df_primary_keys_cur_design[self.key_strategy] == strategy)
-						][self.key_primary]
+						].reset_index(drop = True)
 
+						id_primary = df_primary_keys_cur_design_fs[self.key_primary]
 						id_primary = int(id_primary.iloc[0]) if (len(id_primary) > 0) else None
 						write_q = ((id_primary, ) not in set_available_ids) or (index_conflict_resolution != "write_replace")
 
@@ -1137,11 +1132,26 @@ class SISEPUEDE:
 
 							# if the model run is successful and the chunk size is appropriate, update primary keys that ran successfully and write to output
 							if success:
+
+								df_out_primary.append(df_primary_keys_cur_design_fs)
+
 								if (len(df_out)%chunk_size == 0) and (len(df_out) > 0):
-									df_out = self._write_chunk_to_output(
+									df_out = self._write_chunk_to_table(
 										df_out,
+										table_name = self.database.table_name_output,
 										index_conflict_resolution = index_conflict_resolution
 									)
+
+								if (len(df_out_primary)%chunk_size == 0) and (len(df_out_primary) > 0):
+									df_out_primary = self._write_chunk_to_table(
+										df_out_primary,
+										check_duplicates = True,
+										table_name = self.database.table_name_attribute_primary,
+										index_conflict_resolution = index_conflict_resolution
+									)
+
+								# append to output
+								df_out_primary.append(df_primary_keys_cur_design_fs)
 
 								dict_primary_keys_run[region][iterate_inner] = id_primary
 
@@ -1151,6 +1161,18 @@ class SISEPUEDE:
 			# reduce length after running
 			dict_primary_keys_run[region] = dict_primary_keys_run[region][0:iterate_inner]
 
-		self._write_chunk_to_output(df_out, index_conflict_resolution = index_conflict_resolution) if (len(df_out) > 0) else None
+		# write tables to output
+		self._write_chunk_to_table(
+			df_out,
+			table_name = self.database.table_name_output,
+			index_conflict_resolution = index_conflict_resolution
+		) if (len(df_out) > 0) else None
+
+		df_out_primary = self._write_chunk_to_table(
+			df_out_primary,
+			check_duplicates = True,
+			table_name = self.database.table_name_attribute_primary,
+			index_conflict_resolution = index_conflict_resolution
+		) if (len(df_out_primary) > 0) else None
 
 		return dict_primary_keys_run

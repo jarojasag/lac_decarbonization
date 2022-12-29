@@ -64,18 +64,18 @@ class SISEPUEDEModelAttributesArchive:
 		self._initialize_output_database(
 			engine,
 			analysis_id = analysis_id,
-		    fp_base_output = fp_base_output,
-		    create_dir_output = create_dir_output,
+			fp_base_output = fp_base_output,
+			create_dir_output = create_dir_output,
 			keep_stash = self.keep_stash,
-		    logger = self.logger,
-		    replace_on_init = self.replace_on_init
+			logger = self.logger,
+			replace_on_init = self.replace_on_init
 		)
 
 
 
 
 	#############################
-	#    INITIALIZE DATABASE    #
+	#	INITIALIZE DATABASE	#
 	#############################
 
 	def _check_dict_dimensional_keys(self,

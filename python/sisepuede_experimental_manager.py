@@ -5,6 +5,7 @@ from lhs_design import LHSDesign
 import logging
 from model_attributes import ModelAttributes
 import numpy as np
+from ordered_direct_product_table import *
 import os, os.path
 import pandas as pd
 from sampling_unit import FutureTrajectories
@@ -540,6 +541,16 @@ class SISEPUEDEExperimentalManager:
 		all_futures = [self.baseline_future]
 		all_futures += self.vector_lhs_key_values if (self.vector_lhs_key_values is not None) else []
 
+		odtp_database = OrderedDirectProductTable(
+		    {
+				self.key_design: all_designs,
+				self.key_future: all_futures,
+				self.key_strategy: all_strategies
+			},
+		    [self.key_design, self.key_strategy, self.key_future],
+		    key_primary = self.key_primary
+		)
+		"""
 		prods = [
 			all_designs,
 			all_strategies,
@@ -559,6 +570,8 @@ class SISEPUEDEExperimentalManager:
 		)
 
 		self.primary_key_database = df_primary_keys
+		"""
+		self.primary_key_database = odtp_database
 
 
 

@@ -12,8 +12,14 @@ from typing import *
 
 
 
+
+
+
+
+
+
 ##  class for sampling and generating experimental design
-class SamplingUnit:
+class SamplingUnitLegacy:
 	"""
 	Generate future trajectories based on an input database.
 
@@ -26,8 +32,6 @@ class SamplingUnit:
 
 	Keyword Arguments
 	-----------------
-	- check_duplicates_in_variable_definition: check for duplicate rows in the
-		input `df_variable_definition`? If False, skips checking.
 	- fan_function_specification: type of uncertainty approach to use
 		* linear: linear ramp to time time T - 1
 		* sigmoid: sigmoid function that ramps to time T - 1
@@ -56,7 +60,6 @@ class SamplingUnit:
 		df_variable_definition: pd.DataFrame,
 		dict_baseline_ids: Dict[str, int],
 		time_period_u0: int,
-		check_duplicates_in_variable_definition: bool = True,
 		fan_function_specification: str = "linear",
 		field_time_period: str = "time_period",
 		field_trajgroup_no_vary_q: str = "trajgroup_no_vary_q",
@@ -84,7 +87,6 @@ class SamplingUnit:
 		self.key_strategy = key_strategy
 		self.missing_trajgroup_flag = missing_trajgroup_flag
 		self.time_period_end_certainty = self.check_time_start_uncertainty(time_period_u0)
-		t0 = time.time()
 		# others
 		self._set_parameters()
 		self._set_attributes_from_table(
@@ -92,25 +94,14 @@ class SamplingUnit:
 			regex_id,
 			regex_max,
 			regex_min,
-			regex_tp,
-			check_duplicates = check_duplicates_in_variable_definition
+			regex_tp
 		)
 
 		# perform initializations
 		self._initialize_uncertainty_functional_form(fan_function_specification)
-		self._set_parameters()
 		self._initialize_scenario_variables(dict_baseline_ids)
-
-		t4 = time.time()
-		self._initialize_variable_dictionaries()
-
-		t_elapse = sf.get_time_elapsed(t4, n_digits = 4)
-		print(f"mark 5: {t_elapse}")
-		t5 = time.time()
+		self._initialize_trajectory_arrays()
 		self._initialize_xl_type()
-		t_elapse = sf.get_time_elapsed(t5, n_digits = 4)
-		print(f"mark 6: {t_elapse}")
-		t6 = time.time()
 
 
 
@@ -126,8 +117,7 @@ class SamplingUnit:
 		regex_id: re.Pattern,
 		regex_max: re.Pattern,
 		regex_min: re.Pattern,
-		regex_tp: re.Pattern,
-		check_duplicates: bool = True
+		regex_tp: re.Pattern
 	) -> None:
 		"""
 		Set a range of attributes derived the input df_variable_definition.
@@ -144,30 +134,13 @@ class SamplingUnit:
 			template
 		- regex_max: re.Pattern (compiled regular expression) used to match the
 			field storing the maximum scalar values at the final time period
-		- regex_min: re.Pattern used to match the field storing the minimum
-			scalar values at the final time period
+		- regex_min: re.Pattern used to match the field storing the minimum scalar
+			values at the final time period
 		- regex_tp: re.Pattern used to match the field storing data values for
 			each time period
 
-		Keyword Arguments
-		-----------------
-		- check_duplicates: check for duplicate rows in
-			`df_variable_definition`?
 		"""
-		self.required_fields = [
-			self.key_strategy,
-			self.field_trajgroup_no_vary_q,
-			self.field_variable_trajgroup,
-			self.field_variable_trajgroup_type,
-			self.field_uniform_scaling_q,
-			self.field_variable
-		]
-
-		self.df_variable_definitions = self.check_input_data_frame(
-			df_variable_definition,
-			drop_duplicates = check_duplicates
-		)
-
+		self.df_variable_definitions, self.required_fields = self.check_input_data_frame(df_variable_definition)
 		self.fields_id = self.get_id_fields(regex_id)
 		self.field_min_scalar, self.field_max_scalar, self.time_period_scalar = self.get_scalar_time_period(
 			regex_max,
@@ -209,37 +182,34 @@ class SamplingUnit:
 
 
 	def check_input_data_frame(self,
-		df_in: pd.DataFrame,
-		drop_duplicates: bool = True,
-		fields_req: Union[List[str], None] = None
-	) -> pd.DataFrame:
+		df_in: pd.DataFrame
+	):
 		"""
-		Check df_in for required fields. Returns a data frame with variable
-			definitions.
+		Check df_in for required fields. Sets the following attributes:
 
-		Function Arguments
-		------------------
-		- df_in: data frame to check
-
-		Keyword Arguments
-		-----------------
-		- drop_duplicates: drop duplicate rows? Set to False if input DataFrame
-			is assured to contain unique rows (can be faster in batch
-			implentation)
-		- fields_req: fields that the dataframe is required to contain
+			* self.df_variable_definitions
+			* self.required_fields
 		"""
 		# some standardized fields to require
-		fields_req = self.required_fields if fields_req is None else fields_req
+		fields_req = [
+			self.key_strategy,
+			self.field_trajgroup_no_vary_q,
+			self.field_variable_trajgroup,
+			self.field_variable_trajgroup_type,
+			self.field_uniform_scaling_q,
+			self.field_variable
+		]
 
-		if not set(fields_req).issubset(set(df_in.columns)):
+		if len(set(fields_req) & set(df_in.columns)) < len(set(fields_req)):
 			fields_missing = list(set(fields_req) - (set(fields_req) & set(df_in.columns)))
 			fields_missing.sort()
 			str_missing = ", ".join([f"'{x}'" for x in fields_missing])
 			raise ValueError(f"Error: one or more columns are missing from the data frame. Columns {str_missing} not found")
 
-		df_out = df_in.drop_duplicates() if drop_duplicates else df_in
+		elif (self.key_strategy in df_in.columns) and ("_id" not in self.key_strategy):
+			raise ValueError(f"Error: the strategy field '{self.key_strategy}' must contain the substring '_id'. Check to ensure this substring is specified.")
 
-		return df_out
+		return df_in.drop_duplicates(), fields_req
 
 
 
@@ -253,6 +223,7 @@ class SamplingUnit:
 		Check inputs of the input data frame and id fields. Sets the following
 			properties:
 
+			* self.data_table
 			* self.df_id_coordinates
 			* self.dict_baseline_ids
 			* self.dict_id_values
@@ -261,9 +232,6 @@ class SamplingUnit:
 			* self.num_scenarios
 			* self.variable_specifications
 
-		Updates the following properties after previous initialization:
-
-			* self.df_variable_definitions
 
 		Function Arguments
 		------------------
@@ -276,44 +244,22 @@ class SamplingUnit:
 		- fields_id: id fields included in df_in
 		- field_merge_key: scenario key
 		"""
-		t0 = time.time()
 		df_in = self.df_variable_definitions if not isinstance(df_in, pd.DataFrame) else df_in
 		fields_id = self.fields_id if not isinstance(fields_id, list) else fields_id
 		field_merge_key = self.primary_key_id_coordinates if (field_merge_key is None) else field_merge_key
 		tups_id = set([tuple(x) for x in np.array(df_in[fields_id])])
 
-		t_elapse = sf.get_time_elapsed(t0, n_digits = 4)
-		print(f"\t{t_elapse}")
 
-		check_tups = len(set(self.required_tg_specs) & set(df_in[self.field_variable_trajgroup_type])) > 0
-		if check_tups:
-			dfs_add = df_in.groupby([self.field_variable_trajgroup_type, self.field_variable])
-			tups_add = []
-			for i in enumerate(dfs_add):
-				i, df = i
-				index, df = df
-				tups_add += [tuple(x) for x in np.array(df[fields_id])]
-
-			tups_id = tups_id & set(tups_add)
-
+		for tg_type in self.required_tg_specs:
+			df_check = df_in[df_in[self.field_variable_trajgroup_type] == tg_type]
+			for vs in list(df_check[self.field_variable].unique()):
+				tups_id = tups_id & set([tuple(x) for x in np.array(df_check[df_check[self.field_variable] == vs][fields_id])])
+		#
 		tups_id = sorted(list(tups_id))
-
-		# get id coordinates dataframe for ordering and merge into data table
 		df_scen = pd.DataFrame(tups_id, columns = fields_id)
+		df_in = pd.merge(df_in, df_scen, how = "inner", on = fields_id)
 		df_scen[field_merge_key] = range(len(df_scen))
-		df_in = pd.merge(
-			df_in,
-			df_scen,
-			how = "inner",
-			on = fields_id
-		).sort_values(
-			by = [field_merge_key, self.field_variable, self.field_variable_trajgroup_type] # CHECK THIS SORT,
-		).reset_index(
-			drop = True
-		)
-
-		t_elapse = sf.get_time_elapsed(t0, n_digits = 4)
-		print(f"\t{t_elapse}")
+		tups_id = sorted(list(tups_id))
 
 		# id values and baseline ids
 		dict_id_values, dict_baseline_ids = self.get_scenario_values(
@@ -323,22 +269,15 @@ class SamplingUnit:
 		)
 		var_specs = self.get_all_vs(df_in)
 
-
-		t_elapse = sf.get_time_elapsed(t0, n_digits = 4)
-		print(f"\t{t_elapse}")
-		t1 = time.time()
-
-		self.df_variable_definitions = df_in
+		self.data_table = df_in
 		self.df_id_coordinates = df_scen
 		self.dict_baseline_ids = dict_baseline_ids
 		self.dict_id_values = dict_id_values
-		#self.dict_variable_info = self.get_variable_dictionary(df_in, var_specs)
+		self.dict_variable_info = self.get_variable_dictionary(df_in, var_specs)
 		self.id_coordinates = tups_id
 		self.num_scenarios = len(tups_id)
 		self.variable_specifications = var_specs
 
-		t_elapse = sf.get_time_elapsed(t1, n_digits = 4)
-		print(f"Mark get_variable_dictionary: {t_elapse}")
 
 
 
@@ -465,6 +404,78 @@ class SamplingUnit:
 
 
 
+	def _initialize_trajectory_arrays(self,
+		df_in: Union[pd.DataFrame, None] = None,
+		fields_id: Union[list, None] = None,
+		fields_time_periods: Union[list, None] = None,
+		variable_specifications: Union[list, None] = None
+	) -> Dict[str, np.ndarray]:
+		"""
+		Order trajectory arrays by id fields; used for quicker lhs application
+			across id dimensions. Sets the following properties:
+
+			* self.ordered_trajectory_arrays
+			* self.scalar_diff_arrays
+
+		Keyword Arguments
+		-----------------
+		- df_in: variable specification data frame
+		- fields_id: id fields included in the specification of variables
+		- fields_time_periods: fields denoting time periods
+		- variable_specifications: list of variable specifications included in
+			df_in
+		"""
+
+		# initialize defaults
+		df_in = self.data_table if not isinstance(df_in, pd.DataFrame) else df_in
+		fields_id = self.fields_id if not isinstance(fields_id, list) else fields_id
+		fields_time_periods = self.fields_time_periods if not isinstance(fields_time_periods, list) else fields_time_periods
+		variable_specifications = self.variable_specifications if not isinstance(variable_specifications, list) else variable_specifications
+
+		# set some other variables
+		tp_end = self.fields_time_periods[-1]
+		dict_scalar_diff_arrays = {}
+		dict_ordered_traj_arrays = {}
+
+		for vs in variable_specifications:
+
+			df_cur_vs = df_in[df_in[self.field_variable].isin([vs])]
+			dfs_cur = [(None, df_cur_vs)] if (self.variable_trajectory_group is None) else df_cur_vs.groupby([self.field_variable_trajgroup_type])
+
+			for df_cur in dfs_cur:
+				tgs, df_cur = df_cur
+				df_cur.sort_values(by = fields_id, inplace = True)
+
+				# ORDERED TRAJECTORY ARRAYS
+				array_data = np.array(df_cur[fields_time_periods])
+				coords_id = df_cur[fields_id]
+				dict_ordered_traj_arrays.update(
+					{
+						(vs, tgs): {
+							"data": np.array(df_cur[fields_time_periods]),
+							"id_coordinates": df_cur[fields_id]
+						}
+					}
+				)
+
+				# SCALAR DIFFERENCE ARRAYS - order the max/min scalars
+				var_info = self.dict_variable_info.get((vs, tgs))
+				vec_scale_max = np.array([var_info.get("max_scalar")[tuple(x)] for x in np.array(coords_id)])
+				vec_scale_min = np.array([var_info.get("min_scalar")[tuple(x)] for x in np.array(coords_id)])
+
+				# difference, in final time period, between scaled value and baseline value-dimension is # of scenarios
+				dict_tp_end_delta = {
+					"max_tp_end_delta": array_data[:,-1]*(vec_scale_max - 1),
+					"min_tp_end_delta": array_data[:,-1]*(vec_scale_min - 1)
+				}
+
+				dict_scalar_diff_arrays.update({(vs, tgs): dict_tp_end_delta})
+
+		self.ordered_trajectory_arrays = dict_ordered_traj_arrays
+		self.scalar_diff_arrays = dict_scalar_diff_arrays
+
+
+
 	def get_scalar_time_period(self,
 		regex_max: re.Pattern,
 		regex_min: re.Pattern,
@@ -544,7 +555,7 @@ class SamplingUnit:
 		------------------
 		"""
 
-		df_in = self.df_variable_definitions if not isinstance(df_in, pd.DataFrame) else df_in
+		df_in = self.data_table if not isinstance(df_in, pd.DataFrame) else df_in
 		fields_id = self.fields_id if not isinstance(fields_id, list) else fields_id
 		#
 		dict_id_values = {}
@@ -666,123 +677,46 @@ class SamplingUnit:
 
 
 
-	def _initialize_variable_dictionaries(self,
-		df_in: Union[pd.DataFrame, None] = None,
-		variable_specifications: Union[List, None] = None,
-		fields_id: Union[List, None] = None,
-		field_max: Union[str, None] = None,
-		field_min: Union[str, None] = None,
-		fields_time_periods: Union[List, None] = None
+	def get_variable_dictionary(self,
+		df_in: pd.DataFrame,
+		variable_specifications: list,
+		fields_id: list = None,
+		field_max: str = None,
+		field_min: str = None,
+		fields_time_periods: list = None
 	) -> None:
 		"""
 		Retrieve a dictionary mapping a vs, tg pair to a list of information.
 			The variable dictionary includes information on sampling ranges for
 			time period scalars, wether the variables should be scaled
-			uniformly, and the trajectories themselves. Sets the following
-			proprties:
+			uniformly, and the trajectories themselves.
 
-			* self.dict_variable_info
-			* self.ordered_trajectory_arrays
-			* self.scalar_diff_arrays
 		"""
-
-		df_in = self.df_variable_definitions if (df_in is None) else df_in
 		fields_id = self.fields_id if (fields_id is None) else fields_id
 		field_max = self.field_max_scalar if (field_max is None) else field_max
 		field_min = self.field_min_scalar if (field_min is None) else field_min
 		fields_time_periods = self.fields_time_periods if (fields_time_periods is None) else fields_time_periods
-		variable_specifications = self.variable_specifications if (variable_specifications is None) else variable_specifications
-		# initialize dictionaries
-		dict_ordered_traj_arrays = {}
-		dict_scalar_diff_arrays = {}
+
 		dict_var_info = {}
+		tgs_loops = self.required_tg_specs if (self.variable_trajectory_group is not None) else [None]
 
-		# initialize other meaningful variables
-		array_base = np.zeros((len(self.df_id_coordinates), len(fields_time_periods)))
-		vec_base = np.zeros(len(self.df_id_coordinates))
-		tp_end = self.fields_time_periods[-1]
+		for vs in variable_specifications:
 
-		# initialize data frame grouping for iteration
-		fields_group = [self.field_variable, self.field_variable_trajgroup_type] if (self.variable_trajectory_group is not None) else [self.field_variable]
-		dfs_build = df_in.groupby(fields_group)
-		t0 = time.time()
-		for i in enumerate(dfs_build):
+			df_vs = sf.subset_df(df_in, {self.field_variable: vs})
 
-			# initialize indexing, subdf, variable specification (vs), and trajgroup_type (tgs)
-			i, df_cur = i
-			index, df_cur = df_cur
-			vs = index[0] if isinstance(index, tuple) else index
-			tgs = index[1] if isinstance(index, tuple) else None
+			for tgs in tgs_loops:
 
+				df_cur = df_vs if (tgs is None) else sf.subset_df(df_vs, {self.field_variable_trajgroup_type: tgs})
+				dict_vs = {
+					"max_scalar": sf.build_dict(df_cur[fields_id + [field_max]], force_tuple = True),
+					"min_scalar": sf.build_dict(df_cur[fields_id + [field_min]], force_tuple = True),
+					"uniform_scaling_q": sf.build_dict(df_cur[fields_id + [self.field_uniform_scaling_q]], force_tuple = True),
+					"trajectories": sf.build_dict(df_cur[fields_id + fields_time_periods], (len(self.fields_id), len(self.fields_time_periods)), force_tuple = True)
+				}
 
-			##  UPDATE VARIABLE INFORMATION DICTIONARY
+				dict_var_info.update({(vs, tgs): dict_vs})
 
-			dict_vs = {
-				"max_scalar": sf.build_dict(
-					df_cur[fields_id + [field_max]],
-					force_tuple = True
-				),
-				"min_scalar": sf.build_dict(
-					df_cur[fields_id + [field_min]],
-					force_tuple = True
-				),
-				"uniform_scaling_q": sf.build_dict(
-					df_cur[fields_id + [self.field_uniform_scaling_q]],
-					force_tuple = True
-				),
-				"trajectories": sf.build_dict(
-					df_cur[fields_id + fields_time_periods],
-					dims = (len(fields_id), len(fields_time_periods)),
-					force_tuple = True
-				)
-			}
-
-			dict_var_info.update({(vs, tgs): dict_vs})
-
-			t_elapse = sf.get_time_elapsed(t0, n_digits = 4)
-			print(f"_initialize_variable_dictionaries mark {i}.0:\t{t_elapse}")
-
-			##  GET ORDERED TRAJECTORY AND SCALAR DIFFERENCE ARRAYS
-
-			# loop over primary key for id coordinates to build array that's sorted according to df_id_coordinates
-			array_data = array_base.copy()
-			vec_scale_max = vec_base.copy()
-			vec_scale_min = vec_base.copy()
-
-			for j in range(len(df_cur)):
-				ind = int(df_cur[self.primary_key_id_coordinates].iloc[j])
-
-				array_data[ind, :] = df_cur[fields_time_periods].iloc[j].to_numpy()
-				vec_scale_max[ind] = float(df_cur[field_max].iloc[j])
-				vec_scale_min[ind] = float(df_cur[field_min].iloc[j])
-
-			t_elapse = sf.get_time_elapsed(t0, n_digits = 4)
-			print(f"_initialize_variable_dictionaries mark {i}.1:\t{t_elapse}")
-			t1 = time.time()
-			# difference, in final time period, between scaled value and baseline value-dimension is # of scenario
-			dict_ordered_traj_array_components = {
-				"data": array_data,
-				"id_coordinates": self.df_id_coordinates
-			}
-			dict_tp_end_delta = {
-				"max_tp_end_delta": array_data[:,-1]*(vec_scale_max - 1),
-				"min_tp_end_delta": array_data[:,-1]*(vec_scale_min - 1)
-			}
-			t_elapse = sf.get_time_elapsed(t0, n_digits = 4)
-			print(f"_initialize_variable_dictionaries mark {i}.2:\t{t_elapse}")
-			t2 = time.time()
-			# update output dictionaries
-			dict_scalar_diff_arrays.update({
-				(vs, tgs): dict_tp_end_delta
-			})
-
-			dict_ordered_traj_arrays.update(
-				{(vs, tgs): dict_ordered_traj_array_components
-			})
-
-		self.dict_variable_info = dict_var_info
-		self.ordered_trajectory_arrays = dict_ordered_traj_arrays
-		self.scalar_diff_arrays = dict_scalar_diff_arrays
+		return dict_var_info
 
 
 
@@ -818,7 +752,7 @@ class SamplingUnit:
 
 		# pivot by strategy--sort by fields_order_strat_diffs for use in dict_strategy_info
 		df_pivot = pd.pivot(
-			self.df_variable_definitions,
+			self.data_table,
 			fields_merge,
 			[self.key_strategy],
 			self.fields_time_periods
@@ -1231,17 +1165,25 @@ class SamplingUnit:
 
 				if self.xl_type == "L":
 					# get series of strategies
-					series_strats = dict_ordered_traj_arrays.get("id_coordinates")[self.key_strategy]
+					series_strats = list(dict_ordered_traj_arrays.get("id_coordinates")[self.key_strategy])
 					w = np.where(np.array(series_strats) == strat_base)[0]
 					# get strategy adjustments
 					lhs_mult_deltas = 1.0 if baseline_future_q else lhs_trial_l
+					vec_alt = np.zeros((1, len(self.time_periods)))
 					array_strat_deltas = np.concatenate(
-						series_strats.apply(
-							self.dict_strategy_info["difference_arrays_by_strategy"].get,
-							args = (np.zeros((1, len(self.time_periods))), )
-						)
-					)*lhs_mult_deltas
+						[
+							self.dict_strategy_info["difference_arrays_by_strategy"].get(x, vec_alt)
+							for x in series_strats
+						]
+					)
+					#array_strat_deltas = np.concatenate(
+					#	series_strats.apply(
+					#		self.dict_strategy_info["difference_arrays_by_strategy"].get,
+					#		args = (np.zeros((1, len(self.time_periods))), )
+					#	)
+					#)*lhs_mult_deltas
 
+					array_strat_deltas *= lhs_mult_deltas
 					arr_out = (array_strat_deltas + arr_out[w, :]) if (len(w) > 0) else arr_out
 
 				arr_out = arr_out.flatten() if flatten_output_array else arr_out
@@ -1249,743 +1191,3 @@ class SamplingUnit:
 
 
 		return dict_out
-
-
-
-
-
-
-class FutureTrajectories:
-
-	"""
-	Create a collection of SampleUnit objects to use to generate futures.
-
-	Initialization Arguments
-	------------------------
-	- df_input_database: DataFrame to use as database of baseline inputs (across strategies)
-	- dict_baseline_ids: dictionary mapping a string of a baseline id field to a baseline id value (integer)
-	- time_period_u0: first time period with uncertainty
-
-	Keyword Arguments
-	-----------------
-	- dict_all_dims: optional dictionary defining all values associated with
-		keys in dict_baseline_ids to pass to each SamplingUnit. If None
-		(default), infers from df_input_database. Takes the form
-		{
-			index_0: [id_val_00, id_val_01,... ],
-			index_1: [id_val_10, id_val_11,... ],
-			.
-			.
-			.
-		}
-	- fan_function_specification: type of uncertainty approach to use
-		* linear: linear ramp to time time T - 1
-		* sigmoid: sigmoid function that ramps to time T - 1
-	- field_sample_unit_group: field used to identify sample unit groups. Sample unit groups are composed of:
-		* individual variable specifications
-		* trajectory groups
-	- field_time_period: field used to specify the time period
-	- field_uniform_scaling_q: field used to identify whether or not a variable
-	- field_variable: field used to specify variables
-	- field_variable_trajgroup: field used to identify the trajectory group (integer)
-	- field_variable_trajgroup_type: field used to identify the trajectory group type (max, min, mix, or lhs)
-	- fan_function_specification: type of uncertainty approach to use
-		* linear: linear ramp to time time T - 1
-		* sigmoid: sigmoid function that ramps to time T - 1
-	- key_future: field used to identify the future
-	- key_strategy: field used to identify the strategy (int)
-		* This field is important as uncertainty in strategies is assessed differently than uncetainty in other variables
-	- logger: optional logging.Logger object used to track generation of futures
-	- regex_id: regular expression used to identify id fields in the input template
-	- regex_trajgroup: Regular expression used to identify trajectory group variables in `field_variable` of `df_input_database`
-	- regex_trajmax: Regular expression used to identify trajectory maxima in variables and trajgroups specified in `field_variable` of `df_input_database`
-	- regex_trajmin: Regular expression used to identify trajectory minima in variables and trajgroups specified in `field_variable` of `df_input_database`
-	- regex_trajmix: Regular expression used to identify trajectory baseline mix (fraction maxima) in variables and trajgroups specified in `field_variable` of `df_input_database`
-
-	"""
-	def __init__(self,
-		df_input_database: pd.DataFrame,
-		dict_baseline_ids: Dict[str, int],
-		time_period_u0: int,
-		dict_all_dims: Union[Dict[str, List[int]], None] = None,
-		fan_function_specification: str = "linear",
-		field_sample_unit_group: str = "sample_unit_group",
-		field_time_period: str = "time_period",
-		field_uniform_scaling_q: str = "uniform_scaling_q",
-		field_trajgroup_no_vary_q: str = "trajgroup_no_vary_q",
-		field_variable: str = "variable",
-		field_variable_trajgroup: str = "variable_trajectory_group",
-		field_variable_trajgroup_type: str = "variable_trajectory_group_trajectory_type",
-		key_future: str = "future_id",
-		key_strategy: str = "strategy_id",
-		# optional logger
-		logger: Union[logging.Logger, None] = None,
-		# regular expressions used to define trajectory group components in input database and
-		regex_id: re.Pattern = re.compile("(\D*)_id$"),
-		regex_max: re.Pattern = re.compile("max_(\d*$)"),
-		regex_min: re.Pattern = re.compile("min_(\d*$)"),
-		regex_tp: re.Pattern = re.compile("(\d*$)"),
-		regex_trajgroup: re.Pattern = re.compile("trajgroup_(\d*)-(\D*$)"),
-		regex_trajmax: re.Pattern = re.compile("trajmax_(\D*$)"),
-		regex_trajmin: re.Pattern = re.compile("trajmin_(\D*$)"),
-		regex_trajmix: re.Pattern = re.compile("trajmix_(\D*$)"),
-		# some internal vars
-		specification_tgt_lhs: str = "lhs",
-		specification_tgt_max: str = "trajectory_boundary_1",
-		specification_tgt_min: str = "trajectory_boundary_0"
-	):
-
-		##  INITIALIZE PARAMETERS
-
-		self._initialize_keys(key_future, key_strategy)
-
-		# dictionary of baseline ids and fan function
-		self.dict_baseline_ids = dict_baseline_ids
-		self.fan_function_specification = fan_function_specification
-
-		# set default fields
-		self.field_sample_unit_group = field_sample_unit_group
-		self.field_time_period = field_time_period
-		self.field_trajgroup_no_vary_q = field_trajgroup_no_vary_q
-		self.field_uniform_scaling_q = field_uniform_scaling_q
-		self.field_variable = field_variable
-		self.field_variable_trajgroup = field_variable_trajgroup
-		self.field_variable_trajgroup_type = field_variable_trajgroup_type
-
-		# logging.Logger
-		self.logger = logger
-
-		# missing values flag
-		self.missing_flag_int = -999
-
-		# default regular expressions
-		self.regex_id = regex_id
-		self.regex_max = regex_max
-		self.regex_min = regex_min
-		self.regex_tp = regex_tp
-		self.regex_trajgroup = regex_trajgroup
-		self.regex_trajmax = regex_trajmax
-		self.regex_trajmin = regex_trajmin
-		self.regex_trajmix = regex_trajmix
-
-		# some default internal specifications used in templates
-		self.specification_tgt_lhs = specification_tgt_lhs
-		self.specification_tgt_max = specification_tgt_max
-		self.specification_tgt_min = specification_tgt_min
-
-		# first period with uncertainty
-		self.time_period_u0 = time_period_u0
-
-
-		##  KEY INITIALIZATIONS
-
-		self._initialize_input_database(df_input_database)
-		self._initialize_dict_all_dims(dict_all_dims)
-		self._initialize_sampling_units()
-		self._set_xl_sampling_units()
-
-
-
-
-
-	###########################################################
-	#	SOME BASIC INITIALIZATIONS AND INTERNAL FUNCTIONS	#
-	###########################################################
-
-	def _initialize_dict_all_dims(self,
-		dict_all_dims: Union[Dict, None]
-	) -> None:
-		"""
-		Initialize the dictionary of all dimensional values to accomodate
-			for each sampling unit--ensures that each SamplingUnit has the
-			same dimensional values (either strategy or discrete baselines).
-			Sets the following properties:
-
-			* self.dict_all_dimensional_values
-
-		Function Arguments
-		------------------
-		- dict_all_dims: dictionary of all dimensional values to preserve.
-			Takes the form
-
-			{
-				index_0: [id_val_00, id_val_01,... ],
-				index_1: [id_val_10, id_val_11,... ],
-				.
-				.
-				.
-			}
-		"""
-
-		dict_all_dims_out = {}
-		self.dict_all_dimensional_values = None
-
-		# infer from input database if undefined
-		if dict_all_dims is None:
-			for k in self.dict_baseline_ids:
-				dict_all_dims_out.update({
-					k: sorted(list(self.input_database[k].unique()))
-				})
-
-		else:
-			# check that each dimension is defined in the baseline ids
-			for k in dict_all_dims.keys():
-				if k in self.dict_baseline_ids.keys():
-					dict_all_dims_out.update({k: dict_all_dims.get(k)})
-
-		self.dict_all_dimensional_values = dict_all_dims_out
-
-
-
-	def _initialize_keys(self,
-		key_future: str,
-		key_strategy: str,
-		default_key_future: str = "strategy_id",
-		default_key_strategy: str = "future_id",
-		str_req: str = "_id"
-	) -> None:
-		"""
-		Checks an initializes the following properties:
-
-		* self.key_future
-		* self.key_strategy
-		"""
-		# check and set future
-		key_future = key_future if isinstance(key_future, str) else default_key_future
-		self.key_future = default_key_future if (str_req not in key_future) else key_future
-
-		# check and set strategy
-		key_strategy = key_strategy if isinstance(key_strategy, str) else default_key_strategy
-		self.key_strategy = default_key_strategy if (str_req not in key_strategy) else key_strategy
-
-
-
-	def _log(self,
-		msg: str,
-		type_log: str = "log",
-		**kwargs
-	):
-		"""
-		Clean implementation of sf._optional_log in-line using default logger. See ?sf._optional_log for more information
-
-		Function Arguments
-		------------------
-		- msg: message to log
-
-		Keyword Arguments
-		-----------------
-		- type_log: type of log to use
-		- **kwargs: passed as logging.Logger.METHOD(msg, **kwargs)
-		"""
-		sf._optional_log(self.logger, msg, type_log = type_log, **kwargs)
-
-
-
-	def _set_xl_sampling_units(self,
-	) -> None:
-		"""
-		Determine X/L sampling units--sets three properties:
-
-		- all_sampling_units_l
-		- all_sampling_units_x
-		- dict_sampling_unit_to_xl_type
-		"""
-		all_sampling_units_l = []
-		all_sampling_units_x = []
-		dict_sampling_unit_to_xl_type = {}
-
-		for k in self.dict_sampling_units.keys():
-			xl_type = self.dict_sampling_units.get(k).xl_type
-			dict_sampling_unit_to_xl_type.update({k: xl_type})
-			all_sampling_units_x.append(k) if (xl_type == "X") else all_sampling_units_l.append(k)
-
-		self.all_sampling_units_l = all_sampling_units_l
-		self.all_sampling_units_x = all_sampling_units_x
-		self.dict_sampling_unit_to_xl_type = dict_sampling_unit_to_xl_type
-
-
-
-	def get_df_row_element(self,
-		row: Union[pd.Series, pd.DataFrame, None],
-		index: Union[int, float, str],
-		return_def: Union[int, float, str, None] = None
-	) -> float:
-		"""
-		Support for self.generate_future_from_lhs_vector. Read an element from a named series or DataFrame.
-
-		Function Arguments
-		------------------
-		- row: Series or DataFrame. If DataFrame, only reads the first row
-		- index: column index in input DataFrame to read (field)
-
-		Keyword Arguments
-		-----------------
-		- return_def: default return value if row is None
-		"""
-		out = return_def
-		if isinstance(row, pd.DataFrame):
-			out = float(row[index].iloc[0]) if (index in row.columns) else out
-		elif isinstance(row, pd.Series):
-			out = float(row[index]) if (index in row.index) else out
-
-		return out
-
-
-
-	####################################
-	#    PREPARE THE INPUT DATABASE    #
-	####################################
-
-	def clean_sampling_unit_input_df(self,
-		df_su_input: pd.DataFrame,
-		dict_all_dims: Union[Dict[str, List], None] = None,
-		dict_baseline_ids: Union[Dict[str, int], None] = None,
-		dict_expand_vars: Union[Dict[str, List[str]], None] = None,
-		sample_unit_id: Any = None
-	) -> pd.DataFrame:
-		"""
-		Prepare an input data frame for initializing SamplingUnit within
-			FutureTrajectories. Ensures that all dimensions that are specified
-			in the global database are defined in the Sampling Unit. Replaces
-			missing dimensions with core baseline (e.g., (0, 0, 0)).
-
-		Function Arguments
-		------------------
-		- df_su_input: input data frame to SamplingUnit
-		- dict_all_dims: optional dictionary to pass that contains dimensions.
-			This dictionary is used to determine which dimensions *should* be
-			present. If any of the dimension sets specified in dict_all_dims
-			are not found in df_in, their values are replaced with associated
-			baselines.
-
-		Keyword Arguments
-		-----------------
-		- dict_baseline_ids: dictionary mapping index fields to baseline
-			values
-		- dict_expand_vars: dictionary of variable specification components to
-			expand. If none, expands along all uniquely defined values for
-			self.field_variable_trajgroup_type and self.variable
-		- sample_unit_id: optional id to pass for error troubleshooting
-		"""
-
-		dict_all_dims = self.dict_all_dimensional_values if (dict_all_dims is None) else dict_all_dims
-		if not isinstance(dict_all_dims, dict):
-			return df_su_input
-
-
-		##  CHECK BASELINES DEFINED
-
-		dict_baseline_ids = self.dict_baseline_ids if not isinstance(dict_baseline_ids, dict) else dict_baseline_ids
-		df_su_base = sf.subset_df(
-			df_su_input,
-			dict_baseline_ids
-		).drop_duplicates()
-
-		# add expansion variables
-		dict_expand_vars = {
-			self.field_variable_trajgroup_type: list(df_su_input[self.field_variable_trajgroup_type].unique()),
-			self.field_variable: list(df_su_input[self.field_variable].unique())
-		} if (dict_expand_vars is None) else dict_expand_vars
-		dict_all_dims.update(dict_expand_vars)
-
-		n_req_baseline = np.prod([len(v) for v in dict_expand_vars.values()])
-		if len(df_su_base) != n_req_baseline:
-			sg = "" if (sample_unit_id is not None) else f" {sample_unit_id}"
-			msg = f"Unable to initialize sample group{sg}: one or more variables and/or variable trajectory group types are missing. Check the input data frame."
-			self._log(msg, type_log = "error")
-			raise RuntimeError(msg)
-
-
-		##  BUILD EXPANDED DATAFRAME, MERGE IN AVAILABLE, THEN FILL IN ROWS
-
-		dims_expand = [x for x in df_su_input.columns if x in dict_all_dims.keys()]
-		vals_expand = [dict_all_dims.get(x) for x in dims_expand]
-		df_dims_req = pd.DataFrame(
-			list(itertools.product(*vals_expand)),
-			columns = dims_expand
-		)
-		df_dims_req = pd.merge(df_dims_req, df_su_input, how = "left")
-
-		# get merge fields (expansion fields that exclude baseline ids) and subset fields (data fields to replace)
-		fields_merge = list(dict_expand_vars.keys())
-		fields_subset = [x for x in df_dims_req.columns if x not in dims_expand]
-		df_out = sf.fill_df_rows_from_df(
-			df_dims_req,
-			df_su_base,
-			fields_merge,
-			fields_subset
-		)
-
-		return df_out[df_su_input.columns]
-
-
-
-	def generate_future_from_lhs_vector(self,
-		df_row_lhc_sample_x: Union[pd.Series, pd.DataFrame],
-		df_row_lhc_sample_l: Union[pd.Series, pd.DataFrame, None] = None,
-		future_id: Union[int, None] = None,
-		baseline_future_q: bool = False,
-		dict_optional_dimensions: Dict[str, int] = {}
-	) -> pd.DataFrame:
-		"""
-		Build a data frame of a single future for all sample units
-
-		Function Arguments
-		------------------
-		- df_row_lhc_sample_x: data frame row with column names as sample groups for all sample groups to vary with uncertainties
-
-		Keyword Arguments
-		-----------------
-		- df_row_lhc_sample_l: data frame row with column names as sample groups for all sample groups to vary with uncertainties
-			* If None, lhs_trial_l = 1 in all samples (constant strategy effect across all futures)
-		- future_id: optional future id to add to the dataframe using self.future_id
-		- baseline_future_q: generate the dataframe for the baseline future?
-		- dict_optional_dimensions: dictionary of optional dimensions to pass to the output data frame (form: {key_dimension: id_value})
-		"""
-
-		# check the specification of
-		if not (isinstance(df_row_lhc_sample_x, pd.DataFrame) or isinstance(df_row_lhc_sample_x, pd.Series) or (df_row_lhc_sample_x is None)):
-			tp = str(type(df_row_lhc_sample_x))
-			self._log(f"Invalid input type {tp} specified for df_row_lhc_sample_x in generate_future_from_lhs_vector: pandas Series or DataFrames (first row) are acceptable inputs. Returning baseline future.", type_log = "warning")
-			df_row_lhc_sample_x = None
-
-		# initialize outputs and iterate
-		dict_df = {}
-		df_out = []
-		for k in enumerate(self.all_sampling_units):
-			k, su = k
-			samp = self.dict_sampling_units.get(su)
-
-			if samp is not None:
-
-				# get LHC samples for X and L
-				lhs_x = self.get_df_row_element(df_row_lhc_sample_x, su)
-				lhs_l = self.get_df_row_element(df_row_lhc_sample_l, su, 1.0)
-
-				# note: if lhs_x is None, returns baseline future no matter what,
-				dict_fut = samp.generate_future(
-					lhs_x,
-					lhs_l,
-					baseline_future_q = baseline_future_q
-				)
-
-				dict_df.update(
-					dict((key, value.flatten()) for key, value in dict_fut.items())
-				)
-
-				# initialize indexing if necessary
-				if len(df_out) == 0:
-					dict_fields = None if (future_id is None) else {self.key_future: future_id}
-					df_out.append(
-						samp.generate_indexing_data_frame(
-							dict_additional_fields = dict_fields
-						)
-					)
-
-		df_out.append(pd.DataFrame(dict_df))
-		df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
-		df_out = sf.add_data_frame_fields_from_dict(df_out, dict_optional_dimensions) if isinstance(dict_optional_dimensions, dict) else df_out
-
-		return df_out
-
-
-
-	def get_trajgroup_and_variable_specification(self,
-		input_var_spec: str,
-		regex_trajgroup: Union[re.Pattern, None] = None,
-		regex_trajmax: Union[re.Pattern, None] = None,
-		regex_trajmin: Union[re.Pattern, None] = None,
-		regex_trajmix: Union[re.Pattern, None] = None
-	) -> Tuple[str, str]:
-		"""
-		Derive a trajectory group and variable specification from variables in an input variable specification
-
-		Function Arguments
-		------------------
-		- input_var_spec: variable specification string
-
-		Keyword Arguments
-		-----------------
-		- regex_trajgroup: Regular expression used to identify trajectory group variables in `field_variable` of `df_input_database`
-		- regex_trajmax: Regular expression used to identify trajectory maxima in variables and trajgroups specified in `field_variable` of `df_input_database`
-		- regex_trajmin: Regular expression used to identify trajectory minima in variables and trajgroups specified in `field_variable` of `df_input_database`
-		- regex_trajmix: Regular expression used to identify trajectory baseline mix (fraction maxima) in variables and trajgroups specified in `field_variable` of `df_input_database`
-		"""
-		input_var_spec = str(input_var_spec)
-		regex_trajgroup = self.regex_trajgroup if (regex_trajgroup is None) else regex_trajgroup
-		regex_trajmax = self.regex_trajmax if (regex_trajmax is None) else regex_trajmax
-		regex_trajmin = self.regex_trajmin if (regex_trajmin is None) else regex_trajmin
-		regex_trajmix = self.regex_trajmix if (regex_trajmix is None) else regex_trajmix
-
-		tg = None
-		var_spec = None
-
-		# check trajgroup match
-		trajgroup_match = regex_trajgroup.match(input_var_spec)
-		if trajgroup_match is not None:
-			tg = int(trajgroup_match.groups()[0])
-			check_spec_string = str(trajgroup_match.groups()[1])
-		else:
-			check_spec_string = input_var_spec
-
-		# check trajectory max/min/mix
-		if regex_trajmax.match(check_spec_string) is not None:
-			var_spec = "max"
-		elif regex_trajmin.match(check_spec_string) is not None:
-			var_spec = "min"
-		elif regex_trajmix.match(check_spec_string) is not None:
-			var_spec = "mix"
-		elif (check_spec_string == "lhs") and (tg is not None):
-			var_spec = "lhs"
-
-		return (tg, var_spec)
-
-
-
-	def _initialize_input_database(self,
-		df_in: pd.DataFrame,
-		field_sample_unit_group: Union[str, None] = None,
-		field_variable: Union[str, None] = None,
-		field_variable_trajgroup: Union[str, None] = None,
-		field_variable_trajgroup_type: Union[str, None] = None,
-		missing_trajgroup_flag: Union[int, None] = None,
-		regex_trajgroup: Union[re.Pattern, None] = None,
-		regex_trajmax: Union[re.Pattern, None] = None,
-		regex_trajmin: Union[re.Pattern, None] = None,
-		regex_trajmix: Union[re.Pattern, None] = None
-	) -> None:
-		"""
-		Prepare the input database for sampling by adding sample unit group,
-			cleaning up trajectory groups, etc. Sets the following properties:
-
-			* self.input_database
-
-		Function Arguments
-		------------------
-		- df_in: input database to use to generate SampleUnit objects
-
-		Keyword Arguments
-		-----------------
-		- field_sample_unit_group: field used to identify groupings of sample units
-		- field_variable: field in df_in used to denote the database
-		- field_variable_trajgroup: field denoting the variable trajectory group
-		- field_variable_trajgroup_type: field denoting the type of the variable within a variable trajectory group
-		- missing_trajgroup_flag: missing flag for trajectory group values
-		- regex_trajgroup: regular expression used to match trajectory group variable specifications
-		- regex_trajmax: regular expression used to match the maximum trajectory component of a trajectory group variable element
-		- regex_trajmin: regular expression used to match the minimum trajectory component of a trajectory group variable element
-		- regex_trajmix: regular expression used to match the mixing component of a trajectory group variable element
-		"""
-
-		# input dataframe
-		#df_in = self.df_input_database if (df_in is None) else df_in
-
-		# key fields
-		field_sample_unit_group = self.field_sample_unit_group if (field_sample_unit_group is None) else field_sample_unit_group
-		field_variable = self.field_variable if (field_variable is None) else field_variable
-		field_variable_trajgroup = self.field_variable_trajgroup if (field_variable_trajgroup is None) else field_variable_trajgroup
-		field_variable_trajgroup_type = self.field_variable_trajgroup_type if (field_variable_trajgroup_type is None) else field_variable_trajgroup_type
-		# set the missing flag
-		missing_flag = self.missing_flag_int if (missing_trajgroup_flag is None) else int(missing_trajgroup_flag)
-		# regular expressions
-		regex_trajgroup = self.regex_trajgroup if (regex_trajgroup is None) else regex_trajgroup
-		regex_trajmax = self.regex_trajmax if (regex_trajmax is None) else regex_trajmax
-		regex_trajmin = self.regex_trajmin if (regex_trajmin is None) else regex_trajmin
-		regex_trajmix = self.regex_trajmix if (regex_trajmix is None) else regex_trajmix
-
-		##  split traj groups
-		new_col_tg = []
-		new_col_spec_type = []
-
-		# split out traj group and variable specification
-		df_add = df_in[field_variable].apply(
-			self.get_trajgroup_and_variable_specification,
-			args = (regex_trajgroup,
-			regex_trajmax,
-			regex_trajmin,
-			regex_trajmix)
-		)
-
-		# add the variable trajectory group
-		df_add = pd.DataFrame([np.array(x) for x in df_add], columns = [field_variable_trajgroup, field_variable_trajgroup_type])
-		df_add[field_variable_trajgroup] = df_add[field_variable_trajgroup].replace({None: missing_flag})
-		df_add[field_variable_trajgroup] = df_add[field_variable_trajgroup].astype(int)
-		df_in = pd.concat([
-				df_in.drop([field_variable_trajgroup, field_variable_trajgroup_type], axis = 1),
-				df_add
-			],
-			axis = 1
-		)
-
-		##  update trajgroups to add dummies
-		new_tg = df_in[df_in[field_variable_trajgroup] >= 0][field_variable_trajgroup]
-		new_tg = 1 if (len(new_tg) == 0) else max(np.array(new_tg)) + 1
-		tgs = list(df_in[field_variable_trajgroup].copy())
-		tgspecs = list(df_in[field_variable_trajgroup_type].copy())
-
-		# initialization outside of the iteration
-		var_list = list(df_in[field_variable].copy())
-		dict_parameter_to_tg = {}
-		dict_repl_tgt = {"max": self.specification_tgt_max, "min": self.specification_tgt_min}
-
-		for i in range(len(df_in)):
-			# get trajgroup, trajgroup type, and variable specification for current row
-			tg = int(df_in[field_variable_trajgroup].iloc[i])
-			tgspec = str(df_in[field_variable_trajgroup_type].iloc[i])
-			vs = str(df_in[field_variable].iloc[i])
-
-			if (tgspec != "<NA>") & (tgspec != "None"):
-				new_tg_q = True
-
-				if tg > 0:
-					# drop the group/remove the trajmax/min/mix
-					vs = regex_trajgroup.match(vs).groups()[0]
-					new_tg_q = False
-
-				# check for current trajgroup type
-				for regex in [regex_trajmax, regex_trajmin, regex_trajmix]:
-					matchstr = regex.match(vs)
-					vs = matchstr.groups()[0] if (matchstr is not None) else vs
-
-				# update the variable list
-				var_list[i] = vs
-
-				# update indexing of trajectory groups
-				if new_tg_q:
-					if vs in dict_parameter_to_tg.keys():
-						tgs[i] = int(dict_parameter_to_tg.get(vs))
-					else:
-						dict_parameter_to_tg.update({vs: new_tg})
-						tgs[i] = new_tg
-						new_tg += 1
-
-		# update outputs
-		df_in[field_variable] = var_list
-		df_in[field_variable_trajgroup] = tgs
-		df_in = df_in[~df_in[field_variable].isin([self.specification_tgt_lhs])].reset_index(drop = True)
-		df_in[field_variable_trajgroup_type].replace(dict_repl_tgt, inplace = True)
-
-		# add sample_unit_group field
-		dict_var_to_su = sf.build_dict(df_in[df_in[field_variable_trajgroup] > 0][[field_variable, field_variable_trajgroup]].drop_duplicates())
-		vec_vars_to_assign = sorted(list(set(df_in[df_in[field_variable_trajgroup] <= 0][field_variable])))
-		min_val = (max(dict_var_to_su.values()) + 1) if (len(dict_var_to_su) > 0) else 1
-		dict_var_to_su.update(
-			dict(zip(
-				vec_vars_to_assign,
-				list(range(min_val, min_val + len(vec_vars_to_assign)))
-			))
-		)
-		df_in[field_sample_unit_group] = df_in[field_variable].replace(dict_var_to_su)
-
-		self.input_database = df_in
-
-
-
-	def _initialize_sampling_units(self,
-		df_in: Union[pd.DataFrame, None] = None,
-		dict_all_dims: Union[Dict[str, List[int]], None] = None,
-		fan_function: Union[str, None] = None,
-		**kwargs
-	) -> None:
-		"""
-		Instantiate all defined SamplingUnits from input database. Sets the
-			following properties:
-
-			* self.n_su
-			* self.all_sampling_units
-			* self.dict_sampling_units
-
-		Behavioral Notes
-		----------------
-		- _initialize_sampling_units() will try to identify the availablity of
-			dimensions specified in dict_all_dims within df_in. If a dimension
-			specified in dict_all_dims is not found within df_in, the funciton
-			will replace the value with the baseline strategy.
-		- If a product specified within self.dict_baseline_ids is missing in
-			the dataframe, then an error will occur.
-
-		Keword Arguments
-		-----------------
-		- df_in: input database used to identify sampling units. Must include
-			self.field_sample_unit_group
-		- dict_all_dims: optional dictionary to pass that contains dimensions.
-			This dictionary is used to determine which dimensions *should* be
-			present. If any of the dimension sets specified in dict_all_dims
-			are not found in df_in, their values are replaced with associated
-			baselines.
-		- fan_function: function specification to use for uncertainty fans
-		- **kwargs: passed to SamplingUnit initialization
-		"""
-
-		# get some defaults
-		df_in = self.input_database if (df_in is None) else df_in
-		fan_function = self.fan_function_specification if (fan_function is None) else fan_function
-		dict_all_dims = self.dict_all_dimensional_values if not isinstance(dict_all_dims, dict) else dict_all_dims
-
-		# setup inputs
-		kwarg_keys = list(kwargs.keys())
-		field_time_period = self.field_time_period if ("field_time_period" not in kwarg_keys) else kwargs.get("field_time_period")
-		field_uniform_scaling_q = self.field_uniform_scaling_q if ("field_uniform_scaling_q" not in kwarg_keys) else kwargs.get("field_uniform_scaling_q")
-		field_trajgroup_no_vary_q = self.field_trajgroup_no_vary_q if ("field_trajgroup_no_vary_q" not in kwarg_keys) else kwargs.get("field_trajgroup_no_vary_q")
-		field_variable_trajgroup = self.field_variable_trajgroup if ("field_variable_trajgroup" not in kwarg_keys) else kwargs.get("field_variable_trajgroup")
-		field_variable_trajgroup_type = self.field_variable_trajgroup_type if ("field_variable_trajgroup_type" not in kwarg_keys) else kwargs.get("field_variable_trajgroup_type")
-		field_variable = self.field_variable if ("field_variable" not in kwarg_keys) else kwargs.get("field_variable")
-		key_strategy = self.key_strategy if ("key_strategy" not in kwarg_keys) else kwargs.get("key_strategy")
-		regex_id = self.regex_id if ("regex_id" not in kwarg_keys) else kwargs.get("regex_id")
-		regex_max = self.regex_max if ("regex_max" not in kwarg_keys) else kwargs.get("regex_max")
-		regex_min = self.regex_min if ("regex_min" not in kwarg_keys) else kwargs.get("regex_min")
-		regex_tp = self.regex_tp if ("regex_tp" not in kwarg_keys) else kwargs.get("regex_tp")
-
-		dict_sampling_units = {}
-
-		dfgroup_sg = df_in.groupby(self.field_sample_unit_group)
-		all_sample_groups = sorted(list(set(df_in[self.field_sample_unit_group])))
-		n_sg = len(dfgroup_sg)
-		if isinstance(dict_all_dims, dict):
-			dict_all_dims = dict((k, v) for k, v in dict_all_dims.items() if k in self.dict_baseline_ids.keys())
-
-
-		##  GENERATE SamplingUnit FROM DATABASE
-
-		self._log(f"Instantiating {n_sg} sampling units.", type_log = "info")
-		t0 = time.time()
-
-		for iterate in enumerate(dfgroup_sg):
-
-			i, df_sg = iterate
-			df_sg = df_sg[1]
-			sg = int(df_sg[self.field_sample_unit_group].iloc[0])
-
-			# fill in missing values from baseline if dims are missing in input database
-			df_sg = self.clean_sampling_unit_input_df(df_sg, dict_all_dims = dict_all_dims) if (dict_all_dims is not None) else df_sg
-
-			samp = SamplingUnit(
-				df_sg.drop(self.field_sample_unit_group, axis = 1),
-				self.dict_baseline_ids,
-				self.time_period_u0,
-				fan_function_specification = fan_function,
-				field_time_period = field_time_period,
-				field_uniform_scaling_q = field_uniform_scaling_q,
-				field_trajgroup_no_vary_q = field_trajgroup_no_vary_q,
-				field_variable_trajgroup = field_variable_trajgroup,
-				field_variable_trajgroup_type = field_variable_trajgroup_type,
-				field_variable = field_variable,
-				key_strategy = key_strategy,
-				missing_trajgroup_flag = self.missing_flag_int,
-				regex_id = regex_id,
-				regex_max = regex_max,
-				regex_min = regex_min,
-				regex_tp = regex_tp
-			)
-
-			dict_sampling_units = dict(zip(all_sample_groups, [samp for x in range(n_sg)])) if (i == 0) else dict_sampling_units
-			dict_sampling_units.update({sg: samp})
-
-			self._log(f"Iteration {i} complete.", type_log = "info") if (i%250 == 0) else None
-
-		t_elapse = sf.get_time_elapsed(t0)
-		self._log(f"\t{n_sg} sampling units complete in {t_elapse} seconds.", type_log = "info")
-
-		self.n_su = n_sg
-		self.all_sampling_units = all_sample_groups
-		self.dict_sampling_units = dict_sampling_units
