@@ -250,7 +250,6 @@ class OrderedDirectProductTable:
         - key_values: set of keys to return specified as a list of primary keys
             OR a dictionary of a dimensional key to values within that
             dimension. If None, returns all keys.
-            * If a
             * NOTE: caution should be exercised in returning all keys. The
                 OrderedDirectProductTable class is designed to reduced the
                 memory footprint of index tables, and returning the entire data

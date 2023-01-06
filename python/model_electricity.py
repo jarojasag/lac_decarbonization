@@ -4582,7 +4582,7 @@ class ElectricEnergy:
         #    BEGIN NEMO MOD INTEGRATION    #
         ####################################
 
-        ##  1. PREPARE AND POPULATION THE DATABASE
+        ##  1. PREPARE AND POPULATE THE DATABASE
 
         # check engine/fp_database
         str_prepend_sqlite = "sqlite:///"
@@ -4630,6 +4630,7 @@ class ElectricEnergy:
         # get the optimizer (must reset each time)
         optimizer = self.julia_jump.Model(self.solver_module.Optimizer)
         self.julia_jump.set_optimizer_attribute(optimizer, "Solver", "cplex") if (solver == "gams_cplex") else None
+        self.julia_jump.set_silent(optimizer)
 
         # set up vars to save
         vars_to_save = ", ".join(self.required_nemomod_output_tables)
@@ -4642,7 +4643,8 @@ class ElectricEnergy:
                 numprocs = 1,
                 calcyears = vector_calc_time_periods,
                 reportzeros = False,
-                varstosave = vars_to_save
+                varstosave = vars_to_save,
+                quiet = True
             )
 
         except Exception as e:

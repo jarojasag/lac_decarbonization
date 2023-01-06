@@ -1090,7 +1090,8 @@ class SISEPUEDE:
 
 						id_primary = df_primary_keys_cur_design_fs[self.key_primary]
 						id_primary = int(id_primary.iloc[0]) if (len(id_primary) > 0) else None
-						write_q = ((id_primary, ) not in set_available_ids) or (index_conflict_resolution != "write_replace")
+						write_q = ((region_out, id_primary) not in set_available_ids) or (index_conflict_resolution == "write_replace")
+						tup = (region_out, id_primary)
 
 						if (id_primary in primary_keys) and write_q:
 

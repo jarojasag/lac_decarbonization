@@ -2410,7 +2410,16 @@ class ModelAttributes:
 
 
     # get scalar
-    def get_scalar(self, modvar: str, return_type: str = "total") -> float:
+    def get_scalar(self,
+        modvar: str,
+        return_type: str = "total"
+    ) -> float:
+        """
+        Get the scalar a to convert units from modvar to configuration units,
+            i.e.
+
+            modvar_units * a = configuration_units
+        """
 
         valid_rts = ["total", "area", "gas", "length", "mass", "monetary", "power", "energy", "volume"]
         if return_type not in valid_rts:
@@ -3185,7 +3194,7 @@ class ModelAttributes:
 
 
 
-    ##  function to retrive multiple variables that, across categories, must sum to some value. Gives a correction threshold to allow for small errors
+    ##
     def get_multivariables_with_bounded_sum_by_category(self,
         df_in: pd.DataFrame,
         modvars: list,
@@ -3196,19 +3205,24 @@ class ModelAttributes:
     ) -> dict:
 
         """
-            use get_multivariables_with_bounded_sum_by_category() to retrieve a array or data frame of input variables. If return_type == "array_units_corrected", then the ModelAttributes will re-scale emissions factors to reflect the desired output emissions mass (as defined in the configuration)
+        use get_multivariables_with_bounded_sum_by_category() to retrive
+            multiple variables that, across categories, must sum to some value.
+            Gives a correction threshold to allow for small errors.
 
-            - df_in: data frame containing input variables
+        Function Arguments
+        ------------------
+        - df_in: data frame containing input variables
+        - modvars: variables to sum over and restrict
+        - sum_restriction: maximium sum that array may equal
 
-            - modvars: variables to sum over and restrict
-
-            - sum_restriction: maximium sum that array may equal
-
-            - correction_threshold: tolerance for correcting categories that
-
-            - force_sum_equality: default is False. If True, will force the sum to equal one (overrides correction_threshold)
-
-            - msg_append: use to passage an additional error message to support troubleshooting
+        Keyword Arguments
+        -----------------
+        - correction_threshold: tolerance for correcting categories that exceed
+            the sum restriction
+        - force_sum_equality: default is False. If True, will force the sum to
+            equal one (overrides correction_threshold)
+        - msg_append: use to passage an additional error message to support
+            troubleshooting
 
         """
         # retrieve arrays
@@ -3249,8 +3263,8 @@ class ModelAttributes:
 
             w = np.where((arr <= sum_restriction + correction_threshold) & (arr > sum_restriction))[0]
             if len(w) > 0:
-                if np.max(sums - sum_restriction) <= correction_threshold:
-                    w = np.where((sums <= sum_restriction + correction_threshold) & (sums > sum_restriction))
+                if np.max(arr - sum_restriction) <= correction_threshold:
+                    w = np.where((arr <= sum_restriction + correction_threshold) & (arr > sum_restriction))
                     inds = w[0]*len(arr[0]) + w[1]
                     for modvar in modvars:
                         arr_cur = dict_arrs[modvar]

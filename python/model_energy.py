@@ -193,6 +193,8 @@ class NonElectricEnergy:
         self.modvar_scoe_consumpinit_energy_per_hh_heat = "SCOE Initial Per Household Heat Energy Consumption"
         self.modvar_scoe_consumpinit_energy_per_mmmgdp_elec = "SCOE Initial Per GDP Electric Appliances Energy Consumption"
         self.modvar_scoe_consumpinit_energy_per_mmmgdp_heat = "SCOE Initial Per GDP Heat Energy Consumption"
+        self.modvar_scoe_demscalar_elec_energy_demand = "SCOE Appliance Energy Demand Scalar"
+        self.modvar_scoe_demscalar_heat_energy_demand = "SCOE Heat Energy Demand Scalar"
         self.modvar_scoe_efficiency_fact_heat_en_coal = "SCOE Efficiency Factor for Heat Energy from Coal"
         self.modvar_scoe_efficiency_fact_heat_en_diesel = "SCOE Efficiency Factor for Heat Energy from Diesel"
         self.modvar_scoe_efficiency_fact_heat_en_electricity = "SCOE Efficiency Factor for Heat Energy from Electricity"
@@ -232,7 +234,7 @@ class NonElectricEnergy:
         self.modvar_dict_scoe_fuel_fractions_to_efficiency_factors = self.modvar_dicts_scoe_fuel_vars["fuel_fraction_variable_by_fuel_to_energy_efficiency_variable_by_fuel"]
 
 
-        # Transportation variables
+        # Transportation variablesz
         self.modvar_trns_average_vehicle_load_freight = "Average Freight Vehicle Load"
         self.modvar_trns_average_passenger_occupancy = "Average Passenger Vehicle Occupancy Rate"
         self.modvar_trns_electrical_efficiency = "Electrical Vehicle Efficiency"
@@ -675,7 +677,7 @@ class NonElectricEnergy:
         """
             Project energy consumption--in terms of configuration units for
                 energy--for a consumption variable for each fuel specified as a
-                key in NonElectricEnergy.modvar_dict_scoe_fuel_fractions_to_efficiency_factors
+                key in self.modvar_dict_scoe_fuel_fractions_to_efficiency_factors
 
             Function Arguments
             ------------------
@@ -1568,22 +1570,33 @@ class NonElectricEnergy:
     ) -> pd.DataFrame:
 
         """
-            Calculation other energy, including stationary combustion (including buildings) and other energy exogenously specified emissions unaccounted for elsewhere
+        Calculation other energy, including stationary combustion (including
+            buildings) and other energy exogenously specified emissions
+            unaccounted for elsewhere
 
-            Function Arguments
-            ------------------
-            - df_neenergy_trajectories: pd.DataFrame of input variables
-            - vec_hh: np.ndarray vector of number of households (requires len(vec_hh) == len(df_neenergy_trajectories))
-            - vec_gdp: np.ndarray vector of gdp (requires len(vec_gdp) == len(df_neenergy_trajectories))
-            - vec_rates_gdp_per_capita: np.ndarray vector of growth rates in gdp/capita (requires len(vec_rates_gdp_per_capita) == len(df_neenergy_trajectories) - 1)
-            - dict_dims: dict of dimensions (returned from check_projection_input_df). Default is None.
-            - n_projection_time_periods: int giving number of time periods (returned from check_projection_input_df). Default is None.
-            - projection_time_periods: list of time periods (returned from check_projection_input_df). Default is None.
+        Function Arguments
+        ------------------
+        - df_neenergy_trajectories: pd.DataFrame of input variables
+        - vec_hh: np.ndarray vector of number of households (requires
+            len(vec_hh) == len(df_neenergy_trajectories))
+        - vec_gdp: np.ndarray vector of gdp (requires
+            len(vec_gdp) == len(df_neenergy_trajectories))
+        - vec_rates_gdp_per_capita: np.ndarray vector of growth rates in
+            gdp/capita (requires
+            en(vec_rates_gdp_per_capita) == len(df_neenergy_trajectories) - 1)
+        - dict_dims: dict of dimensions (returned from
+            check_projection_input_df). Default is None.
+        - n_projection_time_periods: int giving number of time periods (returned
+            from check_projection_input_df). Default is None.
+        - projection_time_periods: list of time periods (returned from
+            check_projection_input_df). Default is None.
 
-            Notes
-            -----
-            If any of dict_dims, n_projection_time_periods, or projection_time_periods are unspecified (expected if ran outside of Energy.project()), self.model_attributes.check_projection_input_df wil be run
-
+        Notes
+        -----
+        If any of dict_dims, n_projection_time_periods, or
+            projection_time_periods are unspecified (expected if ran outside of
+            Energy.project()), self.model_attributes.check_projection_input_df
+            will be run
         """
 
         # allows production to be run outside of the project method
@@ -1637,6 +1650,23 @@ class NonElectricEnergy:
         arr_scoe_growth_demand_mmmgdp_elec = sf.project_growth_scalar_from_elasticity(vec_rates_gdp_per_capita, arr_scoe_enerdem_elasticity_hh_elec, False, "standard")
         arr_scoe_demand_mmmgdp_elec = sf.do_array_mult(arr_scoe_deminit_mmmgdp_elec[0]*arr_scoe_growth_demand_mmmgdp_elec, vec_gdp)
         arr_scoe_demand_mmmgdp_elec *= self.model_attributes.get_scalar(self.modvar_scoe_consumpinit_energy_per_mmmgdp_elec, "energy")
+        # get demand scalars
+        arr_scoe_demscalar_elec_energy_demand = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories,
+            self.modvar_scoe_demscalar_elec_energy_demand,
+            override_vector_for_single_mv_q = True,
+            return_type = "array_base",
+            expand_to_all_cats = True,
+            all_cats_missing_val = 1.0
+        )
+        arr_scoe_demscalar_heat_energy_demand = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories,
+            self.modvar_scoe_demscalar_heat_energy_demand,
+            override_vector_for_single_mv_q = True,
+            return_type = "array_base",
+            expand_to_all_cats = True,
+            all_cats_missing_val = 1.0
+        )
 
         # next, use fuel mix + efficiencies to determine demands from final fuel consumption for heat energy_to_match
         dict_scoe_demands_by_fuel_heat_hh = self.project_energy_consumption_by_fuel_from_effvars(
@@ -1658,7 +1688,9 @@ class NonElectricEnergy:
         # get total demands by fuel
         dict_demands_by_fuel_heat = {}
         for k in list(set(dict_scoe_demands_by_fuel_heat_hh.keys()) & set(dict_scoe_demands_by_fuel_heat_mmmgdp.keys())):
-            dict_demands_by_fuel_heat.update({k: dict_scoe_demands_by_fuel_heat_hh[k] + dict_scoe_demands_by_fuel_heat_mmmgdp[k]})
+            arr_tmp_demands_total = dict_scoe_demands_by_fuel_heat_hh[k] + dict_scoe_demands_by_fuel_heat_mmmgdp[k]
+            arr_tmp_demands_total *= arr_scoe_demscalar_heat_energy_demand
+            dict_demands_by_fuel_heat.update({k: arr_tmp_demands_total})
 
 
         ##  GET EMISSION FACTORS
@@ -1693,6 +1725,7 @@ class NonElectricEnergy:
         # initialize electrical demand to pass and output emission arrays
         arr_scoe_demand_by_fuel = np.zeros((n_projection_time_periods, len(attr_enfu.key_values)))
         arr_scoe_demand_electricity = arr_scoe_demand_hh_elec + arr_scoe_demand_mmmgdp_elec
+        arr_scoe_demand_electricity *= arr_scoe_demscalar_elec_energy_demand
         arr_scoe_demand_non_electric = 0.0
         arr_scoe_demand_non_electric_total = 0.0
         arr_scoe_emissions_ch4 = 0.0
@@ -1707,7 +1740,7 @@ class NonElectricEnergy:
             index_cat_fuel = attr_enfu.get_key_value_index(cat_fuel)
 
             # get the demand for the current fuel
-            arr_scoe_endem_cur_fuel = dict_demands_by_fuel_heat[var_ener_frac]
+            arr_scoe_endem_cur_fuel = dict_demands_by_fuel_heat.get(var_ener_frac)
             arr_scoe_demand_by_fuel[:, index_cat_fuel] = np.sum(arr_scoe_endem_cur_fuel, axis = 1)*scalar_scoe_to_enfu_var_units
 
             # apply emission factors

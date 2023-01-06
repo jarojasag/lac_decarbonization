@@ -333,13 +333,17 @@ class InputTemplate:
 		# clean data frames to filter out repeat rows in non-baseline strategies
 		sheet_names = []
 		fields_index = [field_req_subsector, field_req_variable, field_time_period]
-		keys_iterate = list(dict_inputs_by_strat.keys())
+		keys_iterate_0 = list(dict_inputs_by_strat.keys())
+		keys_iterate = [self.baseline_strategy] if self.baseline_strategy in keys_iterate_0 else []
+		keys_iterate += sorted([x for x in keys_iterate_0 if (x != self.baseline_strategy)])
 
 		for strat in keys_iterate:
 			#
 			sheet_name = self.name_sheet_from_index(strat)
 			sheet_names.append(sheet_name)
 			df_cur = dict_inputs_by_strat.get(strat)
+			df_cur_out = df_cur
+			df_var_info_out = df_var_info
 
 			if strat != self.baseline_strategy:
 				df_cur = sf.filter_df_on_reference_df_rows(
@@ -350,15 +354,16 @@ class InputTemplate:
 					fields_groupby = [field_req_variable]
 				)
 
-			# add in variable info and pivot to wide by time period
-			df_cur = pd.merge(df_cur, df_var_info, how = "left")
-			df_cur = sf.pivot_df_clean(
-				df_cur,
-				[field_time_period],
-				[field_melted_value]
-			)
+			if df_cur is not None:
+				# add in variable info and pivot to wide by time period
+				df_cur = pd.merge(df_cur, df_var_info, how = "left")
+				df_cur = sf.pivot_df_clean(
+					df_cur,
+					[field_time_period],
+					[field_melted_value]
+				)
 
-			dict_inputs_by_strat.update({sheet_name: df_cur})
+				dict_inputs_by_strat.update({sheet_name: df_cur})
 
 		dict_inputs_by_strat = dict((k, v) for k, v in dict_inputs_by_strat.items() if k in sheet_names)
 

@@ -4,6 +4,33 @@
 2,Test Energy,0
 1001,AFOLU Specific Strategies Start,0
 2001,Circular Economy Specific Strategies Start,0
-3001,Energy Test Electrification,0
+3001,EN - Minimize leaks,0
+3002,EN - Maximize flaring,0
+3003,EN - Maximize industrial energy efficiency,0
+3004,EN - Maximize industrial production efficiency,0
+3005,EN - Fuel switch low-temp thermal processes,0
+3006,EN - Fuel switch high-temp thermal processes,0
+3007,EN - Electrify light duty road transport,0
+3008,EN - Electrify medium duty road transport,0
+3009,EN - Electrify rail,0
+3010,EN - Increase transportation electricity energy efficiency,0
+3011,EN - Increase transportation non-electricity energy efficiency,0
+3012,EN - Reduce demand for transport,0
+3013,EN - Increase occupancy for private vehicles,0
+3014,EN - Mode shift passenger vehicles to others,0
+3015,EN - Mode shift regional passenger travel,0
+3016,EN - Mode shift freight,0
+3017,EN - Increase efficiency of fuel for heat,0
+3018,EN - Reduce demand for heat energy,0
+3019,EN - Switch to electricity for heat,0
+3020,EN - Retire fossil fuel plants early,0
+3021,EN - Increase renewabls,0
+3022,EN - Reduce cost of renewables,0
+3023,EN - Increase efficiency of electricity production,0
+3024,EN - Reduce transmission losses,0
+3025,EN - Increase sequestration or use in industry,0
+3026,EN - Increase sequestration or use in electricity production,0
+3027,EN - Increase direct air capture,0
+3050,Energy Test Electrification,0
 4001,IPPU Specific Strategies,0
 5001,Cross Sectoral Strategies Start,0
