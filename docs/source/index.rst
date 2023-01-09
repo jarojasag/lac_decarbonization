@@ -86,7 +86,9 @@ Contents
    :hidden:
 
    dimensions_of_analysis
+   entering_data
    running_models
+   sisepuede_database
 
 .. toctree::
    :caption: Mathematical Specifications
