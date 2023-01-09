@@ -45,6 +45,7 @@ ATTRIBUTE_PRIMARY
 The `ATTRIBUTE_PRIMARY` table defines the `primary key (primary_id) <dimensions_of_analysis.html#primary-key>`_ for the runs contained in the database.
 
 .. note:: To save memory and disk space, SISEPUEDE stores all primary key information in an ``OrderedDirectProductTable`` class, which does not explicitly store all rows of the table. Instead, SISEPUEDE **only stores rows associated with `primary_id` values that are contained within the output database**. The following ``OrderedDirectProductTable`` methods can be used to find more information on the primary key indexing.
+
     * ``OrderedDirectProductTable.get_dims_from_key()``: Get dimensional values associated with a key (inverse of ``get_key_value``)
     * ``OrderedDirectProductTable.get_key_value()``: Get a key value associated with dimensional values (inverse of ``get_dims_from_key``)
     * ``OrderedDirectProductTable.get_indexing_dataframe()``: Get a data frame associated with select dimensional values or with key values.
