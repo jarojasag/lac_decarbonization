@@ -44,7 +44,7 @@ ATTRIBUTE_PRIMARY
 -----------------
 The `ATTRIBUTE_PRIMARY` table defines the `primary key (primary_id) <dimensions_of_analysis.html#primary-key>`_ for the runs contained in the database.
 
-..note:: To save memory and disk space, SISEPUEDE stores all primary key information in an ``OrderedDirectProductTable`` class, which does not explicitly store all rows of the table. Instead, SISEPUEDE **only stores rows associated with `primary_id` values that are contained within the output database**. The following ``OrderedDirectProductTable`` methods can be used to find more information on the primary key indexing.
+.. note:: To save memory and disk space, SISEPUEDE stores all primary key information in an ``OrderedDirectProductTable`` class, which does not explicitly store all rows of the table. Instead, SISEPUEDE **only stores rows associated with `primary_id` values that are contained within the output database**. The following ``OrderedDirectProductTable`` methods can be used to find more information on the primary key indexing.
     * ``OrderedDirectProductTable.get_dims_from_key()``: Get dimensional values associated with a key (inverse of ``get_key_value``)
     * ``OrderedDirectProductTable.get_key_value()``: Get a key value associated with dimensional values (inverse of ``get_dims_from_key``)
     * ``OrderedDirectProductTable.get_indexing_dataframe()``: Get a data frame associated with select dimensional values or with key values.
@@ -66,7 +66,7 @@ MODEL_INPUT
 -----------
 The `MODEL_INPUT` table stores explicit model inputs for every scenario that is available in the database. It is long by `primary_id`, `region`, and `time_period`. The `MODEL_INPUT` table is **optional**; by default, it is not stored to save space. **NOTE: ADD MECHANISM FOR ALLOWING INPUT TABLE TO BE WRITTEN**
 
-..note:: Individual futures (and the table itself) can be reproduced quickly using SISEPUEDE's internal functions in combination with LHS tables, which are saved by default. To generate an input table associated with a primary key, use ``SISEPUEDE.generate_scenario_database_from_primary_key()``.
+.. note:: Individual futures (and the table itself) can be reproduced quickly using SISEPUEDE's internal functions in combination with LHS tables, which are saved by default. To generate an input table associated with a primary key, use ``SISEPUEDE.generate_scenario_database_from_primary_key()``.
 
 
 MODEL_OUTPUT
