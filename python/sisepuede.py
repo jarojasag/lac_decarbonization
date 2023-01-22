@@ -535,7 +535,6 @@ class SISEPUEDE:
 		# try getting the configuration parameter
 		db_type = self.get_config_parameter(config_key_output_method)
 		db_type = default_db_type if (db_type is None) else db_type
-
 		self.database = None
 
 		try:
@@ -553,7 +552,8 @@ class SISEPUEDE:
 				fp_base_output = self.fp_base_output_raw,
 				create_dir_output = True,
 				logger = self.logger,
-				replace_on_init = False
+				replace_on_init = False,
+
 			)
 
 		except Exception as e:

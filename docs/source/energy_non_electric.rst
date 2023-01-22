@@ -41,6 +41,15 @@ Energy Fuels
 
 Fuel is cross-cutting, affecting all energy sectors (including `Electricity <../energy_electric.htm>`_). **EXPAND DESCRIPTION**
 
+Categories
+----------
+
+Energy Fuels is divided into the following categories.
+
+.. csv-table:: Fuel categories (``$CAT-FUEL$`` attribute table)
+   :file: ./csvs/attribute_cat_enfu.csv
+   :header-rows: 1
+
 
 Variables by Category
 ---------------------
@@ -62,14 +71,12 @@ The following variables are required for some categories ``$CAT-FUEL$``.
    :header-rows: 1
 
 
-Categories
-----------
+Fuel Production
+---------------
 
-Energy Fuels is divided into the following categories.
+Fuel production is a subsector of industrial energy that incorporates feedback loops with electricity production. 
 
-.. csv-table:: Fuel categories (``$CAT-FUEL$`` attribute table)
-   :file: ./csvs/attribute_cat_enfu.csv
-   :header-rows: 1
+.. note:: All fuel production that can be electrified is modeled using a dummy technology with a high cost; this cost is used inconjunction with a minimum production share to ensure that target electrification levels are met. 
 
 ----
 
@@ -100,6 +107,12 @@ Industrial Energy
 
 Industrial energy includes emission from **DESCRIPTION**
 
+Categories
+----------
+
+Industrial categories are described in `Industial Processes and Product Use (IPPU) <../ippu.html>`_.
+
+
 Variables by Category
 ---------------------
 
@@ -117,12 +130,6 @@ Variables by Partial Category
    :file: ./csvs/table_varreqs_by_partial_category_en_inen.csv
    :header-rows: 1
 
-
-Categories
-----------
-
-Industrial categories are described in `Industial Processes and Product Use (IPPU) <../ippu.html>`_.
-
 ----
 
 
@@ -138,6 +145,15 @@ SCOE (**S**\tationary **C**\tombustion and **O**\tther **E**\tnergy) captures st
           | For example, a value of 0.8 would indicate that 20% (1 - 0.8) of the input energy to the system (e.g., for heating, cooking, water heaters, etc.) is lost (e.g., 1.25 TJ of input energy satisfies 1 TJ of end-use demand), while a value of 1 would indicate perfect efficiency (1 TJ in :math:`\implies` 1 TJ out)
           |
           | At time :math:`t = 0`, the efficiencies are used to calculate an end-user demand for energy, which elasticities are applied to to estimate a point-of-use demand. In subsequent time steps, as the mix of energy use changes, input energy demands are calculated using the efficiency factors of different mixes of fuels.
+
+Categories
+----------
+
+SCOE is divided into the following categories.
+
+.. csv-table:: Other categories (``$CAT-SCOE$`` attribute table)
+   :file: ./csvs/attribute_cat_scoe.csv
+   :header-rows: 1
 
 
 Variables by Category
@@ -157,16 +173,6 @@ Variables by Partial Category
    :file: ./csvs/table_varreqs_by_partial_category_en_scoe.csv
    :header-rows: 1
 
-
-Categories
-----------
-
-SCOE is divided into the following categories.
-
-.. csv-table:: Other categories (``$CAT-SCOE$`` attribute table)
-   :file: ./csvs/attribute_cat_scoe.csv
-   :header-rows: 1
-
 ----
 
 
@@ -181,6 +187,16 @@ Known Issues
 ------------
 
 **Discuss how variables that are set in Transportation have to be added to the NonElectricEnergy class as well**
+
+
+Categories
+----------
+
+Transportation is divided into the following categories. These categories are associated with different transportation demand categories (see below), which govern mode-shifting.
+
+.. csv-table:: Other categories (``$CAT-TRANSPORTATION$`` attribute table)
+   :file: ./csvs/attribute_cat_transportation.csv
+   :header-rows: 1
 
 
 Variables by Category
@@ -203,16 +219,6 @@ Variables by Partial Category
    :file: ./csvs/table_varreqs_by_partial_category_en_trns.csv
    :header-rows: 1
 
-
-Categories
-----------
-
-Transportation is divided into the following categories. These categories are associated with different transportation demand categories (see below), which govern mode-shifting.
-
-.. csv-table:: Other categories (``$CAT-TRANSPORTATION$`` attribute table)
-   :file: ./csvs/attribute_cat_transportation.csv
-   :header-rows: 1
-
 ----
 
 
@@ -222,6 +228,19 @@ Transportation Demand
 =====================
 
 Transportation demand is broken into its own subsector given some of the complexities that drive transportation demand (unlike other subsectors, like SCOE, that do not contain categorical mode-shifting within demands). The **MODELNAME** transportation demand subsector allows for more complex interactions--e.g., interactions with industrial production, growth in tourism, waste collection, and imports and exports--to be integrated, though these are not dealt with explicitly at this time.
+
+Categories
+----------
+
+Transportation demand is divided into the following categories. These categories are associated with different allowable mode shifts between vehicle types.
+
+.. csv-table:: Transportation Demand categories (``$CAT-TRANSPORTATION-DEMAND$`` attribute table)
+   :file: ./csvs/attribute_cat_transportation_demand.csv
+   :header-rows: 1
+
+
+Variables by Category
+---------------------
 
 For each transportation demand category ``$CAT-TRANSPORTATION-DEMAND$``, the following variables are required.
 
@@ -238,11 +257,4 @@ Variables by Partial Category
    :header-rows: 1
 
 
-Categories
-----------
 
-Transportation demand is divided into the following categories. These categories are associated with different allowable mode shifts between vehicle types.
-
-.. csv-table:: Transportation Demand categories (``$CAT-TRANSPORTATION-DEMAND$`` attribute table)
-   :file: ./csvs/attribute_cat_transportation_demand.csv
-   :header-rows: 1

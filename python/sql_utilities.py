@@ -15,8 +15,8 @@ def dict_subset_to_query_append(
 
     Function Arguments
     ------------------
-    - dict_subset: dictionary with keys that are columns in the table and values,
-        given as a list, to subset the table. dict_subset is written as:
+    - dict_subset: dictionary with keys that are columns in the table and 
+        values, given as a list, to subset the table. dict_subset is written as:
 
         dict_subset = {
             field_a = [val_a1, val_a2, ..., val_am],
@@ -30,7 +30,8 @@ def dict_subset_to_query_append(
     -----------------
     - query_logic: default is "and". Subsets table to as
 
-        where field_a in (val_a1, val_a2, ..., val_am) ~ field_b in (val_b1, val_b2, ..., val_bn)...
+        where field_a in (val_a1, val_a2, ..., val_am) ~ field_b in 
+        (val_b1, val_b2, ..., val_bn)...
 
         where `~ in ["and", "or"]`
 
@@ -157,10 +158,13 @@ def sql_table_to_df(
 ) -> pd.DataFrame:
     """
         Query a database, retrieve a table, and convert it to a dataframe.
-        - engine: SQLalchemy Engine used to create a connection and query the database
+        - engine: SQLalchemy Engine used to create a connection and query the 
+            database
         - table_name: the table in the database to query
-        - fields_select: a list of fields to select or a string of fields to select (comma-delimited). If None, return all fields.
-        - query_append: any restrictions to place on the query (e.g., where). If None, return all records.
+        - fields_select: a list of fields to select or a string of fields to 
+            select (comma-delimited). If None, return all fields.
+        - query_append: any restrictions to place on the query (e.g., where). If 
+            None, return all records.
     """
 
     # check table names
@@ -196,18 +200,24 @@ def _write_dataframes_to_db(
     append_q: bool = False
 ):
     """
-        Write a dictionary of tables to an SQL data base.
+    Write a dictionary of tables to an SQL data base.
 
-        Function Arguments
-        ------------------
-        - dict_tables: dictionary of form {TABLENAME: pd.DataFrame, ...} used to write the table to the database
-        - db_engine: an existing SQLAlchemy database engine or a file path to an SQLite database used to establish a connection
-            * If a file path is specified, the connection will be opened and closed within the function
+    Function Arguments
+    ------------------
+    - dict_tables: dictionary of form {TABLENAME: pd.DataFrame, ...} used to 
+        write the table to the database
+    - db_engine: an existing SQLAlchemy database engine or a file path to an 
+        SQLite database used to establish a connection
+        * If a file path is specified, the connection will be opened and closed 
+            within the function
 
-        Keyword Arguments
-        -----------------
-        - preserve_table_schema: preserve existing schema? If so, before writing new tables, rows in existing tables will be deleted and the table will be appended.
-        - append_q: set to True top append tables to existing tables if they exist in the database
+    Keyword Arguments
+    -----------------
+    - preserve_table_schema: preserve existing schema? If so, before writing new 
+        tables, rows in existing tables will be deleted and the table will be 
+        appended.
+    - append_q: set to True top append tables to existing tables if they exist 
+        in the database
     """
 
     # check input specification

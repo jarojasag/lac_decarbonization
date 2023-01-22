@@ -1487,12 +1487,33 @@ class ElectricEnergy:
 
 
     ##  format a description of a dummy tech from the fuel
-    def format_dummy_tech_description_from_fuel(self, fuel: str) -> str:
+    def format_dummy_tech_description_from_fuel(self, 
+        fuel: str
+    ) -> str:
         return f"Dummy technology for fuel {fuel}"
 
+
+
     ##  function to map a fuel to a dummy variable used to extract demands and allow for a solution
-    def get_dummy_fuel_tech(self, fuel: str) -> str:
+    def get_dummy_fuel_tech(self, 
+        fuel: str
+    ) -> str:
+        """
+        Name of dummy technology that generates fuel.
+        """
         return f"supply_{fuel}"
+
+
+
+    ##  function to map a fuel to a dummy variable used to extract demands and allow for a solution
+    def get_dummy_fuel_electrification_tech(self, 
+        fuel: str
+    ) -> str:
+        """
+        Name of dummy technology to allow for electrification in fuel production
+            (replaces get_dummy_fuel_tech() tech)
+        """
+        return f"supply_{fuel}_from_{self.cat_enfu_elec}"
 
 
 
@@ -1967,16 +1988,22 @@ class ElectricEnergy:
         attribute_region: AttributeTable = None
     ) -> pd.DataFrame:
         """
-            Format the CapacityFactor input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the CapacityFactor input table for NemoMod based on SISEPUEDE 
+            configuration parameters, input variables, integrated model outputs, 
+            and reference tables.
 
-            Function Arguments
-            ------------------
-            - df_reference_capacity_factor: data frame of regional capacity factors for technologies that vary (others revert to default)
+        Function Arguments
+        ------------------
+        - df_reference_capacity_factor: data frame of regional capacity factors 
+            for technologies that vary (others revert to default)
 
-            Keyword Arguments
-            -----------------
-            - attribute_technology: AttributeTable for technology, used to separate technologies from storage and identify primary fuels. If None, defaults to ModelAttributes attribute table.
-            - attribute_region: AttributeTable for regions. If None, defaults to ModelAttributes attribute table.
+        Keyword Arguments
+        -----------------
+        - attribute_technology: AttributeTable for technology, used to separate 
+            technologies from storage and identify primary fuels. If None, 
+            defaults to ModelAttributes attribute table.
+        - attribute_region: AttributeTable for regions. If None, defaults to 
+            ModelAttributes attribute table.
         """
 
         # check fields
@@ -2031,12 +2058,15 @@ class ElectricEnergy:
         return_type: str = "table"
     ) -> pd.DataFrame:
         """
-            Format the CapacityToActivityUnit input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the CapacityToActivityUnit input table for NemoMod based on 
+            SISEPUEDE configuration parameters, input variables, integrated 
+            model outputs, and reference tables.
 
-            Keyword Arguments
-            -----------------
-            - return_type: "table" or "value". If value, returns only the CapacityToActivityUnit value for all techs (used in DefaultParams)
-            * Based on configuration parameters
+        Keyword Arguments
+        -----------------
+        - return_type: "table" or "value". If value, returns only the 
+        CapacityToActivityUnit value for all techs (used in DefaultParams)
+        * Based on configuration parameters
         """
 
         # first, get power units, swap to get energy unit equivalent, then get units for the default total energy variable
@@ -2065,16 +2095,19 @@ class ElectricEnergy:
         minimum_dummy_price: Union[int, float] = 100
     ) -> pd.DataFrame:
         """
-            Format the CapitalCost, FixedCost, and VaribleCost input tables for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the CapitalCost, FixedCost, and VaribleCost input tables for 
+            NemoMod based on SISEPUEDE configuration parameters, input 
+            variables, integrated model outputs, and reference tables.
 
-            Function Arguments
-            ------------------
-            - df_elec_trajectories: data frame of model variable input trajectories
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
 
-            Keyword Arguments
-            -----------------
-            - flag_dummy_price: initial price to use, which is later replaced. Should be a large magnitude negative number.
-            - minimum_dummy_price: minimum price for dummy technologies
+        Keyword Arguments
+        -----------------
+        - flag_dummy_price: initial price to use, which is later replaced. 
+            Should be a large magnitude negative number.
+        - minimum_dummy_price: minimum price for dummy technologies
         """
 
         dict_return = {}
@@ -2164,11 +2197,13 @@ class ElectricEnergy:
         df_elec_trajectories: pd.DataFrame
     ) -> pd.DataFrame:
         """
-            Format the CapitalCostStorage input tables for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the CapitalCostStorage input tables for NemoMod based on 
+            SISEPUEDE configuration parameters, input variables, integrated 
+            model outputs, and reference tables.
 
-            Function Arguments
-            ------------------
-            - df_elec_trajectories: data frame of model variable input trajectories
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
         """
 
         dict_return = {}
@@ -2203,12 +2238,16 @@ class ElectricEnergy:
         field_default_values: str = "default_value"
     ) -> pd.DataFrame:
         """
-            Format the DefaultParameters input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the DefaultParameters input table for NemoMod based on SISEPUEDE 
+            configuration parameters, input variables, integrated model outputs, 
+            and reference tables.
 
-            Keyword Arguments
-            -----------------
-            - attribute_nemomod_table: NemoMod tables AttributeTable that includes default values stored in the field 'field_default_values'
-            - field_default_values: string giving the name in the attribute_nemomod_table with default values
+        Keyword Arguments
+        -----------------
+        - attribute_nemomod_table: NemoMod tables AttributeTable that includes 
+            default values stored in the field 'field_default_values'
+        - field_default_values: string giving the name in the 
+            attribute_nemomod_table with default values
         """
 
         attribute_nemomod_table = self.model_attributes.dict_attributes.get("nemomod_table") if (attribute_nemomod_table is None) else attribute_nemomod_table
@@ -2242,11 +2281,14 @@ class ElectricEnergy:
         return_type: str = "table"
     ) -> pd.DataFrame:
         """
-            Format the DiscountRate input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the DiscountRate input table for NemoMod based on SISEPUEDE 
+            configuration parameters, input variables, integrated model outputs,
+            and reference tables.
 
-            Keyword Arguments
-            -----------------
-            - return_type: "table" or "value". If value, returns only the DiscountRate
+        Keyword Arguments
+        -----------------
+        - return_type: "table" or "value". If value, returns only the 
+            DiscountRate
             * Based on configuration specification of discount_rate
         """
 
@@ -2268,11 +2310,18 @@ class ElectricEnergy:
         attribute_time_period: AttributeTable = None
     ) -> pd.DataFrame:
         """
-            Format the EmissionsActivityRatio input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the EmissionsActivityRatio input table for NemoMod based on 
+            SISEPUEDE configuration parameters, input variables, integrated 
+            model outputs, and reference tables.
 
-            Function Arguments
-            ------------------
-            - df_elec_trajectories: data frame of model variable input trajectories
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
+
+        Keyword Arguments
+        -----------------
+        - attribute_time_period: attribute table used for time period. If None,
+            defaults to self.model_attributes
         """
 
         ##  CATEGORY AND ATTRIBUTE INITIALIZATION
@@ -2430,11 +2479,13 @@ class ElectricEnergy:
         df_elec_trajectories: pd.DataFrame
     ) -> pd.DataFrame:
         """
-            Format the FixedCost input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the FixedCost input table for NemoMod based on SISEPUEDE 
+            configuration parameters, input variables, integrated model outputs, 
+            and reference tables.
 
-            Function Arguments
-            ------------------
-            - df_elec_trajectories: data frame of model variable input trajectories
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
         """
 
         return None
@@ -2446,11 +2497,13 @@ class ElectricEnergy:
         df_elec_trajectories: pd.DataFrame
     ) -> pd.DataFrame:
         """
-            Format the InterestRateStorage input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the InterestRateStorage input table for NemoMod based on 
+            SISEPUEDE configuration parameters, input variables, integrated 
+            model outputs, and reference tables.
 
-            Function Arguments
-            ------------------
-            - df_elec_trajectories: data frame of model variable input trajectories
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
         """
 
         return None
@@ -2462,11 +2515,13 @@ class ElectricEnergy:
         df_elec_trajectories: pd.DataFrame
     ) -> pd.DataFrame:
         """
-            Format the InterestRateTechnology input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the InterestRateTechnology input table for NemoMod based on 
+            SISEPUEDE configuration parameters, input variables, integrated 
+            model outputs, and reference tables.
 
-            Function Arguments
-            ------------------
-            - df_elec_trajectories: data frame of model variable input trajectories
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
         """
 
         return None
@@ -2480,16 +2535,20 @@ class ElectricEnergy:
         max_ratio: float = 1000000.0
     ) -> pd.DataFrame:
         """
-            Format the InputActivityRatio input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the InputActivityRatio input table for NemoMod based on SISEPUEDE 
+            configuration parameters, input variables, integrated model outputs, 
+            and reference tables.
 
-            Function Arguments
-            ------------------
-            - df_elec_trajectories: data frame of model variable input trajectories
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
 
-            Keyword Arguments
-            -----------------
-            - attribute_technology: AttributeTable for technology, used to separate technologies from storage and identify primary fuels.
-            - max_ratio: replacement for any input_activity_ratio values derived from efficiencies of 0
+        Keyword Arguments
+        -----------------
+        - attribute_technology: AttributeTable for technology, used to separate 
+            technologies from storage and identify primary fuels.
+        - max_ratio: replacement for any input_activity_ratio values derived 
+            from efficiencies of 0
         """
 
         ##  CATEGORY AND ATTRIBUTE INITIALIZATION
@@ -2572,6 +2631,28 @@ class ElectricEnergy:
 
 
 
+    ##  format MinShareProduction for NemoMod
+    def format_nemomod_table_min_share_production(self,
+        df_elec_trajectories: pd.DataFrame
+    ) -> pd.DataFrame:
+        """
+        Format the MinShareProduction input table for NemoMod based on SISEPUEDE 
+            configuration parameters, input variables, integrated model outputs, 
+            and reference tables. Used to implement electrification in 
+            fuel-production inputs.
+
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
+
+        Keyword Arguments
+        -----------------
+        """
+
+        return None
+
+
+
     ##  format MinStorageCharge for NemoMod
     def format_nemomod_table_min_storage_charge(self,
         df_elec_trajectories: pd.DataFrame,
@@ -2579,16 +2660,21 @@ class ElectricEnergy:
         field_attribute_min_charge: str = "minimum_charge_fraction"
     ) -> pd.DataFrame:
         """
-            Format the MinStorageCharge input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the MinStorageCharge input table for NemoMod based on SISEPUEDE 
+            configuration parameters, input variables, integrated model outputs, 
+            and reference tables.
 
-            Function Arguments
-            ------------------
-            - df_elec_trajectories: data frame of model variable input trajectories
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
 
-            Keyword Arguments
-            -----------------
-            - attribute_storage: AttributeTable used to identify minimum storage charge by storage type. If None, defaults to ModelAttribute cat_storage table
-            - field_attribute_min_charge: field in attribute_storage containing the minimum storage charge fraction by storage type
+        Keyword Arguments
+        -----------------
+        - attribute_storage: AttributeTable used to identify minimum storage 
+            charge by storage type. If None, defaults to ModelAttribute 
+            cat_storage table
+        - field_attribute_min_charge: field in attribute_storage containing the 
+            minimum storage charge fraction by storage type
         """
 
         ##

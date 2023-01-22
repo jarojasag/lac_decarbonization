@@ -271,6 +271,7 @@ class NonElectricEnergy:
         self.modvar_trns_emissions_ch4 = ":math:\\text{CH}_4 Emissions from Transportation"
         self.modvar_trns_emissions_co2 = ":math:\\text{CO}_2 Emissions from Transportation"
         self.modvar_trns_emissions_n2o = ":math:\\text{N}_2\\text{O} Emissions from Transportation"
+        self.modvar_trns_passenger_distance_traveled = "Total Passenger Distance by Vehicle"
         self.modvar_trns_vehicle_distance_traveled = "Total Vehicle Distance Traveled"
         # fuel variables dictionary for transportation
         self.dict_trns_fuel_categories_to_fuel_variables, self.dict_trns_fuel_categories_to_unassigned_fuel_variables = self.get_dict_trns_fuel_categories_to_fuel_variables()
@@ -836,11 +837,11 @@ class NonElectricEnergy:
             # get efficiency, then fuel fractions
             vec_efficiency = arr_enfu_efficiency[:, index_enfu_fuel]
             arr_frac = dict_fuel_fracs.get(modvar_fuel_frac)
-            arr_frac_norm += np.nan_to_num(arr_frac.transpose()/vec_efficiency, 0.0)
+            arr_frac_norm += np.nan_to_num(arr_frac.transpose()/vec_efficiency, nan = 0.0, posinf = 0.0)
 
         # transpose again and project demand forward
         arr_frac_norm = arr_frac_norm.transpose()
-        arr_demand = np.nan_to_num(vec_consumption_intensity_initial/arr_frac_norm[0], 0.0)
+        arr_demand = np.nan_to_num(vec_consumption_intensity_initial/arr_frac_norm[0], nan = 0.0, posinf = 0.0)
         arr_demand = sf.do_array_mult(arr_driver, arr_demand)
 
         # calculate consumption
@@ -854,7 +855,7 @@ class NonElectricEnergy:
             arr_frac = dict_fuel_fracs.get(modvar_fuel_frac)
 
             # use consumption by fuel type and efficiency to get output demand for each fuel (in output energy units specified in config)
-            arr_consumption_fuel = np.nan_to_num((arr_demand*arr_frac).transpose()/vec_efficiency, 0.0).transpose()
+            arr_consumption_fuel = np.nan_to_num((arr_demand*arr_frac).transpose()/vec_efficiency, nan = 0.0, posinf = 0.0).transpose()
             dict_consumption_by_fuel_out.update({modvar_fuel_frac: arr_consumption_fuel})
 
         return dict_consumption_by_fuel_out
@@ -1139,10 +1140,76 @@ class NonElectricEnergy:
         self.model_attributes.add_subsector_emissions_aggregates(df_out, [self.subsec_name_ccsq], False)
 
         return df_out
+    
+
+
+    def project_fuel_production(self,
+        df_neenergy_trajectories: pd.DataFrame,
+        dict_dims: dict = None,
+        n_projection_time_periods: int = None,
+        projection_time_periods: list = None
+    ) -> pd.DataFrame:
+        """
+        Calculate direct emissions from the production of fuels. Includes 
+            emissions from the manufacture of energy-generating infrastructure
+            (e.g., solar panels, wind turbines, reservoirs, lithium, etc.) and 
+            the direct production and/or refinement of energy-producing fuels
+            such as oil, coal, and natural gas. Relies on integration with 
+            ElectricEnergy to generate fuel demands.
+
+        This is the second to last model projected in the SISEPUEDE DAG as it 
+            depends on all other energy models to determine mining production.
+
+        Function Arguments
+        ------------------
+        - df_neenergy_trajectories: pd.DataFrame of input variables
+        - vec_gdp: np.ndarray vector of gdp (requires 
+            len(vec_gdp) == len(df_neenergy_trajectories))
+        - dict_dims: dict of dimensions (returned from 
+            check_projection_input_df). Default is None.
+        - n_projection_time_periods: int giving number of time periods (returned 
+            from check_projection_input_df). Default is None.
+        - projection_time_periods: list of time periods (returned from 
+            check_projection_input_df). Default is None.
+
+        Notes
+        -----
+        If any of dict_dims, n_projection_time_periods, or 
+            projection_time_periods are unspecified (expected if ran outside of 
+            Energy.project()), self.model_attributes.check_projection_input_df 
+            wil be run
+        """
+       # allows production to be run outside of the project method
+        if type(None) in set([type(x) for x in [dict_dims, n_projection_time_periods, projection_time_periods]]):
+            dict_dims, df_neenergy_trajectories, n_projection_time_periods, projection_time_periods = self.model_attributes.check_projection_input_df(df_neenergy_trajectories, True, True, True)
+
+
+        ##  CATEGORY AND ATTRIBUTE INITIALIZATION
+        pycat_enfu = self.model_attributes.get_subsector_attribute(self.subsec_name_enfu, "pycategory_primary")
+        pycat_entc = self.model_attributes.get_subsector_attribute(self.subsec_name_entc, "pycategory_primary")
+        pycat_inen = self.model_attributes.get_subsector_attribute(self.subsec_name_inen, "pycategory_primary")
+        pycat_ippu = self.model_attributes.get_subsector_attribute(self.subsec_name_ippu, "pycategory_primary")
+        # attribute tables
+        attr_enfu = self.model_attributes.dict_attributes.get(pycat_enfu)
+        attr_entc = self.model_attributes.dict_attributes.get(pycat_entc)
+        attr_inen = self.model_attributes.dict_attributes.get(pycat_inen)
+        attr_ippu = self.model_attributes.dict_attributes.get(pycat_ippu)
+
+
+        ##  OUTPUT INITIALIZATION
+
+        df_out = [df_neenergy_trajectories[self.required_dimensions].copy()]
+
+
+        ############################
+        #    MODEL CALCULATIONS    #
+        ############################
+
+        # get 
 
 
 
-    ##  fugitive emissions model
+
     def project_fugitive_emissions(
         self,
         df_neenergy_trajectories: pd.DataFrame,
@@ -1152,22 +1219,30 @@ class NonElectricEnergy:
     ) -> pd.DataFrame:
 
         """
-            Calculate fugitive emissions of gasses from coal, oil, and gas production, transmission, and distribution.
+        Calculate fugitive emissions of gasses from coal, oil, and gas 
+            production, transmission, and distribution.
 
-            This is the final model projected in the SISEPUEDE DAG as it depends on all other energy models to determine mining production.
+        This is the final model projected in the SISEPUEDE DAG as it depends on 
+            all other energy models to determine mining production.
 
-            Function Arguments
-            ------------------
-            - df_neenergy_trajectories: pd.DataFrame of input variables
-            - vec_gdp: np.ndarray vector of gdp (requires len(vec_gdp) == len(df_neenergy_trajectories))
-            - dict_dims: dict of dimensions (returned from check_projection_input_df). Default is None.
-            - n_projection_time_periods: int giving number of time periods (returned from check_projection_input_df). Default is None.
-            - projection_time_periods: list of time periods (returned from check_projection_input_df). Default is None.
+        Function Arguments
+        ------------------
+        - df_neenergy_trajectories: pd.DataFrame of input variables
+        - vec_gdp: np.ndarray vector of gdp (requires 
+            len(vec_gdp) == len(df_neenergy_trajectories))
+        - dict_dims: dict of dimensions (returned from 
+            check_projection_input_df). Default is None.
+        - n_projection_time_periods: int giving number of time periods (returned 
+            from check_projection_input_df). Default is None.
+        - projection_time_periods: list of time periods (returned from 
+            check_projection_input_df). Default is None.
 
-            Notes
-            -----
-            If any of dict_dims, n_projection_time_periods, or projection_time_periods are unspecified (expected if ran outside of Energy.project()), self.model_attributes.check_projection_input_df wil be run
-
+        Notes
+        -----
+        If any of dict_dims, n_projection_time_periods, or 
+            projection_time_periods are unspecified (expected if ran outside of 
+            Energy.project()), self.model_attributes.check_projection_input_df 
+            wil be run
         """
 
         # allows production to be run outside of the project method
@@ -1298,7 +1373,7 @@ class NonElectricEnergy:
             arr_fgtv_ef_fv_flare = arr_fgtv_frac_vent_to_flare*arr_ef_production_flaring if (arr_ef_production_flaring is not None) else 0.0
             arr_fgtv_ef_fv_vent = (1 - arr_fgtv_frac_vent_to_flare)*arr_ef_production_venting if (arr_ef_production_flaring is not None) else 0.0
             arr_fgtv_ef_fv = arr_fgtv_ef_fv_flare + arr_fgtv_ef_fv_vent
-            # distribution, prodduction, and transmission emissions
+            # distribution, production, and transmission emissions
             arr_fgtv_emit_distribution = arr_demands_distribution*arr_ef_distribution if (arr_ef_distribution is not None) else 0.0
             arr_fgtv_emit_production = arr_fgtv_production*arr_fgtv_ef_fv
             arr_fgtv_emit_transmission = arr_ef_transmission*(arr_fgtv_production + arr_fgtv_imports) if (arr_ef_transmission is not None) else 0.0
@@ -1447,7 +1522,7 @@ class NonElectricEnergy:
             self.modvar_inen_en_gdp_intensity_factor,
             self.modvar_inen_en_prod_intensity_factor,
             "energy"
-        ) #HEREHERE
+        ) 
         dict_inen_energy_consumption_gdp = self.project_energy_consumption_by_fuel_from_fuel_cats(
             df_neenergy_trajectories,
             arr_inen_energy_consumption_intensity_gdp[0],
@@ -1892,8 +1967,16 @@ class NonElectricEnergy:
         ##  START WITH DEMANDS
 
         # start with demands and map categories in attribute to associated variable
-        dict_trns_vars_to_trde_cats = self.model_attributes.get_ordered_category_attribute(self.subsec_name_trns, "cat_transportation_demand", "key_varreqs_partial", True, dict, True)
+        dict_trns_vars_to_trde_cats = self.model_attributes.get_ordered_category_attribute(
+            self.subsec_name_trns, 
+            "cat_transportation_demand", 
+            attr_type = "key_varreqs_partial", 
+            skip_none_q = True, 
+            return_type = dict, 
+            clean_attribute_schema_q = True
+        )
         dict_trns_vars_to_trde_cats = sf.reverse_dict(dict_trns_vars_to_trde_cats)
+        array_trns_total_passenger_demand = 0.0
         array_trns_total_vehicle_demand = 0.0
         # get occupancy and freight occupancies
         array_trns_avg_load_freight = self.model_attributes.get_standard_variables(
@@ -1926,7 +2009,12 @@ class NonElectricEnergy:
             # get key index, model variable, and the current demand
             index_key = self.model_attributes.get_attribute_table(self.subsec_name_trde).get_key_value_index(category)
             modvar = self.model_attributes.get_variable_from_category(self.subsec_name_trde, category, "partial")
-            vec_trde_dem_cur = self.model_attributes.get_standard_variables(df_neenergy_trajectories, modvar, return_type = "array_base", expand_to_all_cats = True)[:, index_key]
+            vec_trde_dem_cur = self.model_attributes.get_standard_variables(
+                df_neenergy_trajectories, 
+                modvar, 
+                return_type = "array_base", 
+                expand_to_all_cats = True
+            )[:, index_key]
             # retrieve the demand mix, convert to total activity-demand by category, then divide by freight/occ_rate
             array_trde_dem_cur_by_cat = self.model_attributes.get_standard_variables(
                 df_neenergy_trajectories,
@@ -1936,30 +2024,41 @@ class NonElectricEnergy:
                 var_bounds = (0, 1),
                 force_boundary_restriction = True
             )
-            # ru
+
             array_trde_dem_cur_by_cat = (array_trde_dem_cur_by_cat.transpose()*vec_trde_dem_cur).transpose()
             """
             freight and passenger should be mutually exclusive categories
-            - e.g., if the iterating variable category == "freight", then array_trde_dem_cur_by_cat*array_trns_occ_rate_passenger should be 0
-            - if category != "freight", then array_trde_dem_cur_by_cat*array_trns_avg_load_freight should be 0)
-
-            - demand length units should be in terms of 'modvar_trns_average_passenger_occupancy' (see scalar multiplication)
+            - e.g., if the iterating variable category == "freight", then 
+                array_trde_dem_cur_by_cat*array_trns_occ_rate_passenger should 
+                be 0
+            - if category != "freight", then 
+                array_trde_dem_cur_by_cat*array_trns_avg_load_freight should 
+                be 0
+            - demand length units should be in terms of 
+                'modvar_trns_average_passenger_occupancy' (see scalar multiplication)
             """
             array_trde_vehicle_dem_cur_by_cat = np.nan_to_num(array_trde_dem_cur_by_cat/array_trns_avg_load_freight, 0.0, neginf = 0.0, posinf = 0.0)*scalar_tnrs_length_demfrieght_to_dempass
             array_trde_vehicle_dem_cur_by_cat += np.nan_to_num(array_trde_dem_cur_by_cat/array_trns_occ_rate_passenger, 0.0, neginf = 0.0, posinf = 0.0)
-            # update total vehicle-km demand
+            # update total passenger distance and vehicle-km demand; note that passenger distance will be reduced to exclude freight categories on output
+            array_trns_total_passenger_demand += array_trde_dem_cur_by_cat
             array_trns_total_vehicle_demand += array_trde_vehicle_dem_cur_by_cat
 
-        # add the vehicle distance to output using the units modvar_trde_demand_pkm
+        # add the vehicle and passenger distance to output using the units modvar_trde_demand_pkm
         scalar_trns_total_vehicle_demand = self.model_attributes.get_scalar(self.modvar_trde_demand_pkm, "length")
-        df_out.append(
+        df_out += [
+            self.model_attributes.array_to_df(
+                array_trns_total_passenger_demand*scalar_trns_total_vehicle_demand,
+                self.modvar_trns_passenger_distance_traveled,
+                include_scalars = False,
+                reduce_from_all_cats_to_specified_cats = True
+            ),
             self.model_attributes.array_to_df(
                 array_trns_total_vehicle_demand*scalar_trns_total_vehicle_demand,
                 self.modvar_trns_vehicle_distance_traveled,
-                False,
-                True
+                include_scalars = False,
+                reduce_from_all_cats_to_specified_cats = True
             )
-        )
+        ]
 
 
         ##  LOOP OVER FUELS
