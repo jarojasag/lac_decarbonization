@@ -13,9 +13,8 @@ Geothermal,``fuel_geothermal``,Geothermal energy production,,,,0,0,0,0
 Hydrogen,``fuel_hydrogen``,Hydrogen energy,,,,0,0,0,0
 Hydropower,``fuel_hydropower``,Power available from hydropower,,,,0,0,0,0
 Kerosene,``fuel_kerosene``,"Kerosene, including jet and other (as definined in Table 2.2, V2, C2)",,,,0,0,0,0
-Liquefied Petroleum Gases,``fuel_gas_petroleum_liquid``,Liquified petroleoum gases,,,,0,0,0,0
+Liquefied Petroleum Gases,``fuel_gas_petroleum_liquid``,"Liquified petroleoum gases, including propane and pliqgas",,,,0,0,0,0
 Liquid Biofuels,``fuel_biofuels``,"Biodiesel, ethanol, and biogasoline",,,,0,0,0,0
-Lithium,``fuel_lithium``,Lithium,,,,0,0,0,0
 Natural Gas,``fuel_natural_gas``,Natural gas,,,,0,0,0,0
 Nuclear,``fuel_nuclear``,Nuclear fuel,,,,0,0,0,0
 Ocean,``fuel_ocean``,Ocean energy,,,,0,0,0,0

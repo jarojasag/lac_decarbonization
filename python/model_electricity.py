@@ -178,6 +178,8 @@ class ElectricEnergy:
         self.modvar_enfu_price_gravimetric = "Gravimetric Fuel Price"
         self.modvar_enfu_price_thermal = "Thermal Fuel Price"
         self.modvar_enfu_price_volumetric = "Volumetric Fuel Price"
+        self.modvar_enfu_production_frac_petroleum_refinement = "Petroleum Refinery Production Fraction"
+        self.modvar_enfu_production_frac_natural_gas_processing = "Natural Gas Processing Fraction"
         self.modvar_enfu_production_fuel = "Fuel Production"
         self.modvar_enfu_transmission_loss_electricity = "Electrical Transmission Loss"
         self.modvar_enfu_unused_fuel_exported = "Unused Fuel Exported"

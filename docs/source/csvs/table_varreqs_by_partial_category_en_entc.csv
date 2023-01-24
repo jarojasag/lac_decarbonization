@@ -30,3 +30,4 @@ Output,NemoMod :math:`\text{N}_2\text{O}` Emissions from Electricity Generation,
 Output,NemoMod Discounted Operating Costs," | Discounted operating (fixed and variable) costs by generation technology (in configuration monetary_units).
  | 
  | NemoMod variable **vdiscountedoperatingcost**",``nemomod_entc_discounted_operating_costs_$CAT-TECHNOLOGY$``,,``pp_biogas``|``pp_biomass``|``pp_coal``|``pp_gas``|``pp_geothermal``|``pp_hydropower``|``pp_nuclear``|``pp_ocean``|``pp_oil``|``pp_solar``|``pp_waste_incineration``|``pp_wind``,,,,1,1,1,0
+Input,Petroleum Refinement Fuel Production Ratios,,,,,,,,,,,

@@ -23,7 +23,6 @@ Chemical,``chemicals``,"Includes production of
 * Soda Ash production
 * Titanium Dioxide
 * Others",none,0,0,0,,,
-Coal,``coal``,Production of coal in the country,none,0,0,0,,,
 Construction and Demolition,``construction_and_demolition``,Primarily generates wastewater and waste. Driven by growth in population and gdp.,none,0,0,0,,,
 Electronics - Displays,``electronics``," | Includes emissions (especially FCs) from processes and product use involved with the production of: 
  * Displays
@@ -42,6 +41,7 @@ Lime and Carbonites,``lime_and_carbonite``,"Includes
   * Others",none,0,0,0,,," | Default :math:`\text{CO}_2` lime production emission factor from V3, C2, EQ 2.8 2006 IPCC GNGHGI); range from Table 2.4.
  | 
  | "
+Lithium,``lithium``,Industrial mining of lithium for global battery supply chains.,none,0,0,0,,,
 Lubricant Use,``product_use_lubricants``,Emissions from use of lubricants. Grows proportionally to GDP.,none,0,0,0,,,
 Metals,``metals``,"Virgin production of metals. Includes emissions from
 
@@ -55,8 +55,6 @@ Metals,``metals``,"Virgin production of metals. Includes emissions from
 * Steel production
 * Zinc production
 * Other Metals production",none,0,0,0,,,
-Natural Gas,``natural_gas``,Production of natural gas,none,0,0,0,,,
-Oil,``oil``,Production of oil,none,0,0,0,,,
 Other,``other_industries``,"This category includes emissions from industrial processes and product use in other industrial categories not covered above, including
 
 * Food and Beverages Industry
