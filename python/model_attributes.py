@@ -1307,7 +1307,7 @@ class ModelAttributes:
         attr = self.get_attribute_table(subsec)
 
         # check required fields - binary
-        fields_req_bin = ["renewable_energy_technology"]
+        fields_req_bin = ["electrification_of_fuel_production", "fuel_production", "power_plant", "renewable_energy_technology"]
         self._check_binary_fields(attr, subsec, fields_req_bin)
 
         # check required fields - numeric
