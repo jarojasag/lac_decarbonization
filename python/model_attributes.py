@@ -3250,27 +3250,32 @@ class ModelAttributes:
                 dict_arrs.update({modvar: arr_cur})
                 arr += arr_cur
 
+
         if force_sum_equality:
             for modvar in modvars:
                 arr_cur = dict_arrs[modvar]
                 arr_cur = np.nan_to_num(arr_cur/arr, 0.0)
                 dict_arrs.update({modvar: arr_cur})
         else:
-            # correction sums if within correction threshold
+            # correct sums if within correction threshold -- set error if any exceed the threshold
             w = np.where(arr > sum_restriction + correction_threshold)[0]
             if len(w) > 0:
                 raise ValueError(f"Invalid summations found: some categories exceed the sum threshold.{msg_append}")
 
-            w = np.where((arr <= sum_restriction + correction_threshold) & (arr > sum_restriction))[0]
-            if len(w) > 0:
+            # set threshold for numerial error
+            epsilon = 10**(-10)
+            #w = np.where((arr <= sum_restriction + correction_threshold) & (arr > sum_restriction))[0]
+            w = np.where((arr <= sum_restriction + correction_threshold) & (arr - sum_restriction > epsilon))
+        
+            if len(w[0]) > 0:
                 if np.max(arr - sum_restriction) <= correction_threshold:
-                    w = np.where((arr <= sum_restriction + correction_threshold) & (arr > sum_restriction))
                     inds = w[0]*len(arr[0]) + w[1]
                     for modvar in modvars:
                         arr_cur = dict_arrs[modvar]
                         np.put(arr_cur, inds, arr_cur[w[0], w[1]].flatten()/arr_cur[w[0], w[1]].flatten())
                         dict_arrs.update({modvar: arr_cur})
-
+        
+        
         return dict_arrs
 
 

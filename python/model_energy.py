@@ -1869,21 +1869,37 @@ class NonElectricEnergy:
     ) -> pd.DataFrame:
 
         """
-            Calculate emissions from fuel combustion in transportation. Requires NonElectricEnergy.project_transportation_demand() and all variables from the transportation demand sector.
+        Calculate emissions from fuel combustion in transportation. Requires 
+            NonElectricEnergy.project_transportation_demand() and all variables 
+            from the transportation demand sector.
 
-            Function Arguments
-            ------------------
-            - df_neenergy_trajectories: pd.DataFrame of input variables
-            - dvec_pop: np.ndarray vector of population (requires len(vec_rates_gdp) == len(df_neenergy_trajectories))
-            - dvec_rates_gdp: np.ndarray vector of gdp growth rates (v_i = growth rate from t_i to t_{i + 1}) (requires len(vec_rates_gdp) == len(df_neenergy_trajectories) - 1)
-            - dvec_rates_gdp_per_capita: np.ndarray vector of gdp per capita growth rates (v_i = growth rate from t_i to t_{i + 1}) (requires len(vec_rates_gdp_per_capita) == len(df_neenergy_trajectories) - 1)
-            - ddict_dims: dict of dimensions (returned from check_projection_input_df). Default is None.
-            - dn_projection_time_periods: int giving number of time periods (returned from check_projection_input_df). Default is None.
-            - dprojection_time_periods: list of time periods (returned from check_projection_input_df). Default is None.
+        Function Arguments
+        ------------------
+        - df_neenergy_trajectories: pd.DataFrame of input variables
+        - vec_pop: np.ndarray vector of population (requires 
+            len(vec_rates_gdp) == len(df_neenergy_trajectories))
+        - vec_rates_gdp: np.ndarray vector of gdp growth rates (v_i = growth 
+            rate from t_i to t_{i + 1}) (requires 
+            len(vec_rates_gdp) == len(df_neenergy_trajectories) - 1)
+        - vec_rates_gdp_per_capita: np.ndarray vector of gdp per capita growth 
+            rates (v_i = growth rate from t_i to t_{i + 1}) (requires 
+            len(vec_rates_gdp_per_capita) == len(df_neenergy_trajectories) - 1)
 
-            Notes
-            -----
-            If any of dict_dims, n_projection_time_periods, or projection_time_periods are unspecified (expected if ran outside of Energy.project()), self.model_attributes.check_projection_input_df wil be run
+        Keyword Arguments
+        -----------------
+        - dict_dims: dict of dimensions (returned from 
+            check_projection_input_df). Default is None.
+        - n_projection_time_periods: int giving number of time periods 
+            (returned from check_projection_input_df). Default is None.
+        - projection_time_periods: list of time periods (returned from 
+            check_projection_input_df). Default is None.
+
+        Notes
+        -----
+        If any of dict_dims, n_projection_time_periods, or 
+            projection_time_periods are unspecified (expected if ran outside of 
+            Energy.project()), self.model_attributes.check_projection_input_df 
+            will be run.
 
         """
 
@@ -2071,6 +2087,7 @@ class NonElectricEnergy:
             force_sum_equality = False,
             msg_append = "Energy fractions by category do not sum to 1. See definition of dict_arrs_trns_frac_fuel."
         )
+
         # get carbon dioxide combustion factors (corrected to output units)
         arr_trns_ef_by_fuel_co2 = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_enfu_ef_combustion_co2, return_type = "array_units_corrected", expand_to_all_cats = True)
         arr_trns_energy_density_fuel = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_enfu_energy_density_volumetric, return_type = "array_units_corrected", expand_to_all_cats = True)
@@ -2118,9 +2135,24 @@ class NonElectricEnergy:
             vec_trns_volumetric_enerdensity_by_fuel = arr_trns_energy_density_fuel[:, ind_enfu_cur]
             # get arrays
             arr_trns_fuel_fraction_cur = dict_arrs_trns_frac_fuel.get(modvar_trns_fuel_fraction_cur)
-            arr_trns_ef_ch4_cur = self.model_attributes.get_standard_variables(df_neenergy_trajectories, modvar_trns_ef_ch4_cur, return_type = "array_units_corrected", expand_to_all_cats = True) if (modvar_trns_ef_ch4_cur is not None) else 0
-            arr_trns_ef_n2o_cur = self.model_attributes.get_standard_variables(df_neenergy_trajectories, modvar_trns_ef_n2o_cur, return_type = "array_units_corrected", expand_to_all_cats = True) if (modvar_trns_ef_n2o_cur is not None) else 0
-            arr_trns_fuel_efficiency_cur = self.model_attributes.get_standard_variables(df_neenergy_trajectories, modvar_trns_fuel_efficiency_cur, return_type = "array_base", expand_to_all_cats = True)
+            arr_trns_ef_ch4_cur = self.model_attributes.get_standard_variables(
+                df_neenergy_trajectories, 
+                modvar_trns_ef_ch4_cur, 
+                return_type = "array_units_corrected", 
+                expand_to_all_cats = True
+            ) if (modvar_trns_ef_ch4_cur is not None) else 0
+            arr_trns_ef_n2o_cur = self.model_attributes.get_standard_variables(
+                df_neenergy_trajectories, 
+                modvar_trns_ef_n2o_cur, 
+                return_type = "array_units_corrected", 
+                expand_to_all_cats = True
+            ) if (modvar_trns_ef_n2o_cur is not None) else 0
+            arr_trns_fuel_efficiency_cur = self.model_attributes.get_standard_variables(
+                df_neenergy_trajectories, 
+                modvar_trns_fuel_efficiency_cur, 
+                return_type = "array_base", 
+                expand_to_all_cats = True
+            )
 
             # current demand associate with the fuel (in terms of modvar_trde_demand_pkm)
             arr_trns_vehdem_cur_fuel = array_trns_total_vehicle_demand*arr_trns_fuel_fraction_cur
@@ -2135,6 +2167,16 @@ class NonElectricEnergy:
                     self.modvar_enfu_energy_density_volumetric,
                     "volume"
                 )
+                if (cat_fuel == "fuel_gasoline") and False:
+                    val = np.round(arr_trns_vehdem_cur_fuel[0:3], decimals = 3)
+                    print(f"starting value of arr_trns_vehdem_cur_fuel:\t{val}\n") 
+
+                    val = np.round(array_trns_total_vehicle_demand[0:3], decimals = 3)
+                    print(f"starting value of array_trns_total_vehicle_demand:\t{val}\n") 
+
+                    val = np.round(arr_trns_fuel_fraction_cur[0:3], decimals = 3)
+                    print(f"starting value of arr_trns_fuel_fraction_cur:\t{val}\n") 
+                
 
 
                 ##  CH4 EMISSIONS
@@ -2148,6 +2190,20 @@ class NonElectricEnergy:
                 arr_trns_fuel_energydem_cur_fuel_ch4 = arr_trns_energydem_cur_fuel*scalar_fuel_energy_to_ef_ch4
                 arr_emissions_ch4_cur_fuel = arr_trns_ef_ch4_cur*arr_trns_fuel_energydem_cur_fuel_ch4
                 arr_trns_emissions_ch4 += arr_emissions_ch4_cur_fuel
+
+                if (cat_fuel == "fuel_gasoline") and False:
+                    print(f"cat_fuel:\t{cat_fuel}")
+                    print(f"modvar_trns_fuel_efficiency_cur:\t{modvar_trns_fuel_efficiency_cur}")
+                    print(f"modvar_trns_fuel_fraction_cur:\t{modvar_trns_fuel_fraction_cur}")
+                    print("arr_trns_energydem_cur_fuel:")
+                    print(np.round(arr_trns_energydem_cur_fuel[0:3], decimals = 3))
+                    print("\narr_trns_ef_ch4_cur:")
+                    print(np.round(arr_trns_ef_ch4_cur[0:3]*100000, decimals = 3))
+                    print("\nemissions:")
+                    print(np.round(arr_emissions_ch4_cur_fuel[0:3,:], decimals = 3))
+                    print("")
+                    print(np.round(arr_trns_emissions_ch4[0:3,:], decimals = 3))
+                    print("\n\n")
 
 
                 ##  CO2 EMISSIONS
@@ -2300,9 +2356,24 @@ class NonElectricEnergy:
         )
 
         # deal with person-km
-        array_trde_dem_init_passenger = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_trde_demand_initial_pkm_per_capita, return_type = "array_base", expand_to_all_cats = True)
-        array_trde_elast_passenger_demand_to_gdppc = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_trde_elasticity_pkm_to_gdp, return_type = "array_base", expand_to_all_cats = True)
-        array_trde_growth_passenger_dem_by_cat = sf.project_growth_scalar_from_elasticity(vec_rates_gdp_per_capita, array_trde_elast_passenger_demand_to_gdppc, False, "standard")
+        array_trde_dem_init_passenger = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_trde_demand_initial_pkm_per_capita, 
+            return_type = "array_base", 
+            expand_to_all_cats = True
+        )
+        array_trde_elast_passenger_demand_to_gdppc = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_trde_elasticity_pkm_to_gdp, 
+            return_type = "array_base", 
+            expand_to_all_cats = True
+        )
+        array_trde_growth_passenger_dem_by_cat = sf.project_growth_scalar_from_elasticity(
+            vec_rates_gdp_per_capita, 
+            array_trde_elast_passenger_demand_to_gdppc, 
+            False, 
+            "standard"
+        )
         # project the growth in per capita, multiply by population, then add it to the output
         array_trde_passenger_dem_by_cat = array_trde_dem_init_passenger[0]*array_trde_growth_passenger_dem_by_cat
         array_trde_passenger_dem_by_cat = (array_trde_passenger_dem_by_cat.transpose()*vec_pop).transpose()
