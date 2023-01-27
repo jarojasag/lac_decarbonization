@@ -1307,7 +1307,7 @@ class ModelAttributes:
         attr = self.get_attribute_table(subsec)
 
         # check required fields - binary
-        fields_req_bin = ["electrification_of_fuel_production", "fuel_production", "power_plant", "renewable_energy_technology"]
+        fields_req_bin = ["allow_electrification", "fuel_production", "power_plant", "renewable_energy_technology"]
         self._check_binary_fields(attr, subsec, fields_req_bin)
 
         # check required fields - numeric
@@ -1874,11 +1874,14 @@ class ModelAttributes:
             raise ValueError(f"Invalid return_type '{return_type}' in order_vars_by_category: valid types are 'inds', 'vars'.")
 
 
-    ##  function for retrieving different attributes associated with a sector
+
     def get_sector_attribute(self,
         sector: str,
         return_type: str
     ) -> Union[float, int, str, None]:
+        """
+        Retrieve different attributes associated with a sector
+        """
 
         # check sector specification
         self.check_sector(sector)
