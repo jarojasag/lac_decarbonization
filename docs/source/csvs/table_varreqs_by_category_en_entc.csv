@@ -2,7 +2,6 @@
 Input,NemoMod VariableCost," | According to `NemoMod <https://sei-international.github.io/NemoMod.jl/stable/parameters/#VariableCost>`_ , VariableCost is ""Running cost for a technology, defined in terms of cost per unit of nominal energy produced. Nominal energy is calculated by multiplying dispatched capacity by the length of time it is dispatched.""
  | 
  | In SISEPUEDE, all technologies (``pp_``) have variable costs associated with ``$MODE$ = generate``.","``nemomod_entc_variable_cost_$CAT-TECHNOLOGY$_$UNIT-MONETARY$_per_$UNIT-ENERGY$`` (``$UNIT-MONETARY$ = usd``, ``$UNIT-ENERGY$ = mwh``)",,,See the `EIA <https://www.eia.gov/outlooks/aeo/assumptions/pdf/table_8.2.pdf>`_ or `Mongird et al. (2020) <https://www.mdpi.com/1996-1073/13/13/3307>`_  (Tables 8. and 13. in particular for variable costs) for some starting default costs (2022).,,0,1,1,0
-Input,Technology Efficiency of Fuel Use,Used to calculate the NemoMod **InputActivityRatio**. Entered as efficiency to keep with other SISEPUEDE variables.,``efficfactor_entc_technology_fuel_use_$CAT-TECHNOLOGY$``,,,,,0,1,1,0
 Output,NemoMod Generation Capacity," | Total annual generation capacity (in configuration power_units).
  | 
  | NemoMod variable **vtotalcapacityannual**",``nemomod_entc_total_annual_generation_capacity_$CAT-TECHNOLOGY$``,,,,,1,1,1,0

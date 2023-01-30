@@ -208,6 +208,14 @@ class ElectricEnergy:
         self.modvar_entc_ef_scalar_co2 = ":math:\\text{CO}_2 NemoMod EmissionsActivityRatio Scalar"
         self.modvar_entc_ef_scalar_n2o = ":math:\\text{N}_2\\text{O} NemoMod EmissionsActivityRatio Scalar"
         self.modvar_entc_efficiency_factor_technology = "Technology Efficiency of Fuel Use"
+        self.modvar_entc_fuelprod_fuel_fraction_coal = "Fuel Production Energy Use Fuel Fraction Coal"
+        self.modvar_entc_fuelprod_fuel_fraction_crude = "Fuel Production Energy Use Fuel Fraction Crude"
+        self.modvar_entc_fuelprod_fuel_fraction_diesel = "Fuel Production Energy Use Fuel Fraction Diesel"
+        self.modvar_entc_fuelprod_fuel_fraction_electricity = "Fuel Production Energy Use Fuel Fraction Electricity"
+        self.modvar_entc_fuelprod_fuel_fraction_gasoline = "Fuel Production Energy Use Fuel Fraction Gasoline"
+        self.modvar_entc_fuelprod_fuel_fraction_hydrogen = "Fuel Production Energy Use Fuel Fraction Hydrogen"
+        self.modvar_entc_fuelprod_fuel_fraction_natural_gas = "Fuel Production Energy Use Fuel Fraction Natural Gas"
+        self.modvar_entc_fuelprod_fuel_fraction_oil = "Fuel Production Energy Use Fuel Fraction Oil"
         self.modvar_entc_init_fuelprod_energy_input_ratio = "Initial Fuel Production Energy Consumption Input Ratio"
         self.modvar_entc_nemomod_discounted_capital_investment = "NemoMod Discounted Capital Investment"
         self.modvar_entc_nemomod_discounted_operating_costs = "NemoMod Discounted Operating Costs"
@@ -227,6 +235,7 @@ class ElectricEnergy:
         self.modvar_entc_nemomod_variable_cost = "NemoMod VariableCost"
         # other key variables
         self.drop_flag_tech_capacities = -999
+
 
         # Energy (Electricity) Storage Variables
         self.modvar_enst_nemomod_capital_cost_storage = "NemoMod CapitalCostStorage"

@@ -10,7 +10,7 @@ Input,Gravimetric Energy Density,Specific energy of fuels that are provided in t
  | See `What is Nuclear <https://www.whatisnuclear.com/energy-density.html>`_ for estimate of energy density of :math:`\text{U}_{235}`, :math:`\text{U}_{238}/\text{Pu}_{239}`, and :math:`\text{Th}_{232}/\text{U}_{233}`
  | 
  | For biogas, use an approximation of 55% of specific energy of :math:`\text{CH}_4` (estimated as 55.6 :math:`\frac{MJ}{kg}`), giving approximately 30.58 :math:`\frac{MJ}{kg}`. (see `Cuellar and Webber [2008] <https://iopscience.iop.org/article/10.1088/1748-9326/3/3/034002>`_)",,,0,1,1,0
-Input,Gravimetric Fuel Price,"Fuel price for fuels using units of mass (e.g., coal or hydrogen)","``cost_enfu_$CAT-FUEL$_$UNIT-MONETARY$_per_$UNIT-MASS$`` (``$UNIT-MONETARY$ = usd``, ``$UNIT-MASS$ = tonne``)",,``fuel_nuclear``,,,,0,1,1,0
+Input,Gravimetric Fuel Price,"Fuel price for fuels using units of mass (e.g., nuclear)","``cost_enfu_$CAT-FUEL$_$UNIT-MONETARY$_per_$UNIT-MASS$`` (``$UNIT-MONETARY$ = usd``, ``$UNIT-MASS$ = tonne``)",,``fuel_nuclear``,,,,0,1,1,0
 Input,Minimum Fraction of Fuel Used for Electricity Generation,"Depending on renewable resource availability and pricing, the use of biogas may not be the most cost-effective renewable fuel available. This parameter ensures that a some minimum fraction of collected biogas is used within the region. ",``frac_enfu_minimum_fuel_to_electricity_$CAT-FUEL$``,,``fuel_biogas``|``fuel_waste``,,,,0,1,1,0
 Input,Natural Gas Processing Fraction," | Natural gas processing converts unprocessed natural gas into natural gas and additional hydrocarbon liquid fails.  This variable is used to specify output ratios relative to inputs of unprocessed natural gas.
  | 
