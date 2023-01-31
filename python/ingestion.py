@@ -242,8 +242,8 @@ class InputTemplate:
 			field_variable = field_req_variable,
 			include_time_periods = True
 		)
-		#global dfb
-		#dfb = df_base
+		global dfb
+		dfb = df_base
 
 		# melt input dataframe to long and filter
 		fields_id = [x for x in df_input.columns if x in [field_key_strategy, field_time_period]]
@@ -327,6 +327,8 @@ class InputTemplate:
 			if x not in df_var_info.columns:
 				df_var_info[x] = None if (x in self.list_fields_required_base) else 1
 
+		global dvi
+		dvi = df_var_info
 
 		##  CLEAN SHEETS AND DEFINE ANEW USING SHEET NAME
 
@@ -337,6 +339,12 @@ class InputTemplate:
 		keys_iterate = [self.baseline_strategy] if self.baseline_strategy in keys_iterate_0 else []
 		keys_iterate += sorted([x for x in keys_iterate_0 if (x != self.baseline_strategy)])
 
+		global df_base_global
+		global df_cur_global
+		global fields_index_global
+		global field_melted_value_global
+		global field_req_variable_global
+
 		for strat in keys_iterate:
 			#
 			sheet_name = self.name_sheet_from_index(strat)
@@ -346,6 +354,12 @@ class InputTemplate:
 			df_var_info_out = df_var_info
 
 			if strat != self.baseline_strategy:
+				df_base_global = dict_inputs_by_strat.get(self.baseline_strategy)
+				df_cur_global = df_cur
+				fields_index_global = fields_index
+				field_melted_value_global = field_melted_value
+				field_req_variable_global = field_req_variable
+
 				df_cur = sf.filter_df_on_reference_df_rows(
 					df_cur,
 					dict_inputs_by_strat.get(self.baseline_strategy),
@@ -353,6 +367,10 @@ class InputTemplate:
 					[field_melted_value],
 					fields_groupby = [field_req_variable]
 				)
+
+				df_cur_global = df_cur
+
+
 
 			if df_cur is not None:
 				# add in variable info and pivot to wide by time period

@@ -813,7 +813,8 @@ def filter_df_on_reference_df_rows(
     fields_index: List[str],
     fields_compare: List[str],
     fields_groupby: Union[List[str], None] = None,
-    filter_method: str = "any"
+    filter_method: str = "any",
+    keep_compare_fields: bool = False
 ) -> pd.DataFrame:
     """
     Compare two data frames and drop rows from df_filter that are contained in
@@ -840,6 +841,8 @@ def filter_df_on_reference_df_rows(
             fields_compare is different.
         * Set to "any" to keep rows where *all* fields contained in
             fields_compare are different.
+    - keep_compare_fields: keep comparison fields from df_reference used to 
+        drop rows in df_filter? 
     """
     # check field specifications
     set_fields_both = set(df_filter.columns) & set(df_reference.columns)
@@ -889,6 +892,10 @@ def filter_df_on_reference_df_rows(
             df_return.append(df) if append_df else None
 
         df_return = pd.concat(df_return, axis = 0).reset_index(drop = True) if (len(df_return) > 0) else None
+
+    df_return.drop(fields_compare_ref, axis = 1, inplace = True) if (
+        (df_return is not None) and not keep_compare_fields
+    ) else None
 
     return df_return
 
