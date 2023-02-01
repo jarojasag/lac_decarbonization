@@ -1796,7 +1796,6 @@ def transformation_trns_increase_energy_efficiency_non_electric(
 
     dict_run = dict((modvar, dict_base) for modvar in modvars)
 
-
     # call general transformation
     df_out = transformation_general(
         df_input,

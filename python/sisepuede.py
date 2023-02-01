@@ -114,6 +114,10 @@ class SISEPUEDE:
 		previous ID/restore a session.
 		* If None, creates a unique ID for the session (used in output file
 			names)
+	- instantiate_nemomod: create connection to Julia for NemoMod? Set to False
+		to disallow the electricity model.
+		* Suggested use is for sector-specific modeling that does not require 
+			the electricity model.
 	- logger: Optional logging.Logger object to use for logging
 	- regions: list of regions to include in the experiment. [NOTE, in v1.0,
 		this should be limited to a single region]
@@ -128,6 +132,7 @@ class SISEPUEDE:
 		attribute_design: Union[AttributeTable, None] = None,
 		dir_ingestion: Union[str, None] = None,
 		id_str: Union[str, None] = None,
+		instantiate_nemomod: bool = True,
 		logger: Union[logging.Logger, None] = None,
 		regions: Union[List[str], None] = None,
 		regex_template_prepend: str = "sisepuede_run",
@@ -147,7 +152,7 @@ class SISEPUEDE:
 		self._initialize_output_database(replace_output_dbs_on_init = replace_output_dbs_on_init)
 		self._initialize_data_mode(data_mode)
 		self._initialize_experimental_manager(regions = regions)
-		self._initialize_models()
+		self._initialize_models(instantiate_nemomod = instantiate_nemomod)
 		self._initialize_function_aliases()
 		self._initialize_base_database_tables()
 
@@ -464,6 +469,7 @@ class SISEPUEDE:
 	def _initialize_models(self,
 		dir_jl: Union[str, None] = None,
 		dir_nemomod_reference_files: Union[str, None] = None,
+		instantiate_nemomod: bool = True,
 		fp_sqlite_tmp_nemomod_intermediate: Union[str, None] = None
 	) -> None:
 		"""
@@ -473,32 +479,47 @@ class SISEPUEDE:
 			* self.dir_nemomod_reference_files
 			* self.fp_sqlite_tmp_nemomod_intermediate
 			* self.models
+			* self.nemomod_enabled
 
 		Optional Arguments
 		------------------
 		For the following arguments, entering = None will return the SISEPUEDE default
 		- dir_jl: file path to julia environment and supporting module directory
 		- dir_nemomod_reference_files: directory containing NemoMod reference files
+		- instantiate_nemomod: initialize NemoMod? Generally set to True.
 		- fp_nemomod_temp_sqlite_db: file name for temporary database used to run NemoMod
 		"""
 
 		dir_jl = self.file_struct.dir_jl if (dir_jl is None) else dir_jl
 		dir_nemomod_reference_files = self.file_struct.dir_ref_nemo if (dir_nemomod_reference_files is None) else dir_nemomod_reference_files
 		fp_sqlite_tmp_nemomod_intermediate = self.file_struct.fp_sqlite_tmp_nemomod_intermediate if (fp_sqlite_tmp_nemomod_intermediate is None) else fp_sqlite_tmp_nemomod_intermediate
+		allow_nemomod_run = (self.file_struct.allow_electricity_run) & instantiate_nemomod
+		nemomod_enabled = False
 
 		try:
 			self.models = SISEPUEDEModels(
 				self.model_attributes,
-				allow_electricity_run = self.file_struct.allow_electricity_run,
+				allow_electricity_run = allow_nemomod_run,
 				fp_julia = dir_jl,
 				fp_nemomod_reference_files = dir_nemomod_reference_files,
 				fp_nemomod_temp_sqlite_db = fp_sqlite_tmp_nemomod_intermediate,
 				logger = self.logger
 			)
 
+			nemomod_enabled = allow_nemomod_run
+
+			if not instantiate_nemomod:
+				self._log(
+					f"\tinstantiate_nemomod = False; NemoMod will not be initialized. To engage NemoMod, re-initialize the SISEPUEDE object (using the same analysis_id if needed) using instantiate_nemomod = True",
+					type_log = "info"
+				)
+			elif not self.file_struct.allow_electricity_run:
+				self._log(
+					f"\tOne or more reference files are missing, and the electricity model cannot be run. This run will not include electricity results. Try locating the missing files and re-initializing SISEPUEDE to run the electricity model.", 
+					type_log = "warning"
+				)
+
 			self._log(f"Successfully initialized SISEPUEDEModels.", type_log = "info")
-			if not self.file_struct.allow_electricity_run:
-				self._log(f"\tOne or more reference files are missing, and the electricity model cannot be run. This run will not include electricity results. Try locating the missing files and re-initializing SISEPUEDE to run the electricity model.", type_log = "warning")
 
 		except Exception as e:
 			self._log(f"Error trying to initialize models: {e}", type_log = "error")
@@ -507,6 +528,7 @@ class SISEPUEDE:
 		self.dir_jl = dir_jl
 		self.dir_nemomod_reference_files = dir_nemomod_reference_files
 		self.fp_sqlite_tmp_nemomod_intermediate = fp_sqlite_tmp_nemomod_intermediate
+		self.nemomod_enabled = nemomod_enabled
 
 
 
