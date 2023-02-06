@@ -219,9 +219,12 @@ class ElectricEnergy:
         self.modvar_entc_init_fuelprod_energy_input_ratio = "Initial Fuel Production Energy Consumption Input Ratio"
         self.modvar_entc_nemomod_discounted_capital_investment = "NemoMod Discounted Capital Investment"
         self.modvar_entc_nemomod_discounted_operating_costs = "NemoMod Discounted Operating Costs"
-        self.modvar_entc_nemomod_emissions_ch4 = "NemoMod :math:\\text{CH}_4 Emissions from Electricity Generation"
-        self.modvar_entc_nemomod_emissions_co2 = "NemoMod :math:\\text{CO}_2 Emissions from Electricity Generation"
-        self.modvar_entc_nemomod_emissions_n2o = "NemoMod :math:\\text{N}_2\\text{O} Emissions from Electricity Generation"
+        self.modvar_entc_nemomod_emissions_ch4_elec = "NemoMod :math:\\text{CH}_4 Emissions from Electricity Generation"
+        self.modvar_entc_nemomod_emissions_co2_elec = "NemoMod :math:\\text{CO}_2 Emissions from Electricity Generation"
+        self.modvar_entc_nemomod_emissions_n2o_elec = "NemoMod :math:\\text{N}_2\\text{O} Emissions from Electricity Generation"
+        self.modvar_entc_nemomod_emissions_ch4_fpr = "NemoMod :math:\\text{CH}_4 Emissions from Fuel Processing and Refinement"
+        self.modvar_entc_nemomod_emissions_co2_fpr = "NemoMod :math:\\text{CO}_2 Emissions from Fuel Processing and Refinement"
+        self.modvar_entc_nemomod_emissions_n2o_fpr = "NemoMod :math:\\text{N}_2\\text{O} Emissions from Fuel Processing and Refinement"
         self.modvar_entc_nemomod_fixed_cost = "NemoMod FixedCost"
         self.modvar_entc_nemomod_generation_capacity = "NemoMod Generation Capacity"
         self.modvar_entc_nemomod_production_by_technology = "NemoMod Production by Technology"
@@ -4172,9 +4175,9 @@ class ElectricEnergy:
         table_name = self.model_attributes.table_nemomod_annual_emissions_by_technology if (table_name is None) else table_name
 
         modvars_emit = [
-            self.modvar_entc_nemomod_emissions_ch4,
-            self.modvar_entc_nemomod_emissions_co2,
-            self.modvar_entc_nemomod_emissions_n2o
+            self.modvar_entc_nemomod_emissions_ch4_elec,
+            self.modvar_entc_nemomod_emissions_co2_elec,
+            self.modvar_entc_nemomod_emissions_n2o_elec
         ]
 
         df_out = []
@@ -4770,9 +4773,9 @@ class ElectricEnergy:
                 self.modvar_enst_nemomod_discounted_capital_investment_storage,
                 self.modvar_entc_nemomod_discounted_operating_costs,
                 self.modvar_enst_nemomod_discounted_operating_costs_storage,
-                self.modvar_entc_nemomod_emissions_ch4,
-                self.modvar_entc_nemomod_emissions_co2,
-                self.modvar_entc_nemomod_emissions_n2o,
+                self.modvar_entc_nemomod_emissions_ch4_elec,
+                self.modvar_entc_nemomod_emissions_co2_elec,
+                self.modvar_entc_nemomod_emissions_n2o_elec,
                 self.modvar_enfu_energy_demand_by_fuel_elec,
                 self.modvar_entc_nemomod_generation_capacity,
                 self.modvar_entc_nemomod_production_by_technology
