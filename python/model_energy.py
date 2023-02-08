@@ -174,11 +174,11 @@ class NonElectricEnergy:
         self.modvar_inen_frac_en_electricity = "Industrial Energy Fuel Fraction Electricity"
         self.modvar_inen_frac_en_furnace_gas = "Industrial Energy Fuel Fraction Furnace Gas"
         self.modvar_inen_frac_en_gasoline = "Industrial Energy Fuel Fraction Gasoline"
+        self.modvar_inen_frac_en_hgl = "Industrial Energy Fuel Fraction Hydrocarbon Gas Liquids"
         self.modvar_inen_frac_en_hydrogen = "Industrial Energy Fuel Fraction Hydrogen"
         self.modvar_inen_frac_en_kerosene = "Industrial Energy Fuel Fraction Kerosene"
         self.modvar_inen_frac_en_natural_gas = "Industrial Energy Fuel Fraction Natural Gas"
         self.modvar_inen_frac_en_oil = "Industrial Energy Fuel Fraction Oil"
-        self.modvar_inen_frac_en_pliqgas = "Industrial Energy Fuel Fraction Petroleum Liquid Gas"
         self.modvar_inen_frac_en_solar = "Industrial Energy Fuel Fraction Solar"
         self.modvar_inen_frac_en_solid_biomass = "Industrial Energy Fuel Fraction Solid Biomass"
         # get some dictionaries implied by the inen attribute tables
@@ -201,10 +201,10 @@ class NonElectricEnergy:
         self.modvar_scoe_efficiency_fact_heat_en_diesel = "SCOE Efficiency Factor for Heat Energy from Diesel"
         self.modvar_scoe_efficiency_fact_heat_en_electricity = "SCOE Efficiency Factor for Heat Energy from Electricity"
         self.modvar_scoe_efficiency_fact_heat_en_gasoline = "SCOE Efficiency Factor for Heat Energy from Gasoline"
+        self.modvar_scoe_efficiency_fact_heat_en_hgl = "SCOE Efficiency Factor for Heat Energy from Hydrocarbon Gas Liquids"
         self.modvar_scoe_efficiency_fact_heat_en_hydrogen = "SCOE Efficiency Factor for Heat Energy from Hydrogen"
         self.modvar_scoe_efficiency_fact_heat_en_kerosene = "SCOE Efficiency Factor for Heat Energy from Kerosene"
         self.modvar_scoe_efficiency_fact_heat_en_natural_gas = "SCOE Efficiency Factor for Heat Energy from Natural Gas"
-        self.modvar_scoe_efficiency_fact_heat_en_pliqgas = "SCOE Efficiency Factor for Heat Energy from Petroleum Liquid Gas"
         self.modvar_scoe_efficiency_fact_heat_en_solid_biomass = "SCOE Efficiency Factor for Heat Energy from Solid Biomass"
         self.modvar_scoe_elasticity_hh_energy_demand_electric_to_gdppc = "SCOE Elasticity of Per Household Electrical Applicance Demand to GDP Per Capita"
         self.modvar_scoe_elasticity_hh_energy_demand_heat_to_gdppc = "SCOE Elasticity of Per Household Heat Energy Demand to GDP Per Capita"
@@ -221,10 +221,10 @@ class NonElectricEnergy:
         self.modvar_scoe_frac_heat_en_diesel = "SCOE Fraction Heat Energy Demand Diesel"
         self.modvar_scoe_frac_heat_en_electricity = "SCOE Fraction Heat Energy Demand Electricity"
         self.modvar_scoe_frac_heat_en_gasoline = "SCOE Fraction Heat Energy Demand Gasoline"
+        self.modvar_scoe_frac_heat_en_hgl = "SCOE Fraction Heat Energy Demand Hydrocarbon Gas Liquids"
         self.modvar_scoe_frac_heat_en_hydrogen = "SCOE Fraction Heat Energy Demand Hydrogen"
         self.modvar_scoe_frac_heat_en_kerosene = "SCOE Fraction Heat Energy Demand Kerosene"
         self.modvar_scoe_frac_heat_en_natural_gas = "SCOE Fraction Heat Energy Demand Natural Gas"
-        self.modvar_scoe_frac_heat_en_pliqgas = "SCOE Fraction Heat Energy Demand Petroleum Liquid Gas"
         self.modvar_scoe_frac_heat_en_solid_biomass = "SCOE Fraction Heat Energy Demand Solid Biomass"
         # get some dictionaries implied by the SCOE attribute tables
         self.modvar_dicts_scoe_fuel_vars = self.model_attributes.get_var_dicts_by_shared_category(
@@ -614,12 +614,22 @@ class NonElectricEnergy:
 
 
     ##  industrial energy variables from fuel categories as specified by a matchstring
-    def get_dict_inen_fuel_categories_to_fuel_variables(self):
+    def get_dict_inen_fuel_categories_to_fuel_variables(self,
+    ) -> Dict:
         """
-            use get_dict_inen_fuel_categories_to_fuel_variables to return a dictionary with fuel categories as keys based on the Transportation attribute table;
-            {cat_fuel: {"fuel_efficiency": VARNAME_FUELEFFICIENCY, ...}}
+        use get_dict_inen_fuel_categories_to_fuel_variables to return a 
+            dictionary with fuel categories as keys based on the Transportation 
+            attribute table:
 
-            for each key, the dict includes variables associated with the fuel cat_fuel:
+            {
+                cat_fuel: {
+                    "fuel_efficiency": VARNAME_FUELEFFICIENCY, 
+                    ...
+                }
+            }
+
+            for each key, the dict includes variables associated with the fuel 
+            cat_fuel:
 
             - "fuel_fraction"
         """
@@ -639,18 +649,26 @@ class NonElectricEnergy:
 
 
     ##  transportation variables from fuel categories as specified by a matchstring
-    def get_dict_trns_fuel_categories_to_fuel_variables(self):
+    def get_dict_trns_fuel_categories_to_fuel_variables(self
+    ) -> dict:
         """
-            use get_dict_trns_fuel_categories_to_fuel_variables to return a dictionary with fuel categories as keys based on the Transportation attribute table;
-            {cat_fuel: {"fuel_efficiency": VARNAME_FUELEFFICIENCY, ...}}
+        Return a dictionary with fuel categories as keys based on the 
+            Transportation attribute table:
+    
+            {
+                cat_fuel: {
+                    "fuel_efficiency": VARNAME_FUELEFFICIENCY, 
+                    ...
+                }
+            }
 
-            for each key, the dict includes variables associated with the fuel cat_fuel:
+            for each key, the dict includes variables associated with the fuel 
+            cat_fuel:
 
             - "fuel_efficiency"
             - "fuel_fraction"
             - "ef_ch4"
             - "ef_n2o"
-
         """
 
         dict_out = self.model_attributes.assign_keys_from_attribute_fields(

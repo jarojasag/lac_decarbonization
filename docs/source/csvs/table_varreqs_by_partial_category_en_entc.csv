@@ -2,9 +2,11 @@
 Input,:math:`\text{CH}_4` NemoMod EmissionsActivityRatio Scalar,Scalar applied to the stationary combustion emission factor associated with a power technology's fuel. Can be used to represent carbon capture or other reductions in emissions not associated with efficiency improvements. ,``nemomod_entc_emissions_activity_ratio_scalar_$CAT-TECHNOLOGY$_$EMISSION-GAS$ (``$EMISSION-GAS$ = ch4``),,``pp_biogas``|``pp_biomass``|``pp_coal``|``pp_coal_ccs``|``pp_gas``|``pp_gas_ccs``|``pp_geothermal``|``pp_hydropower``|``pp_nuclear``|``pp_ocean``|``pp_oil``|``pp_solar``|``pp_waste_incineration``|``pp_wind``,,,,none,0,1,1,0
 Input,:math:`\text{CO}_2` NemoMod EmissionsActivityRatio Scalar,Scalar applied to the stationary combustion emission factor associated with a power technology's fuel. Can be used to represent carbon capture or other reductions in emissions not associated with efficiency improvements. ,``nemomod_entc_emissions_activity_ratio_scalar_$CAT-TECHNOLOGY$_$EMISSION-GAS$ (``$EMISSION-GAS$ = co2``),,``pp_biogas``|``pp_biomass``|``pp_coal``|``pp_coal_ccs``|``pp_gas``|``pp_gas_ccs``|``pp_geothermal``|``pp_hydropower``|``pp_nuclear``|``pp_ocean``|``pp_oil``|``pp_solar``|``pp_waste_incineration``|``pp_wind``,,,,none,0,1,1,0
 Input,:math:`\text{N}_2\text{O}` NemoMod EmissionsActivityRatio Scalar,Scalar applied to the stationary combustion emission factor associated with a power technology's fuel. Can be used to represent carbon capture or other reductions in emissions not associated with efficiency improvements. ,``nemomod_entc_emissions_activity_ratio_scalar_$CAT-TECHNOLOGY$_$EMISSION-GAS$ (``$EMISSION-GAS$ = n2o``),,``pp_biogas``|``pp_biomass``|``pp_coal``|``pp_coal_ccs``|``pp_gas``|``pp_gas_ccs``|``pp_geothermal``|``pp_hydropower``|``pp_nuclear``|``pp_ocean``|``pp_oil``|``pp_solar``|``pp_waste_incineration``|``pp_wind``,,,,none,0,1,1,0
-Input,Fuel Production NemoMod InputActivityRatio Biomass," | Input activity ratio of coal deposits for a fuel production technology (can be combined with other input fuels).
+Input,Fuel Production NemoMod InputActivityRatio Biomass," | Input activity ratio of biomass deposits for a fuel production technology (can be combined with other input fuels). 
  | 
- | The total input energy to a technology comes from the combination of all input fuel input activity ratios.",``inputactivityratio_entc_fuel_production_$CAT-TECHNOLOGY$_biomass``,,``fp_hydrogen_gasification``,,,,``fuel_coal``,0,1,1,0
+ | **NOTE**: biomass InputActivityRatio can be assumed to be similar to coal for gasification. 
+ | 
+ | The total input energy to a technology comes from the combination of all input fuel input activity ratios.",``inputactivityratio_entc_fuel_production_$CAT-TECHNOLOGY$_biomass``,,``fp_hydrogen_gasification``,,,,``fuel_biomass``,0,1,1,0
 Input,Fuel Production NemoMod InputActivityRatio Coal," | Input activity ratio of coal deposits for a fuel production technology (can be combined with other input fuels).
  | 
  | The total input energy to a technology comes from the combination of all input fuel input activity ratios.",``inputactivityratio_entc_fuel_production_$CAT-TECHNOLOGY$_coal``,,``fp_hydrogen_gasification``,,,,``fuel_coal``,0,1,1,0
@@ -25,16 +27,19 @@ Input,Fuel Production NemoMod InputActivityRatio Gasoline," | Input activity rat
  | The total input energy to a technology comes from the combination of all input fuel input activity ratios.",``inputactivityratio_entc_fuel_production_$CAT-TECHNOLOGY$_gasoline``,,``me_coal``|``me_natural_gas``|``me_crude``,,,,``fuel_gasoline``,0,1,1,0
 Input,Fuel Production NemoMod InputActivityRatio Natural Gas," | Input activity ratio of natural gas for a fuel production technology (can be combined with other input fuels).
  | 
- | The total input energy to a technology comes from the combination of all input fuel input activity ratios.",``inputactivityratio_entc_fuel_production_$CAT-TECHNOLOGY$_natural_gas``,,``fp_hydrogen_reformation``|``me_coal``|``me_natural_gas``|``me_crude``,,,,``fuel_natural_gas_unprocessed``,0,1,1,0
+ | The total input energy to a technology comes from the combination of all input fuel input activity ratios.",``inputactivityratio_entc_fuel_production_$CAT-TECHNOLOGY$_natural_gas``,,``fp_hydrogen_reformation``|``me_coal``|``me_natural_gas``|``me_crude``,,,,``fuel_natural_gas``,0,1,1,0
 Input,Fuel Production NemoMod InputActivityRatio Natural Gas Unprocessed," | Input activity ratio of unprocessed natural gas for a fuel production technology (can be combined with other input fuels).
  | 
- | The total input energy to a technology comes from the combination of all input fuel input activity ratios.",``inputactivityratio_entc_fuel_production_$CAT-TECHNOLOGY$_natural_gas_unprocessed``,,``fp_natural_gas``,,,,``fuel_natural_gas``,0,1,1,0
+ | The total input energy to a technology comes from the combination of all input fuel input activity ratios.",``inputactivityratio_entc_fuel_production_$CAT-TECHNOLOGY$_natural_gas_unprocessed``,,``fp_natural_gas``,,,,``fuel_natural_gas_unprocessed``,0,1,1,0
 Input,Fuel Production NemoMod InputActivityRatio Oil," | Input activity ratio of oil for a fuel production technology (can be combined with other input fuels).
  | 
  | The total input energy to a technology comes from the combination of all input fuel input activity ratios.",``inputactivityratio_entc_fuel_production_$CAT-TECHNOLOGY$_oil``,,``fp_hydrogen_reformation``|``me_coal``|``me_natural_gas``|``me_crude``,,,,``fuel_oil``,0,1,1,0
 Input,Fuel Production NemoMod OutputActivityRatio Coal," | Output activity ratio of coal produced by a fuel production technology (can be combined with other output fuels).
  | 
  | The total output energy from a technology comes from the combination of all output fuel input activity ratios.",``outputactivityratio_entc_fuel_production_$CAT-TECHNOLOGY$_coal``,,``me_coal``,,,,``fuel_coal``,0,1,1,0
+Input,Fuel Production NemoMod OutputActivityRatio Crude," | Output activity ratio of crude produced by a fuel production technology (can be combined with other output fuels).
+ | 
+ | The total output energy from a technology comes from the combination of all output fuel input activity ratios.",``outputactivityratio_entc_fuel_production_$CAT-TECHNOLOGY$_crude``,,``me_crude``,,,,``fuel_crude``,0,1,1,0
 Input,Fuel Production NemoMod OutputActivityRatio Diesel," | Output activity ratio of diesel produced by a fuel production technology (can be combined with other output fuels).
  | 
  | The total output energy from a technology comes from the combination of all output fuel input activity ratios.",``outputactivityratio_entc_fuel_production_$CAT-TECHNOLOGY$_diesel``,,``fp_petroleum_refinement``,,,,``fuel_diesel``,0,1,1,0
@@ -43,7 +48,7 @@ Input,Fuel Production NemoMod OutputActivityRatio Gasoline," | Output activity r
  | The total output energy from a technology comes from the combination of all output fuel input activity ratios.",``outputactivityratio_entc_fuel_production_$CAT-TECHNOLOGY$_gasoline``,,``fp_petroleum_refinement``,,,,``fuel_gasoline``,0,1,1,0
 Input,Fuel Production NemoMod OutputActivityRatio Hydrocarbon Gas Liquids," | Output activity ratio of hydocarbon gas liquids produced by a fuel production technology (can be combined with other output fuels).
  | 
- | The total output energy from a technology comes from the combination of all output fuel input activity ratios.",``outputactivityratio_entc_fuel_production_$CAT-TECHNOLOGY$_hydrocarbon_gas_liquids``,,``fp_natural_gas``|``fp_petroleum_refinement``,,,,``fuel_petroleum_liquid_gas``,0,1,1,0
+ | The total output energy from a technology comes from the combination of all output fuel input activity ratios.",``outputactivityratio_entc_fuel_production_$CAT-TECHNOLOGY$_hydrocarbon_gas_liquids``,,``fp_natural_gas``|``fp_petroleum_refinement``,,,,``fuel_hydrocarbon_gas_liquids``,0,1,1,0
 Input,Fuel Production NemoMod OutputActivityRatio Hydrogen," | Output activity ratio of hydrogen produced by a fuel production technology (can be combined with other output fuels).
  | 
  | The total output energy from a technology comes from the combination of all output fuel input activity ratios.",``outputactivityratio_entc_fuel_production_$CAT-TECHNOLOGY$_hydrogen``,,```fp_hydrogen_electrolysis``|``fp_hydrogen_gasification``|``fp_hydrogen_reformation``,,,,``fuel_hydrogen``,0,1,1,0
@@ -53,6 +58,9 @@ Input,Fuel Production NemoMod OutputActivityRatio Kerosene," | Output activity r
 Input,Fuel Production NemoMod OutputActivityRatio Natural Gas," | Output activity ratio of natural gas produced by a fuel production technology (can be combined with other output fuels).
  | 
  | The total output energy from a technology comes from the combination of all output fuel input activity ratios.",``outputactivityratio_entc_fuel_production_$CAT-TECHNOLOGY$_natural_gas``,,``fp_natural_gas``,,,,``fuel_natural_gas``,0,1,1,0
+Input,Fuel Production NemoMod OutputActivityRatio Natural Gas Unprocessed," | Output activity ratio of unprocessed natural gas produced by a fuel production technology (can be combined with other output fuels).
+ | 
+ | The total output energy from a technology comes from the combination of all output fuel input activity ratios.",``outputactivityratio_entc_fuel_production_$CAT-TECHNOLOGY$_natural_gas_unprocessed``,,``me_natural_gas``,,,,``fuel_natural_gas_unprocessed``,0,1,1,0
 Input,Fuel Production NemoMod OutputActivityRatio Oil," | Output activity ratio of oil produced by a fuel production technology (can be combined with other output fuels).
  | 
  | The total output energy from a technology comes from the combination of all output fuel input activity ratios.",``outputactivityratio_entc_fuel_production_$CAT-TECHNOLOGY$_oil``,,``fp_petroleum_refinement``,,,,``fuel_oil``,0,1,1,0

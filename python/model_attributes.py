@@ -1154,15 +1154,34 @@ class ModelAttributes:
         allow_multiple_cats_q: bool = False
     ):
         """
-            Checks the validity of categories specified as an attribute (subsector_target) of a primary subsctor category (subsector_primary)
+        Check the validity of categories specified as an attribute 
+            (subsector_target) of a primary subsector category 
+            (subsector_primary)
 
-            - dict_subsector_primary: dictionary of form {subsector_primary: field_attribute_target}. The key gives the primary subsector, and 'field_attribute_target' is the field in the attribute table associated with the categories to check.
-                NOTE: dict_subsector_primary can also be specified only as a string (subsector_primary) -- if dict_subsector_primary is a string, then field_attribute_target is assumed to be the primary python category of subsector_target (e.g., $CAT-TARGET$)
-            - subsector_target: target subsector to check values against
-            - type_primary: default = "categories". Represents the type of attribute table for the primary table; valid values are 'categories', 'varreqs_all', and 'varreqs_partial'
-            - type_target: default = "categories". Type of the target table. Valid values are the same as those for type_primary.
-            - injection_q: default = True. If injection_q, then target categories should be associated with a unique primary category (exclding those are specified as 'none').
-            - allow_multiple_cats_q: allow the target field to specify multiple categories using the default delimiter (|)?
+        Function Arguments
+        ------------------
+        - dict_subsector_primary: dictionary of form {subsector_primary: 
+            field_attribute_target}. The key gives the primary subsector, 
+            and 'field_attribute_target' is the field in the attribute table 
+            associated with the categories to check.
+            * NOTE: dict_subsector_primary can also be specified only as a 
+                string (subsector_primary) -- if dict_subsector_primary is a 
+                string, then field_attribute_target is assumed to be the primary 
+                python category of subsector_target (e.g., $CAT-TARGET$)
+        - subsector_target: target subsector to check values against
+
+        Keyword Arguments
+        -----------------
+        - allow_multiple_cats_q: allow the target field to specify multiple 
+            categories using the default delimiter (|)?
+        - injection_q: default = True. If injection_q, then target categories 
+            should be associated with a unique primary category (exclding those 
+            are specified as 'none').
+        - type_primary: default = "categories". Represents the type of attribute 
+            table for the primary table; valid values are 'categories', 
+            'varreqs_all', and 'varreqs_partial'
+        - type_target: default = "categories". Type of the target table. Valid 
+            values are the same as those for type_primary.
         """
 
         ##  RUN CHECKS ON INPUT SPECIFICATIONS
@@ -1303,11 +1322,13 @@ class ModelAttributes:
     def _check_attribute_tables_entc(self,
     ) -> None:
         # some shared values
+        pycat_enfu = self.get_subsector_attribute(self.subsec_name_enfu, "pycategory_primary")
         subsec = self.subsec_name_entc
         attr = self.get_attribute_table(subsec)
 
+
         # check required fields - binary
-        fields_req_bin = ["allow_electrification", "fuel_production", "power_plant", "renewable_energy_technology"]
+        fields_req_bin = ["fuel_production", "power_plant", "renewable_energy_technology"]
         self._check_binary_fields(attr, subsec, fields_req_bin)
 
         # check required fields - numeric
@@ -1316,7 +1337,14 @@ class ModelAttributes:
 
         # check technology/fuel crosswalks
         self._check_subsector_attribute_table_crosswalk(
-            self.subsec_name_entc,
+            {self.subsec_name_entc: f"electricity_generation_{pycat_enfu}"},
+            self.subsec_name_enfu,
+            type_primary = "categories",
+            injection_q = False
+        )
+        # check specifications of fuel in fuel generation
+        self._check_subsector_attribute_table_crosswalk(
+            {self.subsec_name_entc: f"generates_fuel_{pycat_enfu}"},
             self.subsec_name_enfu,
             type_primary = "categories",
             injection_q = False
@@ -2795,18 +2823,38 @@ class ModelAttributes:
         clean_attr_key: bool = False,
     ) -> tuple:
         """
-            Assign key_values that are associated with a secondary category. Use matchstrings defined in dict_assignment to create an output dictionary
+        Assign key_values that are associated with a secondary category. Use 
+            matchstrings defined in dict_assignment to create an output 
+            dictionary.
 
             Returns a tuple of following structure:
             * tuple: (dict_out, vars_unassigned)
-            * dict_out -> {key_value: {assigned_dictionary_key: variable_name, ...}}
+            * dict_out: takes form
+                {
+                    key_value: {
+                        assigned_dictionary_key: variable_name, 
+                        ...
+                    },
+                    ...
+                }
 
-            - subsector: the subsector to pull the attribute table from
-            - field_attribute: field in the attribute table to use to split elements
-            - dict_assignment: dict. {match_str: assigned_dictionary_key} map a variable match string to an assignment
-            - type_table: default = "categories". Represents the type of attribute table; valid values are 'categories', 'varreqs_all', and 'varreqs_partial'
-            - clean_field_vals: default = True. Apply clean_schema() to the values found in attr_subsector[field_attribute]?
-            - clean_attr_key: default is False. Apply clean_schema() to the keys that are assigned to the output dictionary (e.g., clean_schema(variable_name))
+        Function Arguments
+        ------------------
+        - dict_assignment: dict. {match_str: assigned_dictionary_key} map a 
+            variable match string to an assignment
+        - field_attribute: field in the attribute table to use to split elements
+        - subsector: the subsector to pull the attribute table from
+        
+        Keyword Arguments
+        -----------------
+        - clean_attr_key: default is False. Apply clean_schema() to the keys 
+            that are assigned to the output dictionary (e.g., 
+            clean_schema(variable_name))
+        - clean_field_vals: default = True. Apply clean_schema() to the values 
+            found in attr_subsector[field_attribute]?
+        - type_table: default = "categories". Represents the type of attribute
+            table; valid values are 'categories', 'varreqs_all', and 
+            'varreqs_partial'
         """
 
         # check the subsector

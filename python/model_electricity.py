@@ -31,257 +31,73 @@ from julia.api import Julia
 
 class ElectricEnergy:
     """
-        Use ElectricEnergy to calculate emissions from electricity generation
-            using NemoMod. Integrates with the SISEPUEDE integrated modeling
-            framework.
+    Use ElectricEnergy to calculate emissions from electricity generation using 
+        NemoMod. Integrates with the SISEPUEDE integrated modeling framework.
 
-        Intialization Arguments
-        -----------------------
-        - attributes: ModelAttributes object used in SISEPUEDE
-        - dir_jl: location of Julia directory containing Julia environment,
-            and support modules
-        - nemomod_reference_files: dictionary of input reference dataframes OR
-            directory containing required CSVs
-            * Required keys or CSVs (without extension):
-                (1) CapacityFactor
-                (2) SpecifiedDemandProfile
+    Intialization Arguments
+    -----------------------
+    - model_attributes: ModelAttributes object used in SISEPUEDE
+    - dir_jl: location of Julia directory containing Julia environment and 
+        support modules
+    - nemomod_reference_files: dictionary of input reference dataframes OR 
+        directory containing required CSVs
+        * Required keys or CSVs (without extension):
+            (1) CapacityFactor
+            (2) SpecifiedDemandProfile
 
-        Optional Arguments
-        ------------------
-        - initialize_julia: initialize the Julia connection? Required to run the model.
-            * Set to False to access ElectricEnergy properties without initializing
-                the connection to Julia.
-        - logger: optional logger object to use for event logging
+    Optional Arguments
+    ------------------
+    - initialize_julia: initialize the Julia connection? Required to run the 
+        model.
+        * Set to False to access ElectricEnergy properties without initializing
+            the connection to Julia.
+    - logger: optional logger object to use for event logging
 
-        Requirements
-        ------------
-        - Julia 1.7+
-        - Python PyJulia package
-        - NemoMod (see https://sei-international.github.io/NemoMod.jl/stable/ for the latest stable release)
-        - Cbc, Clp, GPLK, CPLEX, GAMS (to access GAMS solvers), Gurobi, HiGHS (at least one)
+    Requirements
+    ------------
+    - Julia 1.7+
+    - Python PyJulia package
+    - NemoMod (see https://sei-international.github.io/NemoMod.jl/stable/ for 
+        the latest stable release)
+    - Cbc, Clp, GPLK, CPLEX, GAMS (to access GAMS solvers), Gurobi, HiGHS (at 
+        least one)
 
     """
 
     def __init__(self,
-        attributes: ModelAttributes,
+        model_attributes: ModelAttributes,
         dir_jl: str,
         nemomod_reference_files: Union[str, dict],
         initialize_julia: bool = True,
         logger: Union[logging.Logger, None] = None
     ):
+        ##  INITIALIZE KEY PROPERTIES (ORDERED)
 
-        # initalize the logger
+        # initalize the logger and model attributes
         self.logger = logger
+        self.model_attributes = model_attributes
 
-        # some subector reference variables
-        self.subsec_name_ccsq = "Carbon Capture and Sequestration"
-        self.subsec_name_econ = "Economy"
-        self.subsec_name_enfu = "Energy Fuels"
-        self.subsec_name_enst = "Energy Storage"
-        self.subsec_name_entc = "Energy Technology"
-        self.subsec_name_fgtv = "Fugitive Emissions"
-        self.subsec_name_gnrl = "General"
-        self.subsec_name_inen = "Industrial Energy"
-        self.subsec_name_ippu = "IPPU"
-        self.subsec_name_scoe = "Stationary Combustion and Other Energy"
-        self.subsec_name_trns = "Transportation"
-        self.subsec_name_trde = "Transportation Demand"
+        # initialize names and shared fields
+        self._initialize_subsector_names()
+        self._initialize_nemomod_fields()
+        self._initialize_input_output_components()
+        self._initialize_other_properties()
 
-        # add some key fields from nemo mod
-        self.field_nemomod_description = "desc"
-        self.field_nemomod_emission = "e"
-        self.field_nemomod_fuel = "f"
-        self.field_nemomod_id = "id"
-        self.field_nemomod_lorder = "lorder"
-        self.field_nemomod_mode = "m"
-        self.field_nemomod_multiplier = "multiplier"
-        self.field_nemomod_name = "name"
-        self.field_nemomod_order = "order"
-        self.field_nemomod_region = "r"
-        self.field_nemomod_storage = "s"
-        self.field_nemomod_table_name = "tablename"
-        self.field_nemomod_technology = "t"
-        self.field_nemomod_tg1 = "tg1"
-        self.field_nemomod_tg2 = "tg2"
-        self.field_nemomod_time_slice = "l"
-        self.field_nemomod_value = "val"
-        self.field_nemomod_year = "y"
-        # dictionary to map fields to type
-        self.dict_fields_nemomod_to_type = {
-            self.field_nemomod_description: str,
-            self.field_nemomod_emission: str,
-            self.field_nemomod_fuel: str,
-            self.field_nemomod_id: int,
-            self.field_nemomod_lorder: int,
-            self.field_nemomod_mode: str,
-            self.field_nemomod_multiplier: float,
-            self.field_nemomod_name: str,
-            self.field_nemomod_order: int,
-            self.field_nemomod_region: str,
-            self.field_nemomod_storage: str,
-            self.field_nemomod_table_name: str,
-            self.field_nemomod_technology: str,
-            self.field_nemomod_tg1: str,
-            self.field_nemomod_tg2: str,
-            self.field_nemomod_time_slice: str,
-            self.field_nemomod_year: str
-        }
+        # initialize subsectoral model variables, categories, and indices
+        self._initialize_subsector_vars_enfu()
+        self._initialize_subsector_vars_entc()
+        self._initialize_subsector_vars_enst()
+        
+        # initialize NemoMod properties
+        self._initialize_dict_tables_required_to_required_fields()
+        self._initialize_nemomod_output_tables()
+        self._initialize_nemomod_reference_dict(nemomod_reference_files)
 
-        # sort hierarchy
-        self.fields_nemomod_sort_hierarchy = [
-            self.field_nemomod_id,
-            self.field_nemomod_region,
-            self.field_nemomod_table_name,
-            self.field_nemomod_technology,
-            self.field_nemomod_storage,
-            self.field_nemomod_fuel,
-            self.field_nemomod_emission,
-            self.field_nemomod_mode,
-            self.field_nemomod_time_slice,
-            self.field_nemomod_year,
-            # value and description should always be at the end
-            self.field_nemomod_value,
-            self.field_nemomod_description
-        ]
-
-        # initialize dynamic variables
-        self._set_dict_tables_required_to_required_fields()
-        self.model_attributes = attributes
-        self.required_dimensions = self.get_required_dimensions()
-        self.required_subsectors, self.required_base_subsectors = self.get_required_subsectors()
-        self.required_variables, self.output_variables = self.get_elec_input_output_fields()
-        self.dict_nemomod_reference_tables = self.get_nemomod_reference_dict(nemomod_reference_files)
-
-
-        ##  SET MODEL FIELDS
-
-        # Energy Fuel model variables
-        self.modvar_enfu_ef_combustion_co2 = ":math:\\text{CO}_2 Combustion Emission Factor"
-        self.modvar_enfu_ef_combustion_mobile_ch4 = ":math:\\text{CH}_4 Mobile Combustion Emission Factor"
-        self.modvar_enfu_ef_combustion_mobile_n2o = ":math:\\text{N}_2\\text{O} Mobile Combustion Emission Factor"
-        self.modvar_enfu_ef_combustion_stationary_ch4 = ":math:\\text{CH}_4 Stationary Combustion Emission Factor"
-        self.modvar_enfu_ef_combustion_stationary_n2o = ":math:\\text{N}_2\\text{O} Stationary Combustion Emission Factor"
-        self.modvar_enfu_efficiency_factor_industrial_energy = "Average Industrial Energy Fuel Efficiency Factor"
-        self.modvar_enfu_energy_demand_by_fuel_ccsq = "Energy Demand by Fuel in CCSQ"
-        self.modvar_enfu_energy_demand_by_fuel_elec = "Energy Demand by Fuel in Electricity"
-        self.modvar_enfu_energy_demand_by_fuel_inen = "Energy Demand by Fuel in Industrial Energy"
-        self.modvar_enfu_energy_demand_by_fuel_scoe = "Energy Demand by Fuel in SCOE"
-        self.modvar_enfu_energy_demand_by_fuel_total = "Total Energy Demand by Fuel"
-        self.modvar_enfu_energy_demand_by_fuel_trns = "Energy Demand by Fuel in Transportation"
-        self.modvar_enfu_energy_density_gravimetric = "Gravimetric Energy Density"
-        self.modvar_enfu_energy_density_volumetric = "Volumetric Energy Density"
-        self.modvar_enfu_exports_fuel = "Fuel Exports"
-        self.modvar_enfu_frac_fuel_demand_imported = "Fraction of Fuel Demand Imported"
-        self.modvar_enfu_imports_electricity = "Electricity Imports"
-        self.modvar_enfu_imports_fuel = "Fuel Imports"
-        self.modvar_enfu_minimum_frac_fuel_used_for_electricity = "Minimum Fraction of Fuel Used for Electricity Generation"
-        self.modvar_enfu_price_gravimetric = "Gravimetric Fuel Price"
-        self.modvar_enfu_price_thermal = "Thermal Fuel Price"
-        self.modvar_enfu_price_volumetric = "Volumetric Fuel Price"
-        self.modvar_enfu_production_frac_petroleum_refinement = "Petroleum Refinery Production Fraction"
-        self.modvar_enfu_production_frac_natural_gas_processing = "Natural Gas Processing Fraction"
-        self.modvar_enfu_production_fuel = "Fuel Production"
-        self.modvar_enfu_transmission_loss_electricity = "Electrical Transmission Loss"
-        self.modvar_enfu_unused_fuel_exported = "Unused Fuel Exported"
-        # key categories
-        self.cat_enfu_bgas = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_enfu, {self.model_attributes.field_enfu_biogas_fuel_category: 1})[0]
-        self.cat_enfu_elec = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_enfu, {self.model_attributes.field_enfu_electricity_demand_category: 1})[0]
-        self.cat_enfu_wste = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_enfu, {self.model_attributes.field_enfu_waste_fuel_category: 1})[0]
-        # associated indices
-        self.ind_enfu_bgas = self.model_attributes.get_attribute_table(self.subsec_name_enfu).get_key_value_index(self.cat_enfu_bgas)
-        self.ind_enfu_elec = self.model_attributes.get_attribute_table(self.subsec_name_enfu).get_key_value_index(self.cat_enfu_elec)
-        self.ind_enfu_wste = self.model_attributes.get_attribute_table(self.subsec_name_enfu).get_key_value_index(self.cat_enfu_wste)
-
-        # Energy (Electricity) Mode Fields
-        self.cat_enmo_gnrt = self.model_attributes.get_categories_from_attribute_characteristic(
-            self.model_attributes.dim_mode,
-            {"generation_category": 1}
-        )[0]
-        self.cat_enmo_stor = self.model_attributes.get_categories_from_attribute_characteristic(
-            self.model_attributes.dim_mode,
-            {"storage_category": 1}
-        )[0]
-
-        # Energy (Electricity) Technology Variables
-        self.modvar_entc_nemomod_capital_cost = "NemoMod CapitalCost"
-        self.modvar_entc_ef_scalar_ch4 = ":math:\\text{CH}_4 NemoMod EmissionsActivityRatio Scalar"
-        self.modvar_entc_ef_scalar_co2 = ":math:\\text{CO}_2 NemoMod EmissionsActivityRatio Scalar"
-        self.modvar_entc_ef_scalar_n2o = ":math:\\text{N}_2\\text{O} NemoMod EmissionsActivityRatio Scalar"
-        self.modvar_entc_efficiency_factor_technology = "Technology Efficiency of Fuel Use"
-        self.modvar_entc_fuelprod_input_activity_ratio_coal_deposits = "Fuel Production NemoMod InputActivityRatio Coal Deposits"
-        self.modvar_entc_fuelprod_input_activity_ratio_crude = "Fuel Production NemoMod InputActivityRatio Crude"
-        self.modvar_entc_fuelprod_input_activity_ratio_diesel = "Fuel Production NemoMod InputActivityRatio Diesel"
-        self.modvar_entc_fuelprod_input_activity_ratio_electricity = "Fuel Production NemoMod InputActivityRatio Electricity"
-        self.modvar_entc_fuelprod_input_activity_ratio_gasoline = "Fuel Production NemoMod InputActivityRatio Gasoline"
-        self.modvar_entc_fuelprod_input_activity_ratio_natural_gas = "Fuel Production NemoMod InputActivityRatio Natural Gas"
-        self.modvar_entc_fuelprod_input_activity_ratio_natural_gas_unprocessed = "Fuel Production NemoMod InputActivityRatio Natural Gas Unprocessed"
-        self.modvar_entc_fuelprod_input_activity_ratio_oil = "Fuel Production NemoMod InputActivityRatio Oil"
-        self.modvar_entc_fuelprod_output_activity_ratio_coal = "Fuel Production NemoMod OutputActivityRatio Coal"
-        self.modvar_entc_fuelprod_output_activity_ratio_diesel = "Fuel Production NemoMod OutputActivityRatio Diesel"
-        self.modvar_entc_fuelprod_output_activity_ratio_gasoline = "Fuel Production NemoMod OutputActivityRatio Gasoline"
-        self.modvar_entc_fuelprod_output_activity_ratio_hgl = "Fuel Production NemoMod OutputActivityRatio Hydrocarbon Gas Liquids"
-        self.modvar_entc_fuelprod_output_activity_ratio_hydrogen = "Fuel Production NemoMod OutputActivityRatio Hydrogen"
-        self.modvar_entc_fuelprod_output_activity_ratio_kerosene = "Fuel Production NemoMod OutputActivityRatio Kerosene"
-        self.modvar_entc_fuelprod_output_activity_ratio_natural_gas = "Fuel Production NemoMod OutputActivityRatio Natural Gas"
-        self.modvar_entc_fuelprod_output_activity_ratio_oil = "Fuel Production NemoMod OutputActivityRatio Oil"
-        self.modvar_entc_nemomod_discounted_capital_investment = "NemoMod Discounted Capital Investment"
-        self.modvar_entc_nemomod_discounted_operating_costs = "NemoMod Discounted Operating Costs"
-        self.modvar_entc_nemomod_emissions_ch4_elec = "NemoMod :math:\\text{CH}_4 Emissions from Electricity Generation"
-        self.modvar_entc_nemomod_emissions_co2_elec = "NemoMod :math:\\text{CO}_2 Emissions from Electricity Generation"
-        self.modvar_entc_nemomod_emissions_n2o_elec = "NemoMod :math:\\text{N}_2\\text{O} Emissions from Electricity Generation"
-        self.modvar_entc_nemomod_emissions_ch4_fpr = "NemoMod :math:\\text{CH}_4 Emissions from Fuel Processing and Refinement"
-        self.modvar_entc_nemomod_emissions_co2_fpr = "NemoMod :math:\\text{CO}_2 Emissions from Fuel Processing and Refinement"
-        self.modvar_entc_nemomod_emissions_n2o_fpr = "NemoMod :math:\\text{N}_2\\text{O} Emissions from Fuel Processing and Refinement"
-        self.modvar_entc_nemomod_fixed_cost = "NemoMod FixedCost"
-        self.modvar_entc_nemomod_generation_capacity = "NemoMod Generation Capacity"
-        self.modvar_entc_nemomod_production_by_technology = "NemoMod Production by Technology"
-        self.modvar_entc_nemomod_reserve_margin = "NemoMod ReserveMargin"
-        self.modvar_entc_nemomod_reserve_margin_tag_technology = "NemoMod ReserveMarginTagTechnology"
-        self.modvar_entc_nemomod_residual_capacity = "NemoMod ResidualCapacity"
-        self.modvar_entc_nemomod_total_annual_max_capacity = "NemoMod TotalAnnualMaxCapacity"
-        self.modvar_entc_nemomod_total_annual_max_capacity_investment = "NemoMod TotalAnnualMaxCapacityInvestment"
-        self.modvar_entc_nemomod_total_annual_min_capacity = "NemoMod TotalAnnualMinCapacity"
-        self.modvar_entc_nemomod_total_annual_min_capacity_investment = "NemoMod TotalAnnualMinCapacityInvestment"
-        self.modvar_entc_nemomod_variable_cost = "NemoMod VariableCost"
-        # other key variables
-        self.drop_flag_tech_capacities = -999
-
-
-        # Energy (Electricity) Storage Variables
-        self.modvar_enst_nemomod_capital_cost_storage = "NemoMod CapitalCostStorage"
-        self.modvar_enst_nemomod_discounted_capital_investment_storage = "NemoMod Discounted Capital Investment Storage"
-        self.modvar_enst_nemomod_discounted_operating_costs_storage = "NemoMod Discounted Operating Costs Storage"
-        self.modvar_enst_nemomod_residual_capacity = "NemoMod ResidualStorageCapacity"
-        self.modvar_enst_nemomod_storage_start_level = "NemoMod StorageStartLevel"
-        self.modvar_enst_nemomod_total_annual_max_capacity_storage = "NemoMod TotalAnnualMaxCapacityStorage"
-        self.modvar_enst_nemomod_total_annual_max_capacity_investment_storage = "NemoMod TotalAnnualMaxCapacityInvestmentStorage"
-        self.modvar_enst_nemomod_total_annual_min_capacity_storage = "NemoMod TotalAnnualMinCapacityStorage"
-        self.modvar_enst_nemomod_total_annual_min_capacity_investment_storage = "NemoMod TotalAnnualMinCapacityInvestmentStorage"
-
-        # Additional Miscellaneous variables and functions (to clean up repetition)
-        self.nemomod_time_period_as_year = True # use time periods as years in NemoMod?
-        self.direction_exchange_year_time_period = self.get_exchange_year_time_period_direction()
-        self.units_energy_nemomod = self.model_attributes.configuration.get("energy_units_nemomod")
-        # NemoMod tables that must be run to extract output for SISEPUEDE
-        self.required_nemomod_output_tables = [
-            self.model_attributes.table_nemomod_annual_emissions_by_technology,
-            self.model_attributes.table_nemomod_capital_investment_discounted,
-            self.model_attributes.table_nemomod_capital_investment_storage_discounted,
-            self.model_attributes.table_nemomod_operating_cost_discounted,
-            self.model_attributes.table_nemomod_production_by_technology,
-            self.model_attributes.table_nemomod_total_annual_capacity,
-            self.model_attributes.table_nemomod_use_by_technology
-        ]
-
-        # instantiate AFOLU and CircularEconomy class for access to variables
-        self.model_afolu = AFOLU(self.model_attributes)
-        self.model_circecon = CircularEconomy(self.model_attributes)
-        self.model_energy = NonElectricEnergy(self.model_attributes)
-        self.model_socioeconomic = Socioeconomic(self.model_attributes)
-
-        # finally, set integrated variables and initialize julia
-        self._set_integrated_variables()
+        # finally, initialize models, set integrated variables/field map dictionaries and initialize julia
+        self._initialize_models()
+        self._initialize_integrated_variables()
         self._initialize_julia(dir_jl, initialize_julia = initialize_julia)
+
 
 
 
@@ -331,127 +147,142 @@ class ElectricEnergy:
         sf.check_fields(df_elec_trajectories, check_fields, f"{msg_prepend} projection cannot proceed: fields ")
 
 
-    def get_elec_input_output_fields(self):
+    def get_elec_input_output_fields(self
+    ) -> None:
+        """
+        Set the following properties:
+
+            * self.required_variables
+            * self.output_variables
+
+        Depende
+        """
         required_doa = [self.model_attributes.dim_time_period]
         required_vars, output_vars = self.model_attributes.get_input_output_fields(self.required_subsectors)
+
+        self.required_variables, self.output_variables
 
         return required_vars + self.get_required_dimensions(), output_vars
 
 
 
-    ##  load the reference dictionary
-    def get_nemomod_reference_dict(self,
-        nemomod_reference_files: Union[str, dict],
-        dict_tables_required_to_required_fields: Union[Dict[str, List[str]], None] = None,
-        filter_regions: bool = True
-    ) -> dict:
+    def _initialize_dict_tables_required_to_required_fields(self,
+    ) -> None:
         """
-            Initialize the dictionary of reference files for NemoMod required to populate the database.
+        Set a dictionary mapping required references tables to required fields. 
+            Initializes the following properties:
 
-            Function Arguments
-            ------------------
-            - nemomod_reference_files: file path of reference CSV files *OR* dictionary. Required
-                keys/files (without .csv extension):
-
-                * CapacityFactor
-                * SpecifiedDemandProfile
-
-            Keyword Arguments
-            -----------------
-            - dict_tables_required_to_required_fields: dictionary mapping required reference table
-                names (str) to list of required fields.
-                * If None, defaults to self.dict_tables_required_to_required_fields
-            - filter_regions: filter regions to correspond with ModelAttributes region attribute table
+            * self.dict_tables_required_to_required_fields
+            * self.required_reference_tables
         """
 
-        # some initialization
-        attr_region = self.model_attributes.dict_attributes.get(self.model_attributes.dim_region)
-        attr_technology = self.model_attributes.get_attribute_table(self.subsec_name_entc)
-        attr_time_slice = self.model_attributes.dict_attributes.get("time_slice")
-        dict_tables_required_to_required_fields = self.dict_tables_required_to_required_fields if (dict_tables_required_to_required_fields is None) else dict_tables_required_to_required_fields
-        dict_out = {}
-        set_tables_required = set(self.dict_tables_required_to_required_fields.keys())
+        self.dict_tables_required_to_required_fields = {
+            "CapacityFactor": [
+                self.field_nemomod_region,
+                self.field_nemomod_time_slice
+            ],
+            "SpecifiedDemandProfile": [
+                self.field_nemomod_region,
+                self.field_nemomod_time_slice,
+                self.field_nemomod_value
+            ]
+        }
 
-        # if file path, check tables and read in
-        if isinstance(nemomod_reference_files, str):
-            # check the directory
-            dir_nemomod_ref = sf.check_path(nemomod_reference_files, False)
-            set_tables_available = set([x.replace(".csv", "") for x in os.listdir(dir_nemomod_ref) if x.endswith(".csv")])
-            set_tables_available = set_tables_required & set_tables_available
-            if not set_tables_required.issubset(set_tables_available):
-                set_missing = sf.print_setdiff(set_tables_required, set_tables_available)
-                raise RuntimeError(f"Initialization error in ElectricEnergy: required reference tables {set_missing} not found in {dir_nemomod_ref}.")
-            # read in files
-            for fbn in list(set_tables_required):
-                # ADD LOGGING HERE
-                df_tmp = pd.read_csv(os.path.join(dir_nemomod_ref, f"{fbn}.csv"))
-                dict_out.update({fbn: df_tmp})
-
-        # if dictionary, simply copy into output dictionary
-        elif isinstance(nemomod_reference_files, dict):
-            sf.check_keys(nemomod_reference_files, required_tables)
-            for k in required_tables:
-                dict_out.update({k: nemomod_reference_files[k]})
-
-        # check tables
-        for k in dict_out.keys():
-            # check that regions are correctly implemented
-            if self.field_nemomod_region in dict_out[k]:
-                df_filt = dict_out[k][dict_out[k][self.field_nemomod_region].isin(attr_region.key_values)]
-                regions_config = self.model_attributes.configuration.get("region")
-                sf.check_set_values(regions_config, df_filt[self.field_nemomod_region])
-                if filter_regions:
-                    df_filt = df_filt[df_filt[self.field_nemomod_region].isin(regions_config)]
-                # conditions needed for the regions
-                check_regions = (len(set(df_filt[self.field_nemomod_region])) == len(set(regions_config)))
-                if not check_regions:
-                    missing_vals = sf.print_setdiff(set(regions_config), set(df_filt[self.field_nemomod_region]))
-                    raise RuntimeError(f"Initialization error in ElectricEnergy: field {self.field_nemomod_region} in table {k} is missing regions {missing_vals}.")
-
-                dict_out.update({k: df_filt})
-
-            # check that time slices are correctly implemented
-            if self.field_nemomod_time_slice in dict_out[k]:
-                n = len(dict_out[k])
-                df_filt = dict_out[k][dict_out[k][self.field_nemomod_time_slice].isin(attr_time_slice.key_values)]
-                if len(set(df_filt[self.field_nemomod_time_slice])) != len(attr_time_slice.key_values):
-                    missing_vals = sf.print_setdiff(set(attr_time_slice.key_values), set(df_filt[self.field_nemomod_time_slice]))
-                    raise RuntimeError(f"Initialization error in ElectricEnergy: field {self.field_nemomod_time_slice} in table {k} is missing time_slices {missing_vals} .")
-
-        # check fields in CapacityFactor
-        sf.check_set_values(
-            [x for x in dict_out[self.model_attributes.table_nemomod_capacity_factor].columns if (x not in [self.field_nemomod_region, self.field_nemomod_time_slice])],
-            attr_technology.key_values
-        )
-
-        return dict_out
+        self.required_reference_tables = sorted(list(
+            self.dict_tables_required_to_required_fields.keys()
+        ))
 
 
 
-    ##  get the required subsectors
-    def get_required_subsectors(self):
-        ## TEMPORARY
+    def _initialize_input_output_components(self,
+    ) -> None:
+        """
+        Set a range of input components, including required dimensions, 
+            subsectors, input and output fields, and integration variables.
+            Sets the following properties:
+
+            * self.output_variables
+            * self.required_dimensions
+            * self.required_subsectors
+            * self.required_base_subsectors
+            * self.required_variables
+            
+        """
+
+        ##  START WITH REQUIRED DIMENSIONS (TEMPORARY - derive from attributes later)
+
+        required_doa = [self.model_attributes.dim_time_period]
+        self.required_dimensions = required_doa
+
+
+        ##  ADD REQUIRED SUBSECTORS (TEMPORARY - derive from attributes)
+
         subsectors = [self.subsec_name_enfu, self.subsec_name_enst, self.subsec_name_entc]#self.model_attributes.get_setor_subsectors("Energy")
         subsectors_base = subsectors.copy()
         subsectors += [self.subsec_name_econ, self.subsec_name_gnrl]
-        return subsectors, subsectors_base
+
+        self.required_subsectors = subsectors
+        self.required_base_subsectors = subsectors_base
 
 
+        ##  SET ELECTRICITY INPUT/OUTPUT FIELDS
 
-    def get_required_dimensions(self):
-        ## TEMPORARY - derive from attributes later
         required_doa = [self.model_attributes.dim_time_period]
-        return required_doa
+        required_vars, output_vars = self.model_attributes.get_input_output_fields(subsectors)
+
+        self.required_variables = required_vars + required_doa
+        self.output_variables = output_vars
+
+
+        return None
 
 
 
-    def get_exchange_year_time_period_direction(self) -> str:
-        if self.nemomod_time_period_as_year:
-            return "time_period_as_year"
-        else:
-            return "time_period_to_year"
+    def _initialize_integrated_variables(self
+    ) -> None:
+        """
+        Sets the following integration variable properties:
 
+            * self.list_vars_required_for_integration
 
+            Updates the following properties:
+
+            * self.required_variables
+        """
+        # set the integration variables
+        self.integration_variables = [
+            # AFOLU variables
+            self.model_afolu.modvar_lsmm_recovered_biogas,
+            # CircularEconomy variables
+            self.model_circecon.modvar_trww_recovered_biogas,
+            self.model_circecon.modvar_waso_emissions_ch4_incineration,
+            self.model_circecon.modvar_waso_emissions_co2_incineration,
+            self.model_circecon.modvar_waso_emissions_n2o_incineration,
+            self.model_circecon.modvar_waso_recovered_biogas_anaerobic,
+            self.model_circecon.modvar_waso_recovered_biogas_landfills,
+            self.model_circecon.modvar_waso_waste_total_for_energy_isw,
+            self.model_circecon.modvar_waso_waste_total_for_energy_msw,
+            self.model_circecon.modvar_waso_waste_total_incineration,
+            # Energy Fuel Demand outputs from other sectors
+            self.modvar_enfu_energy_demand_by_fuel_ccsq,
+            self.modvar_enfu_energy_demand_by_fuel_inen,
+            self.modvar_enfu_energy_demand_by_fuel_scoe,
+            self.modvar_enfu_energy_demand_by_fuel_trns
+        ]
+
+        # in Electricity, update required variables
+        for modvar in self.integration_variables:
+            subsec = self.model_attributes.get_variable_subsector(modvar)
+            new_vars = self.model_attributes.build_varlist(subsec, modvar)
+            self.required_variables += new_vars
+
+        # set required variables and ensure no double counting
+        self.required_variables = list(set(self.required_variables))
+        self.required_variables.sort()
+
+        return None
+
+        
 
     def _initialize_julia(self,
         dir_jl: str,
@@ -569,49 +400,473 @@ class ElectricEnergy:
         except Exception as e:
             self._log(f"An error occured while trying to initialize the JuMP optimizer from package: {e}", type_log = "error")
 
+        return None
 
 
-    def _set_integrated_variables(self
+
+    def _initialize_models(self,
+        model_attributes: Union[ModelAttributes, None] = None
     ) -> None:
         """
-        Sets the following integration variable properties:
+        Initialize SISEPUEDE model classes for fetching variables and 
+            accessing methods. Initializes the following properties:
 
-            * self.list_vars_required_for_integration
+            * self.model_afolu
+            * self.model_circecon
+            * self.model_energy
+            * self.model_socioeconomic
+
+        Keyword Arguments
+        -----------------
+        - model_attributes: ModelAttributes object used to instantiate
+            models. If None, defaults to self.model_attributes.
         """
-        # set the integration variables
-        self.integration_variables = [
-            # AFOLU variables
-            self.model_afolu.modvar_lsmm_recovered_biogas,
-            # CircularEconomy variables
-            self.model_circecon.modvar_trww_recovered_biogas,
-            self.model_circecon.modvar_waso_emissions_ch4_incineration,
-            self.model_circecon.modvar_waso_emissions_co2_incineration,
-            self.model_circecon.modvar_waso_emissions_n2o_incineration,
-            self.model_circecon.modvar_waso_recovered_biogas_anaerobic,
-            self.model_circecon.modvar_waso_recovered_biogas_landfills,
-            self.model_circecon.modvar_waso_waste_total_for_energy_isw,
-            self.model_circecon.modvar_waso_waste_total_for_energy_msw,
-            self.model_circecon.modvar_waso_waste_total_incineration,
-            # Energy Fuel Demand outputs from other sectors
-            self.modvar_enfu_energy_demand_by_fuel_ccsq,
-            self.modvar_enfu_energy_demand_by_fuel_inen,
-            self.modvar_enfu_energy_demand_by_fuel_scoe,
-            self.modvar_enfu_energy_demand_by_fuel_trns
+
+        model_attributes = self.model_attributes if (model_attributes is None) else model_attributes
+        
+        self.model_afolu = AFOLU(self.model_attributes)
+        self.model_circecon = CircularEconomy(self.model_attributes)
+        self.model_energy = NonElectricEnergy(self.model_attributes)
+        self.model_socioeconomic = Socioeconomic(self.model_attributes)
+
+        return None
+
+
+
+    def _initialize_nemomod_fields(self
+    ) -> None:
+        """
+        Set common fields used in NemoMod. Sets the following properties:
+
+            * self.dict_fields_nemomod_to_type
+            * self.field_nemomod_####
+            * self.fields_nemomod_sort_hierarchy
+        """
+    
+        # add some key fields from nemo mod
+        self.field_nemomod_description = "desc"
+        self.field_nemomod_emission = "e"
+        self.field_nemomod_fuel = "f"
+        self.field_nemomod_id = "id"
+        self.field_nemomod_lorder = "lorder"
+        self.field_nemomod_mode = "m"
+        self.field_nemomod_multiplier = "multiplier"
+        self.field_nemomod_name = "name"
+        self.field_nemomod_order = "order"
+        self.field_nemomod_region = "r"
+        self.field_nemomod_storage = "s"
+        self.field_nemomod_table_name = "tablename"
+        self.field_nemomod_technology = "t"
+        self.field_nemomod_tg1 = "tg1"
+        self.field_nemomod_tg2 = "tg2"
+        self.field_nemomod_time_slice = "l"
+        self.field_nemomod_value = "val"
+        self.field_nemomod_year = "y"
+
+        # dictionary to map fields to type
+        self.dict_fields_nemomod_to_type = {
+            self.field_nemomod_description: str,
+            self.field_nemomod_emission: str,
+            self.field_nemomod_fuel: str,
+            self.field_nemomod_id: int,
+            self.field_nemomod_lorder: int,
+            self.field_nemomod_mode: str,
+            self.field_nemomod_multiplier: float,
+            self.field_nemomod_name: str,
+            self.field_nemomod_order: int,
+            self.field_nemomod_region: str,
+            self.field_nemomod_storage: str,
+            self.field_nemomod_table_name: str,
+            self.field_nemomod_technology: str,
+            self.field_nemomod_tg1: str,
+            self.field_nemomod_tg2: str,
+            self.field_nemomod_time_slice: str,
+            self.field_nemomod_year: str
+        }
+
+        # sort hierarchy for tables
+        self.fields_nemomod_sort_hierarchy = [
+            self.field_nemomod_id,
+            self.field_nemomod_region,
+            self.field_nemomod_table_name,
+            self.field_nemomod_technology,
+            self.field_nemomod_storage,
+            self.field_nemomod_fuel,
+            self.field_nemomod_emission,
+            self.field_nemomod_mode,
+            self.field_nemomod_time_slice,
+            self.field_nemomod_year,
+            # value and description should always be at the end
+            self.field_nemomod_value,
+            self.field_nemomod_description
         ]
 
-        # in Electricity, update required variables
-        for modvar in self.integration_variables:
-            subsec = self.model_attributes.get_variable_subsector(modvar)
-            new_vars = self.model_attributes.build_varlist(subsec, modvar)
-            self.required_variables += new_vars
-
-        # set required variables and ensure no double counting
-        self.required_variables = list(set(self.required_variables))
-        self.required_variables.sort()
+        return None
+    
 
 
+    def _initialize_nemomod_output_tables(self,
+    ) -> None:
+        """
+        SET NemoMod tables that need to be extract to generate results in
+            SISEPUEDE. Sets the following properties:
 
-    ##  nemomod apparently cannot handle years == 0
+            * self.required_nemomod_output_tables
+        """
+
+        self.required_nemomod_output_tables = [
+            self.model_attributes.table_nemomod_annual_emissions_by_technology,
+            self.model_attributes.table_nemomod_capital_investment_discounted,
+            self.model_attributes.table_nemomod_capital_investment_storage_discounted,
+            self.model_attributes.table_nemomod_operating_cost_discounted,
+            self.model_attributes.table_nemomod_production_by_technology,
+            self.model_attributes.table_nemomod_total_annual_capacity,
+            self.model_attributes.table_nemomod_use_by_technology
+        ]
+
+        return None
+
+
+
+    def _initialize_nemomod_reference_dict(self,
+        nemomod_reference_files: Union[str, dict],
+        dict_tables_required_to_required_fields: Union[Dict[str, List[str]], None] = None,
+        filter_regions: bool = True
+    ) -> None:
+        """
+        Initialize the dictionary of reference files for NemoMod required to 
+            populate the database. Sets the following properties:
+
+            * self.dict_nemomod_reference_tables
+
+        Function Arguments
+        ------------------
+        - nemomod_reference_files: file path of reference CSV files *OR* 
+            dictionary. Required keys/files (without .csv extension):
+
+            * CapacityFactor
+            * SpecifiedDemandProfile
+
+        Keyword Arguments
+        -----------------
+        - dict_tables_required_to_required_fields: dictionary mapping required 
+            reference table names (str) to list of required fields.
+            * If None, defaults to self.dict_tables_required_to_required_fields
+        - filter_regions: filter regions to correspond with ModelAttributes 
+            region attribute table
+        """
+
+        # some initialization
+        attr_region = self.model_attributes.dict_attributes.get(self.model_attributes.dim_region)
+        attr_technology = self.model_attributes.get_attribute_table(self.subsec_name_entc)
+        attr_time_slice = self.model_attributes.dict_attributes.get("time_slice")
+        dict_tables_required_to_required_fields = self.dict_tables_required_to_required_fields if (dict_tables_required_to_required_fields is None) else dict_tables_required_to_required_fields
+        dict_out = {}
+        set_tables_required = set(self.dict_tables_required_to_required_fields.keys())
+
+        # if file path, check tables and read in
+        if isinstance(nemomod_reference_files, str):
+            # check the directory
+            dir_nemomod_ref = sf.check_path(nemomod_reference_files, False)
+            set_tables_available = set([x.replace(".csv", "") for x in os.listdir(dir_nemomod_ref) if x.endswith(".csv")])
+            set_tables_available = set_tables_required & set_tables_available
+            if not set_tables_required.issubset(set_tables_available):
+                set_missing = sf.print_setdiff(set_tables_required, set_tables_available)
+                raise RuntimeError(f"Initialization error in ElectricEnergy: required reference tables {set_missing} not found in {dir_nemomod_ref}.")
+            # read in files
+            for fbn in list(set_tables_required):
+                # ADD LOGGING HERE
+                df_tmp = pd.read_csv(os.path.join(dir_nemomod_ref, f"{fbn}.csv"))
+                dict_out.update({fbn: df_tmp})
+
+        # if dictionary, simply copy into output dictionary
+        elif isinstance(nemomod_reference_files, dict):
+            sf.check_keys(nemomod_reference_files, required_tables)
+            for k in required_tables:
+                dict_out.update({k: nemomod_reference_files[k]})
+
+        # check tables
+        for k in dict_out.keys():
+            # check that regions are correctly implemented
+            if self.field_nemomod_region in dict_out[k]:
+                df_filt = dict_out[k][dict_out[k][self.field_nemomod_region].isin(attr_region.key_values)]
+                regions_config = self.model_attributes.configuration.get("region")
+                sf.check_set_values(regions_config, df_filt[self.field_nemomod_region])
+                if filter_regions:
+                    df_filt = df_filt[df_filt[self.field_nemomod_region].isin(regions_config)]
+                # conditions needed for the regions
+                check_regions = (len(set(df_filt[self.field_nemomod_region])) == len(set(regions_config)))
+                if not check_regions:
+                    missing_vals = sf.print_setdiff(set(regions_config), set(df_filt[self.field_nemomod_region]))
+                    raise RuntimeError(f"Initialization error in ElectricEnergy: field {self.field_nemomod_region} in table {k} is missing regions {missing_vals}.")
+
+                dict_out.update({k: df_filt})
+
+            # check that time slices are correctly implemented
+            if self.field_nemomod_time_slice in dict_out[k]:
+                n = len(dict_out[k])
+                df_filt = dict_out[k][dict_out[k][self.field_nemomod_time_slice].isin(attr_time_slice.key_values)]
+                if len(set(df_filt[self.field_nemomod_time_slice])) != len(attr_time_slice.key_values):
+                    missing_vals = sf.print_setdiff(set(attr_time_slice.key_values), set(df_filt[self.field_nemomod_time_slice]))
+                    raise RuntimeError(f"Initialization error in ElectricEnergy: field {self.field_nemomod_time_slice} in table {k} is missing time_slices {missing_vals} .")
+
+        # check fields in CapacityFactor
+        sf.check_set_values(
+            [x for x in dict_out[self.model_attributes.table_nemomod_capacity_factor].columns if (x not in [self.field_nemomod_region, self.field_nemomod_time_slice])],
+            attr_technology.key_values
+        )
+
+        self.dict_nemomod_reference_tables = dict_out
+
+        return None
+
+        
+
+    def _initialize_other_properties(self,
+    ) -> None:
+        """
+        Initialize other properties that don't fit elsewhere. Sets the 
+            following properties:
+
+            * self.cat_enmo_gnrt
+            * self.cat_enmo_stor
+            * self.direction_exchange_year_time_period
+            * self.drop_flag_tech_capacities
+            * self.nemomod_time_period_as_year
+            * self.units_energy_nemomod
+
+        """
+
+        # Energy (Electricity) Mode Fields
+        self.cat_enmo_gnrt = self.model_attributes.get_categories_from_attribute_characteristic(
+            self.model_attributes.dim_mode,
+            {"generation_category": 1}
+        )[0]
+        self.cat_enmo_stor = self.model_attributes.get_categories_from_attribute_characteristic(
+            self.model_attributes.dim_mode,
+            {"storage_category": 1}
+        )[0]
+
+        # other key variables
+        self.drop_flag_tech_capacities = -999
+        self.nemomod_time_period_as_year = True # use time periods as years in NemoMod?
+        self.direction_exchange_year_time_period = "time_period_as_year" if self.nemomod_time_period_as_year else "time_period_to_year"
+        self.units_energy_nemomod = self.model_attributes.configuration.get("energy_units_nemomod")
+
+        return None
+
+
+
+    def _initialize_subsector_names(self,
+    ) -> None:
+        """
+        Set subsector names (self.subsec_name_####)
+        """
+        # some subector reference variables
+        self.subsec_name_ccsq = "Carbon Capture and Sequestration"
+        self.subsec_name_econ = "Economy"
+        self.subsec_name_enfu = "Energy Fuels"
+        self.subsec_name_enst = "Energy Storage"
+        self.subsec_name_entc = "Energy Technology"
+        self.subsec_name_fgtv = "Fugitive Emissions"
+        self.subsec_name_gnrl = "General"
+        self.subsec_name_inen = "Industrial Energy"
+        self.subsec_name_ippu = "IPPU"
+        self.subsec_name_scoe = "Stationary Combustion and Other Energy"
+        self.subsec_name_trns = "Transportation"
+        self.subsec_name_trde = "Transportation Demand"
+
+        return None
+
+
+
+    def _initialize_subsector_vars_enfu(self,
+    ) -> None:
+        """
+        Initialize model variables, categories, and indicies associated with
+            ENFU (Energy Fuels). Sets the following properties:
+
+            * self.cat_enfu_****
+            * self.ind_enfu_****
+            * self.modvar_enfu_****
+        """
+        # Energy Fuel model variables
+        self.modvar_enfu_ef_combustion_co2 = ":math:\\text{CO}_2 Combustion Emission Factor"
+        self.modvar_enfu_ef_combustion_mobile_ch4 = ":math:\\text{CH}_4 Mobile Combustion Emission Factor"
+        self.modvar_enfu_ef_combustion_mobile_n2o = ":math:\\text{N}_2\\text{O} Mobile Combustion Emission Factor"
+        self.modvar_enfu_ef_combustion_stationary_ch4 = ":math:\\text{CH}_4 Stationary Combustion Emission Factor"
+        self.modvar_enfu_ef_combustion_stationary_n2o = ":math:\\text{N}_2\\text{O} Stationary Combustion Emission Factor"
+        self.modvar_enfu_efficiency_factor_industrial_energy = "Average Industrial Energy Fuel Efficiency Factor"
+        self.modvar_enfu_energy_demand_by_fuel_ccsq = "Energy Demand by Fuel in CCSQ"
+        self.modvar_enfu_energy_demand_by_fuel_elec = "Energy Demand by Fuel in Electricity"
+        self.modvar_enfu_energy_demand_by_fuel_inen = "Energy Demand by Fuel in Industrial Energy"
+        self.modvar_enfu_energy_demand_by_fuel_scoe = "Energy Demand by Fuel in SCOE"
+        self.modvar_enfu_energy_demand_by_fuel_total = "Total Energy Demand by Fuel"
+        self.modvar_enfu_energy_demand_by_fuel_trns = "Energy Demand by Fuel in Transportation"
+        self.modvar_enfu_energy_density_gravimetric = "Gravimetric Energy Density"
+        self.modvar_enfu_energy_density_volumetric = "Volumetric Energy Density"
+        self.modvar_enfu_exports_fuel = "Fuel Exports"
+        self.modvar_enfu_frac_fuel_demand_imported = "Fraction of Fuel Demand Imported"
+        self.modvar_enfu_imports_electricity = "Electricity Imports"
+        self.modvar_enfu_imports_fuel = "Fuel Imports"
+        self.modvar_enfu_minimum_frac_fuel_used_for_electricity = "Minimum Fraction of Fuel Used for Electricity Generation"
+        self.modvar_enfu_price_gravimetric = "Gravimetric Fuel Price"
+        self.modvar_enfu_price_thermal = "Thermal Fuel Price"
+        self.modvar_enfu_price_volumetric = "Volumetric Fuel Price"
+        self.modvar_enfu_production_frac_petroleum_refinement = "Petroleum Refinery Production Fraction"
+        self.modvar_enfu_production_frac_natural_gas_processing = "Natural Gas Processing Fraction"
+        self.modvar_enfu_production_fuel = "Fuel Production"
+        self.modvar_enfu_transmission_loss_electricity = "Electrical Transmission Loss"
+        self.modvar_enfu_unused_fuel_exported = "Unused Fuel Exported"
+        # key categories
+        self.cat_enfu_bgas = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_enfu, {self.model_attributes.field_enfu_biogas_fuel_category: 1})[0]
+        self.cat_enfu_elec = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_enfu, {self.model_attributes.field_enfu_electricity_demand_category: 1})[0]
+        self.cat_enfu_wste = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_enfu, {self.model_attributes.field_enfu_waste_fuel_category: 1})[0]
+        # associated indices
+        self.ind_enfu_bgas = self.model_attributes.get_attribute_table(self.subsec_name_enfu).get_key_value_index(self.cat_enfu_bgas)
+        self.ind_enfu_elec = self.model_attributes.get_attribute_table(self.subsec_name_enfu).get_key_value_index(self.cat_enfu_elec)
+        self.ind_enfu_wste = self.model_attributes.get_attribute_table(self.subsec_name_enfu).get_key_value_index(self.cat_enfu_wste)
+
+        return None
+
+
+
+    def _initialize_subsector_vars_entc(self,
+    ) -> None:
+        """
+        Initialize model variables, categories, and indicies associated with
+            ENTC (Energy Technology). Initializes the following properties:
+
+            * self.cat_entc_****
+            * dict_entc_fuel_categories_to_fuel_variables
+            * dict_entc_fuel_categories_to_unassigned_fuel_variables
+            * self.ind_entc_****
+            * self.key_iar
+            * self.key_oar
+            * self.modvar_entc_****
+        """
+
+        # Energy (Electricity) Technology Variables
+        self.modvar_entc_nemomod_capital_cost = "NemoMod CapitalCost"
+        self.modvar_entc_ef_scalar_ch4 = ":math:\\text{CH}_4 NemoMod EmissionsActivityRatio Scalar"
+        self.modvar_entc_ef_scalar_co2 = ":math:\\text{CO}_2 NemoMod EmissionsActivityRatio Scalar"
+        self.modvar_entc_ef_scalar_n2o = ":math:\\text{N}_2\\text{O} NemoMod EmissionsActivityRatio Scalar"
+        self.modvar_entc_efficiency_factor_technology = "Technology Efficiency of Fuel Use"
+        self.modvar_entc_fuelprod_input_activity_ratio_coal_deposits = "Fuel Production NemoMod InputActivityRatio Coal Deposits"
+        self.modvar_entc_fuelprod_input_activity_ratio_crude = "Fuel Production NemoMod InputActivityRatio Crude"
+        self.modvar_entc_fuelprod_input_activity_ratio_diesel = "Fuel Production NemoMod InputActivityRatio Diesel"
+        self.modvar_entc_fuelprod_input_activity_ratio_electricity = "Fuel Production NemoMod InputActivityRatio Electricity"
+        self.modvar_entc_fuelprod_input_activity_ratio_gasoline = "Fuel Production NemoMod InputActivityRatio Gasoline"
+        self.modvar_entc_fuelprod_input_activity_ratio_natural_gas = "Fuel Production NemoMod InputActivityRatio Natural Gas"
+        self.modvar_entc_fuelprod_input_activity_ratio_natural_gas_unprocessed = "Fuel Production NemoMod InputActivityRatio Natural Gas Unprocessed"
+        self.modvar_entc_fuelprod_input_activity_ratio_oil = "Fuel Production NemoMod InputActivityRatio Oil"
+        self.modvar_entc_fuelprod_output_activity_ratio_coal = "Fuel Production NemoMod OutputActivityRatio Coal"
+        self.modvar_entc_fuelprod_output_activity_ratio_diesel = "Fuel Production NemoMod OutputActivityRatio Diesel"
+        self.modvar_entc_fuelprod_output_activity_ratio_gasoline = "Fuel Production NemoMod OutputActivityRatio Gasoline"
+        self.modvar_entc_fuelprod_output_activity_ratio_hgl = "Fuel Production NemoMod OutputActivityRatio Hydrocarbon Gas Liquids"
+        self.modvar_entc_fuelprod_output_activity_ratio_hydrogen = "Fuel Production NemoMod OutputActivityRatio Hydrogen"
+        self.modvar_entc_fuelprod_output_activity_ratio_kerosene = "Fuel Production NemoMod OutputActivityRatio Kerosene"
+        self.modvar_entc_fuelprod_output_activity_ratio_natural_gas = "Fuel Production NemoMod OutputActivityRatio Natural Gas"
+        self.modvar_entc_fuelprod_output_activity_ratio_oil = "Fuel Production NemoMod OutputActivityRatio Oil"
+        self.modvar_entc_nemomod_discounted_capital_investment = "NemoMod Discounted Capital Investment"
+        self.modvar_entc_nemomod_discounted_operating_costs = "NemoMod Discounted Operating Costs"
+        self.modvar_entc_nemomod_emissions_ch4_elec = "NemoMod :math:\\text{CH}_4 Emissions from Electricity Generation"
+        self.modvar_entc_nemomod_emissions_co2_elec = "NemoMod :math:\\text{CO}_2 Emissions from Electricity Generation"
+        self.modvar_entc_nemomod_emissions_n2o_elec = "NemoMod :math:\\text{N}_2\\text{O} Emissions from Electricity Generation"
+        self.modvar_entc_nemomod_emissions_ch4_fpr = "NemoMod :math:\\text{CH}_4 Emissions from Fuel Processing and Refinement"
+        self.modvar_entc_nemomod_emissions_co2_fpr = "NemoMod :math:\\text{CO}_2 Emissions from Fuel Processing and Refinement"
+        self.modvar_entc_nemomod_emissions_n2o_fpr = "NemoMod :math:\\text{N}_2\\text{O} Emissions from Fuel Processing and Refinement"
+        self.modvar_entc_nemomod_fixed_cost = "NemoMod FixedCost"
+        self.modvar_entc_nemomod_generation_capacity = "NemoMod Generation Capacity"
+        self.modvar_entc_nemomod_production_by_technology = "NemoMod Production by Technology"
+        self.modvar_entc_nemomod_reserve_margin = "NemoMod ReserveMargin"
+        self.modvar_entc_nemomod_reserve_margin_tag_technology = "NemoMod ReserveMarginTagTechnology"
+        self.modvar_entc_nemomod_residual_capacity = "NemoMod ResidualCapacity"
+        self.modvar_entc_nemomod_total_annual_max_capacity = "NemoMod TotalAnnualMaxCapacity"
+        self.modvar_entc_nemomod_total_annual_max_capacity_investment = "NemoMod TotalAnnualMaxCapacityInvestment"
+        self.modvar_entc_nemomod_total_annual_min_capacity = "NemoMod TotalAnnualMinCapacity"
+        self.modvar_entc_nemomod_total_annual_min_capacity_investment = "NemoMod TotalAnnualMinCapacityInvestment"
+        self.modvar_entc_nemomod_variable_cost = "NemoMod VariableCost"
+
+        # set dictionaries 
+        self._set_dict_enfu_fuel_categories_to_iar_oar_variables()
+
+        return None
+
+
+
+    def _initialize_subsector_vars_enst(self,
+    ) -> None:
+        """
+        Initialize model variables, categories, and indicies associated with
+            ENST (Energy Storage). Sets the following properties:
+
+            * self.cat_enst_****
+            * self.ind_enst_****
+            * self.modvar_enst_****
+        """
+
+        # Energy (Electricity) Storage Variables
+        self.modvar_enst_nemomod_capital_cost_storage = "NemoMod CapitalCostStorage"
+        self.modvar_enst_nemomod_discounted_capital_investment_storage = "NemoMod Discounted Capital Investment Storage"
+        self.modvar_enst_nemomod_discounted_operating_costs_storage = "NemoMod Discounted Operating Costs Storage"
+        self.modvar_enst_nemomod_residual_capacity = "NemoMod ResidualStorageCapacity"
+        self.modvar_enst_nemomod_storage_start_level = "NemoMod StorageStartLevel"
+        self.modvar_enst_nemomod_total_annual_max_capacity_storage = "NemoMod TotalAnnualMaxCapacityStorage"
+        self.modvar_enst_nemomod_total_annual_max_capacity_investment_storage = "NemoMod TotalAnnualMaxCapacityInvestmentStorage"
+        self.modvar_enst_nemomod_total_annual_min_capacity_storage = "NemoMod TotalAnnualMinCapacityStorage"
+        self.modvar_enst_nemomod_total_annual_min_capacity_investment_storage = "NemoMod TotalAnnualMinCapacityInvestmentStorage"
+
+        return None
+        
+
+
+    def _set_dict_enfu_fuel_categories_to_iar_oar_variables(self,
+        key_iar: str = "input_activity_ratio",
+        key_oar: str = "output_activity_ratio"
+    ) -> None:
+        """
+        Set dictionaries mapping fuel categories to input variables in Energy 
+            Technology. Sets the following properties:
+        
+            * self.dict_entc_fuel_categories_to_fuel_variables
+            * self.dict_entc_fuel_categories_to_unassigned_fuel_variables
+            * self.key_iar
+            * self.key_oar
+
+        Keyword Arguments
+        -----------------
+        - key_iar: key to use self.dict_entc_fuel_categories_to_fuel_variables
+            for NemoMod InputActivityRatio variables associated with a fuel
+            category. Set as self.key_iar
+        - key_oar: key to use self.dict_entc_fuel_categories_to_fuel_variables
+            for NemoMod OutputActivityRatio variables associated with a fuel
+            category. Set as self.key_oar
+        """
+
+        pycat_enfu = self.model_attributes.get_subsector_attribute(self.subsec_name_enfu, "pycategory_primary")
+
+        self.key_iar = key_iar
+        self.key_oar = key_oar
+
+        tuple_out = self.model_attributes.assign_keys_from_attribute_fields(
+            self.subsec_name_entc,
+            pycat_enfu,
+            {
+                "Fuel Production NemoMod InputActivityRatio": self.key_iar,
+                "Fuel Production NemoMod OutputActivityRatio": self.key_oar
+            },
+            "varreqs_partial",
+            True
+        )
+        
+        self.dict_entc_fuel_categories_to_fuel_variables = tuple_out[0]
+        self.dict_entc_fuel_categories_to_unassigned_fuel_variables = tuple_out[1]
+        
+        return None
+
+
+
     def transform_field_year_nemomod(self,
         vector: list,
         time_period_as_year: bool = None,
@@ -619,12 +874,22 @@ class ElectricEnergy:
         shift: int = 1000
     ) -> np.ndarray:
         """
-            Transform a year field if necessary to ensure that the minimum is greater than 0. Only applied if time_period_as_year = True
-            - vector: input of years
-            - time_period_as_year: treat the time period as year in NemoMod?
-            - direction: "to_nemomod" will transform the field to prepare it for nemomod, while "from_nemomod" will prepapre it for SISEPUEDE
-            - shift: integer shift to apply to field
-                * NOTE: NemoMod apparently has a minimum year requirement. Default of 1000 should protect against issues.
+        Transform a year field if necessary to ensure that the minimum is 
+            greater than 0--NemoMod cannot handle a minimum of year == 0. Only 
+            applied if time_period_as_year = True
+
+        Function Arguments
+        ------------------
+        - vector: input vector of years
+
+        Keyword Arguments
+        -----------------
+        - time_period_as_year: treat the time period as year in NemoMod?
+        - direction: "to_nemomod" will transform the field to prepare it for 
+            nemomod, while "from_nemomod" will prepapre it for SISEPUEDE
+        - shift: integer shift to apply to field
+            * NOTE: NemoMod apparently has a minimum year requirement. Default 
+            of 1000 should protect against issues.
         """
 
         sf.check_set_values([direction], ["to_nemomod", "from_nemomod"])
@@ -638,34 +903,6 @@ class ElectricEnergy:
 
 
 
-    ##  function to set some properties
-    def _set_dict_tables_required_to_required_fields(self,
-    ) -> None:
-        """
-        Set a dictionary mapping required references tables to required fields. Initializes
-            the following properties:
-
-            * self.dict_tables_required_to_required_fields
-            * self.required_reference_tables
-        """
-
-        self.dict_tables_required_to_required_fields = {
-            "CapacityFactor": [
-                self.field_nemomod_region,
-                self.field_nemomod_time_slice
-            ],
-            "SpecifiedDemandProfile": [
-                self.field_nemomod_region,
-                self.field_nemomod_time_slice,
-                self.field_nemomod_value
-            ]
-        }
-
-        self.required_reference_tables = sorted(list(
-            self.dict_tables_required_to_required_fields.keys()
-        ))
-
-
 
 
 
@@ -673,7 +910,6 @@ class ElectricEnergy:
     #    GENERALIZED DATA FRAME CHECK FUNCTIONS FOR FORMATTING    #
     ###############################################################
 
-    ##  add a field by expanding to all possible values if it is missing
     def add_index_field_from_key_values(self,
         df_input: pd.DataFrame,
         index_values: list,
@@ -681,12 +917,20 @@ class ElectricEnergy:
         outer_prod: bool = True
     ) -> pd.DataFrame:
         """
-            Add a field (if necessary) to input dataframe if it is missing based on input index_values.
+        Add a field (if necessary) to input dataframe if it is missing based on 
+            input index_values.
 
-            - df_input: input data frame to modify
-            - index_values: values to expand the data frame along
-            - field_index: new field to add
-            - outer_prod: assume data frame is repeated to all regions. If not, assume that the index values are applied as a column only (must be one element or of the same length as df_input)
+        Function Arguments
+        ------------------
+        - df_input: input data frame to modify
+        - index_values: values to expand the data frame along
+        - field_index: new field to add
+
+        Keyword Arguments
+        -----------------
+        - outer_prod: assume data frame is repeated to all regions. If not, 
+            assume that the index values are applied as a column only (must be 
+            one element or of the same length as df_input)
         """
 
         field_dummy = "merge_key"
@@ -714,7 +958,7 @@ class ElectricEnergy:
         return df_input
 
 
-    ##  add a fuel field if it is missing
+
     def add_index_field_fuel(self,
         df_input: pd.DataFrame,
         field_fuel: str = None,
@@ -722,12 +966,20 @@ class ElectricEnergy:
         restriction_fuels: list = None
     ) -> pd.DataFrame:
         """
-            Add a fuel field (if necessary) to input dataframe if it is missing. Defaults to all defined fuels, and assumes that the input data frame is repeated across all fuels.
+        Add a fuel field (if necessary) to input dataframe if it is missing. 
+            Defaults to all defined fuels, and assumes that the input data frame 
+            is repeated across all fuels.
 
-            - df_input: input data frame to add field to
-            - field_fuel: the name of the field. Default is set to NemoMod naming convention.
-            - outer_prod: product against all fuels
-            - restriction_fuels: subset of fuels to restrict addition to
+        Function Arguments
+        ------------------
+        - df_input: input data frame to add field to
+
+        Keyword Arguments
+        -----------------
+        - field_fuel: the name of the field. Default is set to NemoMod naming 
+            convention.
+        - outer_prod: product against all fuels
+        - restriction_fuels: subset of fuels to restrict addition to
         """
 
         field_fuel = self.field_nemomod_fuel if (field_fuel is None) else field_fuel
@@ -741,7 +993,7 @@ class ElectricEnergy:
         return df_input
 
 
-    ##  add an id field if it is missing
+
     def add_index_field_id(self,
         df_input: pd.DataFrame,
         field_id: str = None
@@ -762,7 +1014,7 @@ class ElectricEnergy:
         return df_input
 
 
-    ##  add a region field if it is missing
+
     def add_index_field_region(self,
         df_input: pd.DataFrame,
         field_region: str = None,
@@ -771,13 +1023,23 @@ class ElectricEnergy:
         restrict_to_config_region: bool = True
     ) -> pd.DataFrame:
         """
-            Add a region field (if necessary) to input dataframe if it is missing. Defaults to configuration regions, and assumes that the input data frame is repeated across all regions.
+        Add a region field (if necessary) to input dataframe if it is missing. 
+            Defaults to configuration regions, and assumes that the input data 
+            frame is repeated across all regions.
 
-            - df_input: input data frame to add field to
-            - field_region: the name of the field. Default is set to NemoMod naming convention.
-            - outer_prod: product against all regions
-            - restriction_regions: subset of regions to restrict addition to
-            - restrict_to_config_region: only allow regions specified in the configuration? Generally set to true, but can be set to false for data construction
+        Function Arguments
+        ------------------
+        - df_input: input data frame to add field to
+
+        Keyword Arguments
+        -----------------
+        - field_region: the name of the field. Default is set to NemoMod naming 
+            convention.
+        - outer_prod: product against all regions
+        - restriction_regions: subset of regions to restrict addition to
+        - restrict_to_config_region: only allow regions specified in the 
+            configuration? Generally set to true, but can be set to false for 
+            data construction
         """
 
         field_region = self.field_nemomod_region if (field_region is None) else field_region
@@ -792,7 +1054,7 @@ class ElectricEnergy:
         return df_input
 
 
-    ##  add a fuel field if it is missing
+ 
     def add_index_field_technology(self,
         df_input: pd.DataFrame,
         field_technology: str = None,
@@ -800,12 +1062,21 @@ class ElectricEnergy:
         restriction_technologies: list = None
     ) -> pd.DataFrame:
         """
-            Add a technology field (if necessary) to input dataframe if it is missing. Defaults to all defined technology, and assumes that the input data frame is repeated across all technologies.
+        Add a technology field (if necessary) to input dataframe if it is 
+            missing. Defaults to all defined technology, and assumes that the 
+            input data frame is repeated across all technologies.
 
-            - df_input: input data frame to add field to
-            - field_technology: the name of the field. Default is set to NemoMod naming convention.
-            - outer_prod: product against all technologies
-            - restriction_technologies: subset of technologies to restrict addition to
+        Function Arguments
+        ------------------
+        - df_input: input data frame to add field to
+
+        Keyword Arguments
+        -----------------
+        - field_technology: the name of the field. Default is set to NemoMod 
+            naming convention.
+        - outer_prod: product against all technologies
+        - restriction_technologies: subset of technologies to restrict addition 
+            to
         """
 
         field_technology = self.field_nemomod_technology if (field_technology is None) else field_technology
@@ -819,7 +1090,7 @@ class ElectricEnergy:
         return df_input
 
 
-    ##  add a year field if it is missing (assumes repitition)
+
     def add_index_field_year(self,
         df_input: pd.DataFrame,
         field_year: str = None,
@@ -829,14 +1100,26 @@ class ElectricEnergy:
         override_time_period_transformation: bool = False
     ) -> pd.DataFrame:
         """
-            Add a year field (if necessary) to input dataframe if it is missing. Defaults to all defined years (if defined in time periods), and assumes that the input data frame is repeated across all years.
+        Add a year field (if necessary) to input dataframe if it is missing. 
+            Defaults to all defined years (if defined in time periods), and 
+            assumes that the input data frame is repeated across all years.
 
-            - df_input: input data frame to add field to
-            - field_year: the name of the field. Default is set to NemoMod naming convention.
-            - outer_prod: product against all years
-            - restriction_years: subset of years to restrict addition to
-            - time_period_as_year: If True, enter the time period as the year. If None, default to ElectricEnergy.nemomod_time_period_as_year
-            - override_time_period_transformation: In some cases, time periods transformations can be applied multiple times from default functions. Set override_time_period_transformation = True to remove the application of ElectricEnergy.transform_field_year_nemomod()
+        Function Arguments
+        ------------------
+        - df_input: input data frame to add field to
+
+        Keyword Arguments
+        -----------------
+        - field_year: the name of the field. Default is set to NemoMod naming 
+            convention.
+        - outer_prod: product against all years
+        - restriction_years: subset of years to restrict addition to
+        - time_period_as_year: If True, enter the time period as the year. If 
+            None, default to ElectricEnergy.nemomod_time_period_as_year
+        - override_time_period_transformation: In some cases, time periods 
+            transformations can be applied multiple times from default 
+            functions. Set override_time_period_transformation = True to remove 
+            the application of ElectricEnergy.transform_field_year_nemomod()
         """
 
         time_period_as_year = self.nemomod_time_period_as_year if (time_period_as_year is None) else time_period_as_year
@@ -854,7 +1137,7 @@ class ElectricEnergy:
         return df_input
 
 
-    ##  batch function to add different fields
+
     def add_multifields_from_key_values(self,
         df_input_base: pd.DataFrame,
         fields_to_add: list,
@@ -862,12 +1145,21 @@ class ElectricEnergy:
         override_time_period_transformation: bool = False
     ) -> pd.DataFrame:
         """
-            Add a multiple fields, assuming repitition of the data frame across dimensions. Based on NemoMod defaults.
+        Add a multiple fields, assuming repitition of the data frame across 
+            dimensions. Based on NemoMod defaults.
 
-            - df_input_base: input data frame to add field to
-            - fields_to_add: fields to add. Must be entered as NemoMod defaults.
-            - time_period_as_year: enter values in field ElectricEnergy.field_nemomod_year as time periods? If None, default to ElectricEnergy.nemomod_time_period_as_year
-            - override_time_period_transformation: override the time period transformation step to prevent applying it twice
+        Function Arguments
+        ------------------
+        - df_input_base: input data frame to add field to
+        - fields_to_add: fields to add. Must be entered as NemoMod defaults.
+
+        Keyword Arguments
+        -----------------
+        - time_period_as_year: enter values in field 
+            ElectricEnergy.field_nemomod_year as time periods? If None, default 
+            to ElectricEnergy.nemomod_time_period_as_year
+        - override_time_period_transformation: override the time period 
+            transformation step to prevent applying it twice
         """
 
         time_period_as_year = self.nemomod_time_period_as_year if (time_period_as_year is None) else time_period_as_year
@@ -903,16 +1195,17 @@ class ElectricEnergy:
         attribute_technology: AttributeTable = None
     ):
         """
-            Build variable costs for dummy techs based on an input price.
+        Build variable costs for dummy techs based on an input price.
 
-            Function Arguments
-            ------------------
-            - price: variable cost to assign to dummy technologies. Should be large relative to other technologies.
+        Function Arguments
+        ------------------
+        - price: variable cost to assign to dummy technologies. Should be large 
+            relative to other technologies.
 
-            Keyword Arguments
-            -----------------
-            - attribute_technology: attribute table used to obtain dummy technologies. If None, use ModelAttributes default.
-
+        Keyword Arguments
+        -----------------
+        - attribute_technology: attribute table used to obtain dummy 
+            technologies. If None, use ModelAttributes default.
         """
         # some attribute initializations
         attribute_technology = self.model_attributes.get_attribute_table(self.subsec_name_entc) if (attribute_technology is None) else attribute_technology
@@ -938,7 +1231,6 @@ class ElectricEnergy:
 
 
 
-    ##  function used in verify_min_max_constraint_inputs
     def conflict_resolution_func_vmmci(self,
         mm_tuple: tuple,
         approach: str = "swap",
@@ -947,17 +1239,21 @@ class ElectricEnergy:
     ) -> float:
 
         """
-            Input a tuple of (min, max) and resolve conflicting inputs if needed
+        Used in verify_min_max_constraint_inputs. Input a tuple of (min, max) 
+            and resolve conflicting inputs if needed.
 
-            Function Arguments
-            ------------------
-            - mm_tuple: tuple of (min, max) to resolve
+        Function Arguments
+        ------------------
+        - mm_tuple: tuple of (min, max) to resolve
 
-            Keyword Arguments
-            -----------------
-            - appraoch: how to resolve the conflict
-            - inequality_strength: "weak" or "strong". Weak comparison means that min <= max is acceptable. Strong comparison means that min < max must hold true.
-            - max_min_distance_scalar: max ~ min*max_min_distance_scalar, where ~ = > or >=. Must be at least one.
+        Keyword Arguments
+        -----------------
+        - appraoch: how to resolve the conflict
+        - inequality_strength: "weak" or "strong". Weak comparison means that 
+            min <= max is acceptable. Strong comparison means that 
+            min < max must hold true.
+        - max_min_distance_scalar: max ~ min*max_min_distance_scalar,
+             where ~ = > or >=. Must be at least one.
         """
 
         max_spec = mm_tuple[1]
@@ -994,11 +1290,14 @@ class ElectricEnergy:
     ) -> tuple:
 
         """
-            Retrieve total energy available from biogas collection and the minimum use
+        Retrieve total energy available from biogas collection and the minimum 
+            use
 
-            Function Arguments
-            ------------------
-            - df_elec_trajectories: data frame of input variables, which must include livestock manure management and wastewater treatment sector outputs used to calcualte emission factors
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of input variables, which must 
+            include livestock manure management and wastewater treatment sector 
+            outputs used to calcualte emission factors
         """
         # initialize of some variables
         vec_enfu_total_energy_biogas = 0.0
@@ -1062,21 +1361,30 @@ class ElectricEnergy:
 
 
 
-    ##  return a scalar - use to reduce clutter in converting energy units to NemoMod energy units
-    def get_nemomod_energy_scalar(self, modvar: str) -> float:
+    def get_nemomod_energy_scalar(self, 
+        modvar: str) -> float:
+        """
+        return a scalar - use to reduce clutter in converting energy units to 
+            NemoMod energy units
+        """
         var_energy = self.model_attributes.get_variable_characteristic(modvar, self.model_attributes.varchar_str_unit_energy)
         scalar = self.model_attributes.get_energy_equivalent(var_energy, self.units_energy_nemomod)
         return (scalar if (scalar is not None) else 1)
 
 
 
-    ##  return information relating techs to storage and dummy techs to fuels
     def get_tech_info_dict(self,
         attribute_technology: AttributeTable = None
     ) -> dict:
         """
-            Retrieve information relating technology to storage, including a map of technologies to storage, storage to associated technology, and classifications of generation techs vs. storage techs.
-            - attribute_technology: AttributeTable containing technologies used to divide techs. If None, uses ModelAttributes default.
+        Retrieve information relating technology to storage, including a map of 
+            technologies to storage, storage to associated technology, and 
+            classifications of generation techs vs. storage techs.
+
+        Keyword Arguments
+        -----------------
+        - attribute_technology: AttributeTable containing technologies used to 
+            divide techs. If None, uses ModelAttributes default.
         """
         # set some defaults
         attribute_technology = self.model_attributes.get_attribute_table(self.subsec_name_entc) if (attribute_technology is None) else attribute_technology
@@ -1128,15 +1436,23 @@ class ElectricEnergy:
 
 
 
-    ##  get variable cost of fuels (as dummy technologies) with prices based on gravimetric energy density
     def get_variable_cost_fuels_gravimetric_density(self,
         df_elec_trajectories: pd.DataFrame,
         override_time_period_transformation: bool = False
     ):
         """
-            Retrieve variable cost of fuels (entered as dummy technologies) with prices based on mass in terms of Configuration energy_units/monetary_units (used in NemoMod)
-            - df_elec_trajectories: data frame containing input variables as columns
-            - override_time_period_transformation: if True, return raw time periods instead of those transformed to fit NemoMod approach.
+        Retrieve variable cost of fuels (entered as dummy technologies) with 
+            prices based on gravimetric energy density in terms of Configuration 
+            energy_units/monetary_units (used in NemoMod)
+
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame containing input variables as columns
+
+        Keyword Arguments
+        -----------------
+        - override_time_period_transformation: if True, return raw time periods 
+            instead of those transformed to fit NemoMod approach.
         """
 
         ##  PREPARE SCALARS
@@ -1216,11 +1532,13 @@ class ElectricEnergy:
         df_elec_trajectories: pd.DataFrame
     ):
         """
-            Retrieve variable cost of fuels (entered as dummy technologies) with prices based on volume in terms of Configuration energy_units/monetary_units (used in NemoMod)
+        Retrieve variable cost of fuels (entered as dummy technologies) with 
+            prices based on volume in terms of Configuration 
+            energy_units/monetary_units (used in NemoMod)
 
-            Function Arguments
-            ------------------
-            - df_elec_trajectories: data frame containing input variables as columns
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame containing input variables as columns
         """
 
         ##  PREPARE SCALARS
@@ -1303,13 +1621,20 @@ class ElectricEnergy:
     ) -> tuple:
 
         """
-            Retrieve total energy to be obtained from waste incineration (minimum capacity) and implied annual emission factors derived from incineration inputs in the waste sector (NemoMod emission/energy)
+        Retrieve total energy to be obtained from waste incineration (minimum 
+            capacity) and implied annual emission factors derived from 
+            incineration inputs in the waste sector (NemoMod emission/energy)
 
-            Function Arguments
-            ------------------
-            - df_elec_trajectories: data frame of input variables, which must include waste sector outputs used to calcualte emission factors
-            - attribute_technology: technology attribute table, used to map fuel to tech. If None, use ModelAttributes default.
-            - return_emission_factors: bool--calculate emission factors?
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of input variables, which must 
+            include waste sector outputs used to calcualte emission factors
+        
+        Keyword Arguments
+        -----------------
+        - attribute_technology: technology attribute table, used to map fuel to 
+            tech. If None, use ModelAttributes default.
+        - return_emission_factors: bool--calculate emission factors?
         """
         # some attribute initializations
         attribute_technology = self.model_attributes.get_attribute_table(self.subsec_name_entc) if (attribute_technology is None) else attribute_technology
@@ -1434,23 +1759,33 @@ class ElectricEnergy:
         **kwargs
     ) -> pd.DataFrame:
         """
-            Format a SISEPUEDE variable as a nemo mod input table.
+        Format a SISEPUEDE variable as a nemo mod input table.
 
-            Function Arguments
-            ------------------
-            - df_elec_trajectories: data frame containing input variables to be reformatted
-            - modvar: SISEPUEDE model variable to extract and reshape
-            - table_nemomod: target NemoMod table
-            - fields_index_nemomod: indexing fields to add/preserve in table
-            - field_melt_nemomod: name of field to store columns under in long format
-            - dict_fields_to_pass: dictionary to pass fields to the output data frame before sorting
-                * Dictionary takes the form {field_1: new_col, ...}, where new_col = [x_0, ..., x_{n - 1}] or new_col = obj
-            - scalar_to_nemomod_units: scalar applied to the values to convert to proper units
-            - drop_flag: values that should be dropped from the table
-            - df_append: pass a data frame from another source to append before sorting and the addition of an id
-            - override_time_period_transformation: override the time series transformation? data frames will return raw years instead of transformed years.
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame containing input variables to be 
+            reformatted
+        - modvar: SISEPUEDE model variable to extract and reshape
+        - table_nemomod: target NemoMod table
+        - fields_index_nemomod: indexing fields to add/preserve in table
+        - field_melt_nemomod: name of field to store columns under in long 
+            format
 
-            **kwargs: passed to ModelAttributes.get_standard_variables()
+        Keyword Arguments
+        -----------------
+        - df_append: pass a data frame from another source to append before 
+            sorting and the addition of an id
+        - dict_fields_to_pass: dictionary to pass fields to the output data 
+            frame before sorting
+            * Dictionary takes the form {field_1: new_col, ...}, where 
+                new_col = [x_0, ..., x_{n - 1}] or new_col = obj
+        - drop_flag: values that should be dropped from the table
+        - override_time_period_transformation: override the time series 
+            transformation? data frames will return raw years instead of 
+            transformed years.
+        - scalar_to_nemomod_units: scalar applied to the values to convert to 
+            proper units
+        **kwargs: passed to ModelAttributes.get_standard_variables()
         """
 
         # set some defaults
@@ -1544,11 +1879,14 @@ class ElectricEnergy:
         attribute_technology: AttributeTable = None
     ) -> dict:
         """
-            Get a dictionary mapping fuels mapped to powerplant generation to associated dummy techs
+        Get a dictionary mapping fuels mapped to powerplant generation to 
+            associated dummy techs
 
-            Function Arguments
-            ------------------
-            - attribute_technology: AttributeTable for technology, used to identify operational lives of generation and storage technologies. If None, use ModelAttributes default.
+        Function Arguments
+        ------------------
+        - attribute_technology: AttributeTable for technology, used to identify 
+            operational lives of generation and storage technologies. If None, 
+            use ModelAttributes default.
         """
         # get some defaults
         attribute_technology = self.model_attributes.get_attribute_table(self.subsec_name_entc) if (attribute_technology is None) else attribute_technology
@@ -1585,28 +1923,43 @@ class ElectricEnergy:
         return_passthrough: bool = False
     ) -> Union[None, dict]:
         """
-            Verify that a minimum trajectory is less than or equal (weak) or less than (strong) a maximum trajectory. Data frames must have comparable indices.
+        Verify that a minimum trajectory is less than or equal (weak) or less 
+            than (strong) a maximum trajectory. Data frames must have comparable 
+            indices.
 
-            Function Arguments
-            ------------------
-            - df_max: data frame containing the maximum trajectory
-            - df_min: data frame containing the minimum trajectory
-            - field_max: field in df_max to use to compare
-            - field_min: field in df_min to use to compare
-            - conflict_resolution_option: if the minimum trajectory is greater than the maximum trajectory, this parameter is used to define the resolution:
-                * "error": stop and return an error
-                * "keep_max_input": keep the values from the maximum input for both
-                * "keep_min_input": keep the values from the minimum input for both
-                * "max_sup": set the larger value as the minimum and the maximum
-                * "mean": use the mean of the two as the minimum and the maximum
-                * "min_sup": set the smaller value as the minimum and the maximum
-                * "swap" (DEFAULT): swap instances where the minimum exceeds the maximum
-            - comparison: "weak" allows the minimum <= maximum, while "strong" => minimum < maximum
-                * If comparison == "strong", then cases where maximum == minimum cannot be resolved will be dropped if drop_invalid_comparisons_on_strong == True; otherwise, an error will be returned (independent of conflict_resolution_option)
-            - drop_invalid_comparisons_on_strong: drop cases where minimum == maximum?
-            - max_min_distance_scalar: max >= min*max_min_distance_scalar for constraints. Default is 1.
-            - field_id: id field contained in both that is used for re-merging
-            - return_passthrough: if no changes are required, return original dataframes?
+        Function Arguments
+        ------------------
+        - df_max: data frame containing the maximum trajectory
+        - df_min: data frame containing the minimum trajectory
+        - field_max: field in df_max to use to compare
+        - field_min: field in df_min to use to compare
+
+        Keyword Arguments
+        -----------------
+        - conflict_resolution_option: if the minimum trajectory is greater than 
+            the maximum trajectory, this parameter is used to define the 
+            resolution:
+            * "error": stop and return an error
+            * "keep_max_input": keep the values from the maximum input for both
+            * "keep_min_input": keep the values from the minimum input for both
+            * "max_sup": set the larger value as the minimum and the maximum
+            * "mean": use the mean of the two as the minimum and the maximum
+            * "min_sup": set the smaller value as the minimum and the maximum
+            * "swap" (DEFAULT): swap instances where the minimum exceeds the 
+                maximum
+        - comparison: "weak" allows the minimum <= maximum, 
+            while "strong" => minimum < maximum
+            * If comparison == "strong", then cases where maximum == minimum 
+                cannot be resolved will be dropped if 
+                drop_invalid_comparisons_on_strong == True; otherwise, an error 
+                will be returned (independent of conflict_resolution_option)
+        - drop_invalid_comparisons_on_strong: drop cases where minimum == 
+            maximum?
+        - max_min_distance_scalar: max >= min*max_min_distance_scalar for 
+            constraints. Default is 1.
+        - field_id: id field contained in both that is used for re-merging
+        - return_passthrough: if no changes are required, return original 
+            dataframes?
 
         """
 
@@ -1682,12 +2035,16 @@ class ElectricEnergy:
         dict_rename: dict = None
     ) -> pd.DataFrame:
         """
-            Format the EMISSION dimension table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the EMISSION dimension table for NemoMod based on SISEPUEDE 
+            configuration parameters, input variables, integrated model outputs, 
+            and reference tables.
 
-            Keyword Arguments
-            -----------------
-            - attribute_emission: Emission Gas AttributeTable. If None, use ModelAttributes default.
-            - dict_rename: dictionary to rename to "val" and "desc" fields for NemoMod
+        Keyword Arguments
+        -----------------
+        - attribute_emission: Emission Gas AttributeTable. If None, use 
+            ModelAttributes default.
+        - dict_rename: dictionary to rename to "val" and "desc" fields for 
+            NemoMod
         """
 
         # set some defaults
@@ -1709,12 +2066,16 @@ class ElectricEnergy:
         dict_rename: dict = None
     ) -> pd.DataFrame:
         """
-            Format the FUEL dimension table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the FUEL dimension table for NemoMod based on SISEPUEDE 
+            configuration parameters, input variables, integrated model outputs, 
+            and reference tables.
 
-            Keyword Arguments
-            -----------------
-            - attribute_fuel: Fuel AttributeTable. If None, use ModelAttributes default.
-            - dict_rename: dictionary to rename to "val" and "desc" fields for NemoMod
+        Keyword Arguments
+        -----------------
+        - attribute_fuel: Fuel AttributeTable. If None, use ModelAttributes 
+            default.
+        - dict_rename: dictionary to rename to "val" and "desc" fields for 
+            NemoMod
         """
 
         # set some defaults
@@ -1737,12 +2098,16 @@ class ElectricEnergy:
         dict_rename: dict = None
     ) -> pd.DataFrame:
         """
-            Format the MODE_OF_OPERATION dimension table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the MODE_OF_OPERATION dimension table for NemoMod based on 
+            SISEPUEDE configuration parameters, input variables, integrated 
+            model outputs, and reference tables.
 
-            Keyword Arguments
-            -----------------
-            - attribute_mode: Mode of Operation AttributeTable. If None, use ModelAttributes default.
-            - dict_rename: dictionary to rename to "val" and "desc" fields for NemoMod
+        Keyword Arguments
+        -----------------
+        - attribute_mode: Mode of Operation AttributeTable. If None, use 
+            ModelAttributes default.
+        - dict_rename: dictionary to rename to "val" and "desc" fields for 
+            NemoMod
         """
 
         # get the region attribute - reduce only to applicable regions
@@ -1764,14 +2129,18 @@ class ElectricEnergy:
         dict_rename: dict = None
     ) -> pd.DataFrame:
         """
-            Format the NODE dimension table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the NODE dimension table for NemoMod based on SISEPUEDE 
+            configuration parameters, input variables, integrated model outputs, 
+            and reference tables.
 
-            Keyword Arguments
-            -----------------
-            - attribute_node: Node AttributeTable. If None, use ModelAttributes default.
-            - dict_rename: dictionary to rename to "val" and "desc" fields for NemoMod
+        Keyword Arguments
+        -----------------
+        - attribute_node: Node AttributeTable. If None, use ModelAttributes 
+            default.
+        - dict_rename: dictionary to rename to "val" and "desc" fields for 
+            NemoMod
 
-            CURRENTLY UNUSED
+        CURRENTLY UNUSED
         """
 
         return None
@@ -1783,12 +2152,16 @@ class ElectricEnergy:
         dict_rename: dict = None
     ) -> pd.DataFrame:
         """
-            Format the REGION dimension table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the REGION dimension table for NemoMod based on SISEPUEDE 
+            configuration parameters, input variables, integrated model outputs, 
+            and reference tables.
 
-            Keyword Arguments
-            -----------------
-            - attribute_region: CAT-REGION AttributeTable. If None, use ModelAttributes default.
-            - dict_rename: dictionary to rename to "val" and "desc" fields for NemoMod
+        Keyword Arguments
+        -----------------
+        - attribute_region: CAT-REGION AttributeTable. If None, use 
+            ModelAttributes default.
+        - dict_rename: dictionary to rename to "val" and "desc" fields for 
+            NemoMod
         """
 
         # get the region attribute - reduce only to applicable regions
@@ -1810,12 +2183,16 @@ class ElectricEnergy:
         dict_rename: dict = None
     ) -> pd.DataFrame:
         """
-            Format the STORAGE dimension table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the STORAGE dimension table for NemoMod based on SISEPUEDE 
+            configuration parameters, input variables, integrated model outputs, 
+                and reference tables.
 
-            Keyword Arguments
-            -----------------
-            - attribute_storage: CAT-STORAGE AttributeTable. If None, use ModelAttributes default.
-            - dict_rename: dictionary to rename to "val" and "desc" fields for NemoMod
+        Keyword Arguments
+        -----------------
+        - attribute_storage: CAT-STORAGE AttributeTable. If None, use 
+            ModelAttributes default.
+        - dict_rename: dictionary to rename to "val" and "desc" fields for
+             NemoMod
         """
 
         # set some defaults
@@ -1838,12 +2215,16 @@ class ElectricEnergy:
         dict_rename: dict = None
     ) -> pd.DataFrame:
         """
-            Format the TECHNOLOGY dimension table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the TECHNOLOGY dimension table for NemoMod based on SISEPUEDE 
+            configuration parameters, input variables, integrated model outputs, 
+                and reference tables.
 
-            Keyword Arguments
-            -----------------
-            - attribute_technology: CAT-TECHNOLOGY AttributeTable. If None, use ModelAttributes default.
-            - dict_rename: dictionary to rename to "val" and "desc" fields for NemoMod
+        Keyword Arguments
+        -----------------
+        - attribute_technology: CAT-TECHNOLOGY AttributeTable. If None, use 
+            ModelAttributes default.
+        - dict_rename: dictionary to rename to "val" and "desc" fields for 
+            NemoMod
         """
 
         # set some defaults
@@ -1880,12 +2261,16 @@ class ElectricEnergy:
         time_period_as_year: bool = None
     ) -> pd.DataFrame:
         """
-            Format the YEAR dimension table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the YEAR dimension table for NemoMod based on SISEPUEDE 
+            configuration parameters, input variables, integrated model outputs, 
+            and reference tables.
 
-            Keyword Arguments
-            -----------------
-            - time_period_as_year: enter years as time periods? If None, default to ElectricEnergy.nemomod_time_period_as_year
-            * Based off of values defined in the attribute_time_period.csv attribute table
+        Keyword Arguments
+        -----------------
+        - time_period_as_year: enter years as time periods? If None, default to 
+            ElectricEnergy.nemomod_time_period_as_year
+        * Based off of values defined in the attribute_time_period.csv attribute 
+            table
         """
 
         time_period_as_year = self.nemomod_time_period_as_year if (time_period_as_year is None) else time_period_as_year
@@ -1918,18 +2303,24 @@ class ElectricEnergy:
         drop_flag: int = -999
     ) -> pd.DataFrame:
         """
-            Format the AnnualEmissionLimit input tables for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the AnnualEmissionLimit input tables for NemoMod based on 
+            SISEPUEDE configuration parameters, input variables, integrated 
+            model outputs, and reference tables.
 
-            Function Arguments
-            ------------------
-            - df_elec_trajectories: data frame of model variable input trajectories
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
 
-            Keyword Arguments
-            -----------------
-            - attribute_emission: AttributeTable table with gasses. If None, use ModelAttribute default.
-            - attribute_time_period: AttributeTable table with time periods for year identification. If None, use ModelAttribute default.
-            - dict_gas_to_emission_fields: dictionary with gasses (in attribute_gas) as keys that map to fields to use to calculate total exogenous emissions
-            - drop_flag: values to drop
+        Keyword Arguments
+        -----------------
+        - attribute_emission: AttributeTable table with gasses. If None, use 
+            ModelAttribute default.
+        - attribute_time_period: AttributeTable table with time periods for year 
+            identification. If None, use ModelAttribute default.
+        - dict_gas_to_emission_fields: dictionary with gasses (in attribute_gas) 
+            as keys that map to fields to use to calculate total exogenous 
+            emissions
+        - drop_flag: values to drop
         """
 
         # get some defaults and attribute tables
@@ -2582,12 +2973,12 @@ class ElectricEnergy:
         # cat to fuel dictionary + reverse
         dict_techs_to_fuel = self.model_attributes.get_ordered_category_attribute(
             self.model_attributes.subsec_name_entc,
-            pycat_enfu,
+            f"electricity_generation_{pycat_enfu}",
             return_type = dict,
             skip_none_q = True,
             clean_attribute_schema_q = True
         )
-        dict_fuel_to_techs = sf.reverse_dict(dict_techs_to_fuel)
+
         # cat to storage dictionary
         dict_tech_to_storage = self.model_attributes.get_ordered_category_attribute(
             self.model_attributes.subsec_name_entc,
@@ -2596,11 +2987,11 @@ class ElectricEnergy:
             skip_none_q = True,
             clean_attribute_schema_q = True
         )
+
         # revise some dictionaries for the output table
-        dict_tech_to_mode = {}
-        # update generation tech mode
-        for k in dict_techs_to_fuel.keys():
-            dict_tech_to_mode.update({k: self.cat_enmo_gnrt})
+        all_techs_power_generation = sorted(list(dict_techs_to_fuel.keys()))
+        all_techs_generate = [x for x in attribute_technology.key_values if x not in dict_tech_to_storage.keys()]
+        dict_tech_to_mode = dict((x, self.cat_enmo_gnrt) for x in all_techs_generate)
 
         # update storage mode/fuel (will add keys to dict_techs_to_fuel)
         for k in dict_tech_to_storage.keys():
@@ -2609,7 +3000,12 @@ class ElectricEnergy:
 
         dict_return = {}
 
-        # Initialize InputActivityRatio
+
+        #################################################################
+        #    BUILD ELEC GENERATION AND STORAGE (NOT FUEL PRODUCTION)    #
+        #################################################################
+
+        # Initialize InputActivityRatio HEREHERE
         dict_return.update(
             self.format_model_variable_as_nemomod_table(
                 df_elec_trajectories,
@@ -2625,15 +3021,16 @@ class ElectricEnergy:
             )
         )
 
-        # make some modifications
-        df_tmp = dict_return[self.model_attributes.table_nemomod_input_activity_ratio]
-        df_tmp[self.field_nemomod_fuel] = df_tmp[self.field_nemomod_technology].replace(dict_techs_to_fuel)
-        df_tmp[self.field_nemomod_mode] = df_tmp[self.field_nemomod_technology].replace(dict_tech_to_mode)
+        # make some modifications to generation
+        df_iar = dict_return.get(self.model_attributes.table_nemomod_input_activity_ratio)
+        df_iar[self.field_nemomod_fuel] = df_iar[self.field_nemomod_technology].replace(dict_techs_to_fuel)
+        df_iar[self.field_nemomod_mode] = df_iar[self.field_nemomod_technology].replace(dict_tech_to_mode)
+
         # convert efficiency to input_activity_ratio_ratio
-        df_tmp[self.field_nemomod_value] = np.nan_to_num(1/np.array(df_tmp[self.field_nemomod_value]), max_ratio, posinf = max_ratio)
+        df_iar[self.field_nemomod_value] = np.nan_to_num(1/np.array(df_iar[self.field_nemomod_value]), max_ratio, posinf = max_ratio)
         # re-sort using hierarchy
-        df_tmp = self.add_multifields_from_key_values(
-            df_tmp,
+        df_iar = self.add_multifields_from_key_values(
+            df_iar,
             [
                 self.field_nemomod_id,
                 self.field_nemomod_fuel,
@@ -2646,8 +3043,69 @@ class ElectricEnergy:
             # the time period transformation was already applied in format_model_variable_as_nemomod_table, so we override additional transformation
             override_time_period_transformation = True
         )
-        # ensure changes are made to dict
-        dict_return.update({self.model_attributes.table_nemomod_input_activity_ratio: df_tmp})
+        
+
+
+        ###########################
+        #  ADD FUEL PRODUCTION    #
+        ###########################
+
+        # dictionary mapping applicable fuel categories to input_activity_ratio/output_activity_ratio
+        dict_fuel_cats = self.dict_entc_fuel_categories_to_fuel_variables 
+        # initialize new dataframe with previous
+        df_append = [df_iar]
+
+        for fuel in dict_fuel_cats.keys():
+            
+            # filter in input activity ratio (iar)
+            dict_iar_oar_var = dict_fuel_cats.get(fuel)
+            modvar_iar = dict_iar_oar_var.get(self.key_iar)
+
+            if modvar_iar is not None:
+
+                df_tmp = self.format_model_variable_as_nemomod_table( 
+                    df_elec_trajectories,
+                    modvar_iar,
+                    self.model_attributes.table_nemomod_input_activity_ratio,
+                    [
+                        self.field_nemomod_id,
+                        self.field_nemomod_year,
+                        self.field_nemomod_region
+                    ],
+                    self.field_nemomod_technology,
+                    var_bounds = (0, np.inf)
+                ).get(self.model_attributes.table_nemomod_input_activity_ratio)
+                
+                # drop techs that are all 0
+                ids_filt = []
+                for i in df_tmp.groupby(self.field_nemomod_technology):
+                    i, df = i
+                    unique_vals = list(df[self.field_nemomod_value].unique())
+                    ids_filt += list(df[self.field_nemomod_id]) if not ((len(unique_vals) == 1) and (0.0 in unique_vals)) else []
+                df_tmp = df_tmp[df_tmp[self.field_nemomod_id].isin(ids_filt)]
+                
+                # add fuel and mode
+                df_tmp[self.field_nemomod_fuel] = fuel
+                df_tmp[self.field_nemomod_mode] = df_tmp[self.field_nemomod_technology].replace(dict_tech_to_mode)   
+                df_append.append(df_tmp) if (len(df_tmp) > 0) else None
+                
+        # re-sort using hierarchy
+        df_append = self.add_multifields_from_key_values(
+            pd.concat(df_append, axis = 0),
+            [
+                self.field_nemomod_id,
+                self.field_nemomod_fuel,
+                self.field_nemomod_technology,
+                self.field_nemomod_mode,
+                self.field_nemomod_region,
+                self.field_nemomod_year,
+                self.field_nemomod_value
+            ],
+            # the time period transformation was already applied in format_model_variable_as_nemomod_table, so we override additional transformation
+            override_time_period_transformation = True
+        )
+
+        dict_return.update({self.model_attributes.table_nemomod_input_activity_ratio: df_append})
 
         return dict_return
 
@@ -2734,11 +3192,13 @@ class ElectricEnergy:
         df_elec_trajectories: pd.DataFrame
     ) -> pd.DataFrame:
         """
-            Format the MinimumUtilization input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the MinimumUtilization input table for NemoMod based on 
+            SISEPUEDE configuration parameters, input variables, integrated 
+            model outputs, and reference tables.
 
-            Function Arguments
-            ------------------
-            - df_elec_trajectories: data frame of model variable input trajectories
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
         """
 
         return None
@@ -2750,11 +3210,13 @@ class ElectricEnergy:
         df_elec_trajectories: pd.DataFrame
     ) -> pd.DataFrame:
         """
-            Format the MinimumUtilization input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the MinimumUtilization input table for NemoMod based on 
+            SISEPUEDE configuration parameters, input variables, integrated 
+            model outputs, and reference tables.
 
-            Function Arguments
-            ------------------
-            - df_elec_trajectories: data frame of model variable input trajectories
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
         """
 
         return None
@@ -2766,11 +3228,13 @@ class ElectricEnergy:
         df_elec_trajectories: pd.DataFrame
     ) -> pd.DataFrame:
         """
-            Format the ModelPeriodEmissionLimit input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the ModelPeriodEmissionLimit input table for NemoMod based on 
+            SISEPUEDE configuration parameters, input variables, integrated 
+            model outputs, and reference tables.
 
-            Function Arguments
-            ------------------
-            - df_elec_trajectories: data frame of model variable input trajectories
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
         """
 
         return None
@@ -2782,18 +3246,19 @@ class ElectricEnergy:
         df_elec_trajectories: pd.DataFrame
     ) -> pd.DataFrame:
         """
-            Format the ModelPeriodExogenousEmission input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the ModelPeriodExogenousEmission input table for NemoMod based on 
+            SISEPUEDE configuration parameters, input variables, integrated 
+            model outputs, and reference tables.
 
-            Function Arguments
-            ------------------
-            - df_elec_trajectories: data frame of model variable input trajectories
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
         """
 
         return None
 
 
 
-    ##  format OperationalLife and OperationalLifeStorage for NemoMod
     def format_nemomod_table_operational_life(self,
         attribute_fuel: AttributeTable = None,
         attribute_storage: AttributeTable = None,
@@ -2801,16 +3266,26 @@ class ElectricEnergy:
         operational_life_dummies: Union[float, int] = 250
     ) -> pd.DataFrame:
         """
-            Format the OperationalLife and OperationalLifeStorage input tables for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the OperationalLife and OperationalLifeStorage input tables for 
+            NemoMod based on SISEPUEDE configuration parameters, input 
+            variables, integrated model outputs, and reference tables.
 
-            Keyword Arguments
-            -----------------
-            - attribute_fuel: AttributeTable for fuel, used to set dummy fuel supplies as a technology. If None, use ModelAttributes default.
-            - attribute_storage: AttributeTable for storage, used to build OperationalLifeStorage from Technology. If None, use ModelAttributes default.
-            - attribute_technology: AttributeTable for technology, used to identify operational lives of generation and storage technologies. If None, use ModelAttributes default.
-            - operational_life_dummies: Operational life for dummy technologies that are entered to account for fuel inputs.
-            Notes:
-            - Validity checks for operational lives are performed on initialization of the ModelAttributes class.
+        Keyword Arguments
+        -----------------
+        - attribute_fuel: AttributeTable for fuel, used to set dummy fuel 
+            supplies as a technology. If None, use ModelAttributes default.
+        - attribute_storage: AttributeTable for storage, used to build 
+            OperationalLifeStorage from Technology. If None, use 
+            ModelAttributes default.
+        - attribute_technology: AttributeTable for technology, used to identify 
+            operational lives of generation and storage technologies. If None, 
+            use ModelAttributes default.
+        - operational_life_dummies: Operational life for dummy technologies that 
+            are entered to account for fuel inputs.
+
+        Notes:
+        - Validity checks for operational lives are performed on initialization 
+            of the ModelAttributes class.
         """
 
         # set some defaults
@@ -2866,23 +3341,25 @@ class ElectricEnergy:
 
 
 
-    ##  format OutputActivityRatio for NemoMod
     def format_nemomod_table_output_activity_ratio(self,
         df_elec_trajectories: pd.DataFrame,
         attribute_technology: AttributeTable = None
     ) -> pd.DataFrame:
         """
-            Format the OutputActivityRatio input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the OutputActivityRatio input table for NemoMod based on 
+            SISEPUEDE configuration parameters, input variables, integrated 
+            model outputs, and reference tables.
 
-            Function Arguments
-            ------------------
-            - df_elec_trajectories: data frame of model variable input trajectories
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
 
-            Keyword Arguments
-            -----------------
-            - attribute_technology: AttributeTable for technology, used to separate technologies from storage and identify primary fuels.
+        Keyword Arguments
+        -----------------
+        - attribute_technology: AttributeTable for technology, used to separate 
+            technologies from storage and identify primary fuels.
         """
-
+        
         ##  CATEGORY AND ATTRIBUTE INITIALIZATION
         attribute_technology = self.model_attributes.get_attribute_table(self.subsec_name_entc) if (attribute_technology is None) else attribute_technology
 
@@ -2890,11 +3367,13 @@ class ElectricEnergy:
         dict_fuels_to_dummy_techs = self.get_dummy_techs(attribute_technology = attribute_technology)
         df_out_dummies = pd.DataFrame({self.field_nemomod_fuel: list(dict_fuels_to_dummy_techs.keys())})
         df_out_dummies[self.field_nemomod_technology] = df_out_dummies[self.field_nemomod_fuel].replace(dict_fuels_to_dummy_techs)
+        
         # Initialize OutputActivityRatio and add dummies
         df_out = pd.DataFrame({self.field_nemomod_technology: attribute_technology.key_values})
         df_out[self.field_nemomod_fuel] = self.cat_enfu_elec
         # HERHERE - ISSUE - WHY IS THIS NEEDED???
         df_out = pd.concat([df_out, df_out_dummies], axis = 0).reset_index(drop = True)
+
         # finish with other variables
         df_out[self.field_nemomod_value] = 1
         df_out[self.field_nemomod_mode] = self.cat_enmo_gnrt
@@ -3607,7 +4086,7 @@ class ElectricEnergy:
                 drop_flag = self.drop_flag_tech_capacities
             )
         )
-        # verify that the maximum capacity meets or exceed the minimum activity lower limit HEREHERE
+        # verify that the maximum capacity meets or exceed the minimum activity lower limit
         df_max_capacity, df_min = self.verify_min_max_constraint_inputs(
             dict_return[self.model_attributes.table_nemomod_total_annual_max_capacity],
             df_total_technology_activity_lower_limit,

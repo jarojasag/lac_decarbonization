@@ -7,13 +7,13 @@ Coke,``fuel_coke``,"Lignite coke, and gas coke (as definined in Table 2.2, V2, C
 Crude Oil,``fuel_crude``,Crude oil. Included for accounting purposes.,,,,0,0,0,0
 Diesel,``fuel_diesel``,"Gas and diesel oil (see fuel ""Gas/Diesel Oil"" in Table 2.2, V2, C2)",,,,0,0,0,0
 Electricity,``fuel_electricity``,"Electricity--this category represents demands and production of electricity as a fuel. All electricity demands associated with ``fuel_electricity`` from the Industrial Energy, Transportation, and Other Energy: Stationary Emissions and Carbon Capture and Sequestration subsectors are passed to the electricity model. ",,,,0,0,1,0
-Furnace Gases,``fuel_gas_furnace``,Blast furnace and oxygen steel furnace gas,,,,0,0,0,0
+Furnace Gases,``fuel_furnace_gas``,Blast furnace and oxygen steel furnace gas,,,,0,0,0,0
 Gasoline,``fuel_gasoline``,"Gasoline (including motor, aviation, and jet gasoline as definined in Table 2.2, V2, C2)",,,,0,0,0,0
 Geothermal,``fuel_geothermal``,Geothermal energy production,,,,0,0,0,0
+Hydrocarbon Gas Liquids,``fuel_hydrocarbon_gas_liquids``,"Liquified petroleoum gases, including propane, butane, and ethane. Produced in petroleum refinement and natural gas processing.",,,,0,0,0,0
 Hydrogen,``fuel_hydrogen``,Hydrogen energy,,,,0,0,0,0
 Hydropower,``fuel_hydropower``,Power available from hydropower,,,,0,0,0,0
 Kerosene,``fuel_kerosene``,"Kerosene, including jet and other (as definined in Table 2.2, V2, C2)",,,,0,0,0,0
-Liquefied Petroleum Gases,``fuel_gas_petroleum_liquid``,"Liquified petroleoum gases, including propane and pliqgas",,,,0,0,0,0
 Liquid Biofuels,``fuel_biofuels``,"Biodiesel, ethanol, and biogasoline",,,,0,0,0,0
 Natural Gas,``fuel_natural_gas``,Natural gas,,,,0,0,0,0
 Nuclear,``fuel_nuclear``,Nuclear fuel,,,,0,0,0,0

@@ -1305,15 +1305,54 @@ def replace_numerical_column_from_merge(
 
 ##  quick function to reverse dictionaries
 def reverse_dict(
-    dict_in: dict
+    dict_in: dict,
+    allow_multi_keys: bool = False
 ) -> dict:
+    """
+    Reverse a dictionary, mapping v -> k for a dictionary of key value pairs 
+        {k: v}
+
+    Function Arguments
+    ------------------
+    dict_in: dictionary to reverse
+
+    Keyword Arguments
+    -----------------
+    - allow_multi_keys: if True, will map a non-injective dictionary 
+
+        {
+            k1: v0,
+            k2: v0,
+            k3: v3,
+            ...
+        }
+
+            to 
+
+        {
+            v0: [k1, k2],
+            v3: [k3]
+        }
+
+        * Note: all keys in the reverse dict will be lists. 
+    """
     # check keys
     s_vals = set(dict_in.values())
     s_keys = set(dict_in.keys())
-    if len(s_vals) != len(s_keys):
-        raise KeyError(f"Invalid dicionary in reverse_dict: the dictionary is not injective.")
+    dict_out = None
 
-    return dict([(dict_in[x], x) for x in list(dict_in.keys())])
+    if len(s_vals) != len(s_keys):
+        if not allow_multi_keys:
+            raise KeyError(f"Invalid dicionary in reverse_dict: the dictionary is not injective.")
+        else:
+            dict_out = {}
+            for v in list(s_vals):
+                ks = [k for k in dict_in.keys() if (dict_in.get(k) == v)]
+                dict_out.update({v: ks})
+    else:
+        dict_out = dict((v, k) for k, v in dict_in.items())
+
+    return dict_out
 
 
 

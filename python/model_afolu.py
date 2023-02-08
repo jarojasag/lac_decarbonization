@@ -406,10 +406,10 @@ class AFOLU:
                 self.model_energy.modvar_scoe_efficiency_fact_heat_en_diesel,
                 self.model_energy.modvar_scoe_efficiency_fact_heat_en_electricity,
                 self.model_energy.modvar_scoe_efficiency_fact_heat_en_gasoline,
+                self.model_energy.modvar_scoe_efficiency_fact_heat_en_hgl,
                 self.model_energy.modvar_scoe_efficiency_fact_heat_en_hydrogen,
                 self.model_energy.modvar_scoe_efficiency_fact_heat_en_kerosene,
                 self.model_energy.modvar_scoe_efficiency_fact_heat_en_natural_gas,
-                self.model_energy.modvar_scoe_efficiency_fact_heat_en_pliqgas,
                 self.model_energy.modvar_scoe_efficiency_fact_heat_en_solid_biomass,
                 self.model_energy.modvar_scoe_elasticity_hh_energy_demand_electric_to_gdppc,
                 self.model_energy.modvar_scoe_elasticity_hh_energy_demand_heat_to_gdppc,
@@ -419,10 +419,10 @@ class AFOLU:
                 self.model_energy.modvar_scoe_frac_heat_en_diesel,
                 self.model_energy.modvar_scoe_frac_heat_en_electricity,
                 self.model_energy.modvar_scoe_frac_heat_en_gasoline,
+                self.model_energy.modvar_scoe_frac_heat_en_hgl,
                 self.model_energy.modvar_scoe_frac_heat_en_hydrogen,
                 self.model_energy.modvar_scoe_frac_heat_en_kerosene,
                 self.model_energy.modvar_scoe_frac_heat_en_natural_gas,
-                self.model_energy.modvar_scoe_frac_heat_en_pliqgas,
                 self.model_energy.modvar_scoe_frac_heat_en_solid_biomass
             ]
         }
