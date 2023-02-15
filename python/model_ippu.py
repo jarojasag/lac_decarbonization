@@ -24,6 +24,7 @@ class IPPU:
         self.subsec_name_ippu = "IPPU"
         self.subsec_name_waso = "Solid Waste"
 
+        self._initialize_subsector_vars_ippu()
         # initialzie dynamic variables
         self.model_attributes = attributes
         self.required_dimensions = self.get_required_dimensions()
@@ -31,8 +32,74 @@ class IPPU:
         self.required_variables, self.output_variables = self.get_ippu_input_output_fields()
 
 
-        ##  SET MODEL VARIABLES
+        # variables from other sectors
+        self.modvar_waso_waste_total_recycled = "Total Waste Recycled"
 
+        # add other model classes
+        self.model_socioeconomic = Socioeconomic(self.model_attributes)
+
+        # optional integration variables (uses calls to other model classes)
+        self.integration_variables = self.set_integrated_variables()
+
+        ##  MISCELLANEOUS VARIABLES
+        self.time_periods, self.n_time_periods = self.model_attributes.get_time_periods()
+
+
+
+
+
+    ##  FUNCTIONS FOR MODEL ATTRIBUTE DIMENSIONS
+
+    def check_df_fields(self, 
+        df_ippu_trajectories
+    ) -> None:
+        check_fields = self.required_variables
+        # check for required variables
+        if not set(check_fields).issubset(df_ippu_trajectories.columns):
+            set_missing = list(set(check_fields) - set(df_ippu_trajectories.columns))
+            set_missing = sf.format_print_list(set_missing)
+            raise KeyError(f"IPPU projection cannot proceed: The fields {set_missing} are missing.")
+
+        return None
+
+
+
+    def get_required_subsectors(self
+    ) -> Tuple:
+        subsectors = self.model_attributes.get_sector_subsectors(self.subsec_name_ippu)
+        subsectors_base = subsectors.copy()
+        subsectors += [self.subsec_name_econ, self.subsec_name_gnrl]
+        return subsectors, subsectors_base
+
+
+
+    def get_required_dimensions(self
+    ) -> List:
+        ## TEMPORARY - derive from attributes later
+        required_doa = [self.model_attributes.dim_time_period]
+        return required_doa
+
+
+
+    def get_ippu_input_output_fields(self
+    ) -> Tuple:
+        required_doa = [self.model_attributes.dim_time_period]
+        required_vars, output_vars = self.model_attributes.get_input_output_fields(self.required_subsectors)
+        return required_vars + self.get_required_dimensions(), output_vars
+
+
+
+    ##  SET MODEL VARIABLES
+    def _initialize_subsector_vars_ippu(self,
+    ) -> None:
+        """
+        Initialize model variables, categories, and indicies associated with
+            IPPU (Industrial P). Sets the following properties:
+
+            * self.cat_ippu_****
+            * self.ind_ippu_****
+            * self.modvar_ippu_****
+        """
         # ippu model variables
         self.modvar_ippu_average_construction_materials_required_per_household = "Average per Household Demand for Construction Materials"
         self.modvar_ippu_average_lifespan_housing = "Average Lifespan of Housing Construction"
@@ -97,52 +164,15 @@ class IPPU:
         self.modvar_ippu_wwf_vol = "Wastewater Production Factor"
 
 
-        # variables from other sectors
-        self.modvar_waso_waste_total_recycled = "Total Waste Recycled"
 
-        # add other model classes
-        self.model_socioeconomic = Socioeconomic(self.model_attributes)
-
-        # optional integration variables (uses calls to other model classes)
-        self.integration_variables = self.set_integrated_variables()
-
-        ##  MISCELLANEOUS VARIABLES
-        self.time_periods, self.n_time_periods = self.model_attributes.get_time_periods()
-
-
-
-    ##  FUNCTIONS FOR MODEL ATTRIBUTE DIMENSIONS
-
-    def check_df_fields(self, df_ippu_trajectories):
-        check_fields = self.required_variables
-        # check for required variables
-        if not set(check_fields).issubset(df_ippu_trajectories.columns):
-            set_missing = list(set(check_fields) - set(df_ippu_trajectories.columns))
-            set_missing = sf.format_print_list(set_missing)
-            raise KeyError(f"IPPU projection cannot proceed: The fields {set_missing} are missing.")
-
-    def get_required_subsectors(self):
-        subsectors = self.model_attributes.get_sector_subsectors(self.subsec_name_ippu)
-        subsectors_base = subsectors.copy()
-        subsectors += [self.subsec_name_econ, self.subsec_name_gnrl]
-        return subsectors, subsectors_base
-
-    def get_required_dimensions(self):
-        ## TEMPORARY - derive from attributes later
-        required_doa = [self.model_attributes.dim_time_period]
-        return required_doa
-
-    def get_ippu_input_output_fields(self):
-        required_doa = [self.model_attributes.dim_time_period]
-        required_vars, output_vars = self.model_attributes.get_input_output_fields(self.required_subsectors)
-        return required_vars + self.get_required_dimensions(), output_vars
-
-    def set_integrated_variables(self):
+    def set_integrated_variables(self
+    ) -> List[str]:
         list_vars_required_for_integration = [
             self.modvar_waso_waste_total_recycled
         ]
 
         return list_vars_required_for_integration
+
 
 
     ################################
@@ -159,24 +189,34 @@ class IPPU:
         modvar_prod_mass: str = None
     ) -> list:
         """
-            Calculate emissions driven by GDP/Production and different factors. Takes a production array (to drive production-based emissions), a gdp vector, and dictionaries that contain (a) output variables as keys and (b) lists of input gdp and/or production variables.
+        Calculate emissions driven by GDP/Production and different factors. 
+            Takes a production array (to drive production-based emissions), a 
+            gdp vector, and dictionaries that contain (a) output variables as 
+            keys and (b) lists of input gdp and/or production variables.
 
 
-            Function Arguments
-            ------------------
-            df_ippu_trajectories: pd.DataFrame with all required input variable trajectories.
+        Function Arguments
+        ------------------
+        - df_ippu_trajectories: pd.DataFrame with all required input variable 
+            trajectories.
+        - array_production: an array of production by industrial category
+        - vec_gdp: vector of gdp
+        - dict_base_emissions: 
+        - dict_simple_efs: dict of the form 
+            
+                {
+                    modvar_emission_out: (
+                        [modvar_factor_gdp_1, ...], 
+                        [modvar_factor_production_1, ... ]
+                    )
+                }
+                
+            Allows for multiple gasses to be summed over.
 
-            array_production: an array of production by industrial category
-
-            vec_gdp: vector of gdp
-
-            dict_simple_efs: dict of the form {modvar_emission_out: ([modvar_factor_gdp_1, ...], [modvar_factor_production_1, ... ])}. Allows for multiple gasses to be summed over.
-
-            modvar_prod_mass: variable with mass of production denoted in array_production; used to match emission factors
-
-
-            Notes
-            -----
+        Keyword Arguments
+        -----------------
+        - modvar_prod_mass: variable with mass of production denoted in 
+            array_production; used to match emission factors
 
         """
 
@@ -236,12 +276,13 @@ class IPPU:
         vec_average_lifetime_hh: np.ndarray
     ) -> np.ndarray:
         """
-            project the number of households constructed based on the number of households and the average lifetime of households
+        Project the number of households constructed based on the number of 
+            households and the average lifetime of households
 
-            Function Arguments
-            ------------------
-            vec_hh: vector of housholds by time period
-            vec_average_lifetime_hh: vector of average household lifetimes.
+        Function Arguments
+        ------------------
+        - vec_hh: vector of housholds by time period
+        - vec_average_lifetime_hh: vector of average household lifetimes.
         """
 
         if len(vec_average_lifetime_hh) != len(vec_hh):
@@ -270,7 +311,7 @@ class IPPU:
         return vec_est_new_builds
 
 
-    # project industrial production—broken out so that other sectors can call it
+
     def project_industrial_production(self,
         df_ippu_trajectories: pd.DataFrame,
         vec_rates_gdp: np.ndarray,
@@ -284,24 +325,38 @@ class IPPU:
         modvar_scalar_prod: str = None
     ) -> np.ndarray:
         """
-            Can be called from other sectors to simplify calculation of industrial production. Includes swap of demand for cement product and wood products in new housing construction.
+        Project industrial production. Called from other sectors to simplify 
+            calculation of industrial production. Includes swap of demand for 
+            cement product and wood products in new housing construction.
 
-            Function Arguments
-            ------------------
-            df_ippu_trajectories: pd.DataFrame of input variable trajectories.
-            vec_rates_gdp: vector of rates of change to gdp (length = len(df_ippu_trajectories) - 1)
-            dict_dims: dict of dimensions (returned from check_projection_input_df). Default is None.
-            n_projection_time_periods: int giving number of time periods (returned from check_projection_input_df). Default is None.
-            projection_time_periods: list of time periods (returned from check_projection_input_df). Default is None.
-            modvar_average_lifespan_housing: average lifespan of housing
-            modvar_elast_ind_prod_to_gdp: model variable giving elasticity of production to gdp
-            modvar_num_hh: model variable giving the number of households
-            modvar_prod_qty_init: model variable giving initial production quantity
-            modvar_scalar_prod: model variable with the production scalar
+        Function Arguments
+        ------------------
+        - df_ippu_trajectories: pd.DataFrame of input variable trajectories.
+        - vec_rates_gdp: vector of rates of change to gdp 
+            (length = len(df_ippu_trajectories) - 1)
 
-            Notes
-            -----
-            - If any of dict_dims, n_projection_time_periods, or projection_time_periods are unspecified (expected if ran outside of IPPU.project()), self.model_attributes.check_projection_input_df wil be run
+        Keyword Arguments
+        -----------------
+        - dict_dims: dict of dimensions (returned from 
+            check_projection_input_df). Default is None.
+        - n_projection_time_periods: int giving number of time periods (returned 
+            from check_projection_input_df). Default is None.
+        - projection_time_periods: list of time periods (returned from 
+            check_projection_input_df). Default is None.
+        - modvar_average_lifespan_housing: average lifespan of housing
+        - modvar_elast_ind_prod_to_gdp: model variable giving elasticity of 
+            production to gdp
+        - modvar_num_hh: model variable giving the number of households
+        - modvar_prod_qty_init: model variable giving initial production 
+            quantity
+        - modvar_scalar_prod: model variable with the production scalar
+
+        Notes
+        -----
+        - If any of dict_dims, n_projection_time_periods, or 
+            projection_time_periods are unspecified (expected if ran outside of 
+            IPPU.project()), self.model_attributes.check_projection_input_df 
+            will be run
         """
         # allows production to be run outside of the project method
         if type(None) in set([type(x) for x in [dict_dims, n_projection_time_periods, projection_time_periods]]):

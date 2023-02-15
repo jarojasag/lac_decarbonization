@@ -431,15 +431,17 @@ class ModelAttributes:
             Sets the following properties:
 
             * self.field_enfu_biofuels_demand_category
-            * self.field_enfu_electricity_demand_category
             * self.field_enfu_biogas_fuel_category
+            * self.field_enfu_electricity_demand_category
+            * self.field_enfu_upstream_fuel_category
             * self.field_enfu_waste_fuel_category
         """
 
         # miscellaneous parameters that need to be checked before running
         self.field_enfu_biofuels_demand_category = "biomass_demand_category"
-        self.field_enfu_electricity_demand_category = "electricity_demand_category"
         self.field_enfu_biogas_fuel_category = "biogas_fuel_category"
+        self.field_enfu_electricity_demand_category = "electricity_demand_category"
+        self.field_enfu_upstream_fuel_category = "upstream_fuel_category"
         self.field_enfu_waste_fuel_category = "waste_fuel_category"
 
         # run checks and raise errors if invalid data are found in the attribute tables
@@ -753,6 +755,7 @@ class ModelAttributes:
         self.table_nemomod_emissions_activity_ratio = "EmissionActivityRatio"
         self.table_nemomod_fixed_cost = "FixedCost"
         self.table_nemomod_input_activity_ratio = "InputActivityRatio"
+        self.table_nemomod_min_share_production = "MinShareProduction"
         self.table_nemomod_min_storage_charge = "MinStorageCharge"
         self.table_nemomod_model_period_emission_limit = "ModelPeriodEmissionLimit"
         self.table_nemomod_model_period_exogenous_emission = "ModelPeriodExogenousEmission"
@@ -761,6 +764,7 @@ class ModelAttributes:
         self.table_nemomod_output_activity_ratio = "OutputActivityRatio"
         self.table_nemomod_residual_capacity = "ResidualCapacity"
         self.table_nemomod_residual_storage_capacity = "ResidualStorageCapacity"
+        self.table_nemomod_re_min_production_target = "REMinProductionTarget"
         self.table_nemomod_re_tag_technology = "RETagTechnology"
         self.table_nemomod_reserve_margin = "ReserveMargin"
         self.table_nemomod_reserve_margin_tag_fuel = "ReserveMarginTagFuel"
@@ -784,7 +788,9 @@ class ModelAttributes:
         self.table_nemomod_specified_annual_demand = "SpecifiedAnnualDemand"
         self.table_nemomod_variable_cost = "VariableCost"
         self.table_nemomod_year_split = "YearSplit"
+
         # nemomod shared tables - output variables
+        self.table_nemomod_annual_demand_nn = "vdemandannualnn"
         self.table_nemomod_annual_emissions_by_technology = "vannualtechnologyemission"
         self.table_nemomod_capital_investment = "vcapitalinvestment"
         self.table_nemomod_capital_investment_discounted = "vdiscountedcapitalinvestment"
@@ -796,6 +802,8 @@ class ModelAttributes:
         self.table_nemomod_production_by_technology = "vproductionbytechnologyannual"
         self.table_nemomod_total_annual_capacity = "vtotalcapacityannual"
         self.table_nemomod_use_by_technology = "vusebytechnologyannual"
+
+        return None
 
 
 
@@ -1029,7 +1037,6 @@ class ModelAttributes:
 
 
 
-    # list variables by all valid subsectors (excludes those without a primary category)
     def _initialize_variables_by_subsector(self,
     ) -> dict:
         """
@@ -1092,13 +1099,38 @@ class ModelAttributes:
     ###                                                                                ###
     ######################################################################################
 
-    ##  check binary fields
+    def _check_binary_category_partition(self,
+        attr: AttributeTable,
+        fields: List[str]
+    ) -> None:
+        """
+        Check a set of binary fields specificied in an attribute table to 
+            determine if they specify a partition across the categories. Assumes
+            fields are binary.
+
+        Function Arguments
+        -----------------
+        - attr: AttributeTable to check
+        - fields: fields to check
+        """
+
+        fields = [x for x in fields if x in attr.table.columns]
+        vec_check = np.array(attr.table[fields]).sum(axis = 1).astype(int)
+
+        if set(vec_check) != set({1}):
+            fields_print = ", ".join([f"'{x}'" for x in fields])
+            raise RuntimeError(f"Invalid specifcation of attribute table with key {attr.key}--the fields {fields_print} do not partition the categories.")
+
+        return None
+
+
+
     def _check_binary_fields(self,
         attr: AttributeTable,
         subsec: str,
         fields: str,
         force_sum_to_1: bool = False
-    ):
+    ) -> None:
         # loop over fields to do checks
         for fld in fields:
             valid_sum = (sum(attr.table[fld]) == 1) if force_sum_to_1 else True
@@ -1109,9 +1141,10 @@ class ModelAttributes:
             elif not valid_sum:
                 raise ValueError(f"Invalid specification of field '{fld}' found in {subsec} attribute table: exactly 1 category or variable should be specfied in the field '{fld}'.\n\nUse 1 to flag the category; all other values should be 0.")
 
+        return None
 
 
-    ##  check numeric fields
+
     def _check_numeric_fields(self,
         attr: AttributeTable,
         subsec: str,
@@ -1141,6 +1174,8 @@ class ModelAttributes:
                     vals_check = [int(x) == x for x in vals]
                     if not all(vals_check):
                         raise ValueError(f"Error in subsector {subsec}: Non-integer equivalent values found in the field {fld}. Entries in '{fld}' should be integers or float equivalents. Check the table at '{attr.fp_table}'.")
+
+        return None
 
 
 
@@ -1255,16 +1290,19 @@ class ModelAttributes:
                 duplicate_vals = sf.format_print_list(set([x for x in primary_cats_defined if primary_cats_defined.count(x) > 1]))
                 raise ValueError(f"Error in {subsector_primary} attribute table at '{attr_prim.fp_table}': duplicate specifications of target categories {duplicate_vals}. There map of {subsector_primary} categories to {subsector_target} categories should be an injection map.")
 
+        return None
+
 
 
     ####################################################
     #    SECTOR-SPECIFIC AND CROSS SECTORIAL CHECKS    #
     ####################################################
 
-    ##  check agricultural attribute tables (category and variables)
     def _check_attribute_tables_agrc(self,
     ) -> None:
-
+        """
+        Check agricultural attribute tables (category and variables)
+        """
         # check for proper specifications in attribute table
         attr = self.get_attribute_table(self.subsec_name_agrc)
         fields_req = ["apply_vegetarian_exchange_scalar", "rice_category"]
@@ -1280,28 +1318,49 @@ class ModelAttributes:
             injection_q = True
         )
 
+        return None
 
 
-    ##  function to check the energy fuels table to ensure that an electricity category is specified
+
     def _check_attribute_tables_enfu(self,
     ) -> None:
+        """
+        Check the Energy Fuels table to ensure that an electricity category is 
+            specified
+        """
         # share values
         subsec = self.subsec_name_enfu
         attr = self.get_attribute_table(subsec)
         # check binary variables
         fields_req_bin = [
             self.field_enfu_biofuels_demand_category,
-            self.field_enfu_electricity_demand_category,
             self.field_enfu_biogas_fuel_category,
+            self.field_enfu_electricity_demand_category,
             self.field_enfu_waste_fuel_category
         ]
-        self._check_binary_fields(attr, self.subsec_name_agrc, fields_req_bin, force_sum_to_1 = True)
+        self._check_binary_fields(attr, self.subsec_name_enfu, fields_req_bin, force_sum_to_1 = True)
+
+        # check multivalue binary fields
+        fields_req_bin = [
+            self.field_enfu_upstream_fuel_category
+        ]
+        self._check_binary_fields(attr, self.subsec_name_enfu, fields_req_bin, force_sum_to_1 = False)
+
+        return None
 
 
 
-    ##  function to check the energy storage table to ensure that an electricity category is specified
     def _check_attribute_tables_enst(self,
     ) -> None:
+        """
+        Check the Energy Storage table to check the technology crosswalk and 
+            ensure the proper specification of the following fields:
+
+            * "minimum_charge_fraction" (numeric, bounded 0, 1)
+            * "netzeroyear" (binary)
+            * "netzerotg1" (binary)
+            * "netzerotg2" (binary)
+        """
         # some shared values
         subsec = self.subsec_name_enst
         attr = self.get_attribute_table(subsec)
@@ -1314,22 +1373,57 @@ class ModelAttributes:
         self._check_numeric_fields(attr, subsec, ["minimum_charge_fraction"], check_bounds = (0, 1))
 
         # check storage/technology crosswalk
-        self._check_subsector_attribute_table_crosswalk(self.subsec_name_enst, self.subsec_name_entc, type_primary = "categories", injection_q = False)
+        self._check_subsector_attribute_table_crosswalk(
+            self.subsec_name_enst, 
+            self.subsec_name_entc, 
+            type_primary = "categories", 
+            injection_q = False
+        )
+
+        return None
 
 
 
-    ##  function to check the energy storage table to ensure that an electricity category is specified
     def _check_attribute_tables_entc(self,
     ) -> None:
+        """
+        Check the Energy Technology table to check the following components:
+
+            * Check crosswalks with ENST and ENFU to ensure fields are properly
+                specified:
+                * electricity_generation_{pycat_enfu} (ENFU)
+                * generates_fuel_{pycat_enfu} (ENFU)
+                * {pycat_enst} (ENST)
+                * technology_from_storage (ENST)
+                * technology_to_storage (ENST)
+
+            * Ensure the proper specification of the following fields:
+                * "fuel_processing" (binary)
+                * "mining_and_extraction" (binary)
+                * "operational_life" (numeric, >= 0)
+                * "power_plant" (binary)
+                * "renewable_energy_technology" (binary)
+                * "storage" (binary)
+
+            * Checks that each technology is specified in exactly one of the
+                following fields:
+                * "fuel_processing"
+                * "mining_and_extraction"
+                * "power_plant"
+                * "storage"
+
+        """
         # some shared values
         pycat_enfu = self.get_subsector_attribute(self.subsec_name_enfu, "pycategory_primary")
         subsec = self.subsec_name_entc
         attr = self.get_attribute_table(subsec)
 
 
-        # check required fields - binary
-        fields_req_bin = ["fuel_production", "power_plant", "renewable_energy_technology"]
+        # check required fields - binary - and the partition of types
+        fields_req_bin = ["fuel_processing", "mining_and_extraction", "power_plant", "renewable_energy_technology", "storage"]
         self._check_binary_fields(attr, subsec, fields_req_bin)
+        fields_partition_bin = ["fuel_processing", "mining_and_extraction", "power_plant", "storage"]
+        self._check_binary_category_partition(attr, fields_partition_bin)
 
         # check required fields - numeric
         fields_req_num = ["operational_life"]
@@ -1371,6 +1465,8 @@ class ModelAttributes:
             allow_multiple_cats_q = True
         )
 
+        return None
+
 
 
     ##  function to check the industrial energy/fuels cw in industrial energy
@@ -1387,6 +1483,8 @@ class ModelAttributes:
 
         # function to check the industrial energy/fuels cw in industrial energy
         self._check_subsector_attribute_table_crosswalk(self.subsec_name_inen, self.subsec_name_enfu, type_primary = "varreqs_partial", injection_q = False)
+
+        return None
 
 
 
@@ -1464,6 +1562,8 @@ class ModelAttributes:
         fields_req_bin = ["mangroves_forest_category", "primary_forest_category", "secondary_forest_category"]
         self._check_binary_fields(attribute_forest, self.subsec_name_frst, fields_req_bin, force_sum_to_1 = 1)
 
+        return None
+
 
 
     ##  check the livestock manure management attribute table
@@ -1486,6 +1586,8 @@ class ModelAttributes:
             fields = sf.format_print_list(fields_check_sum)
             raise ValueError(f"Invalid specification of fields {fields} in {subsec} attribute located at {attr.fp_table}: Non-injective mapping specified--categories can map to at most 1 of these fields.")
 
+        return None
+
 
 
     ##  function to check the variables specified in the Transportation Demand attribute table
@@ -1499,6 +1601,8 @@ class ModelAttributes:
             injection_q = False
         )
 
+        return None
+
 
 
     ##  function to check the transportation/transportation demand crosswalk in both the attribute table and the varreqs table
@@ -1507,12 +1611,15 @@ class ModelAttributes:
         self._check_subsector_attribute_table_crosswalk("Transportation", "Transportation Demand", type_primary = "varreqs_partial", injection_q = True)
         self._check_subsector_attribute_table_crosswalk("Transportation", "Transportation Demand", injection_q = False)
 
+        return None
+
 
 
     ##  function to check the liquid waste/population crosswalk in liquid waste
     def _check_crosswalk_wali_gnrl(self,
     ) -> None:
         self._check_subsector_attribute_table_crosswalk("Liquid Waste", "General", injection_q = True)
+        return None
 
 
 
@@ -1520,6 +1627,7 @@ class ModelAttributes:
     def _check_crosswalk_wali_trww(self,
     ) -> None:
         self._check_subsector_attribute_table_crosswalk("Liquid Waste", "Wastewater Treatment", type_primary = "varreqs_all")
+        return None
 
 
 
@@ -1532,6 +1640,8 @@ class ModelAttributes:
         if len(cats_sludge) > 1:
             raise ValueError(f"Error in Solid Waste attribute table at {attr_waso.fp_table}: multiple sludge categories defined in the 'sewage_sludge_category' field. There should be no more than 1 sewage sludge category.")
 
+        return None
+
 
 
 
@@ -1541,7 +1651,6 @@ class ModelAttributes:
     #   FUNCTIONS FOR ATTRIBUTE TABLES, DIMENSIONS, SECTORS    #
     ############################################################
 
-    ##  wrapper function to add scenarios to
     def add_index_fields(self,
         df_input: pd.DataFrame,
         design_id: Union[None, int] = None,
@@ -1554,7 +1663,8 @@ class ModelAttributes:
         overwrite_fields: bool = False
     ) -> pd.DataFrame:
         """
-        Add scenario and dimensional index fields to a data frame using consistent field hierachy
+        Add scenario and dimensional index fields to a data frame using 
+            consistent field hierachy
 
         Function Arguments
         ------------------
@@ -1562,17 +1672,26 @@ class ModelAttributes:
 
         Keyword Arguments
         -----------------
-        - design_id: value for index ModelAttributes.dim_design_id; if None, the index is not added
-        - future_id: value for index ModelAttributes.dim_future_id; if None, the index is not added
-        - primary_id: value for index ModelAttributes.dim_primary_id; if None, the index is not added
-        - region: value for index ModelAttributes.dim_region; if None, the index is not added
-        - strategy_id: value for index ModelAttributes.dim_strategy_id; if None, the index is not added
-        - time_period: value for index ModelAttributes.dim_time_period; if None, the index is not added
-        - time_series_id: value for index ModelAttributes.dim_time_series_id; if None, the index is not added
+        - design_id: value for index ModelAttributes.dim_design_id; if None, the 
+            index is not added
+        - future_id: value for index ModelAttributes.dim_future_id; if None, the 
+            index is not added
+        - primary_id: value for index ModelAttributes.dim_primary_id; if None, 
+            the index is not added
+        - region: value for index ModelAttributes.dim_region; if None, the index 
+            is not added
+        - strategy_id: value for index ModelAttributes.dim_strategy_id; if None, 
+            the index is not added
+        - time_period: value for index ModelAttributes.dim_time_period; if None, 
+            the index is not added
+        - time_series_id: value for index ModelAttributes.dim_time_series_id; if 
+            None, the index is not added
         - overwrite_fields:
-            * If True, if the index field already iexists in `df_input`, it will be overwritten with the value passed to add_index_fields
+            * If True, if the index field already iexists in `df_input`, it will 
+                be overwritten with the value passed to add_index_fields
             * Otherwise, the existing field will be left.
-            * NOTE: if a value is passed with overwrite_q = False, then the data frame will still order fields hierarchically
+            * NOTE: if a value is passed with overwrite_q = False, then the data 
+                frame will still order fields hierarchically
         """
 
         if df_input is None:
@@ -1601,22 +1720,25 @@ class ModelAttributes:
 
 
 
-    ##  function to ensure dimensions of analysis are properly specified
     def check_dimensions_of_analysis(self,
     ) -> None:
+        """
+        Ensure dimensions of analysis are properly specified
+        """
         if not set(self.sort_ordered_dimensions_of_analysis).issubset(set(self.all_dims)):
             missing_vals = sf.print_setdiff(set(self.sort_ordered_dimensions_of_analysis), set(self.all_dims))
             raise ValueError(f"Missing specification of required dimensions of analysis: no attribute tables for dimensions {missing_vals} found in directory '{self.attribute_directory}'.")
 
 
 
-    ##  check data frames specified for integrated variables
     def check_integrated_df_vars(self,
         df_in: pd.DataFrame,
         dict_integrated_vars: dict,
         subsec: str = "all"
     ) -> dict:
-
+        """
+        Check data frames specified for integrated variables
+        """
         # initialize list of subsectors to provide checks for
         subsecs = list(dict_integrated_vars.keys()) if (subsec == "all") else [subsec]
         dict_out = {}
@@ -1645,13 +1767,14 @@ class ModelAttributes:
 
 
 
-    ##  function to ensure a sector is properly specified
     def check_region(self,
         region: str,
         allow_unclean: bool = False
-    ):
-
-        region = clean_region(region) if allow_unclean else region
+    ) -> None:
+        """
+        Ensure a region is properly specified
+        """
+        region = self.clean_region(region) if allow_unclean else region
         attr_region = self.dict_attributes.get(self.dim_region)
 
         # check sectors
@@ -1659,22 +1782,32 @@ class ModelAttributes:
             valid_regions = sf.format_print_list(attr_region.key_values)
             raise ValueError(f"Invalid region specification '{region}': valid sectors are {valid_region}")
 
+        return None
 
 
-    ##  function to ensure a sector is properly specified
-    def check_sector(self, sector: str):
+
+    def check_sector(self, 
+        sector: str
+    ) -> None:
+        """
+        Ensure a sector is properly specified
+        """
         # check sectors
         if sector not in self.all_sectors:
             valid_sectors = sf.format_print_list(self.all_sectors)
             raise ValueError(f"Invalid sector specification '{sector}': valid sectors are {valid_sectors}")
 
+        return None
 
 
-    ##  function to ensure a sector is properly specified
+
     def check_subsector(self,
         subsector: str,
         throw_error_q = True
     ) -> Union[str, None]:
+        """
+        Ensure a subsector is properly specified
+        """
         # check sectors
         if subsector not in self.all_subsectors:
             valid_subsectors = sf.format_print_list(self.all_subsectors)
@@ -1687,38 +1820,54 @@ class ModelAttributes:
 
 
 
-    ##  commonly used--restrict variable values
-    def check_restricted_value_argument(self, arg, valid_values: list, func_arg: str = "", func_name: str = ""):
+    def check_restricted_value_argument(self, 
+        arg: Any, 
+        valid_values: list, 
+        func_arg: str = "", 
+        func_name: str = ""
+    ) -> None:
+        """
+        Commonly used--restrict variable values. Throws an error if the argument
+            is not in valid values. Reports out valid values in error message.
+        """
         if arg not in valid_values:
             vrts = sf.format_print_list(valid_values)
             raise ValueError(f"Invalid {func_arg} in {func_name}: valid values are {vrts}.")
 
+        return None
 
 
-    ##  simple inline function to dimensions in a data frame (if they are converted to floats)
+
     def clean_dimension_fields(self,
         df_in: pd.DataFrame
     ):
+        """
+        Simple inline function to dimensions in a data frame (if they are 
+            converted to floats)
+        """
         fields_clean = [x for x in self.sort_ordered_dimensions_of_analysis if x in df_in.columns]
         for fld in fields_clean:
             df_in[fld] = np.array(df_in[fld]).astype(int)
 
 
 
-    ##  inline function to clean regions (commonly called)
     def clean_region(self,
         region: str
     ) -> str:
+        """
+        inline function to clean regions (commonly called)
+        """
         return region.strip().lower().replace(" ", "_")
 
 
 
-    ##  function to simplify retrieval of attribute tables within functions
     def get_attribute_table(self,
         subsector: str,
         table_type = "pycategory_primary"
     ) -> AttributeTable:
-
+        """
+        Simplify retrieval of attribute tables within functions
+        """
         if table_type == "pycategory_primary":
             key_dict = self.get_subsector_attribute(subsector, table_type)
             return self.dict_attributes.get(key_dict)
@@ -1737,12 +1886,15 @@ class ModelAttributes:
     ) -> int:
 
         """
-            Return the scenario id associated with a baseline scenario (as specified in the attribute table)
+        Return the scenario id associated with a baseline scenario (as specified 
+            in the attribute table)
 
-            Function Arguments
-            ------------------
-            - dim: a scenario dimension specified in an attribute table (attribute_dim_####.csv) within the ModelAttributes class
-            - infer_baseline_as_minimum: If True, infers the baseline scenario as the minimum specified.
+        Function Arguments
+        ------------------
+        - dim: a scenario dimension specified in an attribute table 
+            (attribute_dim_####.csv) within the ModelAttributes class
+        - infer_baseline_as_minimum: If True, infers the baseline scenario as 
+            the minimum specified.
         """
         if dim not in self.all_dims:
             fpl = sf.format_print_list(self.all_dims)
@@ -1778,8 +1930,14 @@ class ModelAttributes:
 
 
 
-    ##  function to get all dimensions of analysis in a data frame - can be used on two data frames for merges
-    def get_df_dimensions_of_analysis(self, df_in: pd.DataFrame, df_in_shared: pd.DataFrame = None) -> list:
+    def get_df_dimensions_of_analysis(self, 
+        df_in: pd.DataFrame, 
+        df_in_shared: pd.DataFrame = None
+    ) -> list:
+        """
+        Get all dimensions of analysis in a data frame - can be used on two 
+            data frames for merges
+        """
         if type(df_in_shared) == pd.DataFrame:
             cols = [x for x in self.sort_ordered_dimensions_of_analysis if (x in df_in.columns) and (x in df_in_shared.columns)]
         else:
@@ -1788,53 +1946,58 @@ class ModelAttributes:
 
 
 
-    ##  function to return categories from an attribute table that match some characteristics (defined in dict_subset)
     def get_categories_from_attribute_characteristic(self,
         subsector: str,
         dict_subset: dict,
         attribute_type: str = "pycategory_primary",
         subsector_extract_key: str = None
     ) -> list:
+        """
+        Return categories from an attribute table that match some 
+            characteristics (defined in dict_subset)
+        """
         #
         auto_select_attr_q = (self.check_subsector(subsector, throw_error_q = False) == subsector)
 
         if auto_select_attr_q:
             pycat = self.get_subsector_attribute(subsector, attribute_type)
-            attr = self.dict_attributes[pycat] if (attribute_type == "pycategory_primary") else self.dict_varreqs[pycat]
+            attr = self.dict_attributes.get(pycat) if (attribute_type == "pycategory_primary") else self.dict_varreqs.get(pycat)
         else:
             attr = self.dict_attributes.get(subsector)
             extract_key = subsector_extract_key if (subsector_extract_key is not None) else (attr.key if (attr is not None) else "")
             pycat = extract_key if (attr is not None) else ""
 
-        #
-        if attr is not None:
-            return list(sf.subset_df(attr.table, dict_subset)[pycat])
-        else:
-            return None
+        return_val = list(sf.subset_df(attr.table, dict_subset)[pycat]) if (attr is not None) else None
+
+        return return_val
 
 
 
-    ##  function for dimensional attributes
-    def get_dimensional_attribute(self, dimension, return_type):
+    def get_dimensional_attribute(self, 
+        dimension: str, 
+        return_type: Any
+    ) -> Any:
+        """
+        NEED INFO
+        """
+
         if dimension not in self.all_dims:
             valid_dims = sf.format_print_list(self.all_dims)
             raise ValueError(f"Invalid dimension '{dimension}'. Valid dimensions are {valid_dims}.")
+
         # add attributes here
-        dict_out = {
-            "pydim": ("dim_" + dimension)
-        }
+        dict_out = {"pydim": ("dim_" + dimension)}
 
-        if return_type in dict_out.keys():
-            return dict_out[return_type]
-        else:
-            valid_rts = sf.format_print_list(list(dict_out.keys()))
+        out_val = dict_out.get(return_type)
+        if out_val is None:
             # warn user, but still allow a return
+            valid_rts = sf.format_print_list(list(dict_out.keys()))
             warnings.warn(f"Invalid dimensional attribute '{return_type}'. Valid return type values are:{valid_rts}")
-            return None
+        
+        return out_val
 
 
 
-    ##  function for grabbing an attribute column from an attribute table ordered the same as key values
     def get_ordered_category_attribute(self,
         subsector: str,
         attribute: str,
@@ -1843,7 +2006,10 @@ class ModelAttributes:
         return_type: type = list,
         clean_attribute_schema_q: bool = False,
     ) -> list:
-
+        """
+        Get attribute column from an attribute table ordered the same as key 
+            values
+        """
         valid_return_types = [list, np.ndarray, dict]
         if return_type not in valid_return_types:
             str_valid_types = sf.format_print_list(valid_return_types)
@@ -2813,7 +2979,6 @@ class ModelAttributes:
 
 
 
-    ##  function to assign keys (e.g., variables in a variable table) based on collections of attribute fields (e.g., a secondary category)
     def assign_keys_from_attribute_fields(self,
         subsector: str,
         field_attribute: str,
@@ -2857,9 +3022,8 @@ class ModelAttributes:
             'varreqs_partial'
         """
 
-        # check the subsector
+        # check the subsector and type specifications
         self.check_subsector(subsector)
-        # check type specifications
         dict_valid_types_to_attribute_keys = {
             "categories": "pycategory_primary",
             "varreqs_all": "key_varreqs_all",
@@ -2912,7 +3076,7 @@ class ModelAttributes:
         var_class: str
     ) -> list:
         """
-        Support function for assign_keys_from_attribute_fields
+        Support function for assign_keys_from_attribute_fields (akaf)
         """
         return [x.get(var_class) for x in dict_in.values() if (x.get(var_class) is not None)]
 
@@ -3046,10 +3210,32 @@ class ModelAttributes:
 
 
 
-    ##  function to build variables that rely on the outer product (e.g., transition probabilities)
-    def build_vars_outer(self, dict_vr_varschema: dict, dict_vars_to_cats: dict, category_to_replace: str, appendstr_i: str = "-I", appendstr_j: str = "-J") -> list:
+    def build_vars_outer(self, 
+        dict_vr_varschema: dict, 
+        dict_vars_to_cats: dict, 
+        category_to_replace: str, 
+        appendstr_i: str = "-I", 
+        appendstr_j: str = "-J"
+    ) -> list:
+        """
+        Build variables that rely on the direct product (e.g., transition 
+            probabilities).
+
+        Function Arguments
+        ------------------
+        - dict_vr_varschema:
+        - dict_vars_to_cats:
+        - category_to_replace:
+
+        Keyword Arguments
+        -----------------
+        - appendstr_i: string appendage in varschema category used to signify 
+            first dimension
+        - appendstr_j: string appendage in varschema category used to signify 
+            second dimension
+        """
         # build categories for I/J
-        cat_i, cat_j = self.format_category_for_outer(category_to_replace, appendstr_i, appendstr_j)
+        cat_i, cat_j = self.format_category_for_direct(category_to_replace, appendstr_i, appendstr_j)
 
         vars_out = []
         # run some checks and notify of any dropped variables
@@ -3076,8 +3262,7 @@ class ModelAttributes:
         for var in vars_to_loop:
             var_schema = clean_schema(dict_vr_varschema[var])
             if (cat_i not in var_schema) or (cat_j not in var_schema):
-                fb_tab = dict_attributes[self.get_subsector_attribute(subsector, "pycategory_primary")].fp_table
-                raise ValueError(f"Error in {var} variable schema: one of the outer categories '{cat_i}' or '{cat_j}' was not found. Check the attribute file found at '{fp_tab}'.")
+                raise ValueError(f"Error in {var} variable schema: one of the outer categories '{cat_i}' or '{cat_j}' was not found. Check the attribute file.")
             for catval_i in dict_vars_to_cats[var]:
                 for catval_j in dict_vars_to_cats[var]:
                     vars_out.append(var_schema.replace(cat_i, catval_i).replace(cat_j, catval_j))
@@ -3086,21 +3271,36 @@ class ModelAttributes:
 
 
 
-    # function to build a variable using an ordered set of categories associated with another variable
-    def build_target_varlist_from_source_varcats(self, modvar_source: str, modvar_target: str):
+    def build_target_varlist_from_source_varcats(self, 
+        modvar_source: str, 
+        modvar_target: str
+    ):
+        """
+        Build a variable using an ordered set of categories associated with 
+            another variable
+
+        Function Arguments
+        ------------------
+        - modvar_source: source model variable (includes source categories)
+        - modvar_target: target model variable (replaced with source categories)
+
+        """
         # get source categories
         cats_source = self.get_variable_categories(modvar_source)
+
         # build the target variable list using the source categories
         subsector_target = self.dict_model_variable_to_subsector[modvar_target]
-        vars_target = self.build_varlist(subsector_target, variable_subsec = modvar_target, restrict_to_category_values = cats_source)
+        vars_target = self.build_varlist(
+            subsector_target, 
+            variable_subsec = modvar_target, 
+            restrict_to_category_values = cats_source
+        )
 
         return vars_target
 
 
 
-    ##  function for building a list of variables (fields) for data tables
-    def build_varlist(
-        self,
+    def build_varlist(self,
         subsector: str,
         variable_subsec: str = None,
         restrict_to_category_values: list = None,
@@ -3109,39 +3309,85 @@ class ModelAttributes:
     ) -> list:
         """
 
-        Build a list of fields (complete variable schema from a data frame) based on the subsector and variable name.
+        Build a list of fields (complete variable schema from a data frame) 
+            based on the subsector and variable name.
 
         Function Arguments
         ------------------
-        subsector: str, the subsector to build the variable list for.
+        - subsector: str, the subsector to build the variable list for.
+        - variable_subsec: default is None. If None, then builds varlist of all 
+            variables required for this variable.
 
-        variable_subsec: default is None. If None, then builds varlist of all variables required for this variable.
+        Keyword Arguments
+        -----------------
+        - dict_force_override_vrp_vvs_cats: dict_force_override_vrp_vvs_cats can 
+            be set do a dictionary of the form
 
-        restrict_to_category_values: default is None. If None, applies to all categories specified in attribute tables. Otherwise, will restrict to specified categories.
+            {
+                MODEL_VAR_NAME: [catval_a, catval_b, catval_c, ... ]
+            }
 
-        dict_force_override_vrp_vvs_cats: dict_force_override_vrp_vvs_cats can be set do a dictionary of the form
-            {MODEL_VAR_NAME: [catval_a, catval_b, catval_c, ... ]}
-            where catval_i are not all unique; this is useful for making a variable that maps unique categories to a subset of non-unique categories that represent proxies (e.g., buffalo -> cattle_dairy, )
+            where catval_i are not all unique; this is useful for making a 
+            variable that maps unique categories to a subset of non-unique 
+            categories that represent proxies (e.g., buffalo -> cattle_dairy, )
 
-        variable_type: input or output. If None, defaults to input.
-
+        - restrict_to_category_values: default is None. If None, applies to all 
+            categories specified in attribute tables. Otherwise, will restrict 
+            to specified categories. 
+        -- variable_type: input or output. If None, defaults to input.
         """
         # get some subsector info
         category = self.dict_attributes[self.table_name_attr_subsector].field_maps["abbreviation_subsector_to_primary_category"][self.get_subsector_attribute(subsector, "abv_subsector")].replace("`", "")
-        category_ij_tuple = self.format_category_for_outer(category, "-I", "-J")
+        category_ij_tuple = self.format_category_for_direct(category, "-I", "-J")
         attribute_table = self.dict_attributes[self.get_subsector_attribute(subsector, "pycategory_primary")]
         valid_cats = self.check_category_restrictions(restrict_to_category_values, attribute_table)
 
         # get dictionary of variable to variable schema and id variables that are in the outer (Cartesian) product (i x j)
-        dict_vr_vvs, dict_vr_vvs_outer = self.separate_varreq_dict_for_outer(subsector, "key_varreqs_all", category_ij_tuple, variable = variable_subsec, variable_type = variable_type)
+        dict_vr_vvs, dict_vr_vvs_outer = self.separate_varreq_dict_for_outer(
+            subsector, 
+            "key_varreqs_all", 
+            category_ij_tuple, 
+            variable = variable_subsec, 
+            variable_type = variable_type
+        )
+       
         # build variables that apply to all categories
-        vars_out = self.build_vars_basic(dict_vr_vvs, dict(zip(list(dict_vr_vvs.keys()), [valid_cats for x in dict_vr_vvs.keys()])), category)
+        vars_out = self.build_vars_basic(
+            dict_vr_vvs, 
+            dict(
+                zip(
+                    list(dict_vr_vvs.keys()), 
+                    [valid_cats for x in dict_vr_vvs.keys()]
+                )
+            ), 
+            category
+        )
         if len(dict_vr_vvs_outer) > 0:
-            vars_out += self.build_vars_outer(dict_vr_vvs_outer, dict(zip(list(dict_vr_vvs_outer.keys()), [valid_cats for x in dict_vr_vvs_outer.keys()])), category)
+            vars_out += self.build_vars_outer(
+                dict_vr_vvs_outer,
+                 dict(
+                    zip(
+                        list(dict_vr_vvs_outer.keys()), 
+                        [valid_cats for x in dict_vr_vvs_outer.keys()]
+                    )
+                ), 
+                 category
+                )
 
         # build those that apply to partial categories
-        dict_vrp_vvs, dict_vrp_vvs_outer = self.separate_varreq_dict_for_outer(subsector, "key_varreqs_partial", category_ij_tuple, variable = variable_subsec, variable_type = variable_type)
-        dict_vrp_vvs_cats, dict_vrp_vvs_cats_outer = self.get_partial_category_dictionaries(subsector, category_ij_tuple, variable_in = variable_subsec, restrict_to_category_values = restrict_to_category_values)
+        dict_vrp_vvs, dict_vrp_vvs_outer = self.separate_varreq_dict_for_outer(
+            subsector, 
+            "key_varreqs_partial", 
+            category_ij_tuple, 
+            variable = variable_subsec, 
+            variable_type = variable_type
+        )
+        dict_vrp_vvs_cats, dict_vrp_vvs_cats_outer = self.get_partial_category_dictionaries(
+            subsector, 
+            category_ij_tuple, 
+            variable_in = variable_subsec, 
+            restrict_to_category_values = restrict_to_category_values
+        )
 
         # check dict_force_override_vrp_vvs_cats - use w/caution if not none. Cannot use w/outer
         if dict_force_override_vrp_vvs_cats != None:
@@ -3160,13 +3406,36 @@ class ModelAttributes:
 
 
 
-    # function to check category subsets that are specified
-    def check_category_restrictions(self, categories_to_restrict_to, attribute_table: AttributeTable, stop_process_on_error: bool = True) -> list:
-        if categories_to_restrict_to != None:
-            if type(categories_to_restrict_to) != list:
-                raise TypeError(f"Invalid type of categories_to_restrict_to: valid types are 'None' and 'list'.")
+    def check_category_restrictions(self, 
+        categories_to_restrict_to: Union[List, None], 
+        attribute_table: AttributeTable, 
+        stop_process_on_error: bool = True
+    ) -> Union[List, None]:
+        """
+        Check category subsets that are specified.
+
+        Function Arguments
+        ------------------
+        - categories_to_restrict_to: categories to check against attribute_table
+        - attribute_table: AttributeTable to use to check categories
+
+        Keyword Arguments
+        -----------------
+        - stop_process_on_error: throw an error?
+        """
+        if categories_to_restrict_to is not None:
+            
+            # check type
+            if not isinstance(categories_to_restrict_to, list):
+                if stop_process_on_error:
+                    raise TypeError(f"Invalid type of categories_to_restrict_to: valid types are 'None' and 'list'.")
+                else:
+                    return None
+
+            # get valid/invalid categories
             valid_cats = [x for x in categories_to_restrict_to if x in attribute_table.key_values]
             invalid_cats = [x for x in categories_to_restrict_to if (x not in attribute_table.key_values)]
+
             if len(invalid_cats) > 0:
                 missing_cats = sf.format_print_list(invalid_cats)
                 msg_err = f"Invalid categories {invalid_cats} found."
@@ -3174,18 +3443,22 @@ class ModelAttributes:
                     raise ValueError(msg_err)
                 else:
                     warnings.warn(msg_err + " They will be dropped.")
+
             return valid_cats
         else:
             return attribute_table.key_values
 
 
 
-    ##  clean a partial category dictionary to return either none (no categorization) or a list of applicable categories
     def clean_partial_category_dictionary(self,
         dict_in: dict,
         all_category_values: list,
         delim: str = None
     ) -> dict:
+        """
+        Clean a partial category dictionary to return either none (no 
+            categorization) or a list of applicable categories
+        """
 
         delim = self.delim_multicats if (delim is None) else delim
 
@@ -3203,16 +3476,27 @@ class ModelAttributes:
 
 
 
-    # use this to avoid changing function in multiple places
-    def format_category_for_outer(self, category_to_replace, appendstr_i = "-I", appendstr_j = "-J"):
+    def format_category_for_direct(self, 
+        category_to_replace: str, 
+        appendstr_i = "-I", 
+        appendstr_j = "-J"
+    ) -> Tuple[str, str]:
+        """
+        Format a category for the direct product of category values.
+        """
         cat_i = category_to_replace.replace("$", f"{appendstr_i}$")[len(appendstr_i):]
         cat_j = category_to_replace.replace("$", f"{appendstr_j}$")[len(appendstr_j):]
         return (cat_i, cat_j)
 
 
 
-    ##  specify the aggregate emission field added to each subsector output dataframe
-    def get_subsector_emission_total_field(self, subsector):
+    def get_subsector_emission_total_field(self, 
+        subsector: str
+    ) -> str:
+        """
+        Specify the aggregate emission field added to each subsector output 
+            data frame
+        """
         # add subsector abbreviation
         fld_nam = self.get_subsector_attribute(subsector, "abv_subsector")
         fld_nam = f"emission_co2e_subsector_total_{fld_nam}"
@@ -3220,8 +3504,14 @@ class ModelAttributes:
 
 
 
-    ##  function for getting input/output fields for a list of subsectors
-    def get_input_output_fields(self, subsectors_inuired: list, build_df_q = False):
+    def get_input_output_fields(self, 
+        subsectors_inuired: list, 
+        build_df_q = False
+    ) -> Tuple[List[str], List[str]]:
+        """
+        Get input/output fields for a list of subsectors
+        """
+
         # initialize output lists
         vars_out = []
         vars_in = []
@@ -3245,7 +3535,6 @@ class ModelAttributes:
 
 
 
-    ##
     def get_multivariables_with_bounded_sum_by_category(self,
         df_in: pd.DataFrame,
         modvars: list,
@@ -3348,7 +3637,6 @@ class ModelAttributes:
 
 
 
-    ##  function to build a dictionary of categories applicable to a give variable; split by unidim/outer
     def get_partial_category_dictionaries(self,
         subsector: str,
         category_outer_tuple: tuple,
@@ -3358,7 +3646,10 @@ class ModelAttributes:
         restrict_to_category_values = None,
         var_type = None
     ) -> tuple:
-
+        """
+        Build a dictionary of categories applicable to a give variable; 
+            split by unidim/outer
+        """
         key_attribute = self.get_subsector_attribute(subsector, key_type)
         valid_cats = self.check_category_restrictions(restrict_to_category_values, self.dict_attributes[self.get_subsector_attribute(subsector, "pycategory_primary")])
 
@@ -3373,7 +3664,6 @@ class ModelAttributes:
 
 
 
-    ##  function to extract a variable (with applicable categories from an input data frame)
     def get_standard_variables(self,
         df_in: pd.DataFrame,
         modvar: str,
@@ -3387,16 +3677,40 @@ class ModelAttributes:
     ) -> pd.DataFrame:
 
         """
-            Retrieve an array or data frame of input variables. If return_type == "array_units_corrected", then the ModelAttributes will re-scale emissions factors to reflect the desired output emissions mass (as defined in the configuration).
+        Retrieve an array or data frame of input variables. If 
+            return_type == "array_units_corrected", then the ModelAttributes 
+            will re-scale emissions factors to reflect the desired output 
+            emissions mass (as defined in the configuration).
 
-            - df_in: data frame containing input variables
-            - modvar: variable name to retrieve
-            - override_vector_for_single_mv_q: default is False. Set to True to return an array if the dimension of the variable is 1; otherwise, a vector will be returned (if not a dataframe).
-            - return_type: valid values are "data_frame", "array_base" (np.ndarray not corrected for configuration emissions), or "array_units_corrected" (emissions corrected for configuration)
-            - var_bounds: Default is None (no bounds). Otherwise, gives boundaries to enforce variables that are retrieved. For example, some variables may be restricted to the range (0, 1). Use a list-like structure to pass a minimum and maximum bound (np.inf can be used to as no bound).
-            - force_boundary_restriction: default is True. Set to True to enforce the boundaries on the variable. If False, a variable that is out of bounds will raise an error.
-            - expand_to_all_cats: default is False. If True, return the variable in the shape of all categories.
-            - all_cats_missing_val: default is 0. If expand_to_all_cats == True, categories not associated with modvar with be filled with this value.
+        Function Arguments
+        ------------------
+        - df_in: data frame containing input variables
+        - modvar: variable name to retrieve
+        
+        Keyword Arguments
+        -----------------
+        - all_cats_missing_val: default is 0. If expand_to_all_cats == True, 
+            categories not associated with modvar with be filled with this 
+            value.
+         - expand_to_all_cats: default is False. If True, return the variable in 
+            the shape of all categories.
+        - force_boundary_restriction: default is True. Set to True to enforce 
+            the boundaries on the variable. If False, a variable that is out of 
+            bounds will raise an error.
+        - override_vector_for_single_mv_q: default is False. Set to True to 
+            return an array if the dimension of the variable is 1; otherwise, a 
+            vector will be returned (if not a dataframe).
+        - return_num_type: return type for numeric values
+        - return_type: valid values are: 
+            * "data_frame"
+            * "array_base" (np.ndarray not corrected for configuration 
+                emissions)
+            * "array_units_corrected" (emissions corrected for configuration)
+        - var_bounds: Default is None (no bounds). Otherwise, gives boundaries 
+            to enforce variables that are retrieved. For example, some variables 
+            may be restricted to the range (0, 1). Use a list-like structure to 
+            pass a minimum and maximum bound (np.inf can be used to as no 
+            bound).
         """
 
         if (modvar is None) or (df_in is None):
@@ -3520,7 +3834,7 @@ class ModelAttributes:
 
         # get some information used
         category = self.dict_attributes[self.table_name_attr_subsector].field_maps["abbreviation_subsector_to_primary_category"][self.get_subsector_attribute(subsector, "abv_subsector")].replace("`", "")
-        category_ij_tuple = self.format_category_for_outer(category, "-I", "-J")
+        category_ij_tuple = self.format_category_for_direct(category, "-I", "-J")
 
         # initialize output list, dictionary of variable to categorization (all or partial), and loop
         vars_by_subsector = []
@@ -4014,9 +4328,13 @@ class ModelAttributes:
 
 
 
-# function for cleaning a variable schema
-def clean_schema(var_schema: str, return_default_dict_q: bool = False) -> str:
-
+def clean_schema(
+    var_schema: str, 
+    return_default_dict_q: bool = False
+) -> str:
+    """
+    Clean a variable schema input `var_schema`
+    """
     var_schema = var_schema.split("(")
     var_schema[0] = var_schema[0].replace("`", "").replace(" ", "")
 
@@ -4032,3 +4350,13 @@ def clean_schema(var_schema: str, return_default_dict_q: bool = False) -> str:
         return dict_repls
     else:
         return var_schema[0]
+
+
+
+def unclean_category(
+    cat: str
+) -> str:
+    """
+    Convert a category to "unclean" by adding tick marks
+    """
+    return f"``{cat}``"

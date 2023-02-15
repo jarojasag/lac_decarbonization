@@ -6,8 +6,8 @@ Energy math here
 
 
 
-Industrial Energy
-=================
+Demand vs. Consumption
+======================
 
 
 Let
@@ -32,7 +32,7 @@ Energy demands in SISEPUEDE are estimated as a function of several components th
 
 #. :math:`e_{it}`: the average fuel efficiency of fuel-technology :math:`i` at time :math:`t`, dimensionless. This factor represents the proportion of input energy that is output by the fuel-technology (e.g., coal-burning ovens might provide 40\ , or 0.4, of the input energy as output energy). The factors :math:`e_{it}` are also written as a vector :math:`e_t = \left(e_{1t}, \ldots, e_{nt}\right)`.
 
-#. :math:`R_t`: the driver of demand, which can be industrial production or GDP. For most industries, :math:`R_t` is production at time :math:`t` (in tons). However, in \texttt{other\_product\_manufacturing}, :math:`R_t` is GDP in \` billion. Production values are calculated in IPPU/Circular Economy, while GDP is exogenously defined.
+#. :math:`R_t`: the driver of demand, which can be production or GDP (INEN, SCOE), passenger- or megatonne- kilometer traveled (TRNS), population (SCOE), and/or sequestration (CCSQ). For most industries, :math:`R_t` is production at time :math:`t` (in tons). However, in \texttt{other\_product\_manufacturing}, :math:`R_t` is GDP in \` billion. Production values are calculated in IPPU/Circular Economy, while GDP is exogenously defined.
 
 #. :math:`\sigma_t`: the demand scalar at time :math:`t`, which is applied to an industry's energy demand (not consumption). If :math:`\sigma_t = 1`, demands in SISEPUEDE are estimated according to drivers (production or GDP), energy intensity, and fuel mix, and the average fuel-technology efficiency factor. The demand projection is scaled by :math:`\sigma`.  Note that SISEPUEDE always corrects the sequence :math:`\{\sigma_t\}_{t \in T} \to \left\{\frac{\sigma_t}{\sigma_0}\right\}_{t \in T}` to ensure that :math:`\sigma_0 = 1` (not that this leaves the sequence unchanged if :math:`\sigma_0 = 1`). See equation :math:numref:`demand_projection` for a description of the demand calculation.
 

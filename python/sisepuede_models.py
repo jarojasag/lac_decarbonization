@@ -202,7 +202,7 @@ class SISEPUEDEModels:
 
 
 	############################
-	#	CORE FUNCTIONALITY	#
+	#    CORE FUNCTIONALITY    #
 	############################
 
 	def project(self,

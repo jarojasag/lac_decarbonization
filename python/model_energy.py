@@ -27,18 +27,20 @@ class NonElectricEnergy:
     ):
 
         self.logger = logger
+        self.model_attributes = attributes
 
-        # some subector reference variables
-        self.subsec_name_ccsq = "Carbon Capture and Sequestration"
-        self.subsec_name_econ = "Economy"
-        self.subsec_name_enfu = "Energy Fuels"
-        self.subsec_name_fgtv = "Fugitive Emissions"
-        self.subsec_name_gnrl = "General"
-        self.subsec_name_inen = "Industrial Energy"
-        self.subsec_name_ippu = "IPPU"
-        self.subsec_name_scoe = "Stationary Combustion and Other Energy"
-        self.subsec_name_trns = "Transportation"
-        self.subsec_name_trde = "Transportation Demand"
+        self._initialize_subsector_names()
+
+        # initialize model variables, categories, and fields
+        self._initialize_subsector_vars_ccsq()
+        self._initialize_subsector_vars_enfu()
+        self._initialize_subsector_vars_fgtv()
+        self._initialize_subsector_vars_inen()
+        self._initialize_subsector_vars_scoe()
+        self._initialize_subsector_vars_trde()
+        self._initialize_subsector_vars_trns()
+
+
         # valid subsectors in .project()
         self.valid_projection_subsecs = [
             self.subsec_name_ccsq,
@@ -47,270 +49,19 @@ class NonElectricEnergy:
             self.subsec_name_scoe,
             self.subsec_name_trns
         ]
-
         # initialize dynamic variables
-        self.model_attributes = attributes
         self.required_dimensions = self.get_required_dimensions()
         self.required_subsectors, self.required_base_subsectors = self.get_required_subsectors()
         self.required_variables, self.output_variables = self.get_neenergy_input_output_fields()
-
-
-        ##  SET MODEL FIELDS
-
-        # Carbon Capture and Sequestration variables
-        self.modvar_ccsq_demand_per_co2 = "CCSQ Energy Demand Per Mass of :math:\\text{CO}_2 Captured"
-        self.modvar_ccsq_efficiency_fact_heat_en_geothermal = "CCSQ Efficiency Factor for Heat Energy from Geothermal"
-        self.modvar_ccsq_efficiency_fact_heat_en_hydrogen = "CCSQ Efficiency Factor for Heat Energy from Hydrogen"
-        self.modvar_ccsq_efficiency_fact_heat_en_natural_gas = "CCSQ Efficiency Factor for Heat Energy from Natural Gas"
-        self.modvar_ccsq_energy_consumption_electricity = "Electrical Energy Consumption from CCSQ"
-        self.modvar_ccsq_energy_consumption_electricity_agg = "Total Electrical Energy Consumption from CCSQ"
-        self.modvar_ccsq_energy_consumption_total = "Energy Consumption from CCSQ"
-        self.modvar_ccsq_energy_consumption_total_agg = "Total Energy Consumption from CCSQ"
-        self.modvar_ccsq_emissions_ch4 = ":math:\\text{CH}_4 Emissions from CCSQ"
-        self.modvar_ccsq_emissions_co2 = ":math:\\text{CO}_2 Emissions from CCSQ"
-        self.modvar_ccsq_emissions_n2o = ":math:\\text{N}_2\\text{O} Emissions from CCSQ"
-        self.modvar_ccsq_frac_en_electricity = "CCSQ Fraction Energy Electricity"
-        self.modvar_ccsq_frac_en_heat = "CCSQ Fraction Energy Heat"
-        self.modvar_ccsq_frac_heat_en_geothermal = "CCSQ Fraction Heat Energy Demand Geothermal"
-        self.modvar_ccsq_frac_heat_en_hydrogen = "CCSQ Fraction Heat Energy Demand Hydrogen"
-        self.modvar_ccsq_frac_heat_en_natural_gas = "CCSQ Fraction Heat Energy Demand Natural Gas"
-        self.modvar_ccsq_total_sequestration = "Annual Capture and Sequestration by Type"
-        # get some dictionaries implied by the CCSQ attribute tables
-        self.modvar_dicts_ccsq_fuel_vars = self.model_attributes.get_var_dicts_by_shared_category(
-            self.subsec_name_ccsq,
-            self.model_attributes.get_subsector_attribute(self.subsec_name_enfu, "pycategory_primary"),
-            ["energy_efficiency_variable_by_fuel", "fuel_fraction_variable_by_fuel"]
-        )
-        # reassign as variables
-        self.modvar_dict_ccsq_fuel_fractions_to_efficiency_factors = self.modvar_dicts_ccsq_fuel_vars["fuel_fraction_variable_by_fuel_to_energy_efficiency_variable_by_fuel"]
-
-        # Energy Fuel model variables
-        self.modvar_enfu_energy_density_volumetric = "Volumetric Energy Density"
-        self.modvar_enfu_ef_combustion_co2 = ":math:\\text{CO}_2 Combustion Emission Factor"
-        self.modvar_enfu_ef_combustion_mobile_ch4 = ":math:\\text{CH}_4 Mobile Combustion Emission Factor"
-        self.modvar_enfu_ef_combustion_mobile_n2o = ":math:\\text{N}_2\\text{O} Mobile Combustion Emission Factor"
-        self.modvar_enfu_ef_combustion_stationary_ch4 = ":math:\\text{CH}_4 Stationary Combustion Emission Factor"
-        self.modvar_enfu_ef_combustion_stationary_n2o = ":math:\\text{N}_2\\text{O} Stationary Combustion Emission Factor"
-        self.modvar_enfu_efficiency_factor_industrial_energy = "Average Industrial Energy Fuel Efficiency Factor"
-        self.modvar_enfu_energy_demand_by_fuel_ccsq = "Energy Demand by Fuel in CCSQ"
-        self.modvar_enfu_energy_demand_by_fuel_elec = "Energy Demand by Fuel in Electricity"
-        self.modvar_enfu_energy_demand_by_fuel_inen = "Energy Demand by Fuel in Industrial Energy"
-        self.modvar_enfu_energy_demand_by_fuel_scoe = "Energy Demand by Fuel in SCOE"
-        self.modvar_enfu_energy_demand_by_fuel_total = "Total Energy Demand by Fuel"
-        self.modvar_enfu_energy_demand_by_fuel_trns = "Energy Demand by Fuel in Transportation"
-        self.modvar_enfu_energy_density_gravimetric = "Gravimetric Energy Density"
-        self.modvar_enfu_energy_density_volumetric = "Volumetric Energy Density"
-        self.modvar_enfu_exports_fuel = "Fuel Exports"
-        self.modvar_enfu_frac_fuel_demand_imported = "Fraction of Fuel Demand Imported"
-        self.modvar_enfu_imports_electricity = "Electricity Imports"
-        self.modvar_enfu_imports_fuel = "Fuel Imports"
-        self.modvar_enfu_minimum_frac_fuel_used_for_electricity = "Minimum Fraction of Fuel Used for Electricity Generation"
-        self.modvar_enfu_price_gravimetric = "Gravimetric Fuel Price"
-        self.modvar_enfu_price_thermal = "Thermal Fuel Price"
-        self.modvar_enfu_price_volumetric = "Volumetric Fuel Price"
-        self.modvar_enfu_production_frac_petroleum_refinement = "Petroleum Refinery Production Fraction"
-        self.modvar_enfu_production_frac_natural_gas_processing = "Natural Gas Processing Fraction"
-        self.modvar_enfu_production_fuel = "Fuel Production"
-        self.modvar_enfu_transmission_loss_electricity = "Electrical Transmission Loss"
-        self.modvar_enfu_unused_fuel_exported = "Unused Fuel Exported"
-        # list of key variables - total energy demands by fuel
-        self.modvars_enfu_energy_demands_total = [
-            self.modvar_enfu_energy_demand_by_fuel_ccsq,
-            self.modvar_enfu_energy_demand_by_fuel_elec,
-            self.modvar_enfu_energy_demand_by_fuel_inen,
-            self.modvar_enfu_energy_demand_by_fuel_scoe,
-            self.modvar_enfu_energy_demand_by_fuel_trns
-        ]
-        # total demand for fuels for estimating distribution
-        self.modvars_enfu_energy_demands_distribution = [
-            self.modvar_enfu_energy_demand_by_fuel_elec,
-            self.modvar_enfu_energy_demand_by_fuel_scoe
-        ]
-        # key categories
-        self.cat_enfu_electricity = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_enfu, {self.model_attributes.field_enfu_electricity_demand_category: 1})[0]
-
-        # Fugitive Emissions model variables
-        self.modvar_fgtv_ef_ch4_distribution = ":math:\\text{CH}_4 FGTV Distribution Emission Factor"
-        self.modvar_fgtv_ef_ch4_production_flaring = ":math:\\text{CH}_4 FGTV Production Flaring Emission Factor"
-        self.modvar_fgtv_ef_ch4_production_fugitive = ":math:\\text{CH}_4 FGTV Production Fugitive Emission Factor"
-        self.modvar_fgtv_ef_ch4_production_venting = ":math:\\text{CH}_4 FGTV Production Venting Emission Factor"
-        self.modvar_fgtv_ef_ch4_transmission = ":math:\\text{CH}_4 FGTV Transmission Emission Factor"
-        self.modvar_fgtv_ef_co2_distribution = ":math:\\text{CO}_2 FGTV Distribution Emission Factor"
-        self.modvar_fgtv_ef_co2_production_flaring = ":math:\\text{CO}_2 FGTV Production Flaring Emission Factor"
-        self.modvar_fgtv_ef_co2_production_fugitive = ":math:\\text{CO}_2 FGTV Production Fugitive Emission Factor"
-        self.modvar_fgtv_ef_co2_production_venting = ":math:\\text{CO}_2 FGTV Production Venting Emission Factor"
-        self.modvar_fgtv_ef_co2_transmission = ":math:\\text{CO}_2 FGTV Transmission Emission Factor"
-        self.modvar_fgtv_ef_n2o_production_flaring = ":math:\\text{N}_2\\text{O} FGTV Production Flaring Emission Factor"
-        self.modvar_fgtv_ef_n2o_production_fugitive = ":math:\\text{N}_2\\text{O} FGTV Production Fugitive Emission Factor"
-        self.modvar_fgtv_ef_n2o_production_venting = ":math:\\text{N}_2\\text{O} FGTV Production Venting Emission Factor"
-        self.modvar_fgtv_ef_n2o_transmission = ":math:\\text{N}_2\\text{O} FGTV Transmission Emission Factor"
-        self.modvar_fgtv_ef_nmvoc_distribution = "NMVOC FGTV Distribution Emission Factor"
-        self.modvar_fgtv_ef_nmvoc_production_flaring = "NMVOC FGTV Production Flaring Emission Factor"
-        self.modvar_fgtv_ef_nmvoc_production_fugitive = "NMVOC FGTV Production Fugitive Emission Factor"
-        self.modvar_fgtv_ef_nmvoc_production_venting = "NMVOC FGTV Production Venting Emission Factor"
-        self.modvar_fgtv_ef_nmvoc_transmission = "NMVOC FGTV Transmission Emission Factor"
-        self.modvar_fgtv_emissions_ch4 = ":math:\\text{CH}_4 Fugitive Emissions"
-        self.modvar_fgtv_emissions_co2 = ":math:\\text{CO}_2 Fugitive Emissions"
-        self.modvar_fgtv_emissions_n2o = ":math:\\text{N}_2\\text{O} Fugitive Emissions"
-        self.modvar_fgtv_emissions_nmvoc = "NMVOC Fugitive Emissions"
-        self.modvar_fgtv_frac_non_fugitive_flared = "Fraction Non-Fugitive :math:\\text{CH}_4 Flared"
-        self.modvar_fgtv_frac_reduction_fugitive_leaks = "Reduction in Fugitive Leaks"
-
-        # Industrial Energy model variables
-        self.modvar_inen_demscalar = "Industrial Energy Demand Scalar"
-        self.modvar_inen_emissions_ch4 = ":math:\\text{CH}_4 Emissions from Industrial Energy"
-        self.modvar_inen_emissions_co2 = ":math:\\text{CO}_2 Emissions from Industrial Energy"
-        self.modvar_inen_emissions_n2o = ":math:\\text{N}_2\\text{O} Emissions from Industrial Energy"
-        self.modvar_inen_energy_conumption_agrc_init = "Initial Energy Consumption in Agriculture and Livestock"
-        self.modvar_inen_energy_consumption_electricity = "Electrical Energy Consumption from Industrial Energy"
-        self.modvar_inen_energy_consumption_electricity_agg = "Total Electrical Energy Consumption from Industrial Energy"
-        self.modvar_inen_energy_consumption_total = "Energy Consumption from Industrial Energy"
-        self.modvar_inen_energy_consumption_total_agg = "Total Energy Consumption from Industrial Energy"
-        self.modvar_inen_en_gdp_intensity_factor = "Initial Energy Consumption Intensity of GDP"
-        self.modvar_inen_en_prod_intensity_factor = "Initial Energy Consumption Intensity of Production"
-        self.modvar_inen_frac_en_coal = "Industrial Energy Fuel Fraction Coal"
-        self.modvar_inen_frac_en_coke = "Industrial Energy Fuel Fraction Coke"
-        self.modvar_inen_frac_en_diesel = "Industrial Energy Fuel Fraction Diesel"
-        self.modvar_inen_frac_en_electricity = "Industrial Energy Fuel Fraction Electricity"
-        self.modvar_inen_frac_en_furnace_gas = "Industrial Energy Fuel Fraction Furnace Gas"
-        self.modvar_inen_frac_en_gasoline = "Industrial Energy Fuel Fraction Gasoline"
-        self.modvar_inen_frac_en_hgl = "Industrial Energy Fuel Fraction Hydrocarbon Gas Liquids"
-        self.modvar_inen_frac_en_hydrogen = "Industrial Energy Fuel Fraction Hydrogen"
-        self.modvar_inen_frac_en_kerosene = "Industrial Energy Fuel Fraction Kerosene"
-        self.modvar_inen_frac_en_natural_gas = "Industrial Energy Fuel Fraction Natural Gas"
-        self.modvar_inen_frac_en_oil = "Industrial Energy Fuel Fraction Oil"
-        self.modvar_inen_frac_en_solar = "Industrial Energy Fuel Fraction Solar"
-        self.modvar_inen_frac_en_solid_biomass = "Industrial Energy Fuel Fraction Solid Biomass"
-        # get some dictionaries implied by the inen attribute tables
-        self.dict_inen_fuel_categories_to_fuel_variables, self.dict_inen_fuel_categories_to_unassigned_fuel_variables = self.get_dict_inen_fuel_categories_to_fuel_variables()
-        self.modvars_inen_list_fuel_fraction = self.model_attributes.get_vars_by_assigned_class_from_akaf(
-            self.dict_inen_fuel_categories_to_fuel_variables,
-            "fuel_fraction"
-        )
-        # key categories
-        self.cat_inen_agricultural = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_inen, {"agricultural_category": 1})[0]
-
-        # Stationary Combustion and Other Energy variables
-        self.modvar_scoe_consumpinit_energy_per_hh_elec = "SCOE Initial Per Household Electric Appliances Energy Consumption"
-        self.modvar_scoe_consumpinit_energy_per_hh_heat = "SCOE Initial Per Household Heat Energy Consumption"
-        self.modvar_scoe_consumpinit_energy_per_mmmgdp_elec = "SCOE Initial Per GDP Electric Appliances Energy Consumption"
-        self.modvar_scoe_consumpinit_energy_per_mmmgdp_heat = "SCOE Initial Per GDP Heat Energy Consumption"
-        self.modvar_scoe_demscalar_elec_energy_demand = "SCOE Appliance Energy Demand Scalar"
-        self.modvar_scoe_demscalar_heat_energy_demand = "SCOE Heat Energy Demand Scalar"
-        self.modvar_scoe_efficiency_fact_heat_en_coal = "SCOE Efficiency Factor for Heat Energy from Coal"
-        self.modvar_scoe_efficiency_fact_heat_en_diesel = "SCOE Efficiency Factor for Heat Energy from Diesel"
-        self.modvar_scoe_efficiency_fact_heat_en_electricity = "SCOE Efficiency Factor for Heat Energy from Electricity"
-        self.modvar_scoe_efficiency_fact_heat_en_gasoline = "SCOE Efficiency Factor for Heat Energy from Gasoline"
-        self.modvar_scoe_efficiency_fact_heat_en_hgl = "SCOE Efficiency Factor for Heat Energy from Hydrocarbon Gas Liquids"
-        self.modvar_scoe_efficiency_fact_heat_en_hydrogen = "SCOE Efficiency Factor for Heat Energy from Hydrogen"
-        self.modvar_scoe_efficiency_fact_heat_en_kerosene = "SCOE Efficiency Factor for Heat Energy from Kerosene"
-        self.modvar_scoe_efficiency_fact_heat_en_natural_gas = "SCOE Efficiency Factor for Heat Energy from Natural Gas"
-        self.modvar_scoe_efficiency_fact_heat_en_solid_biomass = "SCOE Efficiency Factor for Heat Energy from Solid Biomass"
-        self.modvar_scoe_elasticity_hh_energy_demand_electric_to_gdppc = "SCOE Elasticity of Per Household Electrical Applicance Demand to GDP Per Capita"
-        self.modvar_scoe_elasticity_hh_energy_demand_heat_to_gdppc = "SCOE Elasticity of Per Household Heat Energy Demand to GDP Per Capita"
-        self.modvar_scoe_elasticity_mmmgdp_energy_demand_elec_to_gdppc = "SCOE Elasticity of Per GDP Electrical Applicance Demand to GDP Per Capita"
-        self.modvar_scoe_elasticity_mmmgdp_energy_demand_heat_to_gdppc = "SCOE Elasticity of Per GDP Heat Energy Demand to GDP Per Capita"
-        self.modvar_scoe_emissions_ch4 = ":math:\\text{CH}_4 Emissions from SCOE"
-        self.modvar_scoe_emissions_co2 = ":math:\\text{CO}_2 Emissions from SCOE"
-        self.modvar_scoe_emissions_n2o = ":math:\\text{N}_2\\text{O} Emissions from SCOE"
-        self.modvar_scoe_energy_consumption_electricity = "Electrical Energy Consumption from SCOE"
-        self.modvar_scoe_energy_consumption_electricity_agg = "Total Electrical Energy Consumption from SCOE"
-        self.modvar_scoe_energy_consumption_total = "Energy Consumption from SCOE"
-        self.modvar_scoe_energy_consumption_total_agg = "Total Energy Consumption from SCOE"
-        self.modvar_scoe_frac_heat_en_coal = "SCOE Fraction Heat Energy Demand Coal"
-        self.modvar_scoe_frac_heat_en_diesel = "SCOE Fraction Heat Energy Demand Diesel"
-        self.modvar_scoe_frac_heat_en_electricity = "SCOE Fraction Heat Energy Demand Electricity"
-        self.modvar_scoe_frac_heat_en_gasoline = "SCOE Fraction Heat Energy Demand Gasoline"
-        self.modvar_scoe_frac_heat_en_hgl = "SCOE Fraction Heat Energy Demand Hydrocarbon Gas Liquids"
-        self.modvar_scoe_frac_heat_en_hydrogen = "SCOE Fraction Heat Energy Demand Hydrogen"
-        self.modvar_scoe_frac_heat_en_kerosene = "SCOE Fraction Heat Energy Demand Kerosene"
-        self.modvar_scoe_frac_heat_en_natural_gas = "SCOE Fraction Heat Energy Demand Natural Gas"
-        self.modvar_scoe_frac_heat_en_solid_biomass = "SCOE Fraction Heat Energy Demand Solid Biomass"
-        # get some dictionaries implied by the SCOE attribute tables
-        self.modvar_dicts_scoe_fuel_vars = self.model_attributes.get_var_dicts_by_shared_category(
-            self.subsec_name_scoe,
-            self.model_attributes.get_subsector_attribute(self.subsec_name_enfu, "pycategory_primary"),
-            ["energy_efficiency_variable_by_fuel", "fuel_fraction_variable_by_fuel", "energy_demand_variable_by_fuel"]
-        )
-        # reassign as variables
-        self.modvar_dict_scoe_fuel_fractions_to_efficiency_factors = self.modvar_dicts_scoe_fuel_vars["fuel_fraction_variable_by_fuel_to_energy_efficiency_variable_by_fuel"]
-
-
-        # Transportation variablesz
-        self.modvar_trns_average_vehicle_load_freight = "Average Freight Vehicle Load"
-        self.modvar_trns_average_passenger_occupancy = "Average Passenger Vehicle Occupancy Rate"
-        self.modvar_trns_electrical_efficiency = "Electrical Vehicle Efficiency"
-        self.modvar_trns_ef_combustion_mobile_biofuels_ch4 = ":math:\\text{CH}_4 Biofuels Mobile Combustion Emission Factor"
-        self.modvar_trns_ef_combustion_mobile_diesel_ch4 = ":math:\\text{CH}_4 Diesel Mobile Combustion Emission Factor"
-        self.modvar_trns_ef_combustion_mobile_gasoline_ch4 = ":math:\\text{CH}_4 Gasoline Mobile Combustion Emission Factor"
-        self.modvar_trns_ef_combustion_mobile_hgl_ch4 = ":math:\\text{CH}_4 Hydrocarbon Gas Liquids Mobile Combustion Emission Factor"
-        self.modvar_trns_ef_combustion_mobile_kerosene_ch4 = ":math:\\text{CH}_4 Kerosene Mobile Combustion Emission Factor"
-        self.modvar_trns_ef_combustion_mobile_natural_gas_ch4 = ":math:\\text{CH}_4 Natural Gas Mobile Combustion Emission Factor"
-        self.modvar_trns_ef_combustion_mobile_biofuels_n2o = ":math:\\text{N}_2\\text{O} Biofuels Mobile Combustion Emission Factor"
-        self.modvar_trns_ef_combustion_mobile_diesel_n2o = ":math:\\text{N}_2\\text{O} Diesel Mobile Combustion Emission Factor"
-        self.modvar_trns_ef_combustion_mobile_gasoline_n2o = ":math:\\text{N}_2\\text{O} Gasoline Mobile Combustion Emission Factor"
-        self.modvar_trns_ef_combustion_mobile_hgl_n2o = ":math:\\text{N}_2\\text{O} Hydrocarbon Gas Liquids Mobile Combustion Emission Factor"
-        self.modvar_trns_ef_combustion_mobile_kerosene_n2o = ":math:\\text{N}_2\\text{O} Kerosene Mobile Combustion Emission Factor"
-        self.modvar_trns_ef_combustion_mobile_natural_gas_n2o = ":math:\\text{N}_2\\text{O} Natural Gas Mobile Combustion Emission Factor"
-        self.modvar_trns_energy_consumption_electricity = "Electrical Energy Consumption from Transportation"
-        self.modvar_trns_energy_consumption_electricity_agg = "Total Electrical Energy Consumption from Transportation"
-        self.modvar_trns_energy_consumption_total = "Energy Consumption from Transportation"
-        self.modvar_trns_energy_consumption_total_agg = "Total Energy Consumption from Transportation"
-        self.modvar_trns_fuel_efficiency_biofuels = "Fuel Efficiency Biofuels"
-        self.modvar_trns_fuel_efficiency_diesel = "Fuel Efficiency Diesel"
-        self.modvar_trns_fuel_efficiency_gasoline = "Fuel Efficiency Gasoline"
-        self.modvar_trns_fuel_efficiency_hgl = "Fuel Efficiency Hydrocarbon Gas Liquids"
-        self.modvar_trns_fuel_efficiency_hydrogen = "Fuel Efficiency Hydrogen"
-        self.modvar_trns_fuel_efficiency_kerosene = "Fuel Efficiency Kerosene"
-        self.modvar_trns_fuel_efficiency_natural_gas = "Fuel Efficiency Natural Gas"
-        self.modvar_trns_modeshare_freight = "Freight Transportation Mode Share"
-        self.modvar_trns_modeshare_public_private = "Private and Public Transportation Mode Share"
-        self.modvar_trns_modeshare_regional = "Regional Transportation Mode Share"
-        self.modvar_trns_fuel_fraction_biofuels = "Transportation Mode Fuel Fraction Biofuels"
-        self.modvar_trns_fuel_fraction_diesel = "Transportation Mode Fuel Fraction Diesel"
-        self.modvar_trns_fuel_fraction_electricity = "Transportation Mode Fuel Fraction Electricity"
-        self.modvar_trns_fuel_fraction_gasoline = "Transportation Mode Fuel Fraction Gasoline"
-        self.modvar_trns_fuel_fraction_hgl = "Transportation Mode Fuel Fraction Hydrocarbon Gas Liquids"
-        self.modvar_trns_fuel_fraction_hydrogen = "Transportation Mode Fuel Fraction Hydrogen"
-        self.modvar_trns_fuel_fraction_kerosene = "Transportation Mode Fuel Fraction Kerosene"
-        self.modvar_trns_fuel_fraction_natural_gas = "Transportation Mode Fuel Fraction Natural Gas"
-        self.modvar_trns_emissions_ch4 = ":math:\\text{CH}_4 Emissions from Transportation"
-        self.modvar_trns_emissions_co2 = ":math:\\text{CO}_2 Emissions from Transportation"
-        self.modvar_trns_emissions_n2o = ":math:\\text{N}_2\\text{O} Emissions from Transportation"
-        self.modvar_trns_passenger_distance_traveled = "Total Passenger Distance by Vehicle"
-        self.modvar_trns_vehicle_distance_traveled = "Total Vehicle Distance Traveled"
-        # fuel variables dictionary for transportation
-        self.dict_trns_fuel_categories_to_fuel_variables, self.dict_trns_fuel_categories_to_unassigned_fuel_variables = self.get_dict_trns_fuel_categories_to_fuel_variables()
-        # some derivate lists of variables
-        self.modvars_trns_list_fuel_fraction = self.model_attributes.get_vars_by_assigned_class_from_akaf(
-            self.dict_trns_fuel_categories_to_fuel_variables,
-            "fuel_fraction"
-        )
-        self.modvars_trns_list_fuel_efficiency = self.model_attributes.get_vars_by_assigned_class_from_akaf(
-            self.dict_trns_fuel_categories_to_fuel_variables,
-            "fuel_efficiency"
-        )
-
-        # Transportation Demand variables
-        self.modvar_trde_demand_scalar = "Transportation Demand Scalar"
-        self.modvar_trde_elasticity_mtkm_to_gdp = "Elasticity of Megatonne-Kilometer Demand to GDP"
-        self.modvar_trde_elasticity_pkm_to_gdp = "Elasticity of Passenger-Kilometer Demand per Capita to GDP per Capita"
-        self.modvar_trde_demand_initial_mtkm = "Initial Megatonne-Kilometer Demand"
-        self.modvar_trde_demand_initial_pkm_per_capita = "Initial per Capita Passenger-Kilometer Demand"
-        self.modvar_trde_demand_mtkm = "Megatonne-Kilometer Demand"
-        self.modvar_trde_demand_pkm = "Passenger-Kilometer Demand"
-
         # variables from other sectors (NOTE: AFOLU INTEGRATION VARIABLES MUST BE SET HERE, CANNOT INITIALIZE AFOLU CLASS)
         self.modvar_agrc_yield = "Crop Yield"
         self.modvar_lvst_total_animal_mass = "Total Domestic Animal Mass"
-
-        # add other model classes (NOTE: CANNOT INITIALIZE AFOLU CLASS BECAUSE IT REQUIRES ACCESS TO THE ENERGY CLASS)
-        self.model_socioeconomic = Socioeconomic(self.model_attributes)
-        self.model_ippu = IPPU(self.model_attributes)
+ 
+        # 
+        self._initialize_models()
 
         # optional integration variables (uses calls to other model classes)
         self._set_integrated_variables()
-
 
         ##  MISCELLANEOUS VARIABLES
 
@@ -486,6 +237,406 @@ class NonElectricEnergy:
         list_out = [dict_map.get(x) for x in valid_subsectors_project if (x in list_out) or (dict_map.get(x) in list_out)]
 
         return list_out
+
+
+    
+    def _initialize_models(self,
+        model_attributes: Union[ModelAttributes, None] = None
+    ) -> None:
+        """
+        Initialize SISEPUEDE model classes for fetching variables and 
+            accessing methods. Initializes the following properties:
+
+            * self.model_ippu
+            * self.model_socioeconomic
+
+        NOTE: CANNOT INITIALIZE AFOLU CLASS BECAUSE IT REQUIRES ACCESS TO 
+            THE NonElectricEnergy CLASS (circular logic)
+
+        Keyword Arguments
+        -----------------
+        - model_attributes: ModelAttributes object used to instantiate
+            models. If None, defaults to self.model_attributes.
+        """
+
+        model_attributes = self.model_attributes if (model_attributes is None) else model_attributes
+        
+        self.model_ippu = IPPU(model_attributes)
+        self.model_socioeconomic = Socioeconomic(model_attributes)
+
+        return None
+
+
+        
+    def _initialize_subsector_names(self,
+        ) -> None:
+            """
+            Set subsector names (self.subsec_name_####)
+            """
+            # some subector reference variables
+            self.subsec_name_ccsq = "Carbon Capture and Sequestration"
+            self.subsec_name_econ = "Economy"
+            self.subsec_name_enfu = "Energy Fuels"
+            self.subsec_name_fgtv = "Fugitive Emissions"
+            self.subsec_name_gnrl = "General"
+            self.subsec_name_inen = "Industrial Energy"
+            self.subsec_name_ippu = "IPPU"
+            self.subsec_name_scoe = "Stationary Combustion and Other Energy"
+            self.subsec_name_trns = "Transportation"
+            self.subsec_name_trde = "Transportation Demand"
+
+            return None
+
+
+            
+    def _initialize_subsector_vars_ccsq(self,
+    ) -> None:
+        """
+        Initialize model variables, categories, and indices associated with
+            CCSQ (Carbon Capture and Sequestration). Sets the following 
+            properties:
+
+            * self.cat_ccsq_****
+            * self.ind_ccsq_****
+            * self.modvar_ccsq_****
+            * self.modvar_dict_ccsq_****
+            * self.modvar_dicts_ccsq_****
+        """
+        # Carbon Capture and Sequestration variables
+        self.modvar_ccsq_demand_per_co2 = "CCSQ Energy Demand Per Mass of :math:\\text{CO}_2 Captured"
+        self.modvar_ccsq_efficiency_fact_heat_en_geothermal = "CCSQ Efficiency Factor for Heat Energy from Geothermal"
+        self.modvar_ccsq_efficiency_fact_heat_en_hydrogen = "CCSQ Efficiency Factor for Heat Energy from Hydrogen"
+        self.modvar_ccsq_efficiency_fact_heat_en_natural_gas = "CCSQ Efficiency Factor for Heat Energy from Natural Gas"
+        self.modvar_ccsq_energy_consumption_electricity = "Electrical Energy Consumption from CCSQ"
+        self.modvar_ccsq_energy_consumption_electricity_agg = "Total Electrical Energy Consumption from CCSQ"
+        self.modvar_ccsq_energy_consumption_total = "Energy Consumption from CCSQ"
+        self.modvar_ccsq_energy_consumption_total_agg = "Total Energy Consumption from CCSQ"
+        self.modvar_ccsq_emissions_ch4 = ":math:\\text{CH}_4 Emissions from CCSQ"
+        self.modvar_ccsq_emissions_co2 = ":math:\\text{CO}_2 Emissions from CCSQ"
+        self.modvar_ccsq_emissions_n2o = ":math:\\text{N}_2\\text{O} Emissions from CCSQ"
+        self.modvar_ccsq_frac_en_electricity = "CCSQ Fraction Energy Electricity"
+        self.modvar_ccsq_frac_en_heat = "CCSQ Fraction Energy Heat"
+        self.modvar_ccsq_frac_heat_en_geothermal = "CCSQ Fraction Heat Energy Demand Geothermal"
+        self.modvar_ccsq_frac_heat_en_hydrogen = "CCSQ Fraction Heat Energy Demand Hydrogen"
+        self.modvar_ccsq_frac_heat_en_natural_gas = "CCSQ Fraction Heat Energy Demand Natural Gas"
+        self.modvar_ccsq_total_sequestration = "Annual Capture and Sequestration by Type"
+        # get some dictionaries implied by the CCSQ attribute tables
+        self.modvar_dicts_ccsq_fuel_vars = self.model_attributes.get_var_dicts_by_shared_category(
+            self.subsec_name_ccsq,
+            self.model_attributes.get_subsector_attribute(self.subsec_name_enfu, "pycategory_primary"),
+            ["energy_efficiency_variable_by_fuel", "fuel_fraction_variable_by_fuel"]
+        )
+        # reassign as variables
+        self.modvar_dict_ccsq_fuel_fractions_to_efficiency_factors = self.modvar_dicts_ccsq_fuel_vars["fuel_fraction_variable_by_fuel_to_energy_efficiency_variable_by_fuel"]
+
+        return None
+
+
+
+    def _initialize_subsector_vars_enfu(self,
+    ) -> None:
+        """
+        Initialize model variables, categories, and indices associated with
+            ENFU (Energy Fuels). Sets the following properties:
+
+            * self.cat_enfu_****
+            * self.ind_enfu_****
+            * self.modvar_enfu_****
+            * self.modvars_enfu_****
+        """
+        # Energy Fuel model variables
+        self.modvar_enfu_energy_density_volumetric = "Volumetric Energy Density"
+        self.modvar_enfu_ef_combustion_co2 = ":math:\\text{CO}_2 Combustion Emission Factor"
+        self.modvar_enfu_ef_combustion_mobile_ch4 = ":math:\\text{CH}_4 Mobile Combustion Emission Factor"
+        self.modvar_enfu_ef_combustion_mobile_n2o = ":math:\\text{N}_2\\text{O} Mobile Combustion Emission Factor"
+        self.modvar_enfu_ef_combustion_stationary_ch4 = ":math:\\text{CH}_4 Stationary Combustion Emission Factor"
+        self.modvar_enfu_ef_combustion_stationary_n2o = ":math:\\text{N}_2\\text{O} Stationary Combustion Emission Factor"
+        self.modvar_enfu_efficiency_factor_industrial_energy = "Average Industrial Energy Fuel Efficiency Factor"
+        self.modvar_enfu_energy_demand_by_fuel_ccsq = "Energy Demand by Fuel in CCSQ"
+        self.modvar_enfu_energy_demand_by_fuel_elec = "Energy Demand by Fuel in Electricity"
+        self.modvar_enfu_energy_demand_by_fuel_inen = "Energy Demand by Fuel in Industrial Energy"
+        self.modvar_enfu_energy_demand_by_fuel_scoe = "Energy Demand by Fuel in SCOE"
+        self.modvar_enfu_energy_demand_by_fuel_total = "Total Energy Demand by Fuel"
+        self.modvar_enfu_energy_demand_by_fuel_trns = "Energy Demand by Fuel in Transportation"
+        self.modvar_enfu_energy_density_gravimetric = "Gravimetric Energy Density"
+        self.modvar_enfu_energy_density_volumetric = "Volumetric Energy Density"
+        self.modvar_enfu_exports_fuel = "Fuel Exports"
+        self.modvar_enfu_frac_fuel_demand_imported = "Fraction of Fuel Demand Imported"
+        self.modvar_enfu_imports_electricity = "Electricity Imports"
+        self.modvar_enfu_imports_fuel = "Fuel Imports"
+        self.modvar_enfu_minimum_frac_fuel_used_for_electricity = "Minimum Fraction of Fuel Used for Electricity Generation"
+        self.modvar_enfu_price_gravimetric = "Gravimetric Fuel Price"
+        self.modvar_enfu_price_thermal = "Thermal Fuel Price"
+        self.modvar_enfu_price_volumetric = "Volumetric Fuel Price"
+        self.modvar_enfu_production_frac_petroleum_refinement = "Petroleum Refinery Production Fraction"
+        self.modvar_enfu_production_frac_natural_gas_processing = "Natural Gas Processing Fraction"
+        self.modvar_enfu_production_fuel = "Fuel Production"
+        self.modvar_enfu_transmission_loss_electricity = "Electrical Transmission Loss"
+        self.modvar_enfu_unused_fuel_exported = "Unused Fuel Exported"
+        # list of key variables - total energy demands by fuel
+        self.modvars_enfu_energy_demands_total = [
+            self.modvar_enfu_energy_demand_by_fuel_ccsq,
+            self.modvar_enfu_energy_demand_by_fuel_elec,
+            self.modvar_enfu_energy_demand_by_fuel_inen,
+            self.modvar_enfu_energy_demand_by_fuel_scoe,
+            self.modvar_enfu_energy_demand_by_fuel_trns
+        ]
+        # total demand for fuels for estimating distribution
+        self.modvars_enfu_energy_demands_distribution = [
+            self.modvar_enfu_energy_demand_by_fuel_elec,
+            self.modvar_enfu_energy_demand_by_fuel_scoe
+        ]
+        # key categories
+        self.cat_enfu_electricity = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_enfu, {self.model_attributes.field_enfu_electricity_demand_category: 1})[0]
+
+        return None
+
+
+
+    def _initialize_subsector_vars_fgtv(self,
+    ) -> None:
+        """
+        Initialize model variables, categories, and indices associated with
+            FGTV (Fugitive Emissions). Sets the following properties:
+
+            * self.cat_fgtv_****
+            * self.ind_fgtv_****
+            * self.modvar_fgtv_****
+        """
+        # Fugitive Emissions model variables
+        self.modvar_fgtv_ef_ch4_distribution = ":math:\\text{CH}_4 FGTV Distribution Emission Factor"
+        self.modvar_fgtv_ef_ch4_production_flaring = ":math:\\text{CH}_4 FGTV Production Flaring Emission Factor"
+        self.modvar_fgtv_ef_ch4_production_fugitive = ":math:\\text{CH}_4 FGTV Production Fugitive Emission Factor"
+        self.modvar_fgtv_ef_ch4_production_venting = ":math:\\text{CH}_4 FGTV Production Venting Emission Factor"
+        self.modvar_fgtv_ef_ch4_transmission = ":math:\\text{CH}_4 FGTV Transmission Emission Factor"
+        self.modvar_fgtv_ef_co2_distribution = ":math:\\text{CO}_2 FGTV Distribution Emission Factor"
+        self.modvar_fgtv_ef_co2_production_flaring = ":math:\\text{CO}_2 FGTV Production Flaring Emission Factor"
+        self.modvar_fgtv_ef_co2_production_fugitive = ":math:\\text{CO}_2 FGTV Production Fugitive Emission Factor"
+        self.modvar_fgtv_ef_co2_production_venting = ":math:\\text{CO}_2 FGTV Production Venting Emission Factor"
+        self.modvar_fgtv_ef_co2_transmission = ":math:\\text{CO}_2 FGTV Transmission Emission Factor"
+        self.modvar_fgtv_ef_n2o_production_flaring = ":math:\\text{N}_2\\text{O} FGTV Production Flaring Emission Factor"
+        self.modvar_fgtv_ef_n2o_production_fugitive = ":math:\\text{N}_2\\text{O} FGTV Production Fugitive Emission Factor"
+        self.modvar_fgtv_ef_n2o_production_venting = ":math:\\text{N}_2\\text{O} FGTV Production Venting Emission Factor"
+        self.modvar_fgtv_ef_n2o_transmission = ":math:\\text{N}_2\\text{O} FGTV Transmission Emission Factor"
+        self.modvar_fgtv_ef_nmvoc_distribution = "NMVOC FGTV Distribution Emission Factor"
+        self.modvar_fgtv_ef_nmvoc_production_flaring = "NMVOC FGTV Production Flaring Emission Factor"
+        self.modvar_fgtv_ef_nmvoc_production_fugitive = "NMVOC FGTV Production Fugitive Emission Factor"
+        self.modvar_fgtv_ef_nmvoc_production_venting = "NMVOC FGTV Production Venting Emission Factor"
+        self.modvar_fgtv_ef_nmvoc_transmission = "NMVOC FGTV Transmission Emission Factor"
+        self.modvar_fgtv_emissions_ch4 = ":math:\\text{CH}_4 Fugitive Emissions"
+        self.modvar_fgtv_emissions_co2 = ":math:\\text{CO}_2 Fugitive Emissions"
+        self.modvar_fgtv_emissions_n2o = ":math:\\text{N}_2\\text{O} Fugitive Emissions"
+        self.modvar_fgtv_emissions_nmvoc = "NMVOC Fugitive Emissions"
+        self.modvar_fgtv_frac_non_fugitive_flared = "Fraction Non-Fugitive :math:\\text{CH}_4 Flared"
+        self.modvar_fgtv_frac_reduction_fugitive_leaks = "Reduction in Fugitive Leaks"
+
+        return None
+
+
+
+    def _initialize_subsector_vars_inen(self,
+    ) -> None:
+        """
+        Initialize model variables, categories, and indices associated with
+            INEN (Industrial Energy). Sets the following properties:
+
+            * self.cat_inen_****
+            * self.ind_inen_****
+            * self.modvar_inen_****
+            * self.modvar_dict_inen_****
+        """
+        # Industrial Energy model variables
+        self.modvar_inen_demscalar = "Industrial Energy Demand Scalar"
+        self.modvar_inen_emissions_ch4 = ":math:\\text{CH}_4 Emissions from Industrial Energy"
+        self.modvar_inen_emissions_co2 = ":math:\\text{CO}_2 Emissions from Industrial Energy"
+        self.modvar_inen_emissions_n2o = ":math:\\text{N}_2\\text{O} Emissions from Industrial Energy"
+        self.modvar_inen_energy_conumption_agrc_init = "Initial Energy Consumption in Agriculture and Livestock"
+        self.modvar_inen_energy_consumption_electricity = "Electrical Energy Consumption from Industrial Energy"
+        self.modvar_inen_energy_consumption_electricity_agg = "Total Electrical Energy Consumption from Industrial Energy"
+        self.modvar_inen_energy_consumption_total = "Energy Consumption from Industrial Energy"
+        self.modvar_inen_energy_consumption_total_agg = "Total Energy Consumption from Industrial Energy"
+        self.modvar_inen_en_gdp_intensity_factor = "Initial Energy Consumption Intensity of GDP"
+        self.modvar_inen_en_prod_intensity_factor = "Initial Energy Consumption Intensity of Production"
+        self.modvar_inen_frac_en_coal = "Industrial Energy Fuel Fraction Coal"
+        self.modvar_inen_frac_en_coke = "Industrial Energy Fuel Fraction Coke"
+        self.modvar_inen_frac_en_diesel = "Industrial Energy Fuel Fraction Diesel"
+        self.modvar_inen_frac_en_electricity = "Industrial Energy Fuel Fraction Electricity"
+        self.modvar_inen_frac_en_furnace_gas = "Industrial Energy Fuel Fraction Furnace Gas"
+        self.modvar_inen_frac_en_gasoline = "Industrial Energy Fuel Fraction Gasoline"
+        self.modvar_inen_frac_en_hgl = "Industrial Energy Fuel Fraction Hydrocarbon Gas Liquids"
+        self.modvar_inen_frac_en_hydrogen = "Industrial Energy Fuel Fraction Hydrogen"
+        self.modvar_inen_frac_en_kerosene = "Industrial Energy Fuel Fraction Kerosene"
+        self.modvar_inen_frac_en_natural_gas = "Industrial Energy Fuel Fraction Natural Gas"
+        self.modvar_inen_frac_en_oil = "Industrial Energy Fuel Fraction Oil"
+        self.modvar_inen_frac_en_solar = "Industrial Energy Fuel Fraction Solar"
+        self.modvar_inen_frac_en_solid_biomass = "Industrial Energy Fuel Fraction Solid Biomass"
+        # get some dictionaries implied by the inen attribute tables
+        self.dict_inen_fuel_categories_to_fuel_variables, self.dict_inen_fuel_categories_to_unassigned_fuel_variables = self.get_dict_inen_fuel_categories_to_fuel_variables()
+        self.modvars_inen_list_fuel_fraction = self.model_attributes.get_vars_by_assigned_class_from_akaf(
+            self.dict_inen_fuel_categories_to_fuel_variables,
+            "fuel_fraction"
+        )
+        # key categories
+        self.cat_inen_agricultural = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_inen, {"agricultural_category": 1})[0]
+
+
+
+    def _initialize_subsector_vars_scoe(self,
+    ) -> None:
+        """
+        Initialize model variables, categories, and indices associated with
+            SCOE (Stationary Combustion and Other Energy). Sets the 
+            following properties:
+
+            * self.cat_scoe_****
+            * self.ind_scoe_****
+            * self.modvar_scoe_****
+            * self.modvar_dict_scoe_****
+            * self.modvar_dicts_scoe_****
+        """
+        # Stationary Combustion and Other Energy variables
+        self.modvar_scoe_consumpinit_energy_per_hh_elec = "SCOE Initial Per Household Electric Appliances Energy Consumption"
+        self.modvar_scoe_consumpinit_energy_per_hh_heat = "SCOE Initial Per Household Heat Energy Consumption"
+        self.modvar_scoe_consumpinit_energy_per_mmmgdp_elec = "SCOE Initial Per GDP Electric Appliances Energy Consumption"
+        self.modvar_scoe_consumpinit_energy_per_mmmgdp_heat = "SCOE Initial Per GDP Heat Energy Consumption"
+        self.modvar_scoe_demscalar_elec_energy_demand = "SCOE Appliance Energy Demand Scalar"
+        self.modvar_scoe_demscalar_heat_energy_demand = "SCOE Heat Energy Demand Scalar"
+        self.modvar_scoe_efficiency_fact_heat_en_coal = "SCOE Efficiency Factor for Heat Energy from Coal"
+        self.modvar_scoe_efficiency_fact_heat_en_diesel = "SCOE Efficiency Factor for Heat Energy from Diesel"
+        self.modvar_scoe_efficiency_fact_heat_en_electricity = "SCOE Efficiency Factor for Heat Energy from Electricity"
+        self.modvar_scoe_efficiency_fact_heat_en_gasoline = "SCOE Efficiency Factor for Heat Energy from Gasoline"
+        self.modvar_scoe_efficiency_fact_heat_en_hgl = "SCOE Efficiency Factor for Heat Energy from Hydrocarbon Gas Liquids"
+        self.modvar_scoe_efficiency_fact_heat_en_hydrogen = "SCOE Efficiency Factor for Heat Energy from Hydrogen"
+        self.modvar_scoe_efficiency_fact_heat_en_kerosene = "SCOE Efficiency Factor for Heat Energy from Kerosene"
+        self.modvar_scoe_efficiency_fact_heat_en_natural_gas = "SCOE Efficiency Factor for Heat Energy from Natural Gas"
+        self.modvar_scoe_efficiency_fact_heat_en_solid_biomass = "SCOE Efficiency Factor for Heat Energy from Solid Biomass"
+        self.modvar_scoe_elasticity_hh_energy_demand_electric_to_gdppc = "SCOE Elasticity of Per Household Electrical Applicance Demand to GDP Per Capita"
+        self.modvar_scoe_elasticity_hh_energy_demand_heat_to_gdppc = "SCOE Elasticity of Per Household Heat Energy Demand to GDP Per Capita"
+        self.modvar_scoe_elasticity_mmmgdp_energy_demand_elec_to_gdppc = "SCOE Elasticity of Per GDP Electrical Applicance Demand to GDP Per Capita"
+        self.modvar_scoe_elasticity_mmmgdp_energy_demand_heat_to_gdppc = "SCOE Elasticity of Per GDP Heat Energy Demand to GDP Per Capita"
+        self.modvar_scoe_emissions_ch4 = ":math:\\text{CH}_4 Emissions from SCOE"
+        self.modvar_scoe_emissions_co2 = ":math:\\text{CO}_2 Emissions from SCOE"
+        self.modvar_scoe_emissions_n2o = ":math:\\text{N}_2\\text{O} Emissions from SCOE"
+        self.modvar_scoe_energy_consumption_electricity = "Electrical Energy Consumption from SCOE"
+        self.modvar_scoe_energy_consumption_electricity_agg = "Total Electrical Energy Consumption from SCOE"
+        self.modvar_scoe_energy_consumption_total = "Energy Consumption from SCOE"
+        self.modvar_scoe_energy_consumption_total_agg = "Total Energy Consumption from SCOE"
+        self.modvar_scoe_frac_heat_en_coal = "SCOE Fraction Heat Energy Demand Coal"
+        self.modvar_scoe_frac_heat_en_diesel = "SCOE Fraction Heat Energy Demand Diesel"
+        self.modvar_scoe_frac_heat_en_electricity = "SCOE Fraction Heat Energy Demand Electricity"
+        self.modvar_scoe_frac_heat_en_gasoline = "SCOE Fraction Heat Energy Demand Gasoline"
+        self.modvar_scoe_frac_heat_en_hgl = "SCOE Fraction Heat Energy Demand Hydrocarbon Gas Liquids"
+        self.modvar_scoe_frac_heat_en_hydrogen = "SCOE Fraction Heat Energy Demand Hydrogen"
+        self.modvar_scoe_frac_heat_en_kerosene = "SCOE Fraction Heat Energy Demand Kerosene"
+        self.modvar_scoe_frac_heat_en_natural_gas = "SCOE Fraction Heat Energy Demand Natural Gas"
+        self.modvar_scoe_frac_heat_en_solid_biomass = "SCOE Fraction Heat Energy Demand Solid Biomass"
+        # get some dictionaries implied by the SCOE attribute tables
+        self.modvar_dicts_scoe_fuel_vars = self.model_attributes.get_var_dicts_by_shared_category(
+            self.subsec_name_scoe,
+            self.model_attributes.get_subsector_attribute(self.subsec_name_enfu, "pycategory_primary"),
+            ["energy_efficiency_variable_by_fuel", "fuel_fraction_variable_by_fuel", "energy_demand_variable_by_fuel"]
+        )
+        # reassign as variables
+        self.modvar_dict_scoe_fuel_fractions_to_efficiency_factors = self.modvar_dicts_scoe_fuel_vars["fuel_fraction_variable_by_fuel_to_energy_efficiency_variable_by_fuel"]
+
+        return None
+
+
+
+    def _initialize_subsector_vars_trde(self,
+    ) -> None:
+        """
+        Initialize model variables, categories, and indices associated with
+            trde (Transportation Demand). Sets the following properties:
+
+            * self.cat_trde_****
+            * self.ind_trde_****
+            * self.modvar_trde_****
+            * self.modvar_dict_trde_****
+            * self.modvar_dicts_trde_****
+        """
+        # Transportation Demand variables
+        self.modvar_trde_demand_scalar = "Transportation Demand Scalar"
+        self.modvar_trde_elasticity_mtkm_to_gdp = "Elasticity of Megatonne-Kilometer Demand to GDP"
+        self.modvar_trde_elasticity_pkm_to_gdp = "Elasticity of Passenger-Kilometer Demand per Capita to GDP per Capita"
+        self.modvar_trde_demand_initial_mtkm = "Initial Megatonne-Kilometer Demand"
+        self.modvar_trde_demand_initial_pkm_per_capita = "Initial per Capita Passenger-Kilometer Demand"
+        self.modvar_trde_demand_mtkm = "Megatonne-Kilometer Demand"
+        self.modvar_trde_demand_pkm = "Passenger-Kilometer Demand"
+
+        return None
+
+
+
+    def _initialize_subsector_vars_trns(self,
+    ) -> None:
+        """
+        Initialize model variables, categories, and indices associated with
+            trns (Transportation). Sets the following properties:
+
+            * self.cat_trns_****
+            * self.ind_trns_****
+            * self.modvar_trns_****
+            * self.modvar_dict_trns_****
+            * self.modvar_dicts_trns_****
+        """
+
+        # Transportation variablesz
+        self.modvar_trns_average_vehicle_load_freight = "Average Freight Vehicle Load"
+        self.modvar_trns_average_passenger_occupancy = "Average Passenger Vehicle Occupancy Rate"
+        self.modvar_trns_electrical_efficiency = "Electrical Vehicle Efficiency"
+        self.modvar_trns_ef_combustion_mobile_biofuels_ch4 = ":math:\\text{CH}_4 Biofuels Mobile Combustion Emission Factor"
+        self.modvar_trns_ef_combustion_mobile_diesel_ch4 = ":math:\\text{CH}_4 Diesel Mobile Combustion Emission Factor"
+        self.modvar_trns_ef_combustion_mobile_gasoline_ch4 = ":math:\\text{CH}_4 Gasoline Mobile Combustion Emission Factor"
+        self.modvar_trns_ef_combustion_mobile_hgl_ch4 = ":math:\\text{CH}_4 Hydrocarbon Gas Liquids Mobile Combustion Emission Factor"
+        self.modvar_trns_ef_combustion_mobile_kerosene_ch4 = ":math:\\text{CH}_4 Kerosene Mobile Combustion Emission Factor"
+        self.modvar_trns_ef_combustion_mobile_natural_gas_ch4 = ":math:\\text{CH}_4 Natural Gas Mobile Combustion Emission Factor"
+        self.modvar_trns_ef_combustion_mobile_biofuels_n2o = ":math:\\text{N}_2\\text{O} Biofuels Mobile Combustion Emission Factor"
+        self.modvar_trns_ef_combustion_mobile_diesel_n2o = ":math:\\text{N}_2\\text{O} Diesel Mobile Combustion Emission Factor"
+        self.modvar_trns_ef_combustion_mobile_gasoline_n2o = ":math:\\text{N}_2\\text{O} Gasoline Mobile Combustion Emission Factor"
+        self.modvar_trns_ef_combustion_mobile_hgl_n2o = ":math:\\text{N}_2\\text{O} Hydrocarbon Gas Liquids Mobile Combustion Emission Factor"
+        self.modvar_trns_ef_combustion_mobile_kerosene_n2o = ":math:\\text{N}_2\\text{O} Kerosene Mobile Combustion Emission Factor"
+        self.modvar_trns_ef_combustion_mobile_natural_gas_n2o = ":math:\\text{N}_2\\text{O} Natural Gas Mobile Combustion Emission Factor"
+        self.modvar_trns_energy_consumption_electricity = "Electrical Energy Consumption from Transportation"
+        self.modvar_trns_energy_consumption_electricity_agg = "Total Electrical Energy Consumption from Transportation"
+        self.modvar_trns_energy_consumption_total = "Energy Consumption from Transportation"
+        self.modvar_trns_energy_consumption_total_agg = "Total Energy Consumption from Transportation"
+        self.modvar_trns_fuel_efficiency_biofuels = "Fuel Efficiency Biofuels"
+        self.modvar_trns_fuel_efficiency_diesel = "Fuel Efficiency Diesel"
+        self.modvar_trns_fuel_efficiency_gasoline = "Fuel Efficiency Gasoline"
+        self.modvar_trns_fuel_efficiency_hgl = "Fuel Efficiency Hydrocarbon Gas Liquids"
+        self.modvar_trns_fuel_efficiency_hydrogen = "Fuel Efficiency Hydrogen"
+        self.modvar_trns_fuel_efficiency_kerosene = "Fuel Efficiency Kerosene"
+        self.modvar_trns_fuel_efficiency_natural_gas = "Fuel Efficiency Natural Gas"
+        self.modvar_trns_modeshare_freight = "Freight Transportation Mode Share"
+        self.modvar_trns_modeshare_public_private = "Private and Public Transportation Mode Share"
+        self.modvar_trns_modeshare_regional = "Regional Transportation Mode Share"
+        self.modvar_trns_fuel_fraction_biofuels = "Transportation Mode Fuel Fraction Biofuels"
+        self.modvar_trns_fuel_fraction_diesel = "Transportation Mode Fuel Fraction Diesel"
+        self.modvar_trns_fuel_fraction_electricity = "Transportation Mode Fuel Fraction Electricity"
+        self.modvar_trns_fuel_fraction_gasoline = "Transportation Mode Fuel Fraction Gasoline"
+        self.modvar_trns_fuel_fraction_hgl = "Transportation Mode Fuel Fraction Hydrocarbon Gas Liquids"
+        self.modvar_trns_fuel_fraction_hydrogen = "Transportation Mode Fuel Fraction Hydrogen"
+        self.modvar_trns_fuel_fraction_kerosene = "Transportation Mode Fuel Fraction Kerosene"
+        self.modvar_trns_fuel_fraction_natural_gas = "Transportation Mode Fuel Fraction Natural Gas"
+        self.modvar_trns_emissions_ch4 = ":math:\\text{CH}_4 Emissions from Transportation"
+        self.modvar_trns_emissions_co2 = ":math:\\text{CO}_2 Emissions from Transportation"
+        self.modvar_trns_emissions_n2o = ":math:\\text{N}_2\\text{O} Emissions from Transportation"
+        self.modvar_trns_passenger_distance_traveled = "Total Passenger Distance by Vehicle"
+        self.modvar_trns_vehicle_distance_traveled = "Total Vehicle Distance Traveled"
+        # fuel variables dictionary for transportation
+        self.dict_trns_fuel_categories_to_fuel_variables, self.dict_trns_fuel_categories_to_unassigned_fuel_variables = self.get_dict_trns_fuel_categories_to_fuel_variables()
+        # some derivate lists of variables
+        self.modvars_trns_list_fuel_fraction = self.model_attributes.get_vars_by_assigned_class_from_akaf(
+            self.dict_trns_fuel_categories_to_fuel_variables,
+            "fuel_fraction"
+        )
+        self.modvars_trns_list_fuel_efficiency = self.model_attributes.get_vars_by_assigned_class_from_akaf(
+            self.dict_trns_fuel_categories_to_fuel_variables,
+            "fuel_efficiency"
+        )
+
+        return None
 
 
 
@@ -898,21 +1049,35 @@ class NonElectricEnergy:
     ) -> tuple:
 
         """
-            Project imports, exports, and domestic production demands for fuels. Returns a tuple of np.ndarrays with the following elements:
+        Project imports, exports, and domestic production demands for fuels. 
+            Returns a tuple of np.ndarrays with the following elements:
 
-            demands, distribution demands, exports, imports, production
+            (demands, distribution demands, exports, imports, production)
 
-            Arrays are returned in order of attribute_fuel.key_values
+        Arrays are returned in order of attribute_fuel.key_values
 
-            Function Arguments
-            ------------------
-            - df_neenergy_trajectories: Dataframe of input variables
-            - attribute_fuel: AttributeTable with information on fuels. If None, use ModelAttributes default.
-            - modvars_energy_demands: list of SISEPUEDE model variables to extract for use as energy demands. If None, defaults to NonElectricEnergy.modvars_enfu_energy_demands_total
-            - modvars_energy_distribution_demands: list of SISEPUEDE model variables to extract for use for distribution energy demands. If None, defaults to NonElectricEnergy.modvars_enfu_energy_demands_distribution
-            - modvar_energy_exports: SISEPUEDE model variable giving exports. If None, default to NonElectricEnergy.modvar_enfu_exports_fuel
-            - modvar_import_fraction: SISEPUEDE model variable giving the import fraction. If None, default to NonElectricEnergy.modvar_enfu_frac_fuel_demand_imported
-            - target_energy_units: target energy units to convert output to. If None, default to ModelAttributes.configuration energy_units.
+        Function Arguments
+        ------------------
+        - df_neenergy_trajectories: Dataframe of input variables
+        - attribute_fuel: AttributeTable with information on fuels. If None, use 
+            ModelAttributes default.
+        - modvars_energy_demands: list of SISEPUEDE model variables to extract 
+            for use as energy demands. If None, defaults to 
+            NonElectricEnergy.modvars_enfu_energy_demands_total
+       
+        Keyword Arguments
+        -----------------
+        - modvars_energy_distribution_demands: list of SISEPUEDE model variables 
+            to extract for use for distribution energy demands. If None, 
+            defaults to 
+            NonElectricEnergy.modvars_enfu_energy_demands_distribution
+        - modvar_energy_exports: SISEPUEDE model variable giving exports. If 
+            None, default to NonElectricEnergy.modvar_enfu_exports_fuel
+        - modvar_import_fraction: SISEPUEDE model variable giving the import 
+            fraction. If None, default to 
+            NonElectricEnergy.modvar_enfu_frac_fuel_demand_imported
+        - target_energy_units: target energy units to convert output to. If 
+            None, default to ModelAttributes.configuration energy_units.
         """
 
         # initialize some variables
@@ -942,6 +1107,7 @@ class NonElectricEnergy:
             )
 
             arr_tmp = 0.0
+
             # note: electricity may be missing
             try:
                 arr_tmp = self.model_attributes.get_standard_variables(
@@ -1011,18 +1177,31 @@ class NonElectricEnergy:
     ) -> pd.DataFrame:
 
         """
-            project_ccsq can be called from other sectors to simplify calculation of emissions from carbon capture and sequestration.
+        SISEPUEDE model for Carbon Capture and Sequestration (CCSQ). Calculates  
+            fuel demands required to acheieve specified sequestration targets
+            and any associated combustion emissions. CCSQ does not include 
+            point-of-capture CCSQ and is instead focused on scalable, industrial
+            technologies like Direct Air Capture.
 
-            Function Arguments
-            ------------------
-            - df_neenergy_trajectories: pd.DataFrame of input variables
-            - dict_dims: dict of dimensions (returned from check_projection_input_df). Default is None.
-            - n_projection_time_periods: int giving number of time periods (returned from check_projection_input_df). Default is None.
-            - projection_time_periods: list of time periods (returned from check_projection_input_df). Default is None.
+        Function Arguments
+        ------------------
+        - df_neenergy_trajectories: pd.DataFrame of input variables
 
-            Notes
-            -----
-            If any of dict_dims, n_projection_time_periods, or projection_time_periods are unspecified (expected if ran outside of Energy.project()), self.model_attributes.check_projection_input_df wil be run
+        Keyword Arguments
+        -----------------
+        - dict_dims: dict of dimensions (returned from 
+            check_projection_input_df). Default is None.
+        - n_projection_time_periods: int giving number of time periods (returned 
+            from check_projection_input_df). Default is None.
+        - projection_time_periods: list of time periods (returned from 
+            check_projection_input_df). Default is None.
+
+        Notes
+        -----
+        If any of dict_dims, n_projection_time_periods, or 
+            projection_time_periods are unspecified (expected if ran outside of 
+            Energy.project()), self.model_attributes.check_projection_input_df 
+            will be run
 
         """
 
@@ -1164,73 +1343,6 @@ class NonElectricEnergy:
         self.model_attributes.add_subsector_emissions_aggregates(df_out, [self.subsec_name_ccsq], False)
 
         return df_out
-    
-
-
-    def project_fuel_production(self,
-        df_neenergy_trajectories: pd.DataFrame,
-        dict_dims: dict = None,
-        n_projection_time_periods: int = None,
-        projection_time_periods: list = None
-    ) -> pd.DataFrame:
-        """
-        Calculate direct emissions from the production of fuels. Includes 
-            emissions from the manufacture of energy-generating infrastructure
-            (e.g., solar panels, wind turbines, reservoirs, lithium, etc.) and 
-            the direct production and/or refinement of energy-producing fuels
-            such as oil, coal, and natural gas. Relies on integration with 
-            ElectricEnergy to generate fuel demands.
-
-        This is the second to last model projected in the SISEPUEDE DAG as it 
-            depends on all other energy models to determine mining production.
-
-        Function Arguments
-        ------------------
-        - df_neenergy_trajectories: pd.DataFrame of input variables
-        - vec_gdp: np.ndarray vector of gdp (requires 
-            len(vec_gdp) == len(df_neenergy_trajectories))
-        - dict_dims: dict of dimensions (returned from 
-            check_projection_input_df). Default is None.
-        - n_projection_time_periods: int giving number of time periods (returned 
-            from check_projection_input_df). Default is None.
-        - projection_time_periods: list of time periods (returned from 
-            check_projection_input_df). Default is None.
-
-        Notes
-        -----
-        If any of dict_dims, n_projection_time_periods, or 
-            projection_time_periods are unspecified (expected if ran outside of 
-            Energy.project()), self.model_attributes.check_projection_input_df 
-            wil be run
-        """
-       # allows production to be run outside of the project method
-        if type(None) in set([type(x) for x in [dict_dims, n_projection_time_periods, projection_time_periods]]):
-            dict_dims, df_neenergy_trajectories, n_projection_time_periods, projection_time_periods = self.model_attributes.check_projection_input_df(df_neenergy_trajectories, True, True, True)
-
-
-        ##  CATEGORY AND ATTRIBUTE INITIALIZATION
-        pycat_enfu = self.model_attributes.get_subsector_attribute(self.subsec_name_enfu, "pycategory_primary")
-        pycat_entc = self.model_attributes.get_subsector_attribute(self.subsec_name_entc, "pycategory_primary")
-        pycat_inen = self.model_attributes.get_subsector_attribute(self.subsec_name_inen, "pycategory_primary")
-        pycat_ippu = self.model_attributes.get_subsector_attribute(self.subsec_name_ippu, "pycategory_primary")
-        # attribute tables
-        attr_enfu = self.model_attributes.dict_attributes.get(pycat_enfu)
-        attr_entc = self.model_attributes.dict_attributes.get(pycat_entc)
-        attr_inen = self.model_attributes.dict_attributes.get(pycat_inen)
-        attr_ippu = self.model_attributes.dict_attributes.get(pycat_ippu)
-
-
-        ##  OUTPUT INITIALIZATION
-
-        df_out = [df_neenergy_trajectories[self.required_dimensions].copy()]
-
-
-        ############################
-        #    MODEL CALCULATIONS    #
-        ############################
-
-        # get HEREHERE
-
 
 
 
@@ -1243,17 +1355,20 @@ class NonElectricEnergy:
     ) -> pd.DataFrame:
 
         """
-        Calculate fugitive emissions of gasses from coal, oil, and gas 
-            production, transmission, and distribution.
-
-        This is the final model projected in the SISEPUEDE DAG as it depends on 
-            all other energy models to determine mining production.
+        SISEPUEDE model for Fugitive Emissions (FGTV). Calculate fugitive 
+            emissions of gasses due to the production, transmission, and 
+            distribution of coal, oil, and gas. Excludes process and combustion 
+            emissions from mining, exploration, processing, and/or refinement of 
+            these fuels, which are handled in Energy Technologies (ENTC).
 
         Function Arguments
         ------------------
         - df_neenergy_trajectories: pd.DataFrame of input variables
         - vec_gdp: np.ndarray vector of gdp (requires 
             len(vec_gdp) == len(df_neenergy_trajectories))
+
+        Keyword Arguments
+        -----------------
         - dict_dims: dict of dimensions (returned from 
             check_projection_input_df). Default is None.
         - n_projection_time_periods: int giving number of time periods (returned 
@@ -1263,6 +1378,9 @@ class NonElectricEnergy:
 
         Notes
         -----
+        This is the final model projected in the SISEPUEDE DAG as it depends on 
+            all other energy models to determine mining production.
+
         If any of dict_dims, n_projection_time_periods, or 
             projection_time_periods are unspecified (expected if ran outside of 
             Energy.project()), self.model_attributes.check_projection_input_df 
@@ -1295,6 +1413,7 @@ class NonElectricEnergy:
         #    MODEL CALCULATIONS    #
         ############################
 
+        # HERE--DEMANDS WILL HAVE TO COME FROM ElectricEnergy
         # get all demands, imports, exports, and production in terms of configuration units
         arr_fgtv_demands, arr_demands_distribution, arr_fgtv_export, arr_fgtv_imports, arr_fgtv_production = self.project_enfu_production_and_demands(
             df_neenergy_trajectories
@@ -1442,9 +1561,7 @@ class NonElectricEnergy:
 
 
 
-    ##  industrial energy model
-    def project_industrial_energy(
-        self,
+    def project_industrial_energy(self,
         df_neenergy_trajectories: pd.DataFrame,
         vec_gdp: np.ndarray,
         dict_dims: dict = None,
@@ -1453,19 +1570,32 @@ class NonElectricEnergy:
     ) -> pd.DataFrame:
 
         """
-            Calculate emissions from fuel combustion in industrial energy.
+        SISEPUEDE model for Industrial Energy (INEN), which calculates emissions
+            from fuel combustion and energy use arising from industrial 
+            production and activities. Excludes energy industries, which are
+            handled in Energy Technologies (ENTC).
 
-            Function Arguments
-            ------------------
-            - df_neenergy_trajectories: pd.DataFrame of input variables
-            = vec_gdp: np.ndarray vector of gdp (requires len(vec_gdp) == len(df_neenergy_trajectories))
-            - dict_dims: dict of dimensions (returned from check_projection_input_df). Default is None.
-            - n_projection_time_periods: int giving number of time periods (returned from check_projection_input_df). Default is None.
-            - projection_time_periods: list of time periods (returned from check_projection_input_df). Default is None.
+        Function Arguments
+        ------------------
+        - df_neenergy_trajectories: pd.DataFrame of input variables
+        - vec_gdp: np.ndarray vector of gdp (requires 
+            len(vec_gdp) == len(df_neenergy_trajectories))
 
-            Notes
-            -----
-            If any of dict_dims, n_projection_time_periods, or projection_time_periods are unspecified (expected if ran outside of Energy.project()), self.model_attributes.check_projection_input_df wil be run
+        Keyword Arguments
+        -----------------
+        - dict_dims: dict of dimensions (returned from 
+            check_projection_input_df). Default is None.
+        - n_projection_time_periods: int giving number of time periods (returned 
+            from check_projection_input_df). Default is None.
+        - projection_time_periods: list of time periods (returned from 
+            check_projection_input_df). Default is None.
+
+        Notes
+        -----
+        If any of dict_dims, n_projection_time_periods, or 
+            projection_time_periods are unspecified (expected if ran outside of 
+            Energy.project()), self.model_attributes.check_projection_input_df 
+            wil be run
 
         """
 
@@ -1657,7 +1787,6 @@ class NonElectricEnergy:
 
 
 
-    ##  stationary combustion and other energy
     def project_scoe(self,
         df_neenergy_trajectories: pd.DataFrame,
         vec_hh: np.ndarray,
@@ -1669,9 +1798,10 @@ class NonElectricEnergy:
     ) -> pd.DataFrame:
 
         """
-        Calculation other energy, including stationary combustion (including
-            buildings) and other energy exogenously specified emissions
-            unaccounted for elsewhere
+        SISEPUEDE model for Stationary Combustion and Other Energy (SCOE),
+            Stationary combustion primarily occurs in buildings. SCOE also
+            allows for other energy exogenously specified energy emissions
+            unaccounted for elsewhere.
 
         Function Arguments
         ------------------
@@ -1737,11 +1867,13 @@ class NonElectricEnergy:
         arr_scoe_deminit_hh_heat = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_scoe_consumpinit_energy_per_hh_heat, True, "array_base", expand_to_all_cats = True)
         arr_scoe_deminit_mmmgdp_elec = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_scoe_consumpinit_energy_per_mmmgdp_elec, True, "array_base", expand_to_all_cats = True)
         arr_scoe_deminit_mmmgdp_heat = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_scoe_consumpinit_energy_per_mmmgdp_heat, True, "array_base", expand_to_all_cats = True)
+        
         # get elasticities
         arr_scoe_enerdem_elasticity_hh_elec = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_scoe_elasticity_hh_energy_demand_electric_to_gdppc, True, "array_base", expand_to_all_cats = True)
         arr_scoe_enerdem_elasticity_hh_heat = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_scoe_elasticity_hh_energy_demand_heat_to_gdppc, True, "array_base", expand_to_all_cats = True)
         arr_scoe_enerdem_elasticity_mmmgdp_elec = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_scoe_elasticity_mmmgdp_energy_demand_elec_to_gdppc, True, "array_base", expand_to_all_cats = True)
         arr_scoe_enerdem_elasticity_mmmgdp_heat = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_scoe_elasticity_mmmgdp_energy_demand_heat_to_gdppc, True, "array_base", expand_to_all_cats = True)
+        
         # get demand for electricity for households and gdp driven demands
         arr_scoe_growth_demand_hh_elec = sf.project_growth_scalar_from_elasticity(vec_rates_gdp_per_capita, arr_scoe_enerdem_elasticity_hh_elec, False, "standard")
         arr_scoe_demand_hh_elec = sf.do_array_mult(arr_scoe_deminit_hh_elec[0]*arr_scoe_growth_demand_hh_elec, vec_hh)
@@ -1749,6 +1881,7 @@ class NonElectricEnergy:
         arr_scoe_growth_demand_mmmgdp_elec = sf.project_growth_scalar_from_elasticity(vec_rates_gdp_per_capita, arr_scoe_enerdem_elasticity_hh_elec, False, "standard")
         arr_scoe_demand_mmmgdp_elec = sf.do_array_mult(arr_scoe_deminit_mmmgdp_elec[0]*arr_scoe_growth_demand_mmmgdp_elec, vec_gdp)
         arr_scoe_demand_mmmgdp_elec *= self.model_attributes.get_scalar(self.modvar_scoe_consumpinit_energy_per_mmmgdp_elec, "energy")
+        
         # get demand scalars
         arr_scoe_demscalar_elec_energy_demand = self.model_attributes.get_standard_variables(
             df_neenergy_trajectories,
@@ -1881,7 +2014,6 @@ class NonElectricEnergy:
 
 
 
-    ##  transportation emissions
     def project_transportation(self,
         df_neenergy_trajectories: pd.DataFrame,
         vec_pop: np.ndarray,
@@ -1893,21 +2025,37 @@ class NonElectricEnergy:
     ) -> pd.DataFrame:
 
         """
-            Calculate emissions from fuel combustion in transportation. Requires NonElectricEnergy.project_transportation_demand() and all variables from the transportation demand sector.
+        Calculate emissions from fuel combustion in TRNS (Transportation). 
+            Requires NonElectricEnergy.project_transportation_demand() and all 
+            output variables from TRDE (Transportation Demand) subsector.
 
-            Function Arguments
-            ------------------
-            - df_neenergy_trajectories: pd.DataFrame of input variables
-            - dvec_pop: np.ndarray vector of population (requires len(vec_rates_gdp) == len(df_neenergy_trajectories))
-            - dvec_rates_gdp: np.ndarray vector of gdp growth rates (v_i = growth rate from t_i to t_{i + 1}) (requires len(vec_rates_gdp) == len(df_neenergy_trajectories) - 1)
-            - dvec_rates_gdp_per_capita: np.ndarray vector of gdp per capita growth rates (v_i = growth rate from t_i to t_{i + 1}) (requires len(vec_rates_gdp_per_capita) == len(df_neenergy_trajectories) - 1)
-            - ddict_dims: dict of dimensions (returned from check_projection_input_df). Default is None.
-            - dn_projection_time_periods: int giving number of time periods (returned from check_projection_input_df). Default is None.
-            - dprojection_time_periods: list of time periods (returned from check_projection_input_df). Default is None.
+        Function Arguments
+        ------------------
+        - df_neenergy_trajectories: pd.DataFrame of input variables
+        - vec_pop: np.ndarray vector of population (requires 
+            len(vec_rates_gdp) == len(df_neenergy_trajectories))
+        - vec_rates_gdp: np.ndarray vector of gdp growth rates (v_i = growth 
+            rate from t_i to t_{i + 1}) (requires 
+            len(vec_rates_gdp) == len(df_neenergy_trajectories) - 1)
+        - vec_rates_gdp_per_capita: np.ndarray vector of gdp per capita growth 
+            rates (v_i = growth rate from t_i to t_{i + 1}) (requires 
+            len(vec_rates_gdp_per_capita) == len(df_neenergy_trajectories) - 1)
+        
+        Keyword Arguments
+        -----------------
+        - dict_dims: dict of dimensions (returned from 
+            check_projection_input_df). Default is None.
+        - n_projection_time_periods: int giving number of time periods (returned 
+            from check_projection_input_df). Default is None.
+        - projection_time_periods: list of time periods (returned from 
+            check_projection_input_df). Default is None.
 
-            Notes
-            -----
-            If any of dict_dims, n_projection_time_periods, or projection_time_periods are unspecified (expected if ran outside of Energy.project()), self.model_attributes.check_projection_input_df wil be run
+        Notes
+        -----
+        If any of dict_dims, n_projection_time_periods, or 
+            projection_time_periods are unspecified (expected if ran outside of 
+            Energy.project()), self.model_attributes.check_projection_input_df 
+            will be run
 
         """
 
@@ -2268,22 +2416,35 @@ class NonElectricEnergy:
     ) -> pd.DataFrame:
 
         """
-            Calculate transportation demands and associated metrics.
+        Calculate transportation demands and associated metrics (TRDE)
 
-            Function Arguments
-            ------------------
-            - df_neenergy_trajectories: pd.DataFrame of input variables
-            - vec_pop: np.ndarray vector of population (requires len(vec_rates_gdp) == len(df_neenergy_trajectories))
-            - vec_rates_gdp: np.ndarray vector of gdp growth rates (v_i = growth rate from t_i to t_{i + 1}) (requires len(vec_rates_gdp) == len(df_neenergy_trajectories) - 1)
-            - vec_rates_gdp_per_capita: np.ndarray vector of gdp per capita growth rates (v_i = growth rate from t_i to t_{i + 1}) (requires len(vec_rates_gdp_per_capita) == len(df_neenergy_trajectories) - 1)
-            - dict_dims: dict of dimensions (returned from check_projection_input_df). Default is None.
-            - n_projection_time_periods: int giving number of time periods (returned from check_projection_input_df). Default is None.
-            - projection_time_periods: list of time periods (returned from check_projection_input_df). Default is None.
+        Function Arguments
+        ------------------
+        - df_neenergy_trajectories: pd.DataFrame of input variables
+        - vec_pop: np.ndarray vector of population (requires 
+            len(vec_rates_gdp) == len(df_neenergy_trajectories))
+        - vec_rates_gdp: np.ndarray vector of gdp growth rates (v_i = growth 
+            rate from t_i to t_{i + 1}) (requires 
+            len(vec_rates_gdp) == len(df_neenergy_trajectories) - 1)
+        - vec_rates_gdp_per_capita: np.ndarray vector of gdp per capita growth 
+            rates (v_i = growth rate from t_i to t_{i + 1}) (requires 
+            len(vec_rates_gdp_per_capita) == len(df_neenergy_trajectories) - 1)
+       
+        Keyword Arguments
+        -----------------
+        - dict_dims: dict of dimensions (returned from 
+            check_projection_input_df). Default is None.
+        - n_projection_time_periods: int giving number of time periods (returned 
+            from check_projection_input_df). Default is None.
+        - projection_time_periods: list of time periods (returned from 
+            check_projection_input_df). Default is None.
 
-            Notes
-            -----
-            If any of dict_dims, n_projection_time_periods, or projection_time_periods are unspecified (expected if ran outside of Energy.project()), self.model_attributes.check_projection_input_df wil be run
-
+        Notes
+        -----
+        If any of dict_dims, n_projection_time_periods, or 
+            projection_time_periods are unspecified (expected if ran outside of 
+            Energy.project()), self.model_attributes.check_projection_input_df 
+            will be run
         """
 
         # allows production to be run outside of the project method
@@ -2349,29 +2510,47 @@ class NonElectricEnergy:
     ) -> pd.DataFrame:
 
         """
-            Take a data frame of input variables (ordered by time series) and return a data frame of output variables (model projections for energy--including carbon capture and sequestration, fugitive emissions, industrial energy, stationary combustion, and transportation) the same order.
+        Run the NonElectricEnergy model. Take a data frame of input variables 
+            (ordered by time series) and return a data frame of output variables 
+            (model projections for energy--including carbon capture and 
+            sequestration (CCSQ), fugitive emission (FGTV), industrial energy 
+            (INEN), stationary combustion (SCOE), and transportation (TRNS)) the 
+            same order.
 
-            NOTE: Fugitive Emissions requires output from ElectricEnergy to complete a full accounting for fuel production and use. In SISEPUEDE, integrated runs should be run in the order of:
+        NOTE: Fugitive Emissions requires output from ElectricEnergy to complete 
+            a full accounting for fuel production and use. In SISEPUEDE, 
+            integrated runs should be run in the order of:
 
-            NonElectricEnergy.project(*args)
-            ElectricEnergy.project(*args)
-            NonElectricEnergy.project(*args, subsectors_project = "Fugitive Emissions")
+            * NonElectricEnergy.project(*args)
+            * ElectricEnergy.project(*args)
+            * NonElectricEnergy.project(*args, 
+                subsectors_project = "Fugitive Emissions")
 
-            Function Arguments
-            ------------------
-            - df_neenergy_trajectories: pd.DataFrame with all required input fields as columns. The model will not run if any required variables are missing, but errors will detail which fields are missing.
-            - subsectors_project: list of subsectors or pipe-delimited string of subsectors. If None, run all subsectors EXCEPT for Fugitive Emissions. Valid list entries/subsectors are:
-                * "Carbon Capture and Sequestration" or "ccsq"
-                * "Fugitive Emissions" or "fgtv"
-                * "Industrial Energy" or "inen"
-                * "Stationary Combustion and Other Energy" or "scoe"
-                * "Transportation" or "trns"
+        Function Arguments
+        ------------------
+        - df_neenergy_trajectories: pd.DataFrame with all required input fields 
+            as columns. The model will not run if any required variables are 
+            missing, but errors will detail which fields are missing.
+        - subsectors_project: list of subsectors or pipe-delimited string of 
+            subsectors. If None, run all subsectors EXCEPT for Fugitive 
+            Emissions. Valid list entries/subsectors are:
 
-            Notes
-            -----
-            - The .project() method is designed to be parallelized or called from command line via __main__ in run_sector_models.py.
-            - df_neenergy_trajectories should have all input fields required (see Energy.required_variables for a list of variables to be defined)
-            - the df_neenergy_trajectories.project() method will run on valid time periods from 1 .. k, where k <= n (n is the number of time periods). By default, it drops invalid time periods. If there are missing time_periods between the first and maximum, data are interpolated.
+            * "Carbon Capture and Sequestration" or "ccsq"
+            * "Fugitive Emissions" or "fgtv"
+            * "Industrial Energy" or "inen"
+            * "Stationary Combustion and Other Energy" or "scoe"
+            * "Transportation" or "trns"
+
+        Notes
+        -----
+        - The .project() method is designed to be parallelized or called from 
+            command line via __main__ in run_sector_models.py.
+        - df_neenergy_trajectories should have all input fields required (see 
+            Energy.required_variables for a list of variables to be defined)
+        - the df_neenergy_trajectories.project() method will run on valid time 
+            periods from 1 .. k, where k <= n (n is the number of time periods). 
+            By default, it drops invalid time periods. If there are missing 
+            time_periods between the first and maximum, data are interpolated.
         """
 
         ##  CHECKS
