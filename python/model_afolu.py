@@ -2186,6 +2186,7 @@ class AFOLU:
             self.modvar_agrc_demand_crops,
             "mass"
         )
+        
         # add to output data frame
         df_out += [
             df_agrc_frac_cropland,
@@ -2194,18 +2195,16 @@ class AFOLU:
             self.model_attributes.array_to_df(arr_agrc_exports_adj, self.modvar_agrc_adjusted_equivalent_exports),
             self.model_attributes.array_to_df(arr_agrc_imports_adj, self.modvar_agrc_adjusted_equivalent_imports),
             self.model_attributes.array_to_df(arr_agrc_yield_out, self.modvar_agrc_yield),
-            #self.model_attributes.array_to_df(arr_agrc_net_import_increase, self.modvar_agrc_net_imports),
             self.model_attributes.array_to_df(vec_agrc_food_produced_wasted_before_consumption, self.modvar_agrc_total_food_lost_in_ag),
             self.model_attributes.array_to_df(vec_agrc_food_wasted_to_landfills, self.modvar_agrc_total_food_lost_in_ag_to_landfills),
             self.model_attributes.array_to_df(arr_land_use*scalar_lndu_input_area_to_output_area, self.modvar_lndu_area_by_cat),
             self.model_attributes.array_to_df(arrs_lndu_conv_from*scalar_lndu_input_area_to_output_area, self.modvar_lndu_area_converted_from_type),
             self.model_attributes.array_to_df(arrs_lndu_conv_to*scalar_lndu_input_area_to_output_area, self.modvar_lndu_area_converted_to_type),
-            self.model_attributes.array_to_df(arr_lndu_emissions_conv, self.modvar_lndu_emissions_conv, True),
+            self.model_attributes.array_to_df(arr_lndu_emissions_conv, self.modvar_lndu_emissions_conv, include_scalars = True),
             self.model_attributes.array_to_df(arr_lvst_change_to_net_imports_lost, self.modvar_lvst_changes_to_net_imports_lost),
             self.model_attributes.array_to_df(arr_lvst_demand, self.modvar_lvst_demand_livestock),
             self.model_attributes.array_to_df(arr_lvst_exports_adj, self.modvar_lvst_adjusted_equivalent_exports),
             self.model_attributes.array_to_df(arr_lvst_imports_adj, self.modvar_lvst_adjusted_equivalent_imports)
-            #self.model_attributes.array_to_df(arr_lvst_net_import_increase, self.modvar_lvst_net_imports)
         ]
 
 

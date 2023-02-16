@@ -109,3 +109,9 @@ Output,NemoMod :math:`\text{N}_2\text{O}` Emissions from Fuel Processing and Ref
 Output,NemoMod Discounted Operating Costs," | Discounted operating (fixed and variable) costs by generation technology (in configuration monetary_units).
  | 
  | NemoMod variable **vdiscountedoperatingcost**",``nemomod_entc_discounted_operating_costs_$CAT-TECHNOLOGY$``,,``fp_hydrogen_electrolysis``|``fp_hydrogen_gasification``|``fp_hydrogen_reformation``|``pp_biogas``|``pp_biomass``|``pp_coal``|``pp_coal_ccs``|``pp_gas``|``pp_gas_ccs``|``pp_geothermal``|``pp_hydropower``|``pp_nuclear``|``pp_ocean``|``pp_oil``|``pp_solar``|``pp_waste_incineration``|``pp_wind``,,,,none,1,1,1,0
+Output,NemoMod Generation Capacity," | Total annual generation capacity (in configuration power_units).
+ | 
+ | NemoMod variable **vtotalcapacityannual**",``nemomod_entc_total_annual_generation_capacity_$CAT-TECHNOLOGY$``,,``pp_biogas``|``pp_biomass``|``pp_coal``|``pp_coal_ccs``|``pp_geothermal``|``pp_hydropower``|``pp_gas``|``pp_gas_ccs``|``pp_nuclear``|``pp_ocean``|``pp_oil``|``pp_solar``|``pp_waste_incineration``|``pp_wind``|``st_batteries``|``st_compressed_air``|``st_flywheels``,,,,none,1,1,1,0
+Output,NemoMod Production by Technology," | Production of electricity by generation technology (in configuration energy_units, [*not* energy_units_nemomod]).
+ | 
+ | NemoMod variable **vproductionbytechnologyannual**",``nemomod_entc_annual_production_by_technology_$CAT-TECHNOLOGY$``,,``pp_biogas``|``pp_biomass``|``pp_coal``|``pp_coal_ccs``|``pp_geothermal``|``pp_hydropower``|``pp_gas``|``pp_gas_ccs``|``pp_nuclear``|``pp_ocean``|``pp_oil``|``pp_solar``|``pp_waste_incineration``|``pp_wind``|``st_batteries``|``st_compressed_air``|``st_flywheels``,,,,none,1,1,1,0

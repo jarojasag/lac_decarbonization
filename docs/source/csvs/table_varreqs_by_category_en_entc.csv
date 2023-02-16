@@ -1,7 +1,1 @@
 ﻿Variable Type,Variable,Information,Variable Schema,Dashboard,Notes,Data Link,Reference,Internal Model Variable,Default LHS Scalar Minimum at Final Time Period,Default LHS Scalar Maximum at Final Time Period,Emissions Total by Gas Component
-Output,NemoMod Generation Capacity," | Total annual generation capacity (in configuration power_units).
- | 
- | NemoMod variable **vtotalcapacityannual**",``nemomod_entc_total_annual_generation_capacity_$CAT-TECHNOLOGY$``,,,,,1,1,1,0
-Output,NemoMod Production by Technology," | Production of electricity by generation technology (in configuration energy_units, [*not* energy_units_nemomod]).
- | 
- | NemoMod variable **vproductionbytechnologyannual**",``nemomod_entc_annual_production_by_technology_$CAT-TECHNOLOGY$``,,,,,1,1,1,0

@@ -1417,6 +1417,48 @@ def scalar_bounds(
 
 
 
+def simple_df_agg(
+    df_in: pd.DataFrame,
+    fields_group: list,
+    dict_agg: str,
+    group_fields_ordered_for_sort_q: bool = False,
+) -> pd.DataFrame:
+    """
+    Take an input dataframe, set grouping fields, and assume all other fields 
+        are data. Then, apply the same 'agg_func' to data fields.
+
+    Function Arguments
+    ------------------
+    - df_in: input data frame to aggregate over
+    - fields_group: fields to group the data frame by
+    - dict_agg: aggregation function to apply to data fields
+    - group_fields_ordered_for_sort_q: bool. Default = False. If True, the 
+        grouping fields are ordered and used to sort the output dataframe after 
+        aggregation.
+    """
+    
+    # check input fields and keys
+    proceed_q = check_fields(df_in, fields_group, throw_error_q = False)
+    if not proceed_q:
+        return df_in
+
+    # initialize output data frame, check specifications, and aggregate if checks are passed
+    df_out = df_in.copy()
+    if (isinstance(fields_group, list) and isinstance(dict_agg, dict)):
+        fields_group = [x for x in fields_group if x in df_out.columns]
+        dict_agg = dict((k, v) for k, v in dict_agg.items() if (k in df_out.columns) and (k not in fields_group))
+
+        if (len(fields_group) > 0) & (len(dict_agg) > 0):
+            dict_agg.update(dict((x, "first") for x in fields_group))
+
+            df_out = df_out[list(dict_agg.keys())]
+            df_out = df_out.groupby(fields_group).agg(dict_agg).reset_index(drop = True)
+            df_out = df_out.sort_values(by = fields_group) if (group_fields_ordered_for_sort_q) else df_out
+
+    return df_out
+
+
+
 def sort_integer_strings(
 	vector: List[str],
 	regex_int: re.Pattern = re.compile("(\d*$)")

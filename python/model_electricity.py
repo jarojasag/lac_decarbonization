@@ -1,7 +1,7 @@
 from attribute_table import AttributeTable
 import logging
 import importlib
-from model_attributes import ModelAttributes, unclean_category
+from model_attributes import *
 from model_afolu import AFOLU
 from model_circular_economy import CircularEconomy
 from model_energy import NonElectricEnergy
@@ -17,8 +17,6 @@ from typing import *
 
 ##  import the julia api
 from julia.api import Julia
-
-
 
 
 
@@ -439,6 +437,7 @@ class ElectricEnergy:
         self.field_nemomod_name = "name"
         self.field_nemomod_order = "order"
         self.field_nemomod_region = "r"
+        self.field_nemomod_solvedtm = "solvedtm"
         self.field_nemomod_storage = "s"
         self.field_nemomod_table_name = "tablename"
         self.field_nemomod_technology = "t"
@@ -698,7 +697,7 @@ class ElectricEnergy:
         self.modvar_enfu_ef_combustion_stationary_n2o = ":math:\\text{N}_2\\text{O} Stationary Combustion Emission Factor"
         self.modvar_enfu_efficiency_factor_industrial_energy = "Average Industrial Energy Fuel Efficiency Factor"
         self.modvar_enfu_energy_demand_by_fuel_ccsq = "Energy Demand by Fuel in CCSQ"
-        self.modvar_enfu_energy_demand_by_fuel_elec = "Energy Demand by Fuel in Electricity"
+        self.modvar_enfu_energy_demand_by_fuel_entc = "Energy Demand by Fuel in Energy Technology"
         self.modvar_enfu_energy_demand_by_fuel_inen = "Energy Demand by Fuel in Industrial Energy"
         self.modvar_enfu_energy_demand_by_fuel_scoe = "Energy Demand by Fuel in SCOE"
         self.modvar_enfu_energy_demand_by_fuel_total = "Total Energy Demand by Fuel"
@@ -1499,18 +1498,20 @@ class ElectricEnergy:
 
 
     def get_enfu_cats_with_high_dummy_tech_costs(self,
+        imports_only: bool = False,
         modvar_fuel_import_fraction: Union[str, None] = None,
         return_type: str = "fuels"
     ) -> float:
         """
-        Energy Fuel categories (fuels
-            tech to endogenize imports. In NemoMod, these are modeled as dummy 
-            technologies that have very high costs coupled with a 
-            MinimumShareProduction. Includes fields that are (1) associated with 
-            imports or (2) are associated with a specified OutputActivityRatio.
+        Energy Fuel categories to endogenize imports. In NemoMod, these are 
+            modeled as dummy technologies that have very high costs coupled with 
+            a MinimumShareProduction. Includes fields that are (1) associated 
+            with imports or (2) are associated with a specified 
+            OutputActivityRatio.
         
         Keyword Arguments
         -----------------
+        - imports_only: only return high dummy techs associated with imports
         - modvar_fuel_import_fraction: model variable used to specify which 
             fuels are associtated with imports. If None, defaults to 
             self.modvar_enfu_frac_fuel_demand_imported
@@ -1523,15 +1524,73 @@ class ElectricEnergy:
         # get enfu categories from import fraction, then integrate those associated with output activity ratios
         cats_price_high = self.model_attributes.get_variable_categories(modvar_fuel_import_fraction)
         
-        dict_fuel_cats = self.dict_entc_fuel_categories_to_fuel_variables
-        cats_price_high += [x for x in dict_fuel_cats.keys() if dict_fuel_cats.get(x).get(self.key_oar) is not None]
-        cats_price_high = list(set(cats_price_high))
+        if not imports_only:
+            dict_fuel_cats = self.dict_entc_fuel_categories_to_fuel_variables
+            cats_price_high += [x for x in dict_fuel_cats.keys() if dict_fuel_cats.get(x).get(self.key_oar) is not None]
+            cats_price_high = list(set(cats_price_high))
         
         # convert to fuel-techs if needed
         cats_price_high = self.get_dummy_fuel_tech_name(cats_price_high) if (return_type == "dummy_fuel_techs") else cats_price_high
         cats_price_high.sort()
 
         return cats_price_high
+
+
+    
+    def get_enfu_upstream_fuel_to_replace_downstream_fuel_consumption_map(self,
+        allow_oar_definition: bool = False, 
+        attribute_fuel: Union[AttributeTable, None] = None,
+        return_type: str = "dict"
+    ) -> Union[Dict, List]:
+        """
+        Get a dictionary mapping an upstream fuel to the downstream fuel
+            that it replaces in ENTC fuel demands. E.g., coal_deposits 
+            replace coal as a fuel (since coal_deposits are used to represent
+            the feedback between coal use in coal mining)
+            
+        Function Arguments
+        ------------------
+    
+
+        Keyword Arguments
+        -----------------
+        - allow_oar_definition: allow the map to define a map if the upstream
+            fuel is also defined in an OutputActivityRatio variable.
+        - attribute_fuel: attribute table used for fuels. If None,
+                defaults to self.model_attributes
+        - return_type: return one of several options
+            * "dict": dictionary mapping fuel to upstream fuel
+            * "dict_reverse": dictionary mapping upstream fuel to downstream
+            * "upstream_fuels": list of upstream fuels
+        """
+        attribute_fuel = self.model_attributes.get_attribute_table(self.model_attributes.subsec_name_enfu) if (attribute_fuel is None) else attribute_fuel
+        dict_upstream_fuel = attribute_fuel.field_maps.get(f"{attribute_fuel.key}_to_{self.model_attributes.field_enfu_upstream_to_fuel_category}")
+        dict_fuel_cats = self.dict_entc_fuel_categories_to_fuel_variables
+        
+        dict_return = {}
+        
+        for cat_enfu in dict_upstream_fuel.keys():
+            try_upstream_cat_enfu = clean_schema(dict_upstream_fuel.get(cat_enfu))
+
+            if try_upstream_cat_enfu in attribute_fuel.key_values:
+                # filter on input activity ratio (iar)
+                # additionally, look for fuels that have no output activity ratio defined (they should be sourced from dummy techs)
+                dict_iar_oar_var = dict_fuel_cats.get(cat_enfu)
+                modvar_iar = dict_iar_oar_var.get(self.key_iar)
+                modvar_oar = dict_iar_oar_var.get(self.key_oar)
+                
+                if (modvar_oar is None) or allow_oar_definition:
+                    # if there is a tech defined with cat_enfu as the input fuel and try_upstream_cat_enfu as the output, assume conditions are met
+                    dict_iar_oar_var = dict_fuel_cats.get(try_upstream_cat_enfu)
+                    modvar_oar_try = dict_iar_oar_var.get(self.key_oar)
+                    cats_shared = set(self.model_attributes.get_variable_categories(modvar_iar)) & set(self.model_attributes.get_variable_categories(modvar_oar_try))
+
+                    dict_return.update({try_upstream_cat_enfu: cat_enfu}) if (len(cats_shared) > 0) else None
+        
+        dict_return = sf.reverse_dict(dict_return) if (return_type in ["reverse_dict", "upstream_fuels"]) else dict_return
+        dict_return = list(dict_return.keys()) if (return_type in ["upstream_fuels"]) else dict_return
+        
+        return dict_return
         
 
 
@@ -1768,7 +1827,7 @@ class ElectricEnergy:
             dict_enfu_ef_to_gas.update({modvar: emission})
             
         # find upstream fuel determinations and initialize output dataframe
-        dict_upstream_fuel = attribute_fuel.field_maps.get(f"{attribute_fuel.key}_to_{self.model_attributes.field_enfu_upstream_fuel_category}")
+        dict_upstream_fuel = attribute_fuel.field_maps.get(f"{attribute_fuel.key}_to_{self.model_attributes.field_enfu_upstream_to_fuel_category}")
         df_out = []
         
         # loop over map of mining and edtraction techs to input fuels
@@ -1786,7 +1845,12 @@ class ElectricEnergy:
                 # e.g., coal_deposits
                 modvar_iar = dict_fuel_cats.get(cat_enfu)
                 modvar_iar = modvar_iar.get(self.key_iar)
-                upstream_q = dict_upstream_fuel.get(cat_enfu) == 1
+
+                # try to see if the specified downstream fuel is produced by the current technology
+                upstream_q = cat_enfu in self.get_enfu_upstream_fuel_to_replace_downstream_fuel_consumption_map(
+                    attribute_fuel = attribute_fuel, 
+                    return_type = "upstream_fuels"
+                )
                 
                 arr_entc_iar = dict_enfu_arrs_iar.get(modvar_iar)
                 vec_entc_iar = arr_entc_iar[:, ind_entc]
@@ -1922,14 +1986,18 @@ class ElectricEnergy:
 
 
     def get_nemomod_energy_scalar(self, 
-        modvar: str
+        modvar: Union[str, None]
     ) -> float:
         """
         return a scalar - use to reduce clutter in converting energy units to 
-            NemoMod energy units
+            NemoMod energy units. If modvar is None, uses configuration units.
         """
-        var_energy = self.model_attributes.get_variable_characteristic(modvar, self.model_attributes.varchar_str_unit_energy)
-        scalar = self.model_attributes.get_energy_equivalent(var_energy, self.units_energy_nemomod)
+        units_source = self.model_attributes.get_variable_characteristic(
+            modvar, 
+            self.model_attributes.varchar_str_unit_energy
+        ) if (modvar is not None) else self.model_attributes.configuration.get("energy_units")
+
+        scalar = self.model_attributes.get_energy_equivalent(units_source, self.units_energy_nemomod)
         
         return (scalar if (scalar is not None) else 1)
 
@@ -3708,10 +3776,9 @@ class ElectricEnergy:
             attribute_fuel = attribute_fuel, 
             return_type = "pd.DataFrame"
         )
-        #HEREHERE
-        df_iar_dummies[self.field_nemomod_fuel] = self.get_dummy_fuel_name()
 
         # finish with other variables
+        df_iar_dummies[self.field_nemomod_fuel] = self.get_dummy_fuel_name()
         df_iar_dummies[self.field_nemomod_value] = 1.0
         df_iar_dummies[self.field_nemomod_mode] = self.cat_enmo_gnrt
 
@@ -4251,38 +4318,6 @@ class ElectricEnergy:
         )
         df_return[self.model_attributes.dim_time_period] = list(df_elec_trajectories[self.model_attributes.dim_time_period])
 
-        """
-        # import fractions are set as minimum shares of production and add technology
-        df_out = self.format_model_variable_as_nemomod_table( 
-            df_elec_trajectories,
-            modvar_import_fraction,
-            self.model_attributes.table_nemomod_min_share_production,
-            [
-                self.field_nemomod_id,
-                self.field_nemomod_year,
-                self.field_nemomod_region
-            ],
-            self.field_nemomod_fuel,
-            var_bounds = (0, 1)
-        ).get(self.model_attributes.table_nemomod_min_share_production)
-
-        df_out[self.field_nemomod_technology] = df_out[self.field_nemomod_fuel].replace(self.get_dummy_fuel_techs())
-
-        # setup for NemoMod
-        df_out = self.add_multifields_from_key_values(
-            df_out,
-            [
-                self.field_nemomod_id,
-                self.field_nemomod_region,
-                self.field_nemomod_fuel,
-                self.field_nemomod_technology,
-                self.field_nemomod_year,
-                self.field_nemomod_value
-            ],
-            override_time_period_transformation = True
-        )
-        """;
-
         # check technologies that are optional from optional input
         df_return = self.format_model_variable_as_nemomod_table(
             df_return,
@@ -4297,7 +4332,7 @@ class ElectricEnergy:
             var_bounds = (0, 1)
         ).get("TMP")
 
-        # filter out groups that are all 0 HEREHERE2
+        # filter out groups that are all 0
         df_return = sf.filter_data_frame_by_group(
             df_return,  
             [
@@ -4367,7 +4402,7 @@ class ElectricEnergy:
                 var_bounds = (0, 1)
             ).get("TMP")
 
-            # filter out groups that are all 0 HEREHERE2
+            # filter out groups that are all 0
             df_entc_re_tag = sf.filter_data_frame_by_group(
                 df_entc_re_tag,  
                 [
@@ -5360,18 +5395,26 @@ class ElectricEnergy:
         return_type: str = "NemoMod"
     ) -> pd.DataFrame:
         """
-            Format the TotalTechnologyAnnualActivityLowerLimit input tables for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the TotalTechnologyAnnualActivityLowerLimit input tables for 
+            NemoMod based on SISEPUEDE configuration parameters, input 
+            variables, integrated model outputs, and reference tables.
 
-            Function Arguments
-            ------------------
-            - df_elec_trajectories: data frame of model variable input trajectories
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
 
-            Keyword Arguments
-            -----------------
-            - attribute_technology: AttributeTable for technology, used to identify whether or not a technology can charge a storage. If None, use ModelAttributes default.
-            - return_type: type of return. Acceptable values are "NemoMod" and "CapacityCheck". Invalid entries default to "NemoMod"
-                * NemoMod (default): return the TotalTechnologyAnnualActivityLowerLimit input table for the NemoMod database
-                * CapacityCheck: return a table of specified minimum capacities associated with the technology.
+        Keyword Arguments
+        -----------------
+        - attribute_technology: AttributeTable for technology, used to identify 
+            whether or not a technology can charge a storage. If None, use 
+            ModelAttributes default.
+        - return_type: type of return. Acceptable values are "NemoMod" and 
+            "CapacityCheck". Invalid entries default to "NemoMod"
+            * NemoMod (default): return the 
+                TotalTechnologyAnnualActivityLowerLimit input table for the 
+                NemoMod database
+            * CapacityCheck: return a table of specified minimum capacities
+                 associated with the technology.
         """
 
         # check input of return_type
@@ -5668,17 +5711,22 @@ class ElectricEnergy:
         transform_time_period: bool = True
     ) -> pd.DataFrame:
         """
-            Retrieves NemoMod storage technologies from vdiscountedoperatingcost output table and reformats for SISEPUEDE (wide format data)
+        Retrieves NemoMod storage technologies from vdiscountedoperatingcost 
+            output table and reformats for SISEPUEDE (wide format data)
 
-            Function Arguments
-            ------------------
-            - engine: SQLalchemy Engine used to retrieve this table
-            - vector_reference_time_period: reference time periods to use in merge--e.g., df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
+        Function Arguments
+        ------------------
+        - engine: SQLalchemy Engine used to retrieve this table
+        - vector_reference_time_period: reference time periods to use in 
+            merge--e.g., 
+            df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
 
-            Keyword Arguments
-            -----------------
-            - table_name: name in the database of the Discounted Capital Investment table. If None, use ModelAttributes deault.
-            - transform_time_period: Does the time period need to be transformed back to SISEPUEDE terms?
+        Keyword Arguments
+        -----------------
+        - table_name: name in the database of the DiscountedOperatingCost table. 
+            If None, use ModelAttributes deault.
+        - transform_time_period: Does the time period need to be transformed 
+            back to SISEPUEDE terms?
         """
 
         # initialize some pieces
@@ -5696,7 +5744,6 @@ class ElectricEnergy:
 
 
 
-    ##  retrieve emissions by technology
     def retrieve_nemomod_table_emissions_by_technology(self,
         engine: sqlalchemy.engine.Engine,
         vector_reference_time_period: Union[list, np.ndarray],
@@ -5704,17 +5751,22 @@ class ElectricEnergy:
         transform_time_period: bool = True
     ) -> pd.DataFrame:
         """
-            Retrieves NemoMod vannualtechnologyemission output table and reformats for SISEPUEDE (wide format data)
+        Retrieves NemoMod vannualtechnologyemission output table and reformats 
+            for SISEPUEDE (wide format data)
 
-            Function Arguments
-            ------------------
-            - engine: SQLalchemy Engine used to retrieve this table
-            - vector_reference_time_period: reference time periods to use in merge--e.g., df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
+        Function Arguments
+        ------------------
+        - engine: SQLalchemy Engine used to retrieve this table
+        - vector_reference_time_period: reference time periods to use in 
+            merge--e.g., 
+            df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
 
-            Keyword Arguments
-            -----------------
-            - table_name: name in the database of the Discounted Capital Investment table. If None, use ModelAttributes deault.
-            - transform_time_period: Does the time period need to be transformed back to SISEPUEDE terms?
+        Keyword Arguments
+        -----------------
+        - table_name: name in the database of the DiscountedCapitalInvestment 
+            table. If None, use ModelAttributes deault.
+        - transform_time_period: Does the time period need to be transformed 
+            back to SISEPUEDE terms?
         """
 
         # initialize some pieces
@@ -5734,6 +5786,7 @@ class ElectricEnergy:
 
         df_out = []
         for modvar in modvars_emit:
+
             # get the gas, global warming potential (to scale output by), and the query
             gas = self.model_attributes.get_variable_characteristic(modvar, self.model_attributes.varchar_str_emission_gas)
             gwp = self.model_attributes.get_gwp(gas)
@@ -5745,8 +5798,8 @@ class ElectricEnergy:
                 modvar,
                 table_name,
                 vector_reference_time_period,
-                techs_to_pivot = None,
-                query_append = query_append
+                query_append = query_append,
+                techs_to_pivot = None
             )
             df_tmp *= gwp
 
@@ -5758,19 +5811,38 @@ class ElectricEnergy:
 
 
 
-    ##  retrieve demands for fuels
-    def retrieve_nemomod_table_fuel_demands(self,
+    def retrieve_nemomod_fuel_sectoral_demands_and_imports(self,
         engine: sqlalchemy.engine.Engine,
         vector_reference_time_period: Union[list, np.ndarray],
-        table_name: str = None,
+        attribute_fuel: Union[AttributeTable, None] = None,
+        table_name: Union[str, None] = None,
+        table_name_demands: Union[str, None] = None,
         transform_time_period: bool = True
-    ) -> pd.DataFrame:
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
-        Retrieves demands for fuels from NemoMod vproductionbytechnologyannual 
-            output table and reformats for SISEPUEDE (wide format data)
+        Retrieves sectoral demands for fuels used in NemoMod and total fuel 
+            imports (global) for all fuels from vusebytechnologyannual output 
+            table and reformats for SISEPUEDE (wide format data).
+
+        Returns a Tuple of DataFrames
+
+                (
+                    df_out_enfu_demand_entc, 
+                    df_out_enfu_imports 
+                )
+
+            associated with model variables
+
+                (
+                    ElectricEnergy.modvar_enfu_energy_demand_by_fuel_entc, 
+                    ElectricEnergy.modvar_enfu_imports_fuel
+                )
+
 
         Function Arguments
         ------------------
+        - attribute_fuel: AttributeTable used to define universe of fuels. If 
+            None, uses self.model_attributes default
         - engine: SQLalchemy Engine used to retrieve this table
         - vector_reference_time_period: reference time periods to use in merge--
             e.g., 
@@ -5780,32 +5852,115 @@ class ElectricEnergy:
         -----------------
         - table_name: name in the database of the Discounted Capital Investment 
             table. If None, use ModelAttributes deault.
+        - table_name_demands: table name storing
+            DemandsAnnualNonNodal. Used to adjust demands of "upstream fuels"
+            (e.g., coal_deposits over coal) that give the true fuel consumption
+            of its downstream counterpart.
         - transform_time_period: Does the time period need to be transformed 
             back to SISEPUEDE terms?
         """
 
         # some key initialization
+        attribute_fuel = self.model_attributes.get_attribute_table(self.subsec_name_enfu) if (attribute_fuel is None) else attribute_fuel
         table_name = self.model_attributes.table_nemomod_use_by_technology if (table_name is None) else table_name
-        scalar_div = self.get_nemomod_energy_scalar(self.modvar_enfu_energy_demand_by_fuel_elec)
+        table_name_demands = self.model_attributes.table_nemomod_annual_demand_nn if (table_name_demands is None) else table_name_demands
+        scalar_div = self.get_nemomod_energy_scalar(self.modvar_enfu_energy_demand_by_fuel_entc)
         dict_tech_info = self.get_tech_info_dict()
 
-        # get the table and pivot on fuel - ignores dummy and storage techs and assumes a 1:1 mapping between fuel and tech
-        df_out = self.retrieve_and_pivot_nemomod_table(
-            engine,
-            self.modvar_enfu_energy_demand_by_fuel_elec,
+
+        ##  GET FUEL DEMANDS IN ENTC HERE
+
+        """
+        upstream fuels are used to account for self-use during production here, 
+            upstream production ADDS imports (#3 and #4) and SUBTRACTS specified 
+            annual demand (see # 7) to get to sectoral demand for the upstream 
+            fuel, which then replaces the downstream fuel.
+
+            major pain in the ass
+        """
+        # 1. get raw data frames, then perform adjustments for upstream fuel use
+        dict_upstream = self.get_enfu_upstream_fuel_to_replace_downstream_fuel_consumption_map(
+            attribute_fuel = attribute_fuel
+        )
+        all_techs_st = dict_tech_info.get("all_techs_st")
+        df_use = sqlutil.sql_table_to_df(engine, table_name)
+        df_use = df_use[~df_use[self.field_nemomod_technology].isin(all_techs_st)] if (all_techs_st is not None) else df_use
+
+        # 2. format specified annual demands of downstream fuel, which will be deducted from upstream fuel
+        df_demands = sqlutil.sql_table_to_df(engine, table_name_demands).drop(self.field_nemomod_solvedtm, axis = 1)
+        field_val_demands = f"{self.field_nemomod_value}_DEMANDS"
+        df_demands.rename(columns = {self.field_nemomod_value: field_val_demands}, inplace = True)
+        df_demands = df_demands[
+            df_demands[self.field_nemomod_fuel].isin(dict_upstream.keys())
+        ]
+
+        # 3. account for imports--overwrite import supply techs with fuel
+        dict_fuels_to_dummy_techs = dict_tech_info.get("dict_fuels_to_dummy_techs")
+        cats_enfu_import = self.get_enfu_cats_with_high_dummy_tech_costs(imports_only = True)
+        dict_cats_entc_import = dict((dict_fuels_to_dummy_techs.get(x), dict_upstream.get(x, x)) for x in cats_enfu_import)
+        inds = df_use[self.field_nemomod_technology].isin([dict_fuels_to_dummy_techs.get(x) for x in dict_upstream.keys() if dict_fuels_to_dummy_techs.get(x) in dict_cats_entc_import.keys()])
+
+        # 4. break out imports and replace techs for 
+        df_imports = df_use[df_use[self.field_nemomod_technology].isin(dict_cats_entc_import.keys())].copy().reset_index(drop = True)
+        df_imports[self.field_nemomod_fuel] = df_imports[self.field_nemomod_technology].replace(dict_tech_info.get("dict_dummy_techs_to_fuels"))
+        df_use.loc[inds, self.field_nemomod_fuel] = df_use.loc[inds, self.field_nemomod_technology].replace(dict_cats_entc_import)
+        df_use = df_use[df_use[self.field_nemomod_fuel] != self.get_dummy_fuel_name()]
+
+        # 5. drop downstream fields, then replace upstream
+        flag_drop = "DROP"
+        for k, v in dict_upstream.items():
+            df_use[self.field_nemomod_fuel].replace({k: flag_drop, v:k}, inplace = True)
+        df_use = df_use[df_use[self.field_nemomod_fuel] != flag_drop]
+
+        # 6. aggregate use
+        df_use0 = df_use.copy()
+        df_use = sf.simple_df_agg(
+            df_use,
+            [
+                self.field_nemomod_fuel,
+                self.field_nemomod_region,
+                self.field_nemomod_year
+            ],
+            {self.field_nemomod_value: "sum"}
+        )
+
+        # 7. merge in demands, adjust by removing demands
+        df_use = pd.merge(df_use, df_demands, how = "left").fillna(0.0)
+        df_use[self.field_nemomod_value] = sf.vec_bounds(
+            np.array(df_use[self.field_nemomod_value]) - np.array(df_use[field_val_demands]), 
+            (0, np.inf)
+        )
+        df_use.drop(field_val_demands, axis = 1, inplace = True)
+
+
+        ##  FORMAT OUTPUTS FOR SISEPUEDE
+
+        # sectoral demands for fuel
+        scalar_div = self.get_nemomod_energy_scalar(self.modvar_enfu_energy_demand_by_fuel_entc)
+        df_out_enfu_demand_entc = self.retrieve_and_pivot_nemomod_table(
+            df_use,
+            self.modvar_enfu_energy_demand_by_fuel_entc,
             table_name,
             vector_reference_time_period,
             field_pivot = self.field_nemomod_fuel,
-            techs_to_pivot = None,
-            dict_filter_override = {self.field_nemomod_technology: dict_tech_info.get("all_techs_pp")}##HEREHERE
-        )
-        df_out /= scalar_div
+            techs_to_pivot = None
+        )/scalar_div
 
-        return df_out
+        # total imports
+        scalar_div = self.get_nemomod_energy_scalar(self.modvar_enfu_imports_fuel)
+        df_out_enfu_imports = self.retrieve_and_pivot_nemomod_table(
+            df_imports,
+            self.modvar_enfu_imports_fuel,
+            table_name,
+            vector_reference_time_period,
+            field_pivot = self.field_nemomod_fuel,
+            techs_to_pivot = None
+        )/scalar_div
+
+        return df_out_enfu_demand_entc, df_out_enfu_imports 
 
 
 
-    ##  Get the total annual capacity by technology
     def retrieve_nemomod_table_total_capacity(self,
         engine: sqlalchemy.engine.Engine,
         vector_reference_time_period: Union[list, np.ndarray],
@@ -5813,44 +5968,8 @@ class ElectricEnergy:
         transform_time_period: bool = True
     ) -> pd.DataFrame:
         """
-            Retrieves NemoMod vtotalcapacityannual output table and reformats for SISEPUEDE (wide format data)
-
-            Function Arguments
-            ------------------
-            - engine: SQLalchemy Engine used to retrieve this table
-            - vector_reference_time_period: reference time periods to use in merge--e.g., df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
-
-            Keyword Arguments
-            -----------------
-            - table_name: name in the database of the Discounted Capital Investment table. If None, use ModelAttributes deault.
-            - transform_time_period: Does the time period need to be transformed back to SISEPUEDE terms?
-        """
-
-        # initialize some pieces
-        table_name = self.model_attributes.table_nemomod_total_annual_capacity if (table_name is None) else table_name
-
-        df_out = self.retrieve_and_pivot_nemomod_table(
-            engine,
-            self.modvar_entc_nemomod_generation_capacity,
-            table_name,
-            vector_reference_time_period,
-            techs_to_pivot = ["all_techs_pp", "all_techs_st"]
-        )
-
-        return df_out
-
-
-
-    ##  Get the total annual production by technology
-    def retrieve_nemomod_table_total_production(self,
-        engine: sqlalchemy.engine.Engine,
-        vector_reference_time_period: Union[list, np.ndarray],
-        table_name: str = None,
-        transform_time_period: bool = True
-    ) -> pd.DataFrame:
-        """
-        Retrieves NemoMod vproductionbytechnologyannual output table and 
-            reformats for SISEPUEDE (wide format data)
+        Retrieves NemoMod vtotalcapacityannual output table and reformats for 
+            SISEPUEDE (wide format data)
 
         Function Arguments
         ------------------
@@ -5868,11 +5987,12 @@ class ElectricEnergy:
         """
 
         # initialize some pieces
-        table_name = self.model_attributes.table_nemomod_production_by_technology if (table_name is None) else table_name
+        table_name = self.model_attributes.table_nemomod_total_annual_capacity if (table_name is None) else table_name
+        
 
         df_out = self.retrieve_and_pivot_nemomod_table(
             engine,
-            self.modvar_entc_nemomod_production_by_technology,
+            self.modvar_entc_nemomod_generation_capacity,
             table_name,
             vector_reference_time_period,
             techs_to_pivot = ["all_techs_pp", "all_techs_st"]
@@ -5882,17 +6002,92 @@ class ElectricEnergy:
 
 
 
-    ##  Get the discounted capital investment for technology - NOTE: Function is messy, need to clean it up
+    def retrieve_nemomod_table_total_production(self,
+        engine: sqlalchemy.engine.Engine,
+        vector_reference_time_period: Union[list, np.ndarray],
+        attribute_fuel: Union[AttributeTable, None] = None,
+        table_name: str = None,
+        transform_time_period: bool = True
+    ) -> pd.DataFrame:
+        """
+        Retrieves NemoMod vproductionbytechnologyannual output table and 
+            reformats for SISEPUEDE (wide format data)
+
+        Function Arguments
+        ------------------
+        - engine: SQLalchemy Engine used to retrieve this table
+        - vector_reference_time_period: reference time periods to use in 
+            merge--e.g., 
+            df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
+
+        Keyword Arguments
+        -----------------
+        - attribute_fuel: AttributeTable used to define universe of fuels. If 
+            None, uses self.model_attributes defaults
+        - table_name: name in the database of the Discounted Capital Investment 
+            table. If None, use ModelAttributes deault.
+        - transform_time_period: Does the time period need to be transformed 
+            back to SISEPUEDE terms?
+        """
+
+        # initialize some pieces
+        attribute_fuel = self.model_attributes.get_attribute_table(self.subsec_name_enfu) if (attribute_fuel is None) else attribute_fuel
+        table_name = self.model_attributes.table_nemomod_production_by_technology if (table_name is None) else table_name
+        df_out = []
+
+        # retrieve data frames for self.modvar_enfu_energy_demand_by_fuel_entc and self.modvar_enfu_imports_fuel
+        df_enfu_demands_entc, df_enfu_imports = self.retrieve_nemomod_fuel_sectoral_demands_and_imports(
+            engine,
+            vector_reference_time_period,
+            attribute_fuel = attribute_fuel,
+            transform_time_period = transform_time_period
+        )
+
+        # add to output 
+        df_out += [
+            df_enfu_demands_entc,
+            df_enfu_imports
+        ]
+
+
+        ##  GET PRODUCTION BY GENERATION TECH
+        
+        # start by checking units
+        scalar_arg = self.model_attributes.get_variable_characteristic(
+            self.modvar_entc_nemomod_production_by_technology, 
+            self.model_attributes.varchar_str_unit_energy
+        )
+        scalar_arg = None if (scalar_arg is None) else self.modvar_entc_nemomod_production_by_technology
+        scalar_div = get_nemomod_energy_scalar(scalar_arg)
+
+        df_out_production = self.retrieve_and_pivot_nemomod_table(
+            engine,
+            self.modvar_entc_nemomod_production_by_technology,
+            table_name,
+            vector_reference_time_period,
+            techs_to_pivot = ["all_techs_pp", "all_techs_st"]
+        )/scalar_div
+
+        # add to output
+        df_out.append(df_out_production)
+
+
+        return df_out
+
+
+
     def retrieve_and_pivot_nemomod_table(self,
         engine: Union[pd.DataFrame, sqlalchemy.engine.Engine],
         modvar: str,
         table_name: str,
         vector_reference_time_period: Union[list, np.ndarray],
+        dict_agg_info: Union[Dict, None] = None,
+        dict_filter_override: dict = None,
+        dict_repl_values: dict = None,
         field_pivot: str = None,
-        techs_to_pivot: list = ["all_techs_pp"],
-        transform_time_period: bool = True,
         query_append: str = None,
-        dict_filter_override: dict = None
+        techs_to_pivot: list = ["all_techs_pp"],
+        transform_time_period: bool = True
     ) -> pd.DataFrame:
         """
         Retrieves NemoMod output table and reformats for SISEPUEDE (wide format 
@@ -5900,7 +6095,8 @@ class ElectricEnergy:
 
         Function Arguments
         ------------------
-        - engine: SQLalchemy Engine used to retrieve this table
+        - engine: SQLalchemy Engine used to retrieve this table OR data frame
+            passed in place of raw output
         - modvar: output model variable
         - table_name: name in the database of the table to retrieve
         - vector_reference_time_period: reference time periods to use in merge--
@@ -5909,19 +6105,37 @@ class ElectricEnergy:
 
         Keyword Arguments
         -----------------
+         - dict_agg_info: dictionary specificying optional fields to group on + 
+            fields to aggregate. If specified, aggregation is applied to the 
+            dataframe that comes from the NemoMod database. Dictionary should
+            have the form:
+
+            {
+                "fields_group": [fld_1,..., fld_2],
+                "agg_info: {
+                    "fld_agg_1": func,
+                    ...
+                }
+            }
+
+            where `func` is an acceptable aggregation function passed to 
+            pd.GroupedDataFrame.agg()
+        - dict_filter_override: filtering dictionary to apply independently of 
+            techs_to_pivot. Filters on top of techs_to_pivot if provided.
+        - dict_repl_values: dictionary of dictionaries mapping a field to apply
+            the replacement to (key) to a dictionary of replacement pairs 
+            (value). Performed immediately *after* filtering.  
         - field_pivot: field to pivot on. Default is 
             ElecticEnergy.field_nemomod_technology, but 
             ElecticEnergy.field_nemomod_storage can be used to transform storage 
             outputs to technology.
+        - query_append: appendage to query (e.g., "where X = 0")
         - techs_to_pivot: list of keys in ElecticEnergy.get_tech_info_dict() to 
             include in the pivot. Can include "all_techs_pp", 
             "all_techs_st", "all_techs_dummy" (only if output sector is fuel). 
             If None, keeps all values.
         - transform_time_period: Does the time period need to be transformed 
             back to SISEPUEDE terms?
-        - query_append: appendage to query (e.g., "where X = 0")
-        - dict_filter_override: filtering dictionary to apply independently of 
-            techs_to_pivot. Filters on top of techs_to_pivot if provided.
         """
 
         # initialize some pieces
@@ -5944,9 +6158,29 @@ class ElectricEnergy:
         # get data frame
         if isinstance(engine, sqlalchemy.engine.Engine):
             df_table_nemomod = sqlutil.sql_table_to_df(engine, table_name, query_append = query_append)
+        elif isinstance(engine, pd.DataFrame):
+            df_table_nemomod = engine
         else:
             tp = type(engine)
             raise ValueError(f"Error in retrieve_and_pivot_nemomod_table: invalid engine type '{tp}'")
+        
+        # apply field replacements if needed
+        if dict_repl_values is not None:
+            for field in dict_repl_values.keys():
+                if field in df_table_nemomod.keys():
+                    dict_repl_cur = dict_repl_values.get(field)
+                    df_table_nemomod[field].replace(dict_repl_cur, inplace = True) if (dict_repl_cur is not None) else None
+
+        # apply an optional aggregation to the dataframe after retrieving
+        if dict_agg_info is not None:
+            fields_group = dict_agg_info.get("fields_group")
+            dict_agg = dict_agg_info.get("dict_agg")
+            if (fields_group is not None) and (dict_agg is not None):
+                df_table_nemomod = sf.simple_df_agg(
+                    df_table_nemomod,
+                    fields_group,
+                    dict_agg
+                )
 
         # reduce data frame to techs (should be trivial)
         df_source = df_table_nemomod[df_table_nemomod[field_pivot].isin(cats_filter)] if (cats_filter is not None) else df_table_nemomod
@@ -5954,7 +6188,8 @@ class ElectricEnergy:
         df_source[field_pivot] = df_source[field_pivot].replace(dict_repl)
 
         # build renaming dictionary
-        dict_cats_to_varname = [x for x in attr.key_values if x in list(df_source[field_pivot])]
+        cats_valid = self.model_attributes.get_variable_categories(modvar)
+        dict_cats_to_varname = [x for x in attr.key_values if (x in list(df_source[field_pivot])) and (x in cats_valid)]
         varnames = self.model_attributes.build_varlist(subsec, modvar, restrict_to_category_values = dict_cats_to_varname)
         dict_cats_to_varname = dict(zip(dict_cats_to_varname, varnames))
 
@@ -6173,7 +6408,6 @@ class ElectricEnergy:
             self.retrieve_nemomod_table_discounted_operating_cost(engine, vec_time_period),
             self.retrieve_nemomod_table_discounted_operating_cost_storage(engine, vec_time_period),
             self.retrieve_nemomod_table_emissions_by_technology(engine, vec_time_period),
-            self.retrieve_nemomod_table_fuel_demands(engine, vec_time_period),
             self.retrieve_nemomod_table_total_capacity(engine, vec_time_period),
             self.retrieve_nemomod_table_total_production(engine, vec_time_period)
         ]
@@ -6266,7 +6500,9 @@ class ElectricEnergy:
         # add to output
         df_out += [
             self.model_attributes.array_to_df(
-                arr_enfu_imports, self.modvar_enfu_imports_electricity, reduce_from_all_cats_to_specified_cats = True
+                arr_enfu_imports, 
+                self.modvar_enfu_imports_electricity, 
+                reduce_from_all_cats_to_specified_cats = True
             )
         ]
 
@@ -6368,7 +6604,7 @@ class ElectricEnergy:
                 self.modvar_entc_nemomod_emissions_ch4_elec,
                 self.modvar_entc_nemomod_emissions_co2_elec,
                 self.modvar_entc_nemomod_emissions_n2o_elec,
-                self.modvar_enfu_energy_demand_by_fuel_elec,
+                self.modvar_enfu_energy_demand_by_fuel_entc,
                 self.modvar_entc_nemomod_generation_capacity,
                 self.modvar_entc_nemomod_production_by_technology
             ]
@@ -6389,7 +6625,7 @@ class ElectricEnergy:
         try:
             arr_enfu_fuel_demand_elec = self.model_attributes.get_standard_variables(
                 df_out[- 1],
-                self.modvar_enfu_energy_demand_by_fuel_elec,
+                self.modvar_enfu_energy_demand_by_fuel_entc,
                 override_vector_for_single_mv_q = True,
                 return_type = "array_base",
                 expand_to_all_cats = True
@@ -6419,7 +6655,7 @@ class ElectricEnergy:
         if add_unused_fuel:
             # do units converison
             arr_enfu_fuel_demand_elec *= self.model_attributes.get_variable_unit_conversion_factor(
-                self.modvar_enfu_energy_demand_by_fuel_elec,
+                self.modvar_enfu_energy_demand_by_fuel_entc,
                 self.modvar_enfu_unused_fuel_exported,
                 "energy"
             )
@@ -6432,7 +6668,9 @@ class ElectricEnergy:
         arr_enfu_total_unused_fuel_exported[:, self.ind_enfu_wste] = sf.vec_bounds(vec_enfu_total_energy_supply_waste - vec_used_wste, (0, np.inf))
         df_out += [
             self.model_attributes.array_to_df(
-                arr_enfu_total_unused_fuel_exported, self.modvar_enfu_unused_fuel_exported, reduce_from_all_cats_to_specified_cats = True
+                arr_enfu_total_unused_fuel_exported, 
+                self.modvar_enfu_unused_fuel_exported, 
+                reduce_from_all_cats_to_specified_cats = True
             )
         ]
 

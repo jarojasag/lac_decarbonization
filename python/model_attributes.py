@@ -433,7 +433,7 @@ class ModelAttributes:
             * self.field_enfu_biofuels_demand_category
             * self.field_enfu_biogas_fuel_category
             * self.field_enfu_electricity_demand_category
-            * self.field_enfu_upstream_fuel_category
+            * self.field_enfu_upstream_to_fuel_category
             * self.field_enfu_waste_fuel_category
         """
 
@@ -441,7 +441,7 @@ class ModelAttributes:
         self.field_enfu_biofuels_demand_category = "biomass_demand_category"
         self.field_enfu_biogas_fuel_category = "biogas_fuel_category"
         self.field_enfu_electricity_demand_category = "electricity_demand_category"
-        self.field_enfu_upstream_fuel_category = "upstream_fuel_category"
+        self.field_enfu_upstream_to_fuel_category = "upstream_to_fuel_category"
         self.field_enfu_waste_fuel_category = "waste_fuel_category"
 
         # run checks and raise errors if invalid data are found in the attribute tables
@@ -1331,6 +1331,7 @@ class ModelAttributes:
         # share values
         subsec = self.subsec_name_enfu
         attr = self.get_attribute_table(subsec)
+
         # check binary variables
         fields_req_bin = [
             self.field_enfu_biofuels_demand_category,
@@ -1338,13 +1339,16 @@ class ModelAttributes:
             self.field_enfu_electricity_demand_category,
             self.field_enfu_waste_fuel_category
         ]
-        self._check_binary_fields(attr, self.subsec_name_enfu, fields_req_bin, force_sum_to_1 = True)
+        self._check_binary_fields(
+            attr, self.subsec_name_enfu, fields_req_bin, force_sum_to_1 = True)
 
-        # check multivalue binary fields
-        fields_req_bin = [
-            self.field_enfu_upstream_fuel_category
-        ]
-        self._check_binary_fields(attr, self.subsec_name_enfu, fields_req_bin, force_sum_to_1 = False)
+        # check specification of upstream fuel
+        self._check_subsector_attribute_table_crosswalk(
+            {self.subsec_name_enfu: self.field_enfu_upstream_to_fuel_category},
+            self.subsec_name_enfu,
+            type_primary = "categories",
+            injection_q = True
+        )
 
         return None
 
@@ -1482,7 +1486,12 @@ class ModelAttributes:
         self._check_binary_fields(attr, subsec, fields_req_bin)
 
         # function to check the industrial energy/fuels cw in industrial energy
-        self._check_subsector_attribute_table_crosswalk(self.subsec_name_inen, self.subsec_name_enfu, type_primary = "varreqs_partial", injection_q = False)
+        self._check_subsector_attribute_table_crosswalk(
+            self.subsec_name_inen, 
+            self.subsec_name_enfu, 
+            type_primary = "varreqs_partial", 
+            injection_q = False
+        )
 
         return None
 
@@ -2318,15 +2327,26 @@ class ModelAttributes:
         unit_to_match: str = None
     ) -> float:
         """
-            for a given mass unit, get the scalar to convert to units unit_to_match
+        For a given mass unit, get the scalar to convert to units unit_to_match
 
-            ------------------
-            - unit: a unit from a specified unit dimension (e.g., mass)
-            = config_str: the configuration parameter associated with the defualt unit
-            - unit_dim_str: name of the dimensional id, either cleaned (e.g., "unit_mass") or uncleaned ("``$UNIT-MASS$``")
-            - unit_type_str: type of unit (e.g., mass)--used in attribute lookup
-            - valid_units: valid values for the unit. Generally available in self.configuration
-            = unit_to_match: Default is None. A unit value to match unit to. The scalar a that is returned is multiplied by unit, i.e., unit*a = unit_to_match. If None (default), return the configuration default.
+        Function Arguments
+        ------------------
+        - area: a unit of area defined in the unit_area attribute table
+        - unit: a unit from a specified unit dimension (e.g., mass)
+        - config_str: the configuration parameter associated with the defualt 
+            unit
+        - unit_dim_str: name of the dimensional id, either cleaned (e.g., 
+            "unit_mass") or uncleaned ("``$UNIT-MASS$``")
+        - unit_type_str: type of unit (e.g., mass)--used in attribute lookup
+        - valid_units: valid values for the unit. Generally available in 
+            self.configuration
+        
+        Keyword Arguments
+        -----------------
+        - unit_to_match: Default is None. A unit value to match unit to. The 
+            scalar `a` that is returned is multiplied by unit, i.e., 
+            unit*a = unit_to_match. If None (default), return the configuration 
+            default.
         """
 
         # get the attribute table
@@ -2360,16 +2380,25 @@ class ModelAttributes:
         return out
 
 
-    ##  get the area equivalent scalar
-    def get_area_equivalent(self, area: str, area_to_match: str = None) -> float:
+
+    def get_area_equivalent(self, 
+        area: str, 
+        area_to_match: str = None
+    ) -> float:
         """
-            for a given area unit *area*, get the scalar to convert to units *area_to_match*
+        For a given area unit *area*, get the scalar to convert to units 
+            *area_to_match*
 
-            Function Arguments
-            ------------------
-            area: a unit of area defined in the unit_area attribute table
+        Function Arguments
+        ------------------
+        - area: a unit of area defined in the unit_area attribute table
 
-            area_to_match: Default is None. A unit of area to match. The scalar a that is returned is multiplied by area, i.e., area*a = area_to_match. If None (default), return the configuration default.
+        Keyword Arguments
+        -----------------
+        - area_to_match: Default is None. A unit of area to match. The scalar 
+            `a` that is returned is multiplied by area, i.e., 
+            area*a = area_to_match. If None (default), return the configuration 
+            default.
         """
         out = self.get_unit_equivalent(
             area,
@@ -2383,14 +2412,26 @@ class ModelAttributes:
         return out
 
 
-    ##  function to get energy equivalent scalar
-    def get_energy_equivalent(self, energy: str, energy_to_match: str = None) -> float:
+
+    def get_energy_equivalent(self,
+        energy: str, 
+        energy_to_match: str = None
+    ) -> float:
 
         """
-            for a given energy unit *energy*, get the scalar to convert to units *energy_to_match*
-            - energy: a unit of energy defined in the unit_energy attribute table
+        For a given energy unit *energy*, get the scalar to convert to units 
+            *energy_to_match*
 
-            - energy_to_match: Default is None. A unit of energy to match. The scalar a that is returned is multiplied by energy, i.e., energy*a = energy_to_match. If None (default), return the configuration default.
+        Function Arguments
+        ------------------
+        - energy: a unit of energy defined in the unit_energy attribute table
+
+        Keyword Arguments
+        -----------------
+        - energy_to_match: Default is None. A unit of energy to match. The 
+            scalar a that is returned is multiplied by energy, i.e., 
+            energy*a = energy_to_match. If None (default), return the 
+            configuration default.
         """
         out = self.get_unit_equivalent(
             energy,
@@ -2934,22 +2975,33 @@ class ModelAttributes:
     def array_to_df(self,
         arr_in: np.ndarray,
         modvar: str,
-        include_scalars = False,
-        reduce_from_all_cats_to_specified_cats = False
+        include_scalars: bool = False,
+        reduce_from_all_cats_to_specified_cats: bool = False
     ) -> pd.DataFrame:
         """
-            Convert an input np.ndarray into a data frame that has the proper variable labels (ordered by category for the appropriate subsector)
+        Convert an input np.ndarray into a data frame that has the proper 
+            variable labels (ordered by category for the appropriate subsector)
 
-            - arr_in: np.ndarray to convert to data frame. If entered as a vector, it will be converted to a (n x 1) array, where n = len(arr_in)
-            - modvar: the name of the model variable to use to name the dataframe
-            - include_scalars: default = False. If True, will rescale to reflect emissions mass correction.
-            - reduce_from_all_cats_to_specified_cats: default = False. If True, the input data frame is given across all categories and needs to be reduced to the set of categories associated with the model variable (selects subset of columns).
+        Function Arguments
+        ------------------
+        - arr_in: np.ndarray to convert to data frame. If entered as a vector, 
+            it will be converted to a (n x 1) array, where n = len(arr_in)
+        - modvar: the name of the model variable to use to name the dataframe
 
+        Keyword Arguments
+        -----------------
+        - include_scalars: If True, will rescale to reflect emissions mass 
+            correction.
+        - reduce_from_all_cats_to_specified_cats: If True, the input data frame 
+            is given across all categories and needs to be reduced to the set of 
+            categories associated with the model variable (selects subset of 
+            columns).
         """
 
         # get subsector and fields to name based on variable
-        subsector = self.dict_model_variable_to_subsector[modvar]
+        subsector = self.dict_model_variable_to_subsector.get(modvar)
         fields = self.build_varlist(subsector, variable_subsec = modvar)
+
         # transpose if needed
         arr_in = np.array([arr_in]).transpose() if (len(arr_in.shape) == 1) else arr_in
 
@@ -2962,10 +3014,12 @@ class ModelAttributes:
 
         scalar_em = 1
         scalar_me = 1
+
         if include_scalars:
             # get scalars
             gas = self.get_variable_characteristic(modvar, self.varchar_str_emission_gas)
             mass = self.get_variable_characteristic(modvar, self.varchar_str_unit_mass)
+
             # will conver ch4 to co2e e.g. + kg to MT
             scalar_em = 1 if not gas else self.get_gwp(gas.lower())
             scalar_me = 1 if not mass else self.get_mass_equivalent(mass.lower())

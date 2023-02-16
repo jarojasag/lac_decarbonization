@@ -259,7 +259,11 @@ class IPPU:
             if subsec is not None:
                 # add to output dataframe if it's a valid model variable
                 df_out += [
-                    self.model_attributes.array_to_df(array_emission, modvar, False, True)
+                    self.model_attributes.array_to_df(
+                        array_emission, 
+                        modvar, 
+                        reduce_from_all_cats_to_specified_cats = True
+                    )
                 ]
 
         return df_out
@@ -270,14 +274,13 @@ class IPPU:
     #    SUBSECTOR SPECIFIC FUNCTIONS    #
     ######################################
 
-    # project construction of households
     def project_hh_construction(self,
         vec_hh: np.ndarray,
         vec_average_lifetime_hh: np.ndarray
     ) -> np.ndarray:
         """
         Project the number of households constructed based on the number of 
-            households and the average lifetime of households
+            households and the average lifetime of households.
 
         Function Arguments
         ------------------
@@ -290,13 +293,16 @@ class IPPU:
             vec_average_lifetime_hh = np.conactenate([vec_average_lifetime_hh, np.array([vec_average_lifetime_hh[-1] for x in range(len(vec_hh) - len(vec_average_lifetime_hh))])])
 
         n_projection_time_periods = len(vec_hh)
+
         # get estimates for new housing stock -- last year, use trend
         vec_new_housing_stock_changes = sf.vec_bounds(vec_hh[1:] - vec_hh[0:-1], (0, np.inf))
         vec_new_housing_stock_changes = np.insert(vec_new_housing_stock_changes, len(vec_new_housing_stock_changes), np.round(vec_new_housing_stock_changes[-1]**2/vec_new_housing_stock_changes[-2]))
+        
         # back-project to estimate replacement construction
         scalar_gr_hh = np.mean((vec_hh[1:]/vec_hh[0:-1])[0:3])
         vec_old_housing_stock_rev = np.round(vec_hh[0]*scalar_gr_hh**(-np.arange(1, 100 + 1)))
         vec_est_new_builds = np.zeros(n_projection_time_periods)
+
         for i in range(n_projection_time_periods):
             ind_lifetime_cur_stock = int(max(0, i - vec_average_lifetime_hh[0] + 1))
             ind_lifetime_old_stock = int(vec_average_lifetime_hh[0] - i - 1)
@@ -581,10 +587,10 @@ class IPPU:
         )
 
         df_out = [
-            self.model_attributes.array_to_df(array_ippu_change_net_imports, modvar_change_net_imports, False, True),
-            self.model_attributes.array_to_df(arr_ippu_harvested_wood, modvar_demand_for_harvested_wood, False, True),
-            self.model_attributes.array_to_df(array_ippu_production, modvar_qty_total_production, False, True),
-            self.model_attributes.array_to_df(array_ippu_production, modvar_qty_recycled_used_in_production, False, True)
+            self.model_attributes.array_to_df(array_ippu_change_net_imports, modvar_change_net_imports, reduce_from_all_cats_to_specified_cats = True),
+            self.model_attributes.array_to_df(arr_ippu_harvested_wood, modvar_demand_for_harvested_wood, reduce_from_all_cats_to_specified_cats = True),
+            self.model_attributes.array_to_df(array_ippu_production, modvar_qty_total_production, reduce_from_all_cats_to_specified_cats = True),
+            self.model_attributes.array_to_df(array_ippu_production, modvar_qty_recycled_used_in_production, reduce_from_all_cats_to_specified_cats = True)
         ]
 
         return array_ippu_production, df_out
