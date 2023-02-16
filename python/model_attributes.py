@@ -1406,7 +1406,6 @@ class ModelAttributes:
                 * "mining_and_extraction" (binary)
                 * "operational_life" (numeric, >= 0)
                 * "power_plant" (binary)
-                * "renewable_energy_technology" (binary)
                 * "storage" (binary)
 
             * Checks that each technology is specified in exactly one of the
@@ -1424,7 +1423,7 @@ class ModelAttributes:
 
 
         # check required fields - binary - and the partition of types
-        fields_req_bin = ["fuel_processing", "mining_and_extraction", "power_plant", "renewable_energy_technology", "storage"]
+        fields_req_bin = ["fuel_processing", "mining_and_extraction", "power_plant", "storage"]
         self._check_binary_fields(attr, subsec, fields_req_bin)
         fields_partition_bin = ["fuel_processing", "mining_and_extraction", "power_plant", "storage"]
         self._check_binary_category_partition(attr, fields_partition_bin)
