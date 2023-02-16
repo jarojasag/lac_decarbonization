@@ -4346,10 +4346,8 @@ class ElectricEnergy:
 
 
 
-    ##  format RETagTechnology for NemoMod
     def format_nemomod_table_re_tag_technology(self,
-        df_elec_trajectories: Union[pd.DataFrame, None],
-        attribute_technology: Union[AttributeTable, None] = None
+        df_elec_trajectories: Union[pd.DataFrame, None]
     ) -> pd.DataFrame:
         """
         Format the RETagTechnology (renewable energy technology tag) input table 
@@ -4364,75 +4362,36 @@ class ElectricEnergy:
 
         Keyword Arguments
         -----------------
-        - attribute_technology: AttributeTable for technology, used to identify 
-            tag. If None, use ModelAttributes default.
+
         """
 
-        # set some defaults
-        attribute_technology = self.model_attributes.get_attribute_table(self.subsec_name_entc) if (attribute_technology is None) else attribute_technology
-        pycat_strg = self.model_attributes.get_subsector_attribute(self.subsec_name_enst, "pycategory_primary")
-        pychat_entc = self.model_attributes.get_subsector_attribute(self.subsec_name_entc, "pycategory_primary")
-
-        # get renewable technologies - default is 0, so only need to specify those that are renewable
-        df_red = attribute_technology.table
-        df_out = df_red[
-            df_red[pycat_strg].isin(["none"]) &
-            df_red["renewable_energy_technology"].isin([1.0, 1])
-        ][[attribute_technology.key, "renewable_energy_technology"]].copy().rename(
-            columns = {
-                attribute_technology.key: self.field_nemomod_technology,
-                "renewable_energy_technology": self.field_nemomod_value
-            }
-        )
-
-        # get optional specifications from input data frame
-        df_entc_re_tag = None
-        if isinstance(df_elec_trajectories, pd.DataFrame):
-            # check technologies that are optional from optional input
-            df_entc_re_tag = self.format_model_variable_as_nemomod_table(
-                df_elec_trajectories,
-                self.modvar_entc_nemomod_renewable_tag_technology,
-                "TMP",
-                [
-                    self.field_nemomod_id,
-                    self.field_nemomod_year,
-                    self.field_nemomod_region
-                ],
-                self.field_nemomod_technology,
-                var_bounds = (0, 1)
-            ).get("TMP")
-
-            # filter out groups that are all 0
-            df_entc_re_tag = sf.filter_data_frame_by_group(
-                df_entc_re_tag,  
-                [
-                    self.field_nemomod_region,
-                    self.field_nemomod_technology
-                ],
-                self.field_nemomod_value
-            )
-            df_entc_re_tag = None if (len(df_entc_re_tag) == 0) else df_entc_re_tag
-
-            # filter and add dimensions to df_out
-            df_out = df_out[
-                ~df_out[self.field_nemomod_technology].isin(list(df_entc_re_tag[self.field_nemomod_technology]))
-            ] if (df_entc_re_tag is not None) else df_out
-
-
-        df_out = self.add_multifields_from_key_values(
-            df_out,
+        # check technologies that are optional from optional input
+        df_entc_re_tag = self.format_model_variable_as_nemomod_table(
+            df_elec_trajectories,
+            self.modvar_entc_nemomod_renewable_tag_technology,
+            "TMP",
             [
                 self.field_nemomod_id,
-                self.field_nemomod_region,
-                self.field_nemomod_technology,
                 self.field_nemomod_year,
-                self.field_nemomod_value
-            ]
+                self.field_nemomod_region
+            ],
+            self.field_nemomod_technology,
+            var_bounds = (0, 1)
+        ).get("TMP")
+
+
+        # filter out groups that are all 0
+        df_entc_re_tag = sf.filter_data_frame_by_group(
+            df_entc_re_tag,  
+            [
+                self.field_nemomod_region,
+                self.field_nemomod_technology
+            ],
+            self.field_nemomod_value
         )
 
-        # concatenate and clean
-        df_out = self.add_multifields_from_key_values(
-            pd.concat([df_out, df_entc_re_tag], axis = 0),
+        df_entc_re_tag = self.add_multifields_from_key_values(
+            df_entc_re_tag,
             [
                 self.field_nemomod_id,
                 self.field_nemomod_region,
@@ -4441,9 +4400,9 @@ class ElectricEnergy:
                 self.field_nemomod_value
             ],
             override_time_period_transformation = True
-        ) if (df_entc_re_tag is not None) else df_out
+        )
 
-        dict_return = {self.model_attributes.table_nemomod_re_tag_technology: df_out}
+        dict_return = {self.model_attributes.table_nemomod_re_tag_technology: df_entc_re_tag}
 
         return dict_return
 
