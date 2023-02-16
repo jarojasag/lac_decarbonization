@@ -152,8 +152,8 @@ class SISEPUEDEModels:
 		fp_nemomod_temp_sqlite_db: Union[str, None]
 	) -> None:
 		"""
-		Initialize the path to the NemoMod SQL database used to execute runs. Initializes
-			the following properties:
+		Initialize the path to the NemoMod SQL database used to execute runs. 
+			Initializes the following properties:
 
 			* self.fp_nemomod_temp_sqlite_db
 		"""
@@ -178,6 +178,12 @@ class SISEPUEDEModels:
 			else:
 				self._log(f"Invalid path '{fp_nemomod_temp_sqlite_db}' specified as fp_nemomod_temp_sqlite_db. Using temporary path {self.fp_nemomod_temp_sqlite_db}.", type_log = "info")
 
+
+		# clear old temp database to prevent competing key information in sql schema
+		os.remove(self.fp_nemomod_temp_sqlite_db) if os.path.exists(self.fp_nemomod_temp_sqlite_db) else None
+
+		return None
+		
 
 
 	def _log(self,
