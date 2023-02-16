@@ -3321,12 +3321,17 @@ class ElectricEnergy:
         attribute_technology: AttributeTable = None
     ) -> pd.DataFrame:
         """
-            Format the TechnologyFromStorage and TechnologyToStorage input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the TechnologyFromStorage and TechnologyToStorage input table for 
+            NemoMod based on SISEPUEDE configuration parameters, input 
+            variables, integrated model outputs, and reference tables.
 
-            Keyword Arguments
-            -----------------
-            - attribute_storage: AttributeTable for storage, used to identify storage characteristics. If None, use ModelAttributes default.
-            - attribute_technology: AttributeTable for technology, used to identify whether or not a technology can charge a storage. If None, use ModelAttributes default.
+        Keyword Arguments
+        -----------------
+        - attribute_storage: AttributeTable for storage, used to identify 
+            storage characteristics. If None, use ModelAttributes default.
+        - attribute_technology: AttributeTable for technology, used to identify 
+            whether or not a technology can charge a storage. If None, use 
+            ModelAttributes default.
         """
 
 
@@ -3337,36 +3342,8 @@ class ElectricEnergy:
         pychat_entc = self.model_attributes.get_subsector_attribute(self.subsec_name_entc, "pycategory_primary")
 
 
-        """
-            ##  get dictionaries mapping technology categories to storage categories
-                NOTE attribute table crosswalk checks are performed in the ModelAttributes class,
-                so if it runs, we know that the categories provided are valid
-        """
-
-        # from storage
-        dict_from_storage = self.model_attributes.get_ordered_category_attribute(
-            self.subsec_name_entc,
-            "technology_from_storage",
-            return_type = dict,
-            skip_none_q = True
-        )
-        dict_from_storage = self.model_attributes.clean_partial_category_dictionary(
-            dict_from_storage,
-            attribute_storage.key_values
-        )
-        # to storage
-        dict_to_storage = self.model_attributes.get_ordered_category_attribute(
-            self.subsec_name_entc,
-            "technology_to_storage",
-            return_type = dict,
-            skip_none_q = True
-        )
-        dict_to_storage = self.model_attributes.clean_partial_category_dictionary(
-            dict_to_storage,
-            attribute_storage.key_values
-        )
         # cat storage dictionary
-        dict_storage_techs_to_storage = self.model_attributes.get_ordered_category_attribute(
+        df_storage_techs_to_storage = self.model_attributes.get_ordered_category_attribute(
             self.model_attributes.subsec_name_entc,
             pycat_strg,
             return_type = dict,
@@ -3374,27 +3351,35 @@ class ElectricEnergy:
             clean_attribute_schema_q = True
         )
 
-        ##  build tech from storage
-        df_tech_from_storage = []
-        for k in dict_from_storage.keys():
-            df_tech_from_storage += list(zip([k for x in dict_from_storage[k]], dict_from_storage[k]))
-        df_tech_from_storage = pd.DataFrame(df_tech_from_storage, columns = [self.field_nemomod_technology, self.field_nemomod_storage])
-        # specify that storage can generate from storage
+        df_storage_techs_to_storage = pd.DataFrame(
+            df_storage_techs_to_storage.items(),
+            columns = [self.field_nemomod_technology, self.field_nemomod_storage]
+        )
+        
+        # build tech from storage
+        df_tech_from_storage = df_storage_techs_to_storage.copy()
         df_tech_from_storage[self.field_nemomod_mode] = self.cat_enmo_gnrt
         df_tech_from_storage[self.field_nemomod_value] = 1.0
-        df_tech_from_storage = self.add_multifields_from_key_values(df_tech_from_storage, [self.field_nemomod_id, self.field_nemomod_region])
+        df_tech_from_storage = self.add_multifields_from_key_values(
+            df_tech_from_storage, 
+            [
+                self.field_nemomod_id, 
+                self.field_nemomod_region
+            ]
+        )
 
-        ##  build tech to storage
+        # build tech to storage
         df_tech_to_storage = []
-        for k in dict_to_storage.keys():
-            df_tech_to_storage += list(zip([k for x in dict_to_storage[k]], dict_to_storage[k]))
-        df_tech_to_storage = pd.DataFrame(df_tech_to_storage, columns = [self.field_nemomod_technology, self.field_nemomod_storage])
-        # specify that tech can generate from storage, while storage only stores
-        def storage_mode(tech: str) -> str:
-            return self.cat_enmo_stor if (tech in dict_storage_techs_to_storage.keys()) else self.cat_enmo_gnrt
-        df_tech_to_storage[self.field_nemomod_mode] = df_tech_to_storage[self.field_nemomod_technology].apply(storage_mode)
+        df_tech_to_storage = df_storage_techs_to_storage.copy()
+        df_tech_to_storage[self.field_nemomod_mode] = self.cat_enmo_stor
         df_tech_to_storage[self.field_nemomod_value] = 1.0
-        df_tech_to_storage = self.add_multifields_from_key_values(df_tech_to_storage, [self.field_nemomod_id, self.field_nemomod_region])
+        df_tech_to_storage = self.add_multifields_from_key_values(
+            df_tech_to_storage, 
+            [
+                self.field_nemomod_id,
+                self.field_nemomod_region
+            ]
+        )
 
         dict_return = {
             self.model_attributes.table_nemomod_technology_from_storage: df_tech_from_storage,

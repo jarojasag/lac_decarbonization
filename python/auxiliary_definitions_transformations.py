@@ -1457,6 +1457,60 @@ def transformation_scoe_increase_energy_efficiency_heat(
 
 
 
+def transformation_scoe_reduce_demand_for_appliance_energy(
+    df_input: pd.DataFrame,
+    magnitude: float,
+    vec_ramp: np.ndarray,
+    model_attributes: ma.ModelAttributes,
+    model_energy: Union[me.NonElectricEnergy, None] = None,
+    **kwargs
+) -> pd.DataFrame:
+    """
+    Implement the "Increase appliance efficiency" transformation in SCOE
+
+    Function Arguments
+    ------------------
+    - df_input: input data frame containing baseline trajectories
+    - magnitude: magnitude of reduction in electric energy demand relative to 
+        final time period (interpreted as an proportional scalar--e.g., a 30% 
+        retuction in  electric energy demand in the final time period is entered 
+        as 0.3).
+    - model_attributes: ModelAttributes object used to call strategies/variables
+    - vec_ramp: ramp vec used for implementation
+
+    Keyword Arguments
+    -----------------
+    - field_region: field in df_input that specifies the region
+    - model_energy: optional NonElectricEnergy object to pass to
+        transformation_general
+    - regions_apply: optional set of regions to use to define strategy. If None,
+        applies to all regions.
+    - strategy_id: optional specification of strategy id to add to output
+        dataframe (only added if integer)
+    """
+
+    # call general transformation
+    df_out = transformation_general(
+        df_input,
+        model_attributes,
+        {
+            model_energy.modvar_scoe_demscalar_elec_energy_demand : {
+                "bounds": (0, np.inf),
+                "magnitude": float(sf.vec_bounds(1 - magnitude, (0, np.inf))),
+                "magnitude_type": "baseline_scalar",
+                "time_period_baseline": get_time_period(model_attributes, "max"),
+                "vec_ramp": vec_ramp
+            }
+
+        },
+        model_energy = model_energy,
+        **kwargs
+    )
+
+    return df_out
+
+
+
 def transformation_scoe_reduce_demand_for_heat_energy(
     df_input: pd.DataFrame,
     magnitude: float,
