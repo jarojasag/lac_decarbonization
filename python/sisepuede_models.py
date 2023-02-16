@@ -177,6 +177,11 @@ class SISEPUEDEModels:
 
 			else:
 				self._log(f"Invalid path '{fp_nemomod_temp_sqlite_db}' specified as fp_nemomod_temp_sqlite_db. Using temporary path {self.fp_nemomod_temp_sqlite_db}.", type_log = "info")
+		
+		# clear old temp database to prevent competing key information in sql schema
+		os.remove(self.fp_nemomod_temp_sqlite_db) if os.path.exists(self.fp_nemomod_temp_sqlite_db) else None
+
+		return None
 
 
 
