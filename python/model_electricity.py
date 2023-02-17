@@ -175,6 +175,7 @@ class ElectricEnergy:
         self.modvar_enfu_imports_electricity = "Electricity Imports"
         self.modvar_enfu_imports_fuel = "Fuel Imports"
         self.modvar_enfu_minimum_frac_fuel_used_for_electricity = "Minimum Fraction of Fuel Used for Electricity Generation"
+        self.modvar_enfu_nemomod_renewable_production_target = "NemoMod REMinProductionTarget"
         self.modvar_enfu_price_gravimetric = "Gravimetric Fuel Price"
         self.modvar_enfu_price_thermal = "Thermal Fuel Price"
         self.modvar_enfu_price_volumetric = "Volumetric Fuel Price"
@@ -216,6 +217,7 @@ class ElectricEnergy:
         self.modvar_entc_nemomod_production_by_technology = "NemoMod Production by Technology"
         self.modvar_entc_nemomod_reserve_margin = "NemoMod ReserveMargin"
         self.modvar_entc_nemomod_reserve_margin_tag_technology = "NemoMod ReserveMarginTagTechnology"
+        self.modvar_entc_nemomod_renewable_tag_technology = "NemoMod RETagTechnology"
         self.modvar_entc_nemomod_residual_capacity = "NemoMod ResidualCapacity"
         self.modvar_entc_nemomod_total_annual_max_capacity = "NemoMod TotalAnnualMaxCapacity"
         self.modvar_entc_nemomod_total_annual_max_capacity_investment = "NemoMod TotalAnnualMaxCapacityInvestment"
@@ -2897,64 +2899,163 @@ class ElectricEnergy:
 
 
 
-    ##  format REMinProductionTarget for NemoMod
     def format_nemomod_re_min_production_target(self,
-        df_elec_trajectories: pd.DataFrame
+        df_elec_trajectories: pd.DataFrame,
+        attribute_fuel: Union[AttributeTable, None] = None,
+        modvar_import_fraction: Union[str, None] = None,
+        modvar_renewable_target: Union[str, None] = None
     ) -> pd.DataFrame:
         """
-            Format the REMinProductionTarget (renewable energy minimum production target) input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the REMinProductionTarget (renewable energy minimum production 
+            target) input table for NemoMod based on SISEPUEDE configuration 
+            parameters, input variables, integrated model outputs, and reference 
+            tables.
 
-            Function Arguments
-            ------------------
-            - df_elec_trajectories: data frame of model variable input trajectories
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
+
+        Keyword Arguments
+        -----------------
+        - attribute_fuel: AttributeTable used to specify fuels
+        - modvar_import_fraction: model variable specifying fuel import 
+            fractions. Defaults to self.modvar_enfu_frac_fuel_demand_imported
+        - modvar_renewable_target: model variable used to specify renewable 
+            energy target fractions. Defaults to 
+            self.modvar_enfu_nemomod_renewable_production_target
+
+        Important Note - Conflicting Constratints
+        -----------------------------------------
+        SISEPUEDE specifies fuel import fractions using a dummy technology in 
+            combination with (a) very high costs and (b) MinShareProduction. 
+            For a given fuel, if the sum of the import fuel fraction 
+            (specified as technology called "supply_FUELNAME") specified in
+            MinShareProduction and the REMinProductionTarget exceed 1, then
+            NemoMod will return an infeasibility. 
+
+        To avoid this problem, SISEPUEDE specified REMinProductionTarget as a 
+            fraction of non-imported energy. This function first checks for 
+            the specification of import fracitons; if present, it interprets
+            the specified minimum renewable production target RPT as 
+            RPT' = RPT(1 - MSP).
+        
         """
+        # perform some initialization
+        attribute_fuel = self.model_attributes.get_attribute_table(self.subsec_name_enfu) if (attribute_fuel is None) else attribute_fuel
+        modvar_import_fraction = self.modvar_enfu_frac_fuel_demand_imported if (modvar_import_fraction is None) else modvar_import_fraction
+        modvar_renewable_target = self.modvar_enfu_nemomod_renewable_production_target if (modvar_renewable_target is None) else modvar_renewable_target
 
-        return None
-
-
-
-    ##  format RETagTechnology for NemoMod
-    def format_nemomod_table_re_tag_technology(self,
-        attribute_technology: AttributeTable = None
-    ) -> pd.DataFrame:
-        """
-            Format the RETagTechnology (renewable energy technology tag) input table for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
-
-            Keyword Arguments
-            -----------------
-            - attribute_technology: AttributeTable for technology, used to identify tag. If None, use ModelAttributes default.
-        """
-
-        # set some defaults
-        attribute_technology = self.model_attributes.get_attribute_table(self.subsec_name_entc) if (attribute_technology is None) else attribute_technology
-        pycat_strg = self.model_attributes.get_subsector_attribute(self.subsec_name_enst, "pycategory_primary")
-        pychat_entc = self.model_attributes.get_subsector_attribute(self.subsec_name_entc, "pycategory_primary")
-
-        # get renewable technologies - default is 0, so only need to specify those that are renewable
-        df_red = attribute_technology.table
-        df_out = df_red[
-            df_red[pycat_strg].isin(["none"]) &
-            df_red["renewable_energy_technology"].isin([1.0, 1])
-        ][[attribute_technology.key, "renewable_energy_technology"]].copy().rename(
-            columns = {
-                attribute_technology.key: self.field_nemomod_technology,
-                "renewable_energy_technology": self.field_nemomod_value
-            }
+        # get imports and renewable energy minimum production targets 
+        arr_enfu_imports = self.model_attributes.get_standard_variables(
+            df_elec_trajectories,
+            modvar_import_fraction,
+            expand_to_all_cats = True,
+            return_type = "array_base",
+            var_bounds = (0, 1)
         )
 
-        # add dimensions
-        df_out = self.add_multifields_from_key_values(
-            df_out,
+        arr_enfu_re_target = self.model_attributes.get_standard_variables(
+            df_elec_trajectories,
+            modvar_renewable_target,
+            expand_to_all_cats = True,
+            return_type = "array_base",
+            var_bounds = (0, 1)
+        )
+
+        # adjust and convert to dataframe (DON'T NEED ADJUSTMENT IN THIS MODEL)
+        arr_enfu_re_target_adj = arr_enfu_re_target
+        df_return = self.model_attributes.array_to_df(
+            arr_enfu_re_target_adj,
+            modvar_renewable_target,
+            reduce_from_all_cats_to_specified_cats = True
+        )
+        df_return[self.model_attributes.dim_time_period] = list(df_elec_trajectories[self.model_attributes.dim_time_period])
+
+        # check technologies that are optional from optional input
+        df_return = self.format_model_variable_as_nemomod_table(
+            df_return,
+            self.modvar_enfu_nemomod_renewable_production_target,
+            "TMP",
+            [
+                self.field_nemomod_id,
+                self.field_nemomod_year,
+                self.field_nemomod_region
+            ],
+            self.field_nemomod_fuel,
+            var_bounds = (0, 1)
+        ).get("TMP")
+
+        # filter out groups that are all 0
+        df_return = sf.filter_data_frame_by_group(
+            df_return,  
+            [
+                self.field_nemomod_region,
+                self.field_nemomod_fuel
+            ],
+            self.field_nemomod_value
+        )
+
+        return {self.model_attributes.table_nemomod_re_min_production_target: df_return}
+
+
+
+    def format_nemomod_table_re_tag_technology(self,
+        df_elec_trajectories: Union[pd.DataFrame, None]
+    ) -> pd.DataFrame:
+        """
+        Format the RETagTechnology (renewable energy technology tag) input table 
+            for NemoMod based on SISEPUEDE configuration parameters, input 
+            variables, integrated model outputs, and reference tables.
+
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories.
+            * Note: If None, specifies renewable energy *only* according to 
+            $CAT-TECHNOLOGY$ attribute table.
+
+        Keyword Arguments
+        -----------------
+
+        """
+
+        # check technologies that are optional from optional input
+        df_entc_re_tag = self.format_model_variable_as_nemomod_table(
+            df_elec_trajectories,
+            self.modvar_entc_nemomod_renewable_tag_technology,
+            "TMP",
+            [
+                self.field_nemomod_id,
+                self.field_nemomod_year,
+                self.field_nemomod_region
+            ],
+            self.field_nemomod_technology,
+            var_bounds = (0, 1)
+        ).get("TMP")
+
+
+        # filter out groups that are all 0
+        df_entc_re_tag = sf.filter_data_frame_by_group(
+            df_entc_re_tag,  
+            [
+                self.field_nemomod_region,
+                self.field_nemomod_technology
+            ],
+            self.field_nemomod_value
+        )
+
+        df_entc_re_tag = self.add_multifields_from_key_values(
+            df_entc_re_tag,
             [
                 self.field_nemomod_id,
                 self.field_nemomod_region,
                 self.field_nemomod_technology,
                 self.field_nemomod_year,
                 self.field_nemomod_value
-            ]
+            ],
+            override_time_period_transformation = True
         )
 
-        dict_return = {self.model_attributes.table_nemomod_re_tag_technology: df_out}
+        dict_return = {self.model_attributes.table_nemomod_re_tag_technology: df_entc_re_tag}
 
         return dict_return
 
@@ -4463,8 +4564,6 @@ class ElectricEnergy:
         )
         # ReserveMarginTagFuel
         dict_out.update(self.format_nemomod_table_reserve_margin_tag_fuel())
-        # RETagTechnology
-        dict_out.update(self.format_nemomod_table_re_tag_technology(attribute_technology = attribute_technology))
         # TechnologyFromStorage and TechnologyToStorage
         dict_out.update(
             self.format_nemomod_table_technology_from_and_to_storage(
@@ -4503,6 +4602,8 @@ class ElectricEnergy:
             dict_out.update(self.format_nemomod_table_residual_capacity(df_elec_trajectories))
             # ResidualStorageCapacity
             dict_out.update(self.format_nemomod_table_residual_storage_capacity(df_elec_trajectories))
+            # RETagTechnology
+            dict_out.update(self.format_nemomod_table_re_tag_technology(df_elec_trajectories))
             # SpecifiedAnnualDemand
             dict_out.update(self.format_nemomod_table_specified_annual_demand(df_elec_trajectories, attribute_time_period = attribute_time_period))
             # StorageMaxChargeRate (if included), StorageMaxDishargeRate (if included), and StorageStartLevel

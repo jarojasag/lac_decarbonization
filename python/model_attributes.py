@@ -1306,10 +1306,6 @@ class ModelAttributes:
         subsec = self.subsec_name_entc
         attr = self.get_attribute_table(subsec)
 
-        # check required fields - binary
-        fields_req_bin = ["renewable_energy_technology"]
-        self._check_binary_fields(attr, subsec, fields_req_bin)
-
         # check required fields - numeric
         fields_req_num = ["operational_life"]
         self._check_numeric_fields(attr, subsec, fields_req_num, integer_q = False, nonnegative_q = True)

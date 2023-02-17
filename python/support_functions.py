@@ -616,6 +616,56 @@ def fill_df_rows_from_df(
 
 
 
+def filter_data_frame_by_group(
+    df_in: pd.DataFrame,
+    fields_group: List[Any],
+    field_value: str,
+    val_exclude: float = 0.0
+) -> pd.DataFrame:
+    """
+    Filter a data frame to remove all entries in a group have a single 
+        value.
+    
+    Function Arguments
+    ------------------
+    - df_in: data frame to filter
+    - fields_group: fields to use to set up groups
+    - field_value: field to use as filtering value
+
+    Keyword Arguments
+    -----------------
+    - val_exclude: exclude groups that are associated with *only* this value
+        (generally zero)
+    """
+    # check fields
+    fields_group = [x for x in fields_group if x in df_in.columns]
+
+    stop_run = field_value not in df_in.columns
+    stop_run = stop_run | (field_value in fields_group)
+    stop_run = stop_run | (len(fields_group) == 0)
+
+    if stop_run:
+        return None
+
+
+    # filter out unnecessary values
+    df_filt = []
+    val_exclude = float(val_exclude) if (isinstance(val_exclude, float) or isinstance(val_exclude, int)) else val_exclude
+    df_grouped = df_in.groupby(
+        fields_group
+    )
+
+    for df in df_grouped:
+        tup, df = df
+        col_vals = set([float(x) for x in list(df[field_value].unique())])
+        df_filt.append(df) if ((len(col_vals) > 1) or not col_vals.issubset({val_exclude})) else None
+
+    return_val = pd.concat(df_filt, axis = 0) if (len(df_filt) > 0) else df_in.iloc[0:0]
+
+    return return_val
+    
+
+
 def filter_tuple(
     tup: Tuple,
     ignore_inds: Union[List[int], int]
