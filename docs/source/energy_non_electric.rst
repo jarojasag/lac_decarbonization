@@ -81,6 +81,40 @@ Fuel production is a subsector of industrial energy that incorporates feedback l
 ----
 
 
+Carbon Capture and Sequestration
+================================
+
+Scalable carbon capture and sequestration industries, like Direct Air Capture.
+
+Categories
+----------
+
+CCSQ is divided into the following categories.
+
+.. csv-table:: Other categories (``$CAT-CCSQ$`` attribute table)
+   :file: ./csvs/attribute_cat_ccsq.csv
+   :header-rows: 1
+
+
+Variables by Category
+---------------------
+
+For each CCSQ category ``$CAT-CCSQ$``, the following variables are required.
+
+.. csv-table:: For different CCSQ categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
+   :file: ./csvs/table_varreqs_by_category_en_ccsq.csv
+   :header-rows: 1
+
+
+Variables by Partial Category
+-----------------------------
+
+.. csv-table:: For different CCSQ categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
+   :file: ./csvs/table_varreqs_by_partial_category_en_ccsq.csv
+   :header-rows: 1
+
+
+
 
 Fugitive Emissions
 ==================
