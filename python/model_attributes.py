@@ -2362,6 +2362,7 @@ class ModelAttributes:
                 attr_key_check = f"{unit_type_str}_to_{attr_cur.key}"
                 dict_convert_unit = attr_cur.field_maps.get(attr_key_check)
                 unit = dict_convert_unit.get(unit) if (dict_convert_unit is not None) else None
+
         if unit is None:
             return None
 
@@ -4000,21 +4001,27 @@ class ModelAttributes:
 
 
 
-    ##  function to convert units
-    def get_variable_unit_conversion_factor(self, var_to_convert: str, var_to_match: str, units: str) -> float:
+    def get_variable_unit_conversion_factor(self, 
+        var_to_convert: str, 
+        var_to_match: str, 
+        units: str
+    ) -> float:
 
         """
-        get_variable_conversion_factor gives a conversion factor to scale 'var_to_convert' in the same units 'units' as 'var_to_match'
+        Conversion factor to scale 'var_to_convert' to the same unit type 
+            'units' as 'var_to_match'
 
         Function Arguments
         ------------------
-
-        var_to_convert: string of a model variable to scale units
-
-        var_to_match: string of a model variable to match units
-
-        units: valid values are 'area', 'energy', 'length', 'mass', 'monetary', 'volume'
-
+        - var_to_convert: string of a model variable to scale units
+        - var_to_match: string of a model variable to match units
+        - units: valid values are: 
+            * 'area'
+            * 'energy'
+            * 'length'
+            * 'mass'
+            * 'monetary'
+            * 'volume'
         """
         # return None if no variable passed
         if var_to_convert is None:

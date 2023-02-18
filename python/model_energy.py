@@ -362,7 +362,6 @@ class NonElectricEnergy:
         self.modvar_enfu_energy_density_volumetric = "Volumetric Energy Density"
         self.modvar_enfu_exports_fuel = "Fuel Exports"
         self.modvar_enfu_frac_fuel_demand_imported = "Fraction of Fuel Demand Imported"
-        self.modvar_enfu_imports_electricity = "Electricity Imports"
         self.modvar_enfu_imports_fuel = "Fuel Imports"
         self.modvar_enfu_minimum_frac_fuel_used_for_electricity = "Minimum Fraction of Fuel Used for Electricity Generation"
         self.modvar_enfu_price_gravimetric = "Gravimetric Fuel Price"
@@ -372,6 +371,7 @@ class NonElectricEnergy:
         self.modvar_enfu_production_frac_natural_gas_processing = "Natural Gas Processing Fraction"
         self.modvar_enfu_production_fuel = "Fuel Production"
         self.modvar_enfu_transmission_loss_electricity = "Electrical Transmission Loss"
+        self.modvar_enfu_transmission_loss_frac_electricity = "Electrical Transmission Loss Fraction"
         self.modvar_enfu_unused_fuel_exported = "Unused Fuel Exported"
         # list of key variables - total energy demands by fuel
         self.modvars_enfu_energy_demands_total = [
@@ -677,7 +677,9 @@ class NonElectricEnergy:
             return_type = "array_base"
         )
         # get initial energy consumption for agrc/lvst and then ensure unit are set
-        arr_inen_init_energy_consumption_agrc = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_inen_energy_conumption_agrc_init, True, "array_base", expand_to_all_cats = True)
+        arr_inen_init_energy_consumption_agrc = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_inen_energy_conumption_agrc_init, True, "array_base", expand_to_all_cats = True)
         arr_inen_init_energy_consumption_agrc *= self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_inen_energy_conumption_agrc_init,
             self.modvar_inen_en_prod_intensity_factor,
@@ -1037,7 +1039,6 @@ class NonElectricEnergy:
 
 
 
-    ##  project imports, exports, and local production of fuels
     def project_enfu_production_and_demands(self,
         df_neenergy_trajectories: pd.DataFrame,
         attribute_fuel: AttributeTable = None,
@@ -1055,6 +1056,8 @@ class NonElectricEnergy:
             (demands, distribution demands, exports, imports, production)
 
         Arrays are returned in order of attribute_fuel.key_values
+
+        Output units are ModelAttributes.configuration energy units
 
         Function Arguments
         ------------------
@@ -1142,7 +1145,7 @@ class NonElectricEnergy:
             modvar_energy_exports,
             return_type = "array_base",
             expand_to_all_cats = True,
-            var_bounds = (0, 1)
+            var_bounds = (0, np.inf)
         )
         energy_units = self.model_attributes.get_variable_characteristic(
             modvar_energy_exports,
@@ -1240,8 +1243,12 @@ class NonElectricEnergy:
         ##  GET ENERGY DEMANDS
 
         # get sequestration totals and energy intensity, and
-        arr_ccsq_demand_sequestration = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_ccsq_total_sequestration, True, "array_base", expand_to_all_cats = True)
-        arr_ccsq_energy_intensity_sequestration = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_ccsq_demand_per_co2, True, "array_base", expand_to_all_cats = True)
+        arr_ccsq_demand_sequestration = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_ccsq_total_sequestration, True, "array_base", expand_to_all_cats = True)
+        arr_ccsq_energy_intensity_sequestration = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_ccsq_demand_per_co2, True, "array_base", expand_to_all_cats = True)
         # here, multiply by inverse (hence vars are reversed) to write intensity mass in terms of self.modvar_ccsq_total_sequestration; next, scale energy units to configuration units
         arr_ccsq_energy_intensity_sequestration *= self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_ccsq_total_sequestration,
@@ -1250,8 +1257,12 @@ class NonElectricEnergy:
         )
         arr_ccsq_energy_intensity_sequestration *= self.model_attributes.get_scalar(self.modvar_ccsq_demand_per_co2, "energy")
         # get fraction of energy that is heat energy (from fuels) + fraction that is electric
-        arr_ccsq_frac_energy_elec = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_ccsq_frac_en_electricity, True, "array_base", expand_to_all_cats = True)
-        arr_ccsq_frac_energy_heat = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_ccsq_frac_en_heat, True, "array_base", expand_to_all_cats = True)
+        arr_ccsq_frac_energy_elec = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_ccsq_frac_en_electricity, True, "array_base", expand_to_all_cats = True)
+        arr_ccsq_frac_energy_heat = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_ccsq_frac_en_heat, True, "array_base", expand_to_all_cats = True)
         # next, use fuel mix + efficiencies to determine demands from final fuel consumption for heat energy_to_match (this will return the fractions of sequestration by consumption)
         dict_ccsq_demands_by_fuel_heat = self.project_energy_consumption_by_fuel_from_effvars(
             df_neenergy_trajectories,
@@ -1263,7 +1274,9 @@ class NonElectricEnergy:
         for k in fuels_loop:
             dict_ccsq_demands_by_fuel_heat[k] = dict_ccsq_demands_by_fuel_heat[k]*arr_ccsq_energy_intensity_sequestration*arr_ccsq_frac_energy_heat
         # get electricity demand
-        arr_ccsq_demand_electricity = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_ccsq_total_sequestration, True, "array_base", expand_to_all_cats = True)
+        arr_ccsq_demand_electricity = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_ccsq_total_sequestration, True, "array_base", expand_to_all_cats = True)
         arr_ccsq_demand_electricity *= arr_ccsq_frac_energy_elec*arr_ccsq_energy_intensity_sequestration
 
 
@@ -1271,13 +1284,19 @@ class NonElectricEnergy:
         ##  GET EMISSION FACTORS
 
         # methane - scale to ensure energy units are the same
-        arr_ccsq_ef_by_fuel_ch4 = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_enfu_ef_combustion_stationary_ch4, return_type = "array_units_corrected")
+        arr_ccsq_ef_by_fuel_ch4 = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_enfu_ef_combustion_stationary_ch4, return_type = "array_units_corrected")
         arr_ccsq_ef_by_fuel_ch4 /= self.model_attributes.get_scalar(self.modvar_enfu_ef_combustion_stationary_ch4, "energy")
         # carbon dioxide - scale to ensure energy units are the same
-        arr_ccsq_ef_by_fuel_co2 = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_enfu_ef_combustion_co2, return_type = "array_units_corrected")
+        arr_ccsq_ef_by_fuel_co2 = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_enfu_ef_combustion_co2, return_type = "array_units_corrected")
         arr_ccsq_ef_by_fuel_co2 /= self.model_attributes.get_scalar(self.modvar_enfu_ef_combustion_co2, "energy")
         # nitrous oxide - scale to ensure energy units are the same
-        arr_ccsq_ef_by_fuel_n2o = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_enfu_ef_combustion_stationary_n2o, return_type = "array_units_corrected")
+        arr_ccsq_ef_by_fuel_n2o = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_enfu_ef_combustion_stationary_n2o, return_type = "array_units_corrected")
         arr_ccsq_ef_by_fuel_n2o /= self.model_attributes.get_scalar(self.modvar_enfu_ef_combustion_stationary_n2o, "energy")
 
 
@@ -1638,8 +1657,12 @@ class NonElectricEnergy:
         ##  GET ENERGY INTENSITIES
 
         # get production-based emissions - start with industrial production, energy demand
-        arr_inen_prod = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.model_ippu.modvar_ippu_qty_total_production, True, "array_base", expand_to_all_cats = True)
-        arr_inen_prod_energy_intensity = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_inen_en_prod_intensity_factor, True, "array_base", expand_to_all_cats = True)
+        arr_inen_prod = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.model_ippu.modvar_ippu_qty_total_production, True, "array_base", expand_to_all_cats = True)
+        arr_inen_prod_energy_intensity = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_inen_en_prod_intensity_factor, True, "array_base", expand_to_all_cats = True)
 
         # get agricultural and livestock production + intensities (in terms of self.model_ippu.modvar_ippu_qty_total_production (mass) and self.modvar_inen_en_prod_intensity_factor (energy), respectively)
         index_inen_agrc, vec_inen_energy_intensity_agrc_lvst, vec_inen_prod_agrc_lvst = self.get_agrc_lvst_prod_and_intensity(df_neenergy_trajectories)
@@ -1673,7 +1696,9 @@ class NonElectricEnergy:
         )
 
         # gdp-based emissions - get intensity, multiply by gdp, and scale to match energy units of production
-        arr_inen_energy_consumption_intensity_gdp = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_inen_en_gdp_intensity_factor, True, "array_base", expand_to_all_cats = True)
+        arr_inen_energy_consumption_intensity_gdp = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_inen_en_gdp_intensity_factor, True, "array_base", expand_to_all_cats = True)
         arr_inen_energy_consumption_intensity_gdp *= self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_inen_en_gdp_intensity_factor,
             self.modvar_inen_en_prod_intensity_factor,
@@ -1697,21 +1722,27 @@ class NonElectricEnergy:
         ##  GET EMISSION FACTORS
 
         # methane - scale to ensure energy units are the same
-        arr_inen_ef_by_fuel_ch4 = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_enfu_ef_combustion_stationary_ch4, return_type = "array_units_corrected")
+        arr_inen_ef_by_fuel_ch4 = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_enfu_ef_combustion_stationary_ch4, return_type = "array_units_corrected")
         arr_inen_ef_by_fuel_ch4 *= self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_enfu_ef_combustion_stationary_ch4,
             self.modvar_inen_en_prod_intensity_factor,
             "energy"
         )
         # carbon dioxide - scale to ensure energy units are the same
-        arr_inen_ef_by_fuel_co2 = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_enfu_ef_combustion_co2, return_type = "array_units_corrected")
+        arr_inen_ef_by_fuel_co2 = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_enfu_ef_combustion_co2, return_type = "array_units_corrected")
         arr_inen_ef_by_fuel_co2 *= self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_enfu_ef_combustion_co2,
             self.modvar_inen_en_prod_intensity_factor,
             "energy"
         )
         # nitrous oxide - scale to ensure energy units are the same
-        arr_inen_ef_by_fuel_n2o = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_enfu_ef_combustion_stationary_n2o, return_type = "array_units_corrected")
+        arr_inen_ef_by_fuel_n2o = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_enfu_ef_combustion_stationary_n2o, return_type = "array_units_corrected")
         arr_inen_ef_by_fuel_n2o *= self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_enfu_ef_combustion_stationary_n2o,
             self.modvar_inen_en_prod_intensity_factor,
@@ -1865,16 +1896,32 @@ class NonElectricEnergy:
         ##  GET ENERGY DEMANDS
 
         # get initial per-activity demands (can use to get true demands)
-        arr_scoe_deminit_hh_elec = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_scoe_consumpinit_energy_per_hh_elec, True, "array_base", expand_to_all_cats = True)
-        arr_scoe_deminit_hh_heat = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_scoe_consumpinit_energy_per_hh_heat, True, "array_base", expand_to_all_cats = True)
-        arr_scoe_deminit_mmmgdp_elec = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_scoe_consumpinit_energy_per_mmmgdp_elec, True, "array_base", expand_to_all_cats = True)
-        arr_scoe_deminit_mmmgdp_heat = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_scoe_consumpinit_energy_per_mmmgdp_heat, True, "array_base", expand_to_all_cats = True)
+        arr_scoe_deminit_hh_elec = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_scoe_consumpinit_energy_per_hh_elec, True, "array_base", expand_to_all_cats = True)
+        arr_scoe_deminit_hh_heat = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_scoe_consumpinit_energy_per_hh_heat, True, "array_base", expand_to_all_cats = True)
+        arr_scoe_deminit_mmmgdp_elec = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_scoe_consumpinit_energy_per_mmmgdp_elec, True, "array_base", expand_to_all_cats = True)
+        arr_scoe_deminit_mmmgdp_heat = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_scoe_consumpinit_energy_per_mmmgdp_heat, True, "array_base", expand_to_all_cats = True)
         
         # get elasticities
-        arr_scoe_enerdem_elasticity_hh_elec = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_scoe_elasticity_hh_energy_demand_electric_to_gdppc, True, "array_base", expand_to_all_cats = True)
-        arr_scoe_enerdem_elasticity_hh_heat = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_scoe_elasticity_hh_energy_demand_heat_to_gdppc, True, "array_base", expand_to_all_cats = True)
-        arr_scoe_enerdem_elasticity_mmmgdp_elec = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_scoe_elasticity_mmmgdp_energy_demand_elec_to_gdppc, True, "array_base", expand_to_all_cats = True)
-        arr_scoe_enerdem_elasticity_mmmgdp_heat = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_scoe_elasticity_mmmgdp_energy_demand_heat_to_gdppc, True, "array_base", expand_to_all_cats = True)
+        arr_scoe_enerdem_elasticity_hh_elec = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_scoe_elasticity_hh_energy_demand_electric_to_gdppc, True, "array_base", expand_to_all_cats = True)
+        arr_scoe_enerdem_elasticity_hh_heat = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_scoe_elasticity_hh_energy_demand_heat_to_gdppc, True, "array_base", expand_to_all_cats = True)
+        arr_scoe_enerdem_elasticity_mmmgdp_elec = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_scoe_elasticity_mmmgdp_energy_demand_elec_to_gdppc, True, "array_base", expand_to_all_cats = True)
+        arr_scoe_enerdem_elasticity_mmmgdp_heat = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_scoe_elasticity_mmmgdp_energy_demand_heat_to_gdppc, True, "array_base", expand_to_all_cats = True)
         
         # get demand for electricity for households and gdp driven demands
         arr_scoe_growth_demand_hh_elec = sf.project_growth_scalar_from_elasticity(vec_rates_gdp_per_capita, arr_scoe_enerdem_elasticity_hh_elec, False, "standard")
@@ -2247,8 +2294,12 @@ class NonElectricEnergy:
             msg_append = "Energy fractions by category do not sum to 1. See definition of dict_arrs_trns_frac_fuel."
         )
         # get carbon dioxide combustion factors (corrected to output units)
-        arr_trns_ef_by_fuel_co2 = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_enfu_ef_combustion_co2, return_type = "array_units_corrected", expand_to_all_cats = True)
-        arr_trns_energy_density_fuel = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_enfu_energy_density_volumetric, return_type = "array_units_corrected", expand_to_all_cats = True)
+        arr_trns_ef_by_fuel_co2 = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_enfu_ef_combustion_co2, return_type = "array_units_corrected", expand_to_all_cats = True)
+        arr_trns_energy_density_fuel = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_enfu_energy_density_volumetric, return_type = "array_units_corrected", expand_to_all_cats = True)
 
         # initialize electrical demand to pass and output emission arrays
         arr_trns_demand_by_category = 0.0
@@ -2475,11 +2526,32 @@ class NonElectricEnergy:
         ############################
 
         # get the demand scalar
-        array_trde_demscalar = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_trde_demand_scalar, return_type = "array_base", expand_to_all_cats = True, var_bounds = (0, np.inf))
+        array_trde_demscalar = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_trde_demand_scalar, 
+            return_type = "array_base", 
+            expand_to_all_cats = True, 
+            var_bounds = (0, np.inf)
+        )
         # start with freight/megaton km demands
-        array_trde_dem_init_freight = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_trde_demand_initial_mtkm, return_type = "array_base", expand_to_all_cats = True)
-        array_trde_elast_freight_demand_to_gdp = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_trde_elasticity_mtkm_to_gdp, return_type = "array_base", expand_to_all_cats = True)
-        array_trde_growth_freight_dem_by_cat = sf.project_growth_scalar_from_elasticity(vec_rates_gdp, array_trde_elast_freight_demand_to_gdp, False, "standard")
+        array_trde_dem_init_freight = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_trde_demand_initial_mtkm, 
+            return_type = "array_base", 
+            expand_to_all_cats = True
+        )
+        array_trde_elast_freight_demand_to_gdp = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_trde_elasticity_mtkm_to_gdp, 
+            return_type = "array_base", 
+            expand_to_all_cats = True
+        )
+        array_trde_growth_freight_dem_by_cat = sf.project_growth_scalar_from_elasticity(
+            vec_rates_gdp, 
+            array_trde_elast_freight_demand_to_gdp, 
+            rates_are_factors = False, 
+            elasticity_type = "standard"
+        )
         # multiply and add to the output
         array_trde_freight_dem_by_cat = array_trde_dem_init_freight[0]*array_trde_growth_freight_dem_by_cat
         array_trde_freight_dem_by_cat *= array_trde_demscalar
@@ -2488,9 +2560,24 @@ class NonElectricEnergy:
         )
 
         # deal with person-km
-        array_trde_dem_init_passenger = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_trde_demand_initial_pkm_per_capita, return_type = "array_base", expand_to_all_cats = True)
-        array_trde_elast_passenger_demand_to_gdppc = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.modvar_trde_elasticity_pkm_to_gdp, return_type = "array_base", expand_to_all_cats = True)
-        array_trde_growth_passenger_dem_by_cat = sf.project_growth_scalar_from_elasticity(vec_rates_gdp_per_capita, array_trde_elast_passenger_demand_to_gdppc, False, "standard")
+        array_trde_dem_init_passenger = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_trde_demand_initial_pkm_per_capita, 
+            return_type = "array_base", 
+            expand_to_all_cats = True
+        )
+        array_trde_elast_passenger_demand_to_gdppc = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.modvar_trde_elasticity_pkm_to_gdp, 
+            return_type = "array_base", 
+            expand_to_all_cats = True
+        )
+        array_trde_growth_passenger_dem_by_cat = sf.project_growth_scalar_from_elasticity(
+            vec_rates_gdp_per_capita, 
+            array_trde_elast_passenger_demand_to_gdppc, 
+            rates_are_factors = False, 
+            elasticity_type = "standard"
+        )
         # project the growth in per capita, multiply by population, then add it to the output
         array_trde_passenger_dem_by_cat = array_trde_dem_init_passenger[0]*array_trde_growth_passenger_dem_by_cat
         array_trde_passenger_dem_by_cat = (array_trde_passenger_dem_by_cat.transpose()*vec_pop).transpose()
@@ -2569,10 +2656,26 @@ class NonElectricEnergy:
         ##  ECON/GNRL VECTOR AND ARRAY INITIALIZATION
 
         # get some vectors from the se model
-        vec_hh = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.model_socioeconomic.modvar_grnl_num_hh, return_type = "array_base")
-        vec_gdp = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.model_socioeconomic.modvar_econ_gdp, return_type = "array_base")
-        vec_pop = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.model_socioeconomic.modvar_gnrl_pop_total, return_type = "array_base")
-        array_pop = self.model_attributes.get_standard_variables(df_neenergy_trajectories, self.model_socioeconomic.modvar_gnrl_subpop, return_type = "array_base")
+        vec_hh = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.model_socioeconomic.modvar_grnl_num_hh, 
+            return_type = "array_base"
+        )
+        vec_gdp = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.model_socioeconomic.modvar_econ_gdp, 
+            return_type = "array_base"
+        )
+        vec_pop = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.model_socioeconomic.modvar_gnrl_pop_total, 
+            return_type = "array_base"
+        )
+        array_pop = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.model_socioeconomic.modvar_gnrl_subpop, 
+            return_type = "array_base"
+        )
         vec_gdp_per_capita = np.array(df_se_internal_shared_variables["vec_gdp_per_capita"])
         vec_rates_gdp = np.array(df_se_internal_shared_variables["vec_rates_gdp"].dropna())
         vec_rates_gdp_per_capita = np.array(df_se_internal_shared_variables["vec_rates_gdp_per_capita"].dropna())
