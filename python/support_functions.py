@@ -1178,7 +1178,7 @@ def orient_df_by_reference_vector(
     # drop the sort field if needed
     df_out.drop([field_compare], axis = 1, inplace = True) if drop_field_compare else None
 
-    return df_out
+    return df_oute
 
 
 
@@ -1382,6 +1382,52 @@ def scalar_bounds(
     bounds = np.array(bounds).astype(float)
 
     return min([max([scalar, min(bounds)]), max(bounds)])
+
+
+
+def simple_df_agg(
+    df_in: pd.DataFrame,
+    fields_group: list,
+    agg_func: str,
+    fields_agg: Union[List, None] = None,
+    group_fields_ordered_for_sort_q: bool = False,
+) -> pd.DataFrame:
+    """
+    Take an input dataframe, ses grouping fields, and assume all other fields are data. Then, apply the same 'agg_func' to data fields.
+
+    Function Arguments
+    ------------------
+    - df_in: input data frame to aggregate over
+    - fields_group: fields to group the data frame by
+    - agg_func: aggregation function to apply to data fields
+
+    - fields_agg: optional fields to aggregate. If None, assumes all non-group fields are aggregated
+    - group_fields_ordered_for_sort_q: bool. Default = False. If True, the grouping fields are ordered and used to sort the output dataframe after aggregation.
+    """
+
+    check_fields(df_in, fields_group)
+
+    fields_agg = (
+        [x for x in df_in.columns if (x not in fields_group)] 
+        if fields_agg is None
+        else [x for x in fields_agg if x in df_in.columns]
+    )
+    dict_agg = dict(zip(fields_group, ["first" for x in fields_group]))
+    dict_agg.update(dict(zip(fields_agg, [agg_func for x in fields_agg])))
+
+    df_out = (
+        df_in[fields_group + fields_agg]
+        .groupby(fields_group)
+        .agg(dict_agg)
+        .reset_index(drop=True)
+    )
+    df_out = (
+        df_out.sort_values(by=fields_group)
+        if (group_fields_ordered_for_sort_q)
+        else df_out
+    )
+
+    return df_out
 
 
 
