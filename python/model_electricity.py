@@ -250,7 +250,9 @@ class ElectricEnergy:
             self.model_attributes.table_nemomod_operating_cost_discounted,
             self.model_attributes.table_nemomod_production_by_technology,
             self.model_attributes.table_nemomod_total_annual_capacity,
-            self.model_attributes.table_nemomod_use_by_technology
+            self.model_attributes.table_nemomod_use_by_technology,
+            "vregenerationannualnn",
+            "vusenn"
         ]
 
         # instantiate AFOLU and CircularEconomy class for access to variables
@@ -4602,6 +4604,8 @@ class ElectricEnergy:
             dict_out.update(self.format_nemomod_table_residual_capacity(df_elec_trajectories))
             # ResidualStorageCapacity
             dict_out.update(self.format_nemomod_table_residual_storage_capacity(df_elec_trajectories))
+            # REMinProductionTarget
+            dict_out.update(self.format_nemomod_re_min_production_target(df_elec_trajectories, attribute_fuel = attribute_fuel))
             # RETagTechnology
             dict_out.update(self.format_nemomod_table_re_tag_technology(df_elec_trajectories))
             # SpecifiedAnnualDemand

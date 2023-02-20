@@ -1136,7 +1136,6 @@ def _optional_log(
 
 
 
-##  order a data frame by values in vector_reference
 def orient_df_by_reference_vector(
     df_in: pd.DataFrame,
     vector_reference: Union[list, np.ndarray],
@@ -1178,7 +1177,7 @@ def orient_df_by_reference_vector(
     # drop the sort field if needed
     df_out.drop([field_compare], axis = 1, inplace = True) if drop_field_compare else None
 
-    return df_oute
+    return df_out
 
 
 
