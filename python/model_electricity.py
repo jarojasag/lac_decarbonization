@@ -6701,6 +6701,13 @@ class ElectricEnergy:
                     df_elec_trajectories
                 )
             )
+            # REMinProductionTarget
+            dict_out.update(
+                self.format_nemomod_re_min_production_target(
+                    df_elec_trajectories
+                    attribute_fuel = attribute_fuel
+                )
+            )
             # RETagTechnology
             dict_out.update(
                 self.format_nemomod_table_re_tag_technology(
