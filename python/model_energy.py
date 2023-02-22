@@ -1326,7 +1326,7 @@ class NonElectricEnergy:
             return_type = "array_base",
             var_bounds = (0, 1)
         )
-        vec_fgtv_reduction_flared_leaks = self.model_attributes.get_standard_variables(
+        vec_fgtv_reduction_leaks = self.model_attributes.get_standard_variables(
             df_neenergy_trajectories,
             self.modvar_fgtv_frac_reduction_fugitive_leaks,
             return_type = "array_base",
@@ -1369,14 +1369,20 @@ class NonElectricEnergy:
                 dict_emission_to_fugitive_components[modvar_emission]["transmission"],
                 arr_enfu_energy_density_volumetric
             )
+
             # weighted emission factor for tradeoff from flare to vent; note that categories for which arr_fgtv_frac_vent_to_flare is not defined have the arr_fgtv_frac_vent_to_flare = 1 (so that everything goes to flaring)
             arr_fgtv_ef_fv_flare = arr_fgtv_frac_vent_to_flare*arr_ef_production_flaring if (arr_ef_production_flaring is not None) else 0.0
             arr_fgtv_ef_fv_vent = (1 - arr_fgtv_frac_vent_to_flare)*arr_ef_production_venting if (arr_ef_production_flaring is not None) else 0.0
             arr_fgtv_ef_fv = arr_fgtv_ef_fv_flare + arr_fgtv_ef_fv_vent
+            arr_fgtv_ef_fv += sf.do_array_mult(arr_ef_production_fugitive, 1 - vec_fgtv_reduction_leaks) #ADD IN FUGITIVE
+
             # distribution, production, and transmission emissions
             arr_fgtv_emit_distribution = arr_demands_distribution*arr_ef_distribution if (arr_ef_distribution is not None) else 0.0
+            arr_fgtv_emit_distribution = sf.do_array_mult(arr_fgtv_emit_distribution, 1 - vec_fgtv_reduction_leaks) if isinstance(arr_fgtv_emit_distribution, np.ndarray) else arr_fgtv_emit_distribution
             arr_fgtv_emit_production = arr_fgtv_production*arr_fgtv_ef_fv
             arr_fgtv_emit_transmission = arr_ef_transmission*(arr_fgtv_production + arr_fgtv_imports) if (arr_ef_transmission is not None) else 0.0
+            arr_fgtv_emit_transmission = sf.do_array_mult(arr_fgtv_emit_transmission, 1 - vec_fgtv_reduction_leaks) if isinstance(arr_fgtv_emit_transmission, np.ndarray) else arr_fgtv_emit_transmission
+
             # get total and determine scalar
             arr_fgtv_emissions_cur = arr_fgtv_emit_distribution + arr_fgtv_emit_production + arr_fgtv_emit_transmission
             emission = self.model_attributes.get_variable_characteristic(

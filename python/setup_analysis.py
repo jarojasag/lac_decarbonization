@@ -69,6 +69,7 @@ fp_csv_cw_fao_product_demand_categories_for_ie = os.path.join(dir_ref_data_cross
 fp_csv_afolu_import_exports = os.path.join(dir_rbd_afolu_exports_imports, "afolu_import_(ofdem)_export_(ofprod)_fractions.csv")
 # files for energy/nemomod inputs
 fp_csv_nemomod_residual_capacity_inputs = os.path.join(dir_rbd_nemomod_energy_inputs, "inputs_by_country_modvar_entc_nemomod_residual_capacity.csv")
+fp_csv_nemomod_hydropower_max_tech_capacity = os.path.join(dir_rbd_nemomod_energy_inputs, "inputs_by_country_modvar_entc_nemomod_max_technological_capacity.csv")
 # files for afolu transition probabilities
 fp_csv_transition_probability_estimation_annual = os.path.join(dir_rbd_baseline_transition_probs, "transition_probs_by_region_and_year.csv")
 fp_csv_transition_probability_estimation_mean = os.path.join(dir_rbd_baseline_transition_probs, "transition_probs_by_region_mean.csv")

@@ -1235,7 +1235,8 @@ def transformation_inen_shift_modvars(
     dict_modvar_specs: Union[Dict[str, float], None] = None,
     categories: Union[List[str], None] = None,
     regions_apply: Union[List[str], None] = None,
-    field_region = "nation",
+    field_region: str = "nation",
+    magnitude_relative_to_baseline: bool = False,
     model_energy: Union[me.NonElectricEnergy, None] = None,
     strategy_id: Union[int, None] = None
 ) -> pd.DataFrame:
@@ -1256,6 +1257,7 @@ def transformation_inen_shift_modvars(
         that will take from others). Maps from modvar to fraction of magnitude.
         Sum of values must == 1.
     - field_region: field in df_input that specifies the region
+    - magnitude_relative_to_baseline: apply the magnitude relative to baseline?
     - model_energy: optional NonElectricEnergy object to pass to
         transformation_general
     - regions_apply: optional set of regions to use to define strategy. If None,
@@ -1314,8 +1316,6 @@ def transformation_inen_shift_modvars(
         if region in regions_apply:
             for cat in cats_all:
 
-                target_value = magnitude#*dict_modvar_specs.get(modvar_target)
-                scale_non_elec = 1 - target_value
                 fields = [
                     model_attributes.build_varlist(
                         subsec,
@@ -1324,9 +1324,19 @@ def transformation_inen_shift_modvars(
                     )[0] for x in modvars_target
                 ]
 
-                target_distribution = magnitude*np.array([dict_modvar_specs.get(x) for x in modvars_target])
+                vec_initial_vals = np.array(df_in[fields].iloc[0]).astype(float)
+                val_initial_target = vec_initial_vals.sum() if magnitude_relative_to_baseline else 0.0
+                vec_initial_distribution = vec_initial_vals/vec_initial_vals.sum()
+
                 vec_final_vals = np.array(df_in[fields].iloc[n_tp - 1]).astype(float)
                 val_final_target = sum(vec_final_vals)
+
+                target_value = float(sf.vec_bounds(magnitude + val_initial_target, (0.0, 1.0)))#*dict_modvar_specs.get(modvar_target)
+                scale_non_elec = 1 - target_value
+
+                target_distribution = magnitude*np.array([dict_modvar_specs.get(x) for x in modvars_target]) + val_initial_target*vec_initial_distribution
+                target_distribution /= (magnitude + val_initial_target)
+                target_distribution = np.nan_to_num(target_distribution, 0.0, posinf = 0.0)
 
                 # get model variables that need to be adjusted
                 modvars_adjust = []

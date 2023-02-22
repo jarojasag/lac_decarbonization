@@ -486,7 +486,9 @@ def do_array_mult(
     - allow_outer: if arrays are mismatched in shape, allow an outer product
         (returns np.outer(arr_stable, arr_variable))
     """
-    if (arr_variable.shape == arr_stable.shape):
+    if isinstance(arr_variable, float) or isinstance(arr_variable, int) or isinstance(arr_stable, float) or isinstance(arr_stable, int):
+        return arr_variable*arr_stable
+    elif (arr_variable.shape == arr_stable.shape):
         return arr_variable*arr_stable
     elif (len(arr_stable.shape) == 2):
         if (arr_variable.shape == (arr_stable.shape[1], )):
