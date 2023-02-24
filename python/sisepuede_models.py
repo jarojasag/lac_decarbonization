@@ -215,6 +215,7 @@ class SISEPUEDEModels:
 		df_input_data: pd.DataFrame,
 		include_electricity_in_energy: bool = True,
 		models_run: Union[List[str], None] = None,
+		regions: Union[List[str], str, None] = None,
 		run_integrated: bool = True
 	) -> pd.DataFrame:
 		"""
@@ -242,6 +243,8 @@ class SISEPUEDEModels:
 		- include_electricity_in_energy: include the electricity model in runs
 			of the energy model?
 			* If False, runs without electricity (time intensive model)
+		- regions: regions to run the model for (NEEDS ADDITIONAL WORK IN 
+			NON-ELECTRICITY SECTORS)
 		- run_integrated: run models as integrated collection?
 			* If False, will run each model individually, without interactions
 				(not recommended)
@@ -249,7 +252,8 @@ class SISEPUEDEModels:
 
 		df_return = []
 		models_run = self.model_attributes.get_sector_list_from_projection_input(models_run)
-
+		regions = self.model_attributes.get_region_list_filtered(regions)
+		
 		##  1. Run AFOLU and collect output
 
 		if "AFOLU" in models_run:
@@ -336,7 +340,11 @@ class SISEPUEDEModels:
 			# create the engine and try to run Electricity
 			engine = sqlalchemy.create_engine(f"sqlite:///{self.fp_nemomod_temp_sqlite_db}")
 			try:
-				df_elec = self.model_electricity.project(df_input_data, engine)
+				df_elec = self.model_electricity.project(
+					df_input_data, 
+					engine,
+					regions = regions
+				)
 				df_return.append(df_elec)
 				df_return = [sf.merge_output_df_list(df_return, self.model_attributes, "concatenate")] if run_integrated else df_return
 				self._log(f"ElectricEnergy model run successfully completed", type_log = "info")

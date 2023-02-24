@@ -1111,7 +1111,11 @@ class SISEPUEDE:
 							# try to run the model
 							try:
 								t0 = time.time()
-								df_output = self.models.project(df_input_cur, **kwargs)
+								df_output = self.models.project(
+									df_input_cur, 
+									regions = region,
+									**kwargs
+								)
 								df_output = sf.add_data_frame_fields_from_dict(
 									df_output,
 									{

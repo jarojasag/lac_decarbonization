@@ -2077,6 +2077,36 @@ class ModelAttributes:
 
 
 
+    def get_region_list_filtered(self,
+        regions: Union[List[str], str, None], 
+        attribute_region: Union[AttributeTable, None] = None
+    ) -> List[str]:
+        """
+        Return a list of regions validly defined within Model Attributes.
+
+        Function Arguments
+        ------------------
+        - regions: List of regions or string of region to run. If None, defaults 
+            to configuration specification.
+
+        Keyword Arguments
+        -----------------
+        - attribute_region: optional regional attribute to specify
+        """
+
+        attribute_region = self.dict_attributes.get("region") if (attribute_region is None) else attribute_region
+
+        # format regions
+        regions = [regions] if isinstance(regions, str) else regions
+        regions = [x for x in regions if x in attribute_region.key_values] if isinstance(regions, List) else None
+        if isinstance(regions, List):
+            regions = None if (len(regions) == 0) else regions
+        regions = self.configuration.get("region") if (regions is None) else regions
+
+        return regions
+
+
+
     def get_sector_attribute(self,
         sector: str,
         return_type: str

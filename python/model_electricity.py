@@ -522,7 +522,7 @@ class ElectricEnergy:
     def _initialize_nemomod_reference_dict(self,
         nemomod_reference_files: Union[str, dict],
         dict_tables_required_to_required_fields: Union[Dict[str, List[str]], None] = None,
-        filter_regions: bool = True
+        filter_regions_to_config: bool = False
     ) -> None:
         """
         Initialize the dictionary of reference files for NemoMod required to 
@@ -543,32 +543,43 @@ class ElectricEnergy:
         - dict_tables_required_to_required_fields: dictionary mapping required 
             reference table names (str) to list of required fields.
             * If None, defaults to self.dict_tables_required_to_required_fields
-        - filter_regions: filter regions to correspond with ModelAttributes 
+        - filter_regions_to_config: filter regions to correspond with ModelAttributes 
             region attribute table
         """
 
-        # some initialization
+        ##  INITIALIZATION
+
+        # attribute tables
         attr_region = self.model_attributes.dict_attributes.get(self.model_attributes.dim_region)
         attr_technology = self.model_attributes.get_attribute_table(self.subsec_name_entc)
         attr_time_slice = self.model_attributes.dict_attributes.get("time_slice")
+
+        # attribute derivatives
         dict_tables_required_to_required_fields = self.dict_tables_required_to_required_fields if (dict_tables_required_to_required_fields is None) else dict_tables_required_to_required_fields
         dict_out = {}
         set_tables_required = set(self.dict_tables_required_to_required_fields.keys())
 
-        # if file path, check tables and read in
+
+        ##  CHECK INPUT DIRCTORY AND TRY TO READ IN IF FILES
+
         if isinstance(nemomod_reference_files, str):
+
             # check the directory
             dir_nemomod_ref = sf.check_path(nemomod_reference_files, False)
             set_tables_available = set([x.replace(".csv", "") for x in os.listdir(dir_nemomod_ref) if x.endswith(".csv")])
             set_tables_available = set_tables_required & set_tables_available
+
             if not set_tables_required.issubset(set_tables_available):
                 set_missing = sf.print_setdiff(set_tables_required, set_tables_available)
                 raise RuntimeError(f"Initialization error in ElectricEnergy: required reference tables {set_missing} not found in {dir_nemomod_ref}.")
+           
             # read in files
             for fbn in list(set_tables_required):
-                # ADD LOGGING HERE
-                df_tmp = pd.read_csv(os.path.join(dir_nemomod_ref, f"{fbn}.csv"))
+                fp_read = os.path.join(dir_nemomod_ref, f"{fbn}.csv")
+                df_tmp = pd.read_csv(fp_read)
                 dict_out.update({fbn: df_tmp})
+
+                self._log(f"Successfully read NemoMod input table data from {fp_read}", type_log = "info")
 
         # if dictionary, simply copy into output dictionary
         elif isinstance(nemomod_reference_files, dict):
@@ -576,27 +587,37 @@ class ElectricEnergy:
             for k in list(set_tables_required):
                 dict_out.update({k: nemomod_reference_files[k]})
 
-        # check tables
+
+        ##  VERIFY INPUT TABLES
+
         for k in dict_out.keys():
+
             # check that regions are correctly implemented
             if self.field_nemomod_region in dict_out[k]:
+
                 df_filt = dict_out[k][dict_out[k][self.field_nemomod_region].isin(attr_region.key_values)]
-                regions_config = self.model_attributes.configuration.get("region")
-                sf.check_set_values(regions_config, df_filt[self.field_nemomod_region])
-                if filter_regions:
+                if len(df_filt) == 0:
+                    raise RuntimeError(f"Error in ElectricEnergy._initialize_nemomod_reference_dict: no valid regions found in table {k}.")
+
+                if filter_regions_to_config:
+                    regions_config = self.model_attributes.configuration.get("region")
+                    sf.check_set_values(regions_config, df_filt[self.field_nemomod_region])
                     df_filt = df_filt[df_filt[self.field_nemomod_region].isin(regions_config)]
-                # conditions needed for the regions
-                check_regions = (len(set(df_filt[self.field_nemomod_region])) == len(set(regions_config)))
-                if not check_regions:
-                    missing_vals = sf.print_setdiff(set(regions_config), set(df_filt[self.field_nemomod_region]))
-                    raise RuntimeError(f"Initialization error in ElectricEnergy: field {self.field_nemomod_region} in table {k} is missing regions {missing_vals}.")
+
+                    # conditions needed for the regions
+                    check_regions = (len(set(df_filt[self.field_nemomod_region])) == len(set(regions_config)))
+                    if not check_regions:
+                        missing_vals = sf.print_setdiff(set(regions_config), set(df_filt[self.field_nemomod_region]))
+                        raise RuntimeError(f"Initialization error in ElectricEnergy: field {self.field_nemomod_region} in table {k} is missing regions {missing_vals}.")
 
                 dict_out.update({k: df_filt})
 
             # check that time slices are correctly implemented
             if self.field_nemomod_time_slice in dict_out[k]:
+
                 n = len(dict_out[k])
                 df_filt = dict_out[k][dict_out[k][self.field_nemomod_time_slice].isin(attr_time_slice.key_values)]
+
                 if len(set(df_filt[self.field_nemomod_time_slice])) != len(attr_time_slice.key_values):
                     missing_vals = sf.print_setdiff(set(attr_time_slice.key_values), set(df_filt[self.field_nemomod_time_slice]))
                     raise RuntimeError(f"Initialization error in ElectricEnergy: field {self.field_nemomod_time_slice} in table {k} is missing time_slices {missing_vals} .")
@@ -1027,8 +1048,7 @@ class ElectricEnergy:
         df_input: pd.DataFrame,
         field_region: str = None,
         outer_prod: bool = True,
-        restriction_regions: list = None,
-        restrict_to_config_region: bool = True
+        restriction_regions: list = None
     ) -> pd.DataFrame:
         """
         Add a region field (if necessary) to input dataframe if it is missing. 
@@ -1049,15 +1069,17 @@ class ElectricEnergy:
             configuration? Generally set to true, but can be set to false for 
             data construction
         """
-
-        field_region = self.field_nemomod_region if (field_region is None) else field_region
-
         # get regions
-        regions = self.model_attributes.dict_attributes[self.model_attributes.dim_region].key_values
-        regions = [x for x in regions if x in self.model_attributes.configuration.get("region")] if restrict_to_config_region else regions
-        regions = [x for x in regions if x in restriction_regions] if (restriction_regions is not None) else regions
+        field_region = self.field_nemomod_region if (field_region is None) else field_region
+        regions = self.model_attributes.get_region_list_filtered(restriction_regions)
+
         # add to output using outer product
-        df_input = self.add_index_field_from_key_values(df_input, regions, field_region, outer_prod = outer_prod)
+        df_input = self.add_index_field_from_key_values(
+            df_input, 
+            regions, 
+            field_region, 
+            outer_prod = outer_prod
+        )
 
         return df_input
 
@@ -1146,11 +1168,12 @@ class ElectricEnergy:
 
 
 
-    def add_multifields_from_key_values(self,
+    def addRGN_multifields_from_key_values(self,
         df_input_base: pd.DataFrame,
         fields_to_add: list,
         time_period_as_year: bool = None,
-        override_time_period_transformation: Union[bool, None] = False
+        override_time_period_transformation: Union[bool, None] = False,
+        regions: Union[List[str], None] = None
     ) -> pd.DataFrame:
         """
         Add a multiple fields, assuming repitition of the data frame across 
@@ -1163,11 +1186,12 @@ class ElectricEnergy:
 
         Keyword Arguments
         -----------------
+        - override_time_period_transformation: override the time period 
+            transformation step to prevent applying it twice
+        - regions: regions to pass to add_index_field_region
         - time_period_as_year: enter values in field 
             ElectricEnergy.field_nemomod_year as time periods? If None, default 
             to ElectricEnergy.nemomod_time_period_as_year
-        - override_time_period_transformation: override the time period 
-            transformation step to prevent applying it twice
         """
 
         time_period_as_year = self.nemomod_time_period_as_year if (time_period_as_year is None) else time_period_as_year
@@ -1181,7 +1205,7 @@ class ElectricEnergy:
         # ordered additions
         df_input = self.add_index_field_technology(df_input) if (self.field_nemomod_technology in fields_to_add) else df_input
         df_input = self.add_index_field_fuel(df_input) if (self.field_nemomod_fuel in fields_to_add) else df_input
-        df_input = self.add_index_field_region(df_input) if (self.field_nemomod_region in fields_to_add) else df_input
+        df_input = self.add_index_field_region(df_input, restriction_regions = regions) if (self.field_nemomod_region in fields_to_add) else df_input
         df_input = self.add_index_field_year(df_input, time_period_as_year = time_period_as_year, override_time_period_transformation = override_time_period_transformation) if (self.field_nemomod_year in fields_to_add) else df_input
 
         # set sorting hierarchy, then drop original id field
@@ -1240,7 +1264,7 @@ class ElectricEnergy:
             self.field_nemomod_value
         ]
         fields_for_multifield.append(self.field_nemomod_mode) if (cost_type == "variable") else None
-        df_out = self.add_multifields_from_key_values(
+        df_out = self.addRGN_multifields_from_key_values(
             df_out, 
             fields_for_multifield,
             override_time_period_transformation = override_time_period_transformation
@@ -1831,7 +1855,8 @@ class ElectricEnergy:
 
     def get_entc_emissions_activity_ratio_comp_fp(self,
         df_elec_trajectories: pd.DataFrame,
-        list_entc_modvars_fp_ear: Union[List[str], None] = None
+        list_entc_modvars_fp_ear: Union[List[str], None] = None,
+        regions: Union[List[str], None] = None
     ) -> Union[pd.DataFrame, None]:
         """
         Get emissions activity ratios for fuel production, which are explicitly 
@@ -1854,6 +1879,8 @@ class ElectricEnergy:
                 defaults to self.model_attributes
         - list_entc_modvars_fp_ear: list of ENTC emissions activity ratio model 
             variables by gas.
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         """
         
         #
@@ -1876,7 +1903,7 @@ class ElectricEnergy:
             scalar_correct /= self.get_nemomod_energy_scalar(modvar)
             
             # get the model variable and pivot
-            df_tmp = self.format_model_variable_as_nemomod_table(
+            df_tmp = self.formatRGN_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 modvar,
                 "TMP",
@@ -1886,6 +1913,7 @@ class ElectricEnergy:
                     self.field_nemomod_region
                 ],
                 self.field_nemomod_technology,
+                regions = regions,
                 scalar_to_nemomod_units = scalar_correct,
                 var_bounds = (0, np.inf)
             ).get("TMP")
@@ -1898,7 +1926,7 @@ class ElectricEnergy:
             
             
         ##  prepare output dataframe
-        df_out = self.add_multifields_from_key_values(
+        df_out = self.addRGN_multifields_from_key_values(
             pd.concat(df_out, axis = 0),
             [
                 self.field_nemomod_id,
@@ -1909,7 +1937,8 @@ class ElectricEnergy:
                 self.field_nemomod_value,
                 self.field_nemomod_year
             ],
-            override_time_period_transformation = True
+            override_time_period_transformation = True,
+            regions = regions
         )
 
         return df_out
@@ -1921,7 +1950,8 @@ class ElectricEnergy:
         dict_enfu_arrs_efs_scaled_to_nemomod: Dict[str, np.ndarray],
         attribute_fuel: Union[AttributeTable, None] = None,
         attribute_technology: Union[AttributeTable, None] = None,
-        attribute_time_period: Union[AttributeTable, None] = None
+        attribute_time_period: Union[AttributeTable, None] = None,
+        regions: Union[List[str], None] = None
     ) -> Union[pd.DataFrame, None]:
         """
         Get emissions activity ratios for mining and extraction activities in 
@@ -1945,6 +1975,8 @@ class ElectricEnergy:
             defaults to self.model_attributes
         - attribute_time_period: attribute table used for time period. If None,
                 defaults to self.model_attributes
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         """
         
         # get some information
@@ -2059,7 +2091,7 @@ class ElectricEnergy:
             
         
         ##  prepare output dataframe
-        df_out = self.add_multifields_from_key_values(
+        df_out = self.addRGN_multifields_from_key_values(
             pd.concat(df_out, axis = 0),
             [
                 self.field_nemomod_id,
@@ -2069,7 +2101,8 @@ class ElectricEnergy:
                 self.field_nemomod_technology,
                 self.field_nemomod_value,
                 self.field_nemomod_year
-            ]
+            ],
+            regions = regions
         )
 
         return df_out
@@ -2192,7 +2225,7 @@ class ElectricEnergy:
     def get_tech_info_dict(self,
         attribute_fuel: Union[AttributeTable, None] = None,
         attribute_technology: Union[AttributeTable, None] = None
-    ) -> dict:
+    ) -> Dict:
         """
         Retrieve information relating technology to storage, including a map of 
             technologies to storage, storage to associated technology, and 
@@ -2259,8 +2292,9 @@ class ElectricEnergy:
 
     def get_variable_cost_fuels_gravimetric_density(self,
         df_elec_trajectories: pd.DataFrame,
-        override_time_period_transformation: bool = False
-    ):
+        override_time_period_transformation: bool = False,
+        regions: Union[List[str], None] = None,
+    ) -> pd.DataFrame:
         """
         CURRENTLY DEPRICATED--CHECK
 
@@ -2276,6 +2310,8 @@ class ElectricEnergy:
         -----------------
         - override_time_period_transformation: if True, return raw time periods 
             instead of those transformed to fit NemoMod approach.
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         """
 
         ##  PREPARE SCALARS
@@ -2296,7 +2332,7 @@ class ElectricEnergy:
         ##  GET PRICES AND DENSITY
 
         # Fuel costs (enter as supply) - Gravimetric price in configuration Monetary/Mass (mass of modvar_enfu_energy_density_gravimetric)
-        df_price = self.format_model_variable_as_nemomod_table(
+        df_price = self.formatRGN_model_variable_as_nemomod_table(
             df_elec_trajectories,
             self.modvar_enfu_price_gravimetric,
             self.model_attributes.table_nemomod_variable_cost,
@@ -2307,13 +2343,14 @@ class ElectricEnergy:
             dict_fields_to_pass = {
                 self.field_nemomod_mode: self.cat_enmo_gnrt
             },
+            override_time_period_transformation = override_time_period_transformation,
+            regions = regions,
             scalar_to_nemomod_units = scalar_price,
-            var_bounds = (0, np.inf),
-            override_time_period_transformation = override_time_period_transformation
+            var_bounds = (0, np.inf)
         )
 
         # get the energy density in terms of configuration Energy/Mass (mass of modvar_enfu_energy_density_gravimetric)
-        df_density = self.format_model_variable_as_nemomod_table(
+        df_density = self.formatRGN_model_variable_as_nemomod_table(
             df_elec_trajectories,
             self.modvar_enfu_energy_density_gravimetric,
             self.model_attributes.table_nemomod_variable_cost,
@@ -2325,8 +2362,9 @@ class ElectricEnergy:
             dict_fields_to_pass = {
                 self.field_nemomod_mode: self.cat_enmo_gnrt
             },
-            var_bounds = (0, np.inf),
-            override_time_period_transformation = override_time_period_transformation
+            override_time_period_transformation = override_time_period_transformation,
+            regions = regions,
+            var_bounds = (0, np.inf)
         )
 
 
@@ -2352,7 +2390,8 @@ class ElectricEnergy:
 
     ##  get variable cost of fuels (as dummy technologies) with prices based on volumetric energy density
     def get_variable_cost_fuels_volumetric_density(self,
-        df_elec_trajectories: pd.DataFrame
+        df_elec_trajectories: pd.DataFrame,
+        regions: Union[List[str], None] = None,
     ):
         """
         CURRENTLY DEPRICATED--CHECK
@@ -2364,6 +2403,11 @@ class ElectricEnergy:
         Function Arguments
         ------------------
         - df_elec_trajectories: data frame containing input variables as columns
+
+        Keyword Arguments
+        -----------------
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         """
 
         ##  PREPARE SCALARS
@@ -2384,7 +2428,7 @@ class ElectricEnergy:
         ##  GET PRICES AND DENSITY
 
         # Fuel costs (enter as supply) - Volumetric price in configuration Monetary/Mass (mass of modvar_enfu_energy_density_gravimetric)
-        df_price = self.format_model_variable_as_nemomod_table(
+        df_price = self.formatRGN_model_variable_as_nemomod_table(
             df_elec_trajectories,
             self.modvar_enfu_price_volumetric,
             self.model_attributes.table_nemomod_variable_cost,
@@ -2395,12 +2439,13 @@ class ElectricEnergy:
             dict_fields_to_pass = {
                 self.field_nemomod_mode: self.cat_enmo_gnrt
             },
+            regions = regions,
             scalar_to_nemomod_units = scalar_price,
             var_bounds = (0, np.inf)
         )
 
         # get the energy density in terms of configuration Energy/Mass (mass of modvar_enfu_energy_density_gravimetric)
-        df_density = self.format_model_variable_as_nemomod_table(
+        df_density = self.formatRGN_model_variable_as_nemomod_table(
             df_elec_trajectories,
             self.modvar_enfu_energy_density_volumetric,
             self.model_attributes.table_nemomod_variable_cost,
@@ -2408,10 +2453,11 @@ class ElectricEnergy:
                 self.field_nemomod_year
             ],
             self.field_nemomod_technology,
-            scalar_to_nemomod_units = scalar_energy,
             dict_fields_to_pass = {
                 self.field_nemomod_mode: self.cat_enmo_gnrt
             },
+            regions = regions,
+            scalar_to_nemomod_units = scalar_energy,
             var_bounds = (0, np.inf)
         )
 
@@ -2561,7 +2607,7 @@ class ElectricEnergy:
 
 
 
-    def format_model_variable_as_nemomod_table(self,
+    def formatRGN_model_variable_as_nemomod_table(self,
         df_elec_trajectories: pd.DataFrame,
         modvar: str,
         table_nemomod: str,
@@ -2571,6 +2617,7 @@ class ElectricEnergy:
         dict_fields_to_pass: dict = {},
         drop_flag: Union[float, int] = None,
         override_time_period_transformation: bool = False,
+        regions: Union[List[str], None] = None,
         scalar_to_nemomod_units: float = 1,
         **kwargs
     ) -> pd.DataFrame:
@@ -2599,6 +2646,8 @@ class ElectricEnergy:
         - override_time_period_transformation: override the time series 
             transformation? data frames will return raw years instead of 
             transformed years.
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         - scalar_to_nemomod_units: scalar applied to the values to convert to 
             proper units
         **kwargs: passed to ModelAttributes.get_standard_variables()
@@ -2654,9 +2703,10 @@ class ElectricEnergy:
         df_out = df_out[~df_out[self.field_nemomod_value].isin([drop_flag])] if (drop_flag is not None) else df_out
         if isinstance(df_append, pd.DataFrame):
             df_out = pd.concat([df_out, df_append[df_out.columns]], axis = 0).reset_index(drop = True)
-        df_out = self.add_multifields_from_key_values(df_out,
+        df_out = self.addRGN_multifields_from_key_values(df_out,
             fields_index_nemomod,
-            override_time_period_transformation = override_time_period_transformation
+            override_time_period_transformation = override_time_period_transformation,
+            regions = regions
         )
 
         return {table_nemomod: df_out}
@@ -2842,10 +2892,14 @@ class ElectricEnergy:
         # set some defaults
         attribute_fuel = self.model_attributes.get_attribute_table(self.subsec_name_enfu) if (attribute_fuel is None) else attribute_fuel
         pycat_fuel = self.model_attributes.get_subsector_attribute(self.subsec_name_enfu, "pycategory_primary")
-        dict_rename = {
-            pycat_fuel: self.field_nemomod_value, 
-            "description": self.field_nemomod_description
-        } if (dict_rename is None) else dict_rename
+        dict_rename = (
+            {
+                pycat_fuel: self.field_nemomod_value, 
+                "description": self.field_nemomod_description
+            } 
+            if (dict_rename is None) 
+            else dict_rename
+        )
 
         # set values out
         df_out = attribute_fuel.table.copy()
@@ -2868,7 +2922,6 @@ class ElectricEnergy:
 
 
 
-    ##  format MODE_OF_OPERATION for NemoMod
     def format_nemomod_attribute_table_mode_of_operation(self,
         attribute_mode: AttributeTable = None,
         dict_rename: dict = None
@@ -2887,8 +2940,15 @@ class ElectricEnergy:
         """
 
         # get the region attribute - reduce only to applicable regions
-        attribute_mode = self.model_attributes.dict_attributes[self.model_attributes.dim_mode] if (attribute_mode is None) else attribute_mode
-        dict_rename = {self.model_attributes.dim_mode: self.field_nemomod_value, "description": self.field_nemomod_description} if (dict_rename is None) else dict_rename
+        attribute_mode = self.model_attributes.dict_attributes.get(self.model_attributes.dim_mode) if (attribute_mode is None) else attribute_mode
+        dict_rename = (
+            {
+                self.model_attributes.dim_mode: self.field_nemomod_value, 
+                "description": self.field_nemomod_description
+            } 
+            if (dict_rename is None) 
+            else dict_rename
+        )
 
         # set values out
         df_out = attribute_mode.table.copy().rename(columns = dict_rename)
@@ -2899,7 +2959,6 @@ class ElectricEnergy:
 
 
 
-    ##  format NODE for NemoMod
     def format_nemomod_attribute_table_node(self,
         attribute_node: AttributeTable = None,
         dict_rename: dict = None
@@ -2922,10 +2981,11 @@ class ElectricEnergy:
         return None
 
 
-    ##  format REGION for NemoMod
+
     def format_nemomod_attribute_table_region(self,
         attribute_region: AttributeTable = None,
-        dict_rename: dict = None
+        dict_rename: dict = None,
+        regions: Union[List[str], None] = None,
     ) -> pd.DataFrame:
         """
         Format the REGION dimension table for NemoMod based on SISEPUEDE 
@@ -2938,22 +2998,33 @@ class ElectricEnergy:
             ModelAttributes default.
         - dict_rename: dictionary to rename to "val" and "desc" fields for 
             NemoMod
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         """
 
         # get the region attribute - reduce only to applicable regions
         attribute_region = self.model_attributes.dict_attributes[self.model_attributes.dim_region] if (attribute_region is None) else attribute_region
-        dict_rename = {self.model_attributes.dim_region: self.field_nemomod_value, "category_name": self.field_nemomod_description} if (dict_rename is None) else dict_rename
+        dict_rename = (
+            {
+                self.model_attributes.dim_region: self.field_nemomod_value, 
+                "category_name": self.field_nemomod_description
+            } 
+            if (dict_rename is None) 
+            else dict_rename
+        )
+        
+        regions = self.model_attributes.get_region_list_filtered(regions, attribute_region = attribute_region)
 
         # set values out
         df_out = attribute_region.table.copy().rename(columns = dict_rename)
-        df_out = df_out[df_out[self.field_nemomod_value].isin(self.model_attributes.configuration.get("region"))]
+        df_out = df_out[df_out[self.field_nemomod_value].isin(regions)]
         fields_ord = [x for x in self.fields_nemomod_sort_hierarchy if (x in df_out.columns)]
         df_out = df_out[fields_ord].sort_values(by = fields_ord).reset_index(drop = True)
 
         return {self.model_attributes.table_nemomod_region: df_out}
 
 
-    ##  format STORAGE for NemoMod
+
     def format_nemomod_attribute_table_storage(self,
         attribute_storage: AttributeTable = None,
         dict_rename: dict = None
@@ -2985,7 +3056,7 @@ class ElectricEnergy:
         return {self.model_attributes.table_nemomod_storage: df_out}
 
 
-    ##  format TECHNOLOGY for NemoMod
+
     def format_nemomod_attribute_table_technology(self,
         attribute_fuel: Union[AttributeTable, None] = None,
         attribute_technology: Union[AttributeTable, None] = None,
@@ -3081,13 +3152,13 @@ class ElectricEnergy:
     #    FUNCTIONS TO FORMAT MODEL VARIABLE INPUTS FOR SQL    #
     ###########################################################
 
-    ##  format AnnualEmissionLimit for NemoMod
     def format_nemomod_table_annual_emission_limit(self,
         df_elec_trajectories: pd.DataFrame,
         attribute_emission: AttributeTable = None,
         attribute_time_period: AttributeTable = None,
         dict_gas_to_emission_fields: dict = None,
-        drop_flag: int = -999
+        drop_flag: int = -999,
+        regions: Union[List[str], None] = None,
     ) -> pd.DataFrame:
         """
         Format the AnnualEmissionLimit input tables for NemoMod based on 
@@ -3108,6 +3179,8 @@ class ElectricEnergy:
             as keys that map to fields to use to calculate total exogenous 
             emissions
         - drop_flag: values to drop
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         """
 
         # get some defaults and attribute tables
@@ -3164,7 +3237,7 @@ class ElectricEnergy:
         # concatenate and order hierarchically
         df_out = pd.concat(df_out, axis = 0)
         df_out = df_out[~df_out["drop_flag"].isin([drop_flag])].drop(["drop_flag"], axis = 1)
-        df_out = self.add_multifields_from_key_values(
+        df_out = self.addRGN_multifields_from_key_values(
             df_out,
             [
                 self.field_nemomod_id,
@@ -3173,7 +3246,8 @@ class ElectricEnergy:
                 self.field_nemomod_year,
                 self.field_nemomod_value,
                 "drop_flag"
-            ]
+            ],
+            regions = regions
         )
         dict_return = {self.model_attributes.table_nemomod_annual_emission_limit: df_out}
 
@@ -3185,7 +3259,8 @@ class ElectricEnergy:
     def format_nemomod_table_capacity_factor(self,
         df_reference_capacity_factor: pd.DataFrame,
         attribute_technology: AttributeTable = None,
-        attribute_region: AttributeTable = None
+        attribute_region: AttributeTable = None,
+        regions: Union[List[str], None] = None
     ) -> pd.DataFrame:
         """
         Format the CapacityFactor input table for NemoMod based on SISEPUEDE 
@@ -3204,6 +3279,7 @@ class ElectricEnergy:
             defaults to ModelAttributes attribute table.
         - attribute_region: AttributeTable for regions. If None, defaults to 
             ModelAttributes attribute table.
+        - regions: regions to keep in capacity factor table
         """
 
         # check fields
@@ -3220,7 +3296,10 @@ class ElectricEnergy:
         ###############################################
 
         # regions to keep
-        regions_keep = set(attribute_region.key_values) & set(df_reference_capacity_factor[self.field_nemomod_region]) & set(self.model_attributes.configuration.get("region"))
+        regions = self.model_attributes.get_region_list_filtered(regions, attribute_region = attribute_region)
+        regions_keep = set(attribute_region.key_values) & set(regions)
+        regions_keep = (regions_keep & set(df_reference_capacity_factor[self.field_nemomod_region])) if (self.field_nemomod_region in df_reference_capacity_factor.columns) else regions_keep
+
         # reshape to long
         fields_melt = [x for x in df_reference_capacity_factor.columns if (x in attribute_technology.key_values)]
         df_out = pd.melt(
@@ -3233,7 +3312,7 @@ class ElectricEnergy:
             self.field_nemomod_value
         )
         # add output fields
-        df_out = self.add_multifields_from_key_values(
+        df_out = self.addRGN_multifields_from_key_values(
             df_out,
             [
                 self.field_nemomod_id,
@@ -3242,7 +3321,8 @@ class ElectricEnergy:
                 self.field_nemomod_time_slice,
                 self.field_nemomod_year,
                 self.field_nemomod_value
-            ]
+            ],
+            regions = regions
         )
 
         # ensure capacity factors are properly specified
@@ -3253,8 +3333,8 @@ class ElectricEnergy:
 
 
 
-    ##  format CapacityToActivityUnit for NemoMod
     def format_nemomod_table_capacity_to_activity_unit(self,
+        regions: Union[List[str], None] = None,
         return_type: str = "table"
     ) -> pd.DataFrame:
         """
@@ -3264,9 +3344,11 @@ class ElectricEnergy:
 
         Keyword Arguments
         -----------------
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         - return_type: "table" or "value". If value, returns only the 
         CapacityToActivityUnit value for all techs (used in DefaultParams)
-        * Based on configuration parameters
+            * Based on configuration parameters
         """
 
         # first, get power units, swap to get energy unit equivalent, then get units for the default total energy variable
@@ -3278,7 +3360,15 @@ class ElectricEnergy:
 
         if return_type == "table":
             df_out = pd.DataFrame({self.field_nemomod_value: [cau]})
-            df_out = self.add_multifields_from_key_values(df_out, [self.field_nemomod_id, self.field_nemomod_region, self.field_nemomod_technology])
+            df_out = self.addRGN_multifields_from_key_values(
+                df_out, 
+                [
+                    self.field_nemomod_id,
+                    self.field_nemomod_region, 
+                    self.field_nemomod_technology
+                ],
+                regions = regions
+            )
         elif return_type == "value":
             df_out = cau
 
@@ -3293,6 +3383,7 @@ class ElectricEnergy:
         df_elec_trajectories: pd.DataFrame,
         flag_dummy_price: Union[int, float] = -999,
         minimum_dummy_price: Union[int, float] = 100,
+        regions: Union[List[str], None] = None,
         tables_with_dummy: List[str] = ["CapitalCost", "FixedCost", "VariableCost"]
     ) -> pd.DataFrame:
         """
@@ -3309,6 +3400,8 @@ class ElectricEnergy:
         - flag_dummy_price: initial price to use, which is later replaced. 
             Should be a large magnitude negative number.
         - minimum_dummy_price: minimum price for dummy technologies
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         - tables_with_dummy: list of tables to include dummy tech costs in. 
             Acceptable values are:
 
@@ -3333,8 +3426,9 @@ class ElectricEnergy:
             cost_type = "capital", 
             override_time_period_transformation = True
         ) if ("CapitalCost" in tables_with_dummy) else None
+
         dict_return.update(
-            self.format_model_variable_as_nemomod_table(
+            self.formatRGN_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_entc_nemomod_capital_cost,
                 self.model_attributes.table_nemomod_capital_cost,
@@ -3344,9 +3438,10 @@ class ElectricEnergy:
                     self.field_nemomod_region
                 ],
                 self.field_nemomod_technology,
+                df_append = df_append,
+                regions = regions,
                 scalar_to_nemomod_units = scalar_cost_capital,
-                var_bounds = (0, np.inf),
-                df_append = df_append
+                var_bounds = (0, np.inf)
             )
         )
 
@@ -3356,8 +3451,9 @@ class ElectricEnergy:
             cost_type = "fixed", 
             override_time_period_transformation = True
         ) if ("FixedCost" in tables_with_dummy) else None
+        
         dict_return.update(
-            self.format_model_variable_as_nemomod_table(
+            self.formatRGN_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_entc_nemomod_fixed_cost,
                 self.model_attributes.table_nemomod_fixed_cost,
@@ -3367,9 +3463,10 @@ class ElectricEnergy:
                     self.field_nemomod_region
                 ],
                 self.field_nemomod_technology,
+                df_append = df_append,
+                regions = regions,
                 scalar_to_nemomod_units = scalar_cost_fixed,
-                var_bounds = (0, np.inf),
-                df_append = df_append
+                var_bounds = (0, np.inf)
             )
         )
 
@@ -3384,8 +3481,9 @@ class ElectricEnergy:
             cost_type = "variable", 
             override_time_period_transformation = True
         ) if ("VariableCost" in tables_with_dummy) else None
+
         dict_return.update(
-            self.format_model_variable_as_nemomod_table(
+            self.formatRGN_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_entc_nemomod_variable_cost,
                 self.model_attributes.table_nemomod_variable_cost,
@@ -3395,10 +3493,11 @@ class ElectricEnergy:
                     self.field_nemomod_region
                 ],
                 self.field_nemomod_technology,
+                df_append = df_append,
                 dict_fields_to_pass = {self.field_nemomod_mode: self.cat_enmo_gnrt},
+                regions = regions,
                 scalar_to_nemomod_units = scalar_cost_variable,
-                var_bounds = (0, np.inf),
-                df_append = df_append
+                var_bounds = (0, np.inf)
             )
         )
         
@@ -3424,9 +3523,9 @@ class ElectricEnergy:
 
 
 
-    ##  format CapitalCostStorage for NemoMod
     def format_nemomod_table_costs_storage(self,
-        df_elec_trajectories: pd.DataFrame
+        df_elec_trajectories: pd.DataFrame,
+        regions: Union[List[str], None] = None,
     ) -> pd.DataFrame:
         """
         Format the CapitalCostStorage input tables for NemoMod based on 
@@ -3436,6 +3535,11 @@ class ElectricEnergy:
         Function Arguments
         ------------------
         - df_elec_trajectories: data frame of model variable input trajectories
+
+        Keyword Arguments
+        -----------------
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         """
 
         dict_return = {}
@@ -3445,7 +3549,7 @@ class ElectricEnergy:
 
         # CapitalCostStorage
         dict_return.update(
-            self.format_model_variable_as_nemomod_table(
+            self.formatRGN_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_enst_nemomod_capital_cost_storage,
                 self.model_attributes.table_nemomod_capital_cost_storage,
@@ -3455,6 +3559,7 @@ class ElectricEnergy:
                     self.field_nemomod_region
                 ],
                 self.field_nemomod_storage,
+                regions = regions,
                 scalar_to_nemomod_units = scalar_cost_capital_storage,
                 var_bounds = (0, np.inf)
             )
@@ -3489,13 +3594,21 @@ class ElectricEnergy:
 
         # get dictionary and update parameters
         dict_repl = attribute_nemomod_table.field_maps[f"{attribute_nemomod_table.key}_to_{field_default_values}"].copy()
-        dict_repl.update(self.format_nemomod_table_capacity_to_activity_unit(return_type = "value"))
-        dict_repl.update(self.format_nemomod_table_discount_rate(return_type = "value"))
+        dict_repl.update(
+            self.format_nemomod_table_capacity_to_activity_unit(
+                return_type = "value"
+            )
+        )
+        dict_repl.update(
+            self.format_nemomod_table_discount_rate(
+                return_type = "value"
+            )
+        )
 
         # build output table
         df_out = attribute_nemomod_table.table[[attribute_nemomod_table.key]].copy().rename(columns = {attribute_nemomod_table.key: self.field_nemomod_table_name})
         df_out[self.field_nemomod_value] = df_out[self.field_nemomod_table_name].replace(dict_repl)
-        df_out = self.add_multifields_from_key_values(
+        df_out = self.addRGN_multifields_from_key_values(
             df_out,
             [
                 self.field_nemomod_id
@@ -3508,8 +3621,8 @@ class ElectricEnergy:
 
 
 
-    ##  format DiscountRate for NemoMod
     def format_nemomod_table_discount_rate(self,
+        regions: Union[List[str], None] = None,
         return_type: str = "table"
     ) -> pd.DataFrame:
         """
@@ -3519,6 +3632,8 @@ class ElectricEnergy:
 
         Keyword Arguments
         -----------------
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         - return_type: "table" or "value". If value, returns only the 
             DiscountRate
             * Based on configuration specification of discount_rate
@@ -3528,7 +3643,14 @@ class ElectricEnergy:
         df_out = pd.DataFrame({self.field_nemomod_value: [discount_rate]})
 
         if return_type == "table":
-            df_out = self.add_multifields_from_key_values(df_out, [self.field_nemomod_id, self.field_nemomod_region])
+            df_out = self.addRGN_multifields_from_key_values(
+                df_out, 
+                [
+                    self.field_nemomod_id, 
+                    self.field_nemomod_region
+                ],
+                regions = regions
+            )
         elif return_type == "value":
             df_out = discount_rate
 
@@ -3541,7 +3663,8 @@ class ElectricEnergy:
         df_elec_trajectories: pd.DataFrame,
         attribute_fuel: Union[AttributeTable, None] = None,
         attribute_technology: Union[AttributeTable, None] = None,
-        attribute_time_period: Union[AttributeTable, None] = None
+        attribute_time_period: Union[AttributeTable, None] = None,
+        regions: Union[List[str], None] = None,
     ) -> pd.DataFrame:
         """
         Format the EmissionsActivityRatio input table for NemoMod based on 
@@ -3560,6 +3683,8 @@ class ElectricEnergy:
             defaults to self.model_attributes
         - attribute_time_period: attribute table used for time period. If None,
             defaults to self.model_attributes
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         """
 
         ##  CATEGORY AND ATTRIBUTE INITIALIZATION
@@ -3694,7 +3819,7 @@ class ElectricEnergy:
             df_out = df_out[~df_out[self.field_nemomod_technology].isin([cat_entc_pp_waste])]
             df_out = pd.concat([df_out, df_enfu_efs_waste], axis = 0).reset_index(drop = True)
 
-        df_out = self.add_multifields_from_key_values(
+        df_out = self.addRGN_multifields_from_key_values(
             df_out,
             [
                 self.field_nemomod_id,
@@ -3704,7 +3829,8 @@ class ElectricEnergy:
                 self.field_nemomod_technology,
                 self.field_nemomod_value,
                 self.field_nemomod_year
-            ]
+            ],
+            regions = regions
         )
 
 
@@ -3717,11 +3843,13 @@ class ElectricEnergy:
             dict_enfu_arrs_efs_scaled_to_nemomod,
             attribute_fuel = attribute_fuel,
             attribute_technology = attribute_technology,
-            attribute_time_period = attribute_time_period
+            attribute_time_period = attribute_time_period,
+            regions = regions
         )
 
         df_out_fp = self.get_entc_emissions_activity_ratio_comp_fp(
-            df_elec_trajectories
+            df_elec_trajectories,
+            regions = regions
         )
         
         # concatenate and filter out 0s
@@ -3737,7 +3865,7 @@ class ElectricEnergy:
         )
 
         # add keys and clean up
-        df_out = self.add_multifields_from_key_values(
+        df_out = self.addRGN_multifields_from_key_values(
             df_out,
             [
                 self.field_nemomod_id,
@@ -3748,7 +3876,8 @@ class ElectricEnergy:
                 self.field_nemomod_value,
                 self.field_nemomod_year
             ],
-            override_time_period_transformation = True
+            override_time_period_transformation = True,
+            regions = regions
         )
     
         dict_return = {self.model_attributes.table_nemomod_emissions_activity_ratio: df_out}
@@ -3811,12 +3940,12 @@ class ElectricEnergy:
 
 
 
-    ##  format InputActivityRatio for NemoMod
     def format_nemomod_table_input_activity_ratio(self,
         df_elec_trajectories: pd.DataFrame,
         attribute_fuel: Union[AttributeTable, None] = None,
         attribute_technology: Union[AttributeTable, None] = None,
-        max_ratio: float = 1000000.0
+        max_ratio: float = 1000000.0,
+        regions: Union[List[str], None] = None,
     ) -> pd.DataFrame:
         """
         Format the InputActivityRatio input table for NemoMod based on SISEPUEDE 
@@ -3834,6 +3963,8 @@ class ElectricEnergy:
             technologies from storage and identify primary fuels.
         - max_ratio: replacement for any input_activity_ratio values derived 
             from efficiencies of 0
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         """
 
         ##  CATEGORY AND ATTRIBUTE INITIALIZATION
@@ -3869,7 +4000,7 @@ class ElectricEnergy:
 
         # Initialize InputActivityRatio
         dict_return.update(
-            self.format_model_variable_as_nemomod_table(
+            self.formatRGN_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_entc_efficiency_factor_technology,
                 self.model_attributes.table_nemomod_input_activity_ratio,
@@ -3879,6 +4010,7 @@ class ElectricEnergy:
                     self.field_nemomod_region
                 ],
                 self.field_nemomod_technology,
+                regions = regions,
                 var_bounds = (0, np.inf)
             )
         )
@@ -3891,7 +4023,7 @@ class ElectricEnergy:
         # convert efficiency to input_activity_ratio_ratio
         df_iar[self.field_nemomod_value] = np.nan_to_num(1/np.array(df_iar[self.field_nemomod_value]), max_ratio, posinf = max_ratio)
         # re-sort using hierarchy
-        df_iar = self.add_multifields_from_key_values(
+        df_iar = self.addRGN_multifields_from_key_values(
             df_iar,
             [
                 self.field_nemomod_id,
@@ -3902,7 +4034,8 @@ class ElectricEnergy:
                 self.field_nemomod_year,
                 self.field_nemomod_value
             ],
-            # the time period transformation was already applied in format_model_variable_as_nemomod_table, so we override additional transformation
+            regions = regions,
+            # the time period transformation was already applied in formatRGN_model_variable_as_nemomod_table, so we override additional transformation
             override_time_period_transformation = True
         )
         
@@ -3925,7 +4058,7 @@ class ElectricEnergy:
 
             if modvar_iar is not None:
 
-                df_tmp = self.format_model_variable_as_nemomod_table( 
+                df_tmp = self.formatRGN_model_variable_as_nemomod_table( 
                     df_elec_trajectories,
                     modvar_iar,
                     self.model_attributes.table_nemomod_input_activity_ratio,
@@ -3935,6 +4068,7 @@ class ElectricEnergy:
                         self.field_nemomod_region
                     ],
                     self.field_nemomod_technology,
+                    regions = regions,
                     var_bounds = (0, np.inf)
                 ).get(self.model_attributes.table_nemomod_input_activity_ratio)
                 
@@ -3969,7 +4103,7 @@ class ElectricEnergy:
         df_iar_dummies[self.field_nemomod_mode] = self.cat_enmo_gnrt
 
         # add key values, like year
-        df_iar_dummies = self.add_multifields_from_key_values(
+        df_iar_dummies = self.addRGN_multifields_from_key_values(
             df_iar_dummies,
             [
                 self.field_nemomod_id,
@@ -3979,7 +4113,8 @@ class ElectricEnergy:
                 self.field_nemomod_region,
                 self.field_nemomod_year,
                 self.field_nemomod_value
-            ]
+            ],
+            regions = regions
         )
 
         df_append.append(df_iar_dummies)
@@ -3987,7 +4122,7 @@ class ElectricEnergy:
 
 
         # re-sort using hierarchy
-        df_append = self.add_multifields_from_key_values(
+        df_append = self.addRGN_multifields_from_key_values(
             pd.concat(df_append, axis = 0),
             [
                 self.field_nemomod_id,
@@ -3998,8 +4133,9 @@ class ElectricEnergy:
                 self.field_nemomod_year,
                 self.field_nemomod_value
             ],
-            # the time period transformation was already applied in format_model_variable_as_nemomod_table, so we override additional transformation
-            override_time_period_transformation = True
+            # the time period transformation was already applied in formatRGN_model_variable_as_nemomod_table, so we override additional transformation
+            override_time_period_transformation = True,
+            regions = regions
         )
 
         dict_return.update({self.model_attributes.table_nemomod_input_activity_ratio: df_append})
@@ -4012,7 +4148,8 @@ class ElectricEnergy:
     def format_nemomod_table_min_share_production(self,
         df_elec_trajectories: pd.DataFrame,
         attribute_fuel: Union[AttributeTable, None] = None,
-        modvar_import_fraction: str = None
+        modvar_import_fraction: str = None,
+        regions: Union[List[str], None] = None,
     ) -> pd.DataFrame:
         """
         Format the MinShareProduction input table for NemoMod based on SISEPUEDE 
@@ -4030,13 +4167,15 @@ class ElectricEnergy:
         - modvar_import_fraction: SISEPUEDE model variable giving the import 
             fraction. If None, default to 
             NonElectricEnergy.modvar_enfu_frac_fuel_demand_imported
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         """
         # perform some initialization
         attribute_fuel = self.model_attributes.get_attribute_table(self.subsec_name_enfu) if (attribute_fuel is None) else attribute_fuel
         modvar_import_fraction = self.modvar_enfu_frac_fuel_demand_imported if (modvar_import_fraction is None) else modvar_import_fraction
 
         # import fractions are set as minimum shares of production and add technology
-        df_out = self.format_model_variable_as_nemomod_table( 
+        df_out = self.formatRGN_model_variable_as_nemomod_table( 
             df_elec_trajectories,
             modvar_import_fraction,
             self.model_attributes.table_nemomod_min_share_production,
@@ -4046,13 +4185,14 @@ class ElectricEnergy:
                 self.field_nemomod_region
             ],
             self.field_nemomod_fuel,
+            regions = regions,
             var_bounds = (0, 1)
         ).get(self.model_attributes.table_nemomod_min_share_production)
 
         df_out[self.field_nemomod_technology] = df_out[self.field_nemomod_fuel].replace(self.get_dummy_fuel_techs())
 
         # setup for NemoMod
-        df_out = self.add_multifields_from_key_values(
+        df_out = self.addRGN_multifields_from_key_values(
             df_out,
             [
                 self.field_nemomod_id,
@@ -4062,7 +4202,8 @@ class ElectricEnergy:
                 self.field_nemomod_year,
                 self.field_nemomod_value
             ],
-            override_time_period_transformation = True
+            override_time_period_transformation = True,
+            regions = regions
         )
 
         dict_return = {self.model_attributes.table_nemomod_min_share_production: df_out}
@@ -4071,11 +4212,11 @@ class ElectricEnergy:
 
 
 
-    ##  format MinStorageCharge for NemoMod
     def format_nemomod_table_min_storage_charge(self,
         df_elec_trajectories: pd.DataFrame,
         attribute_storage: AttributeTable = None,
-        field_attribute_min_charge: str = "minimum_charge_fraction"
+        field_attribute_min_charge: str = "minimum_charge_fraction",
+        regions: Union[List[str], None] = None,
     ) -> pd.DataFrame:
         """
         Format the MinStorageCharge input table for NemoMod based on SISEPUEDE 
@@ -4093,6 +4234,8 @@ class ElectricEnergy:
             cat_storage table
         - field_attribute_min_charge: field in attribute_storage containing the 
             minimum storage charge fraction by storage type
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         """
 
         ##
@@ -4109,7 +4252,7 @@ class ElectricEnergy:
             self.field_nemomod_value: [dict_strg_to_min_charge.get(x) for x in all_storage]
         })
 
-        df_out = self.add_multifields_from_key_values(
+        df_out = self.addRGN_multifields_from_key_values(
             df_out,
             [
                 self.field_nemomod_id,
@@ -4117,7 +4260,8 @@ class ElectricEnergy:
                 self.field_nemomod_storage,
                 self.field_nemomod_year,
                 self.field_nemomod_value
-            ]
+            ],
+            regions = regions
         )
         dict_return = {self.model_attributes.table_nemomod_min_storage_charge: df_out}
 
@@ -4201,7 +4345,8 @@ class ElectricEnergy:
         attribute_fuel: AttributeTable = None,
         attribute_storage: AttributeTable = None,
         attribute_technology: AttributeTable = None,
-        operational_life_dummies: Union[float, int] = 250
+        operational_life_dummies: Union[float, int] = 250,
+        regions: Union[List[str], None] = None,
     ) -> pd.DataFrame:
         """
         Format the OperationalLife and OperationalLifeStorage input tables for 
@@ -4220,6 +4365,8 @@ class ElectricEnergy:
             use ModelAttributes default.
         - operational_life_dummies: Operational life for dummy technologies that 
             are entered to account for fuel inputs.
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
 
         Notes:
         - Validity checks for operational lives are performed on initialization 
@@ -4267,8 +4414,16 @@ class ElectricEnergy:
 
         # add required fields
         fields_reg = [self.field_nemomod_id, self.field_nemomod_region]
-        df_operational_life = self.add_multifields_from_key_values(df_operational_life, fields_reg)
-        df_operational_life_storage = self.add_multifields_from_key_values(df_operational_life_storage, fields_reg)
+        df_operational_life = self.addRGN_multifields_from_key_values(
+            df_operational_life, 
+            fields_reg,
+            regions = regions
+        )
+        df_operational_life_storage = self.addRGN_multifields_from_key_values(
+            df_operational_life_storage, 
+            fields_reg,
+            regions = regions
+        )
 
         dict_return = {
             self.model_attributes.table_nemomod_operational_life: df_operational_life,
@@ -4282,7 +4437,8 @@ class ElectricEnergy:
     def format_nemomod_table_output_activity_ratio(self,
         df_elec_trajectories: pd.DataFrame,
         attribute_fuel: Union[AttributeTable, None] = None,
-        attribute_technology:  Union[AttributeTable, None] = None
+        attribute_technology:  Union[AttributeTable, None] = None,
+        regions: Union[List[str], None] = None,
     ) -> pd.DataFrame:
         """
         Format the OutputActivityRatio input table for NemoMod based on 
@@ -4299,6 +4455,8 @@ class ElectricEnergy:
             require dummy supply techs
         - attribute_technology:  AttributeTable for technology, used to separate 
             technologies from storage and identify primary fuels.
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         """
         
         ##  CATEGORY AND ATTRIBUTE INITIALIZATION
@@ -4327,7 +4485,7 @@ class ElectricEnergy:
         df_oar[self.field_nemomod_mode] = self.cat_enmo_gnrt
 
         # add key values, like year
-        df_oar = self.add_multifields_from_key_values(
+        df_oar = self.addRGN_multifields_from_key_values(
             df_oar,
             [
                 self.field_nemomod_id,
@@ -4337,7 +4495,8 @@ class ElectricEnergy:
                 self.field_nemomod_region,
                 self.field_nemomod_year,
                 self.field_nemomod_value
-            ]
+            ],
+            regions = regions
         )
 
 
@@ -4354,7 +4513,7 @@ class ElectricEnergy:
 
             if modvar_oar is not None:
 
-                df_tmp = self.format_model_variable_as_nemomod_table( 
+                df_tmp = self.formatRGN_model_variable_as_nemomod_table( 
                     df_elec_trajectories,
                     modvar_oar,
                     self.model_attributes.table_nemomod_output_activity_ratio,
@@ -4364,6 +4523,7 @@ class ElectricEnergy:
                         self.field_nemomod_region
                     ],
                     self.field_nemomod_technology,
+                    regions = regions,
                     var_bounds = (0, np.inf)
                 ).get(self.model_attributes.table_nemomod_output_activity_ratio)
                 
@@ -4392,7 +4552,7 @@ class ElectricEnergy:
             self.field_nemomod_mode: [self.cat_enmo_gnrt]
         })
         # format with dimensions
-        df_append = self.add_multifields_from_key_values(
+        df_append = self.addRGN_multifields_from_key_values(
             df_append,
             [
                 self.field_nemomod_id,
@@ -4402,14 +4562,15 @@ class ElectricEnergy:
                 self.field_nemomod_region,
                 self.field_nemomod_year,
                 self.field_nemomod_value
-            ]
+            ],
+            regions = regions
         )
         # append to output
         df_out.append(df_append)
 
                 
         # re-sort using hierarchy
-        df_out = self.add_multifields_from_key_values(
+        df_out = self.addRGN_multifields_from_key_values(
             pd.concat(df_out, axis = 0),
             [
                 self.field_nemomod_id,
@@ -4420,8 +4581,9 @@ class ElectricEnergy:
                 self.field_nemomod_year,
                 self.field_nemomod_value
             ],
-            # the time period transformation was already applied in format_model_variable_as_nemomod_table, so we override additional transformation
-            override_time_period_transformation = True
+            # the time period transformation was already applied in formatRGN_model_variable_as_nemomod_table, so we override additional transformation
+            override_time_period_transformation = True,
+            regions = regions
         )
 
         # ensure changes are made to dict
@@ -4431,12 +4593,12 @@ class ElectricEnergy:
 
 
 
-    ##  format REMinProductionTarget for NemoMod
-    def format_nemomod_re_min_production_target(self,
+    def format_nemomod_table_re_min_production_target(self,
         df_elec_trajectories: pd.DataFrame,
         attribute_fuel: Union[AttributeTable, None] = None,
         modvar_import_fraction: Union[str, None] = None,
-        modvar_renewable_target: Union[str, None] = None
+        modvar_renewable_target: Union[str, None] = None,
+        regions: Union[List[str], None] = None,
     ) -> pd.DataFrame:
         """
         Format the REMinProductionTarget (renewable energy minimum production 
@@ -4456,6 +4618,8 @@ class ElectricEnergy:
         - modvar_renewable_target: model variable used to specify renewable 
             energy target fractions. Defaults to 
             self.modvar_enfu_nemomod_renewable_production_target
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
 
         Important Note - Conflicting Constratints
         -----------------------------------------
@@ -4505,7 +4669,7 @@ class ElectricEnergy:
         df_return[self.model_attributes.dim_time_period] = list(df_elec_trajectories[self.model_attributes.dim_time_period])
 
         # check technologies that are optional from optional input
-        df_return = self.format_model_variable_as_nemomod_table(
+        df_return = self.formatRGN_model_variable_as_nemomod_table(
             df_return,
             self.modvar_enfu_nemomod_renewable_production_target,
             "TMP",
@@ -4515,6 +4679,7 @@ class ElectricEnergy:
                 self.field_nemomod_region
             ],
             self.field_nemomod_fuel,
+            regions = regions,
             var_bounds = (0, 1)
         ).get("TMP")
 
@@ -4533,7 +4698,8 @@ class ElectricEnergy:
 
 
     def format_nemomod_table_re_tag_technology(self,
-        df_elec_trajectories: Union[pd.DataFrame, None]
+        df_elec_trajectories: Union[pd.DataFrame, None],
+        regions: Union[List[str], None] = None,
     ) -> pd.DataFrame:
         """
         Format the RETagTechnology (renewable energy technology tag) input table 
@@ -4548,11 +4714,13 @@ class ElectricEnergy:
 
         Keyword Arguments
         -----------------
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
 
         """
 
         # check technologies that are optional from optional input
-        df_entc_re_tag = self.format_model_variable_as_nemomod_table(
+        df_entc_re_tag = self.formatRGN_model_variable_as_nemomod_table(
             df_elec_trajectories,
             self.modvar_entc_nemomod_renewable_tag_technology,
             "TMP",
@@ -4562,6 +4730,7 @@ class ElectricEnergy:
                 self.field_nemomod_region
             ],
             self.field_nemomod_technology,
+            regions = regions,
             var_bounds = (0, 1)
         ).get("TMP")
 
@@ -4576,7 +4745,7 @@ class ElectricEnergy:
             self.field_nemomod_value
         )
 
-        df_entc_re_tag = self.add_multifields_from_key_values(
+        df_entc_re_tag = self.addRGN_multifields_from_key_values(
             df_entc_re_tag,
             [
                 self.field_nemomod_id,
@@ -4585,7 +4754,8 @@ class ElectricEnergy:
                 self.field_nemomod_year,
                 self.field_nemomod_value
             ],
-            override_time_period_transformation = True
+            override_time_period_transformation = True,
+            regions = regions
         )
 
         dict_return = {self.model_attributes.table_nemomod_re_tag_technology: df_entc_re_tag}
@@ -4595,7 +4765,8 @@ class ElectricEnergy:
 
 
     def format_nemomod_table_reserve_margin(self,
-        df_elec_trajectories: pd.DataFrame
+        df_elec_trajectories: pd.DataFrame,
+        regions: Union[List[str], None] = None,
     ) -> pd.DataFrame:
         """
         Format the ReserveMargin input table for NemoMod based on SISEPUEDE 
@@ -4605,12 +4776,17 @@ class ElectricEnergy:
         Function Arguments
         ------------------
         - df_elec_trajectories: data frame of model variable input trajectories
+
+        Keyword Arguments
+        -----------------
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         """
 
         dict_return = {}
         # ReserveMargin
         dict_return.update(
-            self.format_model_variable_as_nemomod_table(
+            self.formatRGN_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_entc_nemomod_reserve_margin,
                 self.model_attributes.table_nemomod_reserve_margin,
@@ -4620,6 +4796,7 @@ class ElectricEnergy:
                     self.field_nemomod_region
                 ],
                 self.field_nemomod_technology,
+                regions = regions,
                 var_bounds = (0, np.inf)
             )
         )
@@ -4629,12 +4806,18 @@ class ElectricEnergy:
 
 
 
-    def format_nemomod_table_reserve_margin_tag_fuel(self
+    def format_nemomod_table_reserve_margin_tag_fuel(self,
+        regions: Union[List[str], None] = None,
     ) -> pd.DataFrame:
         """
         Format the ReserveMargin input table for NemoMod based on SISEPUEDE 
             configuration parameters, input variables, integrated model outputs, 
             and reference tables.
+
+        Keyword Arguments
+        -----------------
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         """
         # build data frame
         df_out = pd.DataFrame({
@@ -4643,7 +4826,7 @@ class ElectricEnergy:
         })
 
         # add dimensions
-        df_out = self.add_multifields_from_key_values(
+        df_out = self.addRGN_multifields_from_key_values(
             df_out,
             [
                 self.field_nemomod_id,
@@ -4651,7 +4834,8 @@ class ElectricEnergy:
                 self.field_nemomod_fuel,
                 self.field_nemomod_year,
                 self.field_nemomod_value
-            ]
+            ],
+            regions = regions
         )
 
         dict_return = {self.model_attributes.table_nemomod_reserve_margin_tag_fuel: df_out}
@@ -4660,9 +4844,9 @@ class ElectricEnergy:
 
 
 
-    ##  format ReserveMarginTagTechnology for NemoMod
     def format_nemomod_table_reserve_margin_tag_technology(self,
-        df_elec_trajectories: pd.DataFrame
+        df_elec_trajectories: pd.DataFrame,
+        regions: Union[List[str], None] = None,
     ) -> pd.DataFrame:
         """
         Format the ReserveMarginTagTechnology input table for NemoMod based on 
@@ -4672,12 +4856,17 @@ class ElectricEnergy:
         Function Arguments
         ------------------
         - df_elec_trajectories: data frame of model variable input trajectories
+
+        Keyword Arguments
+        -----------------
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         """
 
         dict_return = {}
         # ReserveMarginTagTechnology
         dict_return.update(
-            self.format_model_variable_as_nemomod_table(
+            self.formatRGN_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_entc_nemomod_reserve_margin_tag_technology,
                 self.model_attributes.table_nemomod_reserve_margin_tag_technology,
@@ -4687,6 +4876,7 @@ class ElectricEnergy:
                     self.field_nemomod_region
                 ],
                 self.field_nemomod_technology,
+                regions = regions,
                 var_bounds = (0, np.inf)
             )
         )
@@ -4695,9 +4885,9 @@ class ElectricEnergy:
 
 
 
-    ##  format ResidualCapacity for NemoMod
     def format_nemomod_table_residual_capacity(self,
-        df_elec_trajectories: pd.DataFrame
+        df_elec_trajectories: pd.DataFrame,
+        regions: Union[List[str], None] = None,
     ) -> pd.DataFrame:
         """
         Format the ResidualCapacity input table for NemoMod based on SISEPUEDE 
@@ -4707,6 +4897,11 @@ class ElectricEnergy:
         Function Arguments
         ------------------
         - df_elec_trajectories: data frame of model variable input trajectories
+
+        Keyword Arguments
+        -----------------
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         """
 
         dict_return = {}
@@ -4714,7 +4909,7 @@ class ElectricEnergy:
         scalar_residual_capacity = self.model_attributes.get_scalar(self.modvar_entc_nemomod_residual_capacity, "power")
         # ResidualCapacity
         dict_return.update(
-            self.format_model_variable_as_nemomod_table(
+            self.formatRGN_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_entc_nemomod_residual_capacity,
                 self.model_attributes.table_nemomod_residual_capacity,
@@ -4724,6 +4919,7 @@ class ElectricEnergy:
                     self.field_nemomod_region
                 ],
                 self.field_nemomod_technology,
+                regions = regions,
                 scalar_to_nemomod_units = scalar_residual_capacity,
                 var_bounds = (0, np.inf)
             )
@@ -4734,7 +4930,8 @@ class ElectricEnergy:
 
 
     def format_nemomod_table_residual_storage_capacity(self,
-        df_elec_trajectories: pd.DataFrame
+        df_elec_trajectories: pd.DataFrame,
+        regions: Union[List[str], None] = None,
     ) -> pd.DataFrame:
         """
         Format the ResidualStorageCapacity input table for NemoMod based on 
@@ -4744,6 +4941,11 @@ class ElectricEnergy:
         Function Arguments
         ------------------
         - df_elec_trajectories: data frame of model variable input trajectories
+
+        Keyword Arguments
+        -----------------
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         """
 
         dict_return = {}
@@ -4751,7 +4953,7 @@ class ElectricEnergy:
         scalar_cost_capital_storage = self.get_nemomod_energy_scalar(self.modvar_enst_nemomod_residual_capacity)
         # ResidualCapacity
         dict_return.update(
-            self.format_model_variable_as_nemomod_table(
+            self.formatRGN_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_enst_nemomod_residual_capacity,
                 self.model_attributes.table_nemomod_residual_storage_capacity,
@@ -4761,6 +4963,7 @@ class ElectricEnergy:
                     self.field_nemomod_region
                 ],
                 self.field_nemomod_storage,
+                regions = regions,
                 scalar_to_nemomod_units = scalar_cost_capital_storage,
                 var_bounds = (0, np.inf)
             )
@@ -4774,6 +4977,7 @@ class ElectricEnergy:
         df_elec_trajectories: pd.DataFrame,
         attribute_fuel: Union[AttributeTable, None] = None,
         attribute_time_period: Union[AttributeTable, None] = None,
+        regions: Union[List[str], None] = None,
         tuple_enfu_production_and_demands: Union[Tuple[pd.DataFrame], None] = None
     ) -> pd.DataFrame:
         """
@@ -4791,6 +4995,8 @@ class ElectricEnergy:
         - attribute_time_period: AttributeTable mapping 
             ModelAttributes.dim_time_period to year. If None, use 
             ModelAttributes default.
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         - tuple_enfu_production_and_demands: optional tuple of energy fuel 
             demands produced by 
             self.model_energy.project_enfu_production_and_demands():
@@ -4863,7 +5069,7 @@ class ElectricEnergy:
         )
 
         # add additional required fields, then sort
-        df_enfu_production = self.add_multifields_from_key_values(
+        df_enfu_production = self.addRGN_multifields_from_key_values(
             df_enfu_production,
             [
                 self.field_nemomod_id,
@@ -4871,19 +5077,21 @@ class ElectricEnergy:
                 self.field_nemomod_region,
                 self.field_nemomod_year,
                 self.field_nemomod_value
-            ]
+            ],
+            regions = regions
         )
 
         return {self.model_attributes.table_nemomod_specified_annual_demand: df_enfu_production}
 
 
 
-    ##  format SpecifiedDemandProfile for NemoMod
     def format_nemomod_table_specified_demand_profile(self,
         df_reference_demand_profile: pd.DataFrame,
         attribute_fuel: Union[AttributeTable, None] = None,
+        attribute_region: AttributeTable = None,
         attribute_time_slice: Union[AttributeTable, None] = None,
-        fuels_to_specify: Union[List[str], None] = None
+        fuels_to_specify: Union[List[str], None] = None,
+        regions: Union[List[str], None] = None
     ) -> pd.DataFrame:
         """
         Format the SpecifiedDemandProfile input table for NemoMod based on 
@@ -4901,18 +5109,32 @@ class ElectricEnergy:
         - attribute_time_slice: AttributeTable used to define time slice 
             weights, which are used to allocate demand in the absence of other
             reference data.
+        - attribute_region: AttributeTable for regions. If None, defaults to 
+            ModelAttributes attribute table.
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         - fuels_to_specify: list of fuels to specify demand profiles for (can be
             passed from SpecifiedAnnualDemand input table). If None, defaults to
             all fuels.
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         """
 
         ##  INITIAlIZATION
 
         attribute_fuel = self.model_attributes.get_attribute_table(self.subsec_name_enfu) if (attribute_fuel is None) else attribute_fuel
+        attribute_region = self.model_attributes.dict_attributes.get(self.model_attributes.dim_region) if (attribute_region is None) else attribute_region
         attribute_time_slice = self.model_attributes.dict_attributes.get("time_slice") if (attribute_time_slice is None) else attribute_time_slice
-
+        
+        # attribute derivatives
         fuels_to_specify = attribute_fuel.key_values if (fuels_to_specify is None) else [x for x in fuels_to_specify if x in attribute_fuel.key_values]
         fuels_to_specify = attribute_fuel.key_values if (len(fuels_to_specify) == 0) else fuels_to_specify
+        regions = self.model_attributes.get_region_list_filtered(regions, attribute_region = attribute_region)
+        regions_keep = set(attribute_region.key_values) & set(regions)
+        regions_keep = (regions_keep & set(df_reference_demand_profile[self.field_nemomod_region])) if (self.field_nemomod_region in df_reference_demand_profile.columns) else regions_keep
+
+        if len(regions_keep) == 0:
+            raise ValueError(f"No valid regions found for format_nemomod_table_specified_demand_profile() in df_reference_demand_profile")
 
 
         ##  BUILD COMPONENTS FROM REFERENCE
@@ -4920,19 +5142,17 @@ class ElectricEnergy:
         # check for required fields
         fields_required = [self.field_nemomod_time_slice, self.field_nemomod_value]
         df_out = df_reference_demand_profile.copy()
-        sf.check_fields(df_out, fields_required, msg_prepend = f"Error in format_nemomod_table_specified_demand_profile: required fields ")
+        df_out = df_out[df_out[self.field_nemomod_region].isin(regions_keep)] if (self.field_nemomod_region in df_out.columns) else df_out
+        
+        sf.check_fields(
+            df_out, 
+            fields_required, 
+            msg_prepend = f"Error in format_nemomod_table_specified_demand_profile: required fields "
+        )
+        #n = len(df_out[self.field_nemomod_region].unique())
 
-        # filter if region is already included
-        if (self.field_nemomod_region in df_reference_demand_profile.columns):
-            df_out = df_out[
-                df_out[self.field_nemomod_region].isin(self.model_attributes.configuration.get("region"))
-            ]
-            n = len(df_out[self.field_nemomod_region].unique())
-
-        # specify fuels
-        if (self.field_nemomod_fuel in df_reference_demand_profile.columns):
-            df_out = df_out[df_out[self.field_nemomod_fuel] == self.cat_enfu_elec]
-        else:
+        # specify fuels - assume electric if missing
+        if self.field_nemomod_fuel not in df_out.columns:
             df_out[self.field_nemomod_fuel] = self.cat_enfu_elec
 
         # setup to the same structure as df_out to allow concatendation
@@ -4942,7 +5162,11 @@ class ElectricEnergy:
             self.field_nemomod_time_slice,
             self.field_nemomod_year
         ]
-        df_out = self.add_multifields_from_key_values(df_out, fields_required_0)
+        df_out = self.addRGN_multifields_from_key_values(
+            df_out, 
+            fields_required_0,
+            regions = regions
+        )
 
 
         ##  ADD DEFAULTS FOR OTHER FUELS
@@ -4956,7 +5180,11 @@ class ElectricEnergy:
         df_append = sf.explode_merge(df_fuels_to_specify, df_time_slices)
         
         # setup to the same structure as df_out to allow concatendation, then concategnate
-        df_append = self.add_multifields_from_key_values(df_append, fields_required_0)
+        df_append = self.addRGN_multifields_from_key_values(
+            df_append, 
+            fields_required_0,
+            regions = regions
+        )
         df_append = df_append[
             ~(
                 df_append[self.field_nemomod_fuel].isin(df_out[self.field_nemomod_fuel]) & 
@@ -4969,17 +5197,19 @@ class ElectricEnergy:
         ).reset_index(drop = True)
 
 
-        # CLEAN SORT AND ADD IDS
+        # CLEAN, SORT AND ADD IDS
 
-        df_out = self.add_multifields_from_key_values(df_out, 
-                [
-                    self.field_nemomod_id, 
-                    self.field_nemomod_fuel,
-                    self.field_nemomod_region,
-                    self.field_nemomod_time_slice,
-                    self.field_nemomod_year
-                ],
-                override_time_period_transformation = True
+        df_out = self.addRGN_multifields_from_key_values(
+            df_out, 
+            [
+                self.field_nemomod_id, 
+                self.field_nemomod_fuel,
+                self.field_nemomod_region,
+                self.field_nemomod_time_slice,
+                self.field_nemomod_year
+            ],
+            override_time_period_transformation = True,
+            regions = regions
         )
         dict_return = {self.model_attributes.table_nemomod_specified_demand_profile: df_out}
 
@@ -4992,7 +5222,8 @@ class ElectricEnergy:
         df_elec_trajectories: pd.DataFrame,
         attribute_storage: AttributeTable = None,
         field_attribute_min_charge: str = "minimum_charge_fraction",
-        field_tmp: str = "TMPNEW"
+        field_tmp: str = "TMPNEW",
+        regions: Union[List[str], None] = None,
     ) -> pd.DataFrame:
         """
         Format the StorageMaxChargeRate, StorageMaxDishargeRate, and 
@@ -5013,6 +5244,9 @@ class ElectricEnergy:
             identify minimum required storage for each type of storage. If None, 
             use ModelAttributes default.
         - field_tmp: temporary field used in data frame
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
+
         """
 
         # set some defaults
@@ -5023,7 +5257,7 @@ class ElectricEnergy:
         dict_return = {}
         # StorageStartLevel
         dict_return.update(
-            self.format_model_variable_as_nemomod_table(
+            self.formatRGN_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_enst_nemomod_storage_start_level,
                 self.model_attributes.table_nemomod_storage_level_start,
@@ -5033,6 +5267,7 @@ class ElectricEnergy:
                     self.field_nemomod_region
                 ],
                 self.field_nemomod_storage,
+                regions = regions,
                 var_bounds = (0, 1)
             )
         )
@@ -5082,7 +5317,8 @@ class ElectricEnergy:
     ##  format TechnologyFromStorage and TechnologyToStorage for NemoMod
     def format_nemomod_table_technology_from_and_to_storage(self,
         attribute_storage: AttributeTable = None,
-        attribute_technology: AttributeTable = None
+        attribute_technology: AttributeTable = None,
+        regions: Union[List[str], None] = None,
     ) -> pd.DataFrame:
         """
         Format the TechnologyFromStorage and TechnologyToStorage input table for 
@@ -5096,6 +5332,8 @@ class ElectricEnergy:
         - attribute_technology: AttributeTable for technology, used to identify 
             whether or not a technology can charge a storage. If None, use 
             ModelAttributes default.
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         """
 
 
@@ -5124,12 +5362,13 @@ class ElectricEnergy:
         df_tech_from_storage = df_storage_techs_to_storage.copy()
         df_tech_from_storage[self.field_nemomod_mode] = self.cat_enmo_gnrt
         df_tech_from_storage[self.field_nemomod_value] = 1.0
-        df_tech_from_storage = self.add_multifields_from_key_values(
+        df_tech_from_storage = self.addRGN_multifields_from_key_values(
             df_tech_from_storage, 
             [
                 self.field_nemomod_id, 
                 self.field_nemomod_region
-            ]
+            ],
+            regions = regions
         )
 
         # build tech to storage
@@ -5137,12 +5376,13 @@ class ElectricEnergy:
         df_tech_to_storage = df_storage_techs_to_storage.copy()
         df_tech_to_storage[self.field_nemomod_mode] = self.cat_enmo_stor
         df_tech_to_storage[self.field_nemomod_value] = 1.0
-        df_tech_to_storage = self.add_multifields_from_key_values(
+        df_tech_to_storage = self.addRGN_multifields_from_key_values(
             df_tech_to_storage, 
             [
                 self.field_nemomod_id,
                 self.field_nemomod_region
-            ]
+            ],
+            regions = regions
         )
 
         dict_return = {
@@ -5214,7 +5454,13 @@ class ElectricEnergy:
             }
         )
         df_year_split = pd.merge(df_year_split, df_ltsgroup[[self.field_nemomod_time_slice, self.field_nemomod_id]], how = "left")
-        df_year_split = self.add_multifields_from_key_values(df_year_split, [self.field_nemomod_id, self.field_nemomod_year])
+        df_year_split = self.addRGN_multifields_from_key_values(
+            df_year_split, 
+            [
+                self.field_nemomod_id, 
+                self.field_nemomod_year
+            ]
+        )
 
 
         ##  FORMAT TSGROUP1 and TSGROUP2
@@ -5291,15 +5537,33 @@ class ElectricEnergy:
     ##  format TotalAnnualMaxCapacity, TotalAnnualMaxCapacityInvestment, TotalAnnualMinCapacity, TotalAnnualMinCapacityInvestment for NemoMod
     def format_nemomod_table_total_capacity_tables(self,
         df_elec_trajectories: pd.DataFrame,
-        df_total_technology_activity_lower_limit: Union[dict, pd.DataFrame, None] = None
+        df_total_technology_activity_lower_limit: Union[dict, pd.DataFrame, None] = None,
+        regions: Union[List[str], None] = None,
     ) -> pd.DataFrame:
         """
-            Format the TotalAnnualMaxCapacity, TotalAnnualMaxCapacityInvestment, TotalAnnualMinCapacity, and TotalAnnualMinCapacityInvestment input tables for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the 
+            TotalAnnualMaxCapacity, 
+            TotalAnnualMaxCapacityInvestment, 
+            TotalAnnualMinCapacity, and 
+            TotalAnnualMinCapacityInvestment 
+            
+            input tables for NemoMod based on SISEPUEDE configuration 
+            parameters, input variables, integrated model outputs, and reference 
+            tables.
 
-            Function Arguments
-            ------------------
-            - df_elec_trajectories: data frame of model variable input trajectories
-            - df_total_technology_activity_lower_limit: dictionary with key "TotalTechnologyAnnualActivityLowerLimit": data frame or data frame giving minimum capacities implied by TotalTechnologyAnnualActivityLowerLimit. If None, accesses ElectricEnergy.format_nemomod_table_total_technology_activity_lower_limit(df_elec_trajectories, return_type = "CapacityCheck")
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
+        - df_total_technology_activity_lower_limit: dictionary with key 
+            "TotalTechnologyAnnualActivityLowerLimit": data frame or data frame 
+            giving minimum capacities implied by 
+            TotalTechnologyAnnualActivityLowerLimit. If None, accesses 
+            ElectricEnergy.format_nemomod_table_total_technology_activity_lower_limit(
+                df_elec_trajectories, 
+                return_type = "CapacityCheck"
+            )
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         """
 
         dict_return = {}
@@ -5309,7 +5573,11 @@ class ElectricEnergy:
             df_total_technology_activity_lower_limit = df_total_technology_activity_lower_limit.get(tablename_lower_lim)
         # check if it's none (applicable if entered as none or if the input dictionary fails)
         if df_total_technology_activity_lower_limit is None:
-            df_total_technology_activity_lower_limit = self.format_nemomod_table_total_technology_activity_lower_limit(df_elec_trajectories, return_type = "CapacityCheck")
+            df_total_technology_activity_lower_limit = self.format_nemomod_table_total_technology_activity_lower_limit(
+                df_elec_trajectories, 
+                regions = regions,
+                return_type = "CapacityCheck"
+            )
             df_total_technology_activity_lower_limit = df_total_technology_activity_lower_limit.get(tablename_lower_lim)
 
         # get some scalars
@@ -5320,7 +5588,7 @@ class ElectricEnergy:
 
         # TotalAnnualMaxCapacity
         dict_return.update(
-            self.format_model_variable_as_nemomod_table(
+            self.formatRGN_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_entc_nemomod_total_annual_max_capacity,
                 self.model_attributes.table_nemomod_total_annual_max_capacity,
@@ -5330,8 +5598,9 @@ class ElectricEnergy:
                     self.field_nemomod_region
                 ],
                 self.field_nemomod_technology,
-                scalar_to_nemomod_units = scalar_total_annual_max_capacity,
-                drop_flag = self.drop_flag_tech_capacities
+                drop_flag = self.drop_flag_tech_capacities,
+                regions = regions,
+                scalar_to_nemomod_units = scalar_total_annual_max_capacity
             )
         )
         # verify that the maximum capacity meets or exceed the minimum activity lower limit
@@ -5347,7 +5616,7 @@ class ElectricEnergy:
 
         # TotalAnnualMaxCapacityInvestment
         dict_return.update(
-            self.format_model_variable_as_nemomod_table(
+            self.formatRGN_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_entc_nemomod_total_annual_max_capacity_investment,
                 self.model_attributes.table_nemomod_total_annual_max_capacity_investment,
@@ -5357,13 +5626,14 @@ class ElectricEnergy:
                     self.field_nemomod_region
                 ],
                 self.field_nemomod_technology,
-                scalar_to_nemomod_units = scalar_total_annual_max_capacity_investment,
-                drop_flag = self.drop_flag_tech_capacities
+                drop_flag = self.drop_flag_tech_capacities,
+                regions = regions,
+                scalar_to_nemomod_units = scalar_total_annual_max_capacity_investment
             )
         )
         # TotalAnnualMinCapacity
         dict_return.update(
-            self.format_model_variable_as_nemomod_table(
+            self.formatRGN_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_entc_nemomod_total_annual_min_capacity,
                 self.model_attributes.table_nemomod_total_annual_min_capacity,
@@ -5373,13 +5643,14 @@ class ElectricEnergy:
                     self.field_nemomod_region
                 ],
                 self.field_nemomod_technology,
-                scalar_to_nemomod_units = scalar_total_annual_min_capacity,
-                drop_flag = self.drop_flag_tech_capacities
+                drop_flag = self.drop_flag_tech_capacities,
+                regions = regions,
+                scalar_to_nemomod_units = scalar_total_annual_min_capacity
             )
         )
         # TotalAnnualMinCapacityInvestment
         dict_return.update(
-            self.format_model_variable_as_nemomod_table(
+            self.formatRGN_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_entc_nemomod_total_annual_min_capacity_investment,
                 self.model_attributes.table_nemomod_total_annual_min_capacity_investment,
@@ -5389,8 +5660,9 @@ class ElectricEnergy:
                     self.field_nemomod_region
                 ],
                 self.field_nemomod_technology,
-                scalar_to_nemomod_units = scalar_total_annual_min_capacity_investment,
-                drop_flag = self.drop_flag_tech_capacities
+                drop_flag = self.drop_flag_tech_capacities,
+                regions = regions,
+                scalar_to_nemomod_units = scalar_total_annual_min_capacity_investment
             )
         )
 
@@ -5435,14 +5707,28 @@ class ElectricEnergy:
 
     ##  format TotalAnnualMaxCapacityStorage, TotalAnnualMaxCapacityInvestmentStorage, TotalAnnualMinCapacityStorage, TotalAnnualMinCapacityInvestmentStorage for NemoMod
     def format_nemomod_table_total_capacity_storage_tables(self,
-        df_elec_trajectories: pd.DataFrame
+        df_elec_trajectories: pd.DataFrame,
+        regions: Union[List[str], None] = None,
     ) -> pd.DataFrame:
         """
-            Format the TotalAnnualMaxCapacityStorage, TotalAnnualMaxCapacityInvestmentStorage, TotalAnnualMinCapacityStorage, and TotalAnnualMinCapacityInvestmentStorage input tables for NemoMod based on SISEPUEDE configuration parameters, input variables, integrated model outputs, and reference tables.
+        Format the 
+            TotalAnnualMaxCapacityStorage, 
+            TotalAnnualMaxCapacityInvestmentStorage, 
+            TotalAnnualMinCapacityStorage, and 
+            TotalAnnualMinCapacityInvestmentStorage 
+            
+            input tables for NemoMod based on SISEPUEDE configuration 
+            parameters, input variables, integrated model outputs, and reference 
+            tables.
 
-            Function Arguments
-            ------------------
-            - df_elec_trajectories: data frame of model variable input trajectories
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
+
+        Keyword Arguments
+        -----------------
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         """
 
         dict_return = {}
@@ -5454,7 +5740,7 @@ class ElectricEnergy:
 
         # TotalAnnualMaxCapacityStorage
         dict_return.update(
-            self.format_model_variable_as_nemomod_table(
+            self.formatRGN_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_enst_nemomod_total_annual_max_capacity_storage,
                 self.model_attributes.table_nemomod_total_annual_max_capacity_storage,
@@ -5464,13 +5750,14 @@ class ElectricEnergy:
                     self.field_nemomod_region
                 ],
                 self.field_nemomod_storage,
-                scalar_to_nemomod_units = scalar_total_annual_max_capacity_storage,
-                drop_flag = self.drop_flag_tech_capacities
+                drop_flag = self.drop_flag_tech_capacities,
+                regions = regions,
+                scalar_to_nemomod_units = scalar_total_annual_max_capacity_storage
             )
         )
         # TotalAnnualMaxCapacityInvestmentStorage
         dict_return.update(
-            self.format_model_variable_as_nemomod_table(
+            self.formatRGN_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_enst_nemomod_total_annual_max_capacity_investment_storage,
                 self.model_attributes.table_nemomod_total_annual_max_capacity_investment_storage,
@@ -5480,13 +5767,14 @@ class ElectricEnergy:
                     self.field_nemomod_region
                 ],
                 self.field_nemomod_storage,
-                scalar_to_nemomod_units = scalar_total_annual_max_capacity_investment_storage,
-                drop_flag = self.drop_flag_tech_capacities
+                drop_flag = self.drop_flag_tech_capacities,
+                regions = regions,
+                scalar_to_nemomod_units = scalar_total_annual_max_capacity_investment_storage
             )
         )
         # TotalAnnualMinCapacityStorage
         dict_return.update(
-            self.format_model_variable_as_nemomod_table(
+            self.formatRGN_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_enst_nemomod_total_annual_min_capacity_storage,
                 self.model_attributes.table_nemomod_total_annual_min_capacity_storage,
@@ -5496,13 +5784,14 @@ class ElectricEnergy:
                     self.field_nemomod_region
                 ],
                 self.field_nemomod_storage,
-                scalar_to_nemomod_units = scalar_total_annual_min_capacity_storage,
-                drop_flag = self.drop_flag_tech_capacities
+                drop_flag = self.drop_flag_tech_capacities,
+                regions = regions,
+                scalar_to_nemomod_units = scalar_total_annual_min_capacity_storage
             )
         )
         # TotalAnnualMinCapacityInvestmentStorage
         dict_return.update(
-            self.format_model_variable_as_nemomod_table(
+            self.formatRGN_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_enst_nemomod_total_annual_min_capacity_investment_storage,
                 self.model_attributes.table_nemomod_total_annual_min_capacity_investment_storage,
@@ -5512,8 +5801,9 @@ class ElectricEnergy:
                     self.field_nemomod_region
                 ],
                 self.field_nemomod_storage,
-                scalar_to_nemomod_units = scalar_total_annual_min_capacity_investment_storage,
-                drop_flag = self.drop_flag_tech_capacities
+                drop_flag = self.drop_flag_tech_capacities,
+                regions = regions,
+                scalar_to_nemomod_units = scalar_total_annual_min_capacity_investment_storage
             )
         )
 
@@ -5560,6 +5850,7 @@ class ElectricEnergy:
     def format_nemomod_table_total_technology_activity_lower_limit(self,
         df_elec_trajectories: pd.DataFrame,
         attribute_technology: AttributeTable = None,
+        regions: Union[List[str], None] = None, 
         return_type: str = "NemoMod"
     ) -> pd.DataFrame:
         """
@@ -5576,6 +5867,8 @@ class ElectricEnergy:
         - attribute_technology: AttributeTable for technology, used to identify 
             whether or not a technology can charge a storage. If None, use 
             ModelAttributes default.
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
         - return_type: type of return. Acceptable values are "NemoMod" and 
             "CapacityCheck". Invalid entries default to "NemoMod"
             * NemoMod (default): return the 
@@ -5657,14 +5950,15 @@ class ElectricEnergy:
             direction = self.direction_exchange_year_time_period
         )
         # add key values
-        df_out = self.add_multifields_from_key_values(df_out,
+        df_out = self.addRGN_multifields_from_key_values(df_out,
             [
                 self.field_nemomod_id,
                 self.field_nemomod_region,
                 self.field_nemomod_technology,
                 self.field_nemomod_year,
                 self.field_nemomod_value
-            ]
+            ],
+            regions = regions
         )
 
         # scale to power units if doing capacity check
@@ -6307,7 +6601,6 @@ class ElectricEnergy:
         )
         arr_enfu_demand_entc *= self.get_nemomod_energy_scalar(self.modvar_enfu_energy_demand_by_fuel_entc)
         arr_enfu_demands = arr_enfu_demands_no_entc + arr_enfu_demand_entc
-        print(f"arr_enfu_demands_no_entc:\n{arr_enfu_demands_no_entc[0]}")
 
         scalar_div = self.get_nemomod_energy_scalar(self.modvar_enfu_energy_demand_by_fuel_total, force_modvar_to_config_on_none = True)
         df_enfu_demands = self.model_attributes.array_to_df(
@@ -6519,8 +6812,9 @@ class ElectricEnergy:
         df_elec_trajectories: pd.DataFrame,
         df_reference_capacity_factor: pd.DataFrame,
         df_reference_specified_demand_profile: pd.DataFrame,
+        dict_attributes: dict = {},
+        regions: Union[List[str], None] = None,
         tuple_enfu_production_and_demands: Union[Tuple[pd.DataFrame], None] = None,
-        dict_attributes: dict = {}
     ) -> dict:
         """
         Retrieve tables from applicable inputs and format as dictionary. 
@@ -6550,6 +6844,7 @@ class ElectricEnergy:
                 * attribute_storage: STORAGE attribute table
                 * attribute_technology: TECHNOLOGY attribute table
                 * attribute_time_slice: TIMESLICE attribute table
+        - regions: regions to generate input tables for
         - tuple_enfu_production_and_demands: optional tuple of energy fuel 
             demands produced by 
             self.model_energy.project_enfu_production_and_demands():
@@ -6562,7 +6857,7 @@ class ElectricEnergy:
                 arr_enfu_production
             )
         """
-
+        
         ##  INITIALIZE SHARED COMPONENTS
 
         # initilize attribute tables to pass--if they are not in the dictionary, they will return None, and defaults are used
@@ -6575,21 +6870,67 @@ class ElectricEnergy:
         attribute_technology = dict_attributes.get("attribute_technology")
         attribute_time_period = dict_attributes.get("attribute_time_period")
         attribute_time_slice = dict_attributes.get("attribute_time_slice")
-
+        
+        # check specification of regions
+        regions = self.model_attributes.get_region_list_filtered(regions, attribute_region = attribute_region)
 
         ##  BUILD TABLES FOR NEMOMOD
 
         dict_out = {}
+
+
+        ##  1. START WITH ATTRIBUTE TABLES
         
-        # start with basic attribute tables and time slice tables
-        dict_out.update(self.format_nemomod_attribute_table_emission(attribute_emission = attribute_emission))
-        dict_out.update(self.format_nemomod_attribute_table_fuel(attribute_fuel = attribute_fuel))
-        dict_out.update(self.format_nemomod_attribute_table_mode_of_operation(attribute_mode = attribute_mode))
-        dict_out.update(self.format_nemomod_attribute_table_region(attribute_region = attribute_region))
-        dict_out.update(self.format_nemomod_attribute_table_storage(attribute_storage = attribute_storage))
-        dict_out.update(self.format_nemomod_attribute_table_technology(attribute_technology = attribute_technology))
-        dict_out.update(self.format_nemomod_attribute_table_year())
-        dict_out.update(self.format_nemomod_table_tsgroup_tables(attribute_time_slice = attribute_time_slice))
+        # EMISSION
+        dict_out.update(
+            self.format_nemomod_attribute_table_emission(
+                attribute_emission = attribute_emission
+            )
+        )
+        # FUEL
+        dict_out.update(
+            self.format_nemomod_attribute_table_fuel(
+                attribute_fuel = attribute_fuel
+            )
+        )
+        #MODEOFOPERATION
+        dict_out.update(
+            self.format_nemomod_attribute_table_mode_of_operation(
+                attribute_mode = attribute_mode
+            )
+        )
+        # REGION
+        dict_out.update(
+            self.format_nemomod_attribute_table_region(
+                attribute_region = attribute_region,
+                regions = regions
+            )
+        )
+        # STORAGE
+        dict_out.update(
+            self.format_nemomod_attribute_table_storage(
+                attribute_storage = attribute_storage
+            )
+        )
+        # TECHNOLOGY
+        dict_out.update(
+            self.format_nemomod_attribute_table_technology(
+                attribute_technology = attribute_technology
+            )
+        )
+        # YEAR
+        dict_out.update(
+            self.format_nemomod_attribute_table_year()
+        )
+        # TIMESLICE
+        dict_out.update(
+            self.format_nemomod_table_tsgroup_tables(
+                attribute_time_slice = attribute_time_slice
+            )
+        )
+
+
+        ##  2. ADD TABLES THAT ARE INDEPENDENT OF MODEL PASS THROUGH (df_elec_trajectories)
 
         # DefaultParams
         dict_out.update(self.format_nemomod_table_default_parameters(attribute_nemomod_table = attribute_nemomod_table))
@@ -6598,39 +6939,50 @@ class ElectricEnergy:
             self.format_nemomod_table_operational_life(
                 attribute_fuel = attribute_fuel,
                 attribute_storage = attribute_storage,
-                attribute_technology = attribute_technology
+                attribute_technology = attribute_technology,
+                regions = regions
             )
         )
         # ReserveMarginTagFuel
-        dict_out.update(self.format_nemomod_table_reserve_margin_tag_fuel())
+        dict_out.update(
+            self.format_nemomod_table_reserve_margin_tag_fuel(
+                regions = regions
+            )
+        )
         # TechnologyFromStorage and TechnologyToStorage
         dict_out.update(
             self.format_nemomod_table_technology_from_and_to_storage(
                 attribute_storage = attribute_storage,
-                attribute_technology = attribute_technology
+                attribute_technology = attribute_technology,
+                regions = regions
             )
         )
 
-        # add those dependent on input variables
+
+        ##  3. ADD TABLES DEPENDENT ON MODEL PASS THROUGH (df_elec_trajectories)
+
         if df_elec_trajectories is not None:
             # AnnualEmissionLimit
             dict_out.update(
                 self.format_nemomod_table_annual_emission_limit(
                     df_elec_trajectories,
                     attribute_emission = attribute_emission,
-                    attribute_time_period = attribute_time_period
+                    attribute_time_period = attribute_time_period,
+                    regions = regions
                 )
             )
             # CapitalCostStorage
             dict_out.update(
                 self.format_nemomod_table_costs_storage(
-                    df_elec_trajectories
+                    df_elec_trajectories,
+                    regions = regions
                 )
             )
             # CapitalCost, FixedCost, and VariableCost -- Costs (Technology)
             dict_out.update(
                 self.format_nemomod_table_costs_technology(
-                    df_elec_trajectories
+                    df_elec_trajectories,
+                    regions = regions
                 )
             )
             # EmissionsActivityRatio - Emission Factors
@@ -6639,28 +6991,32 @@ class ElectricEnergy:
                     df_elec_trajectories, 
                     attribute_fuel = attribute_fuel, 
                     attribute_technology = attribute_technology, 
-                    attribute_time_period = attribute_time_period
+                    attribute_time_period = attribute_time_period,
+                    regions = regions
                 )
             )
             # InputActivityRatio
             dict_out.update(
                 self.format_nemomod_table_input_activity_ratio(
                     df_elec_trajectories, 
-                    attribute_technology = attribute_technology
+                    attribute_technology = attribute_technology,
+                    regions = regions
                 )
             )
             # MinShareProduction
             dict_out.update(
                 self.format_nemomod_table_min_share_production(
                     df_elec_trajectories, 
-                    attribute_fuel = attribute_fuel
+                    attribute_fuel = attribute_fuel,
+                    regions = regions
                 )
             )
             # MinStorageCharge
             dict_out.update(
                 self.format_nemomod_table_min_storage_charge(
                     df_elec_trajectories, 
-                    attribute_storage = attribute_storage
+                    attribute_storage = attribute_storage,
+                    regions = regions
                 )
             )
             # OutputActivityRatio
@@ -6668,50 +7024,51 @@ class ElectricEnergy:
                 self.format_nemomod_table_output_activity_ratio(
                     df_elec_trajectories, 
                     attribute_fuel = attribute_fuel, 
-                    attribute_technology = attribute_technology
-                )
-            )
-            # REMinProductionTarget
-            dict_out.update(
-                self.format_nemomod_re_min_production_target(
-                    df_elec_trajectories
+                    attribute_technology = attribute_technology,
+                    regions = regions
                 )
             )
             # ReserveMargin
             dict_out.update(
                 self.format_nemomod_table_reserve_margin(
-                    df_elec_trajectories
+                    df_elec_trajectories,
+                    regions = regions
                 )
             )
             # ReserveMarginTagTechnology
             dict_out.update(
                 self.format_nemomod_table_reserve_margin_tag_technology(
-                    df_elec_trajectories
+                    df_elec_trajectories,
+                    regions = regions
                 )
             )
             # ResidualCapacity
             dict_out.update(
                 self.format_nemomod_table_residual_capacity(
-                    df_elec_trajectories
+                    df_elec_trajectories,
+                    regions = regions
                 )
             )
             # ResidualStorageCapacity
             dict_out.update(
                 self.format_nemomod_table_residual_storage_capacity(
-                    df_elec_trajectories
+                    df_elec_trajectories,
+                    regions = regions
                 )
             )
             # REMinProductionTarget
             dict_out.update(
-                self.format_nemomod_re_min_production_target(
-                    df_elec_trajectories
-                    attribute_fuel = attribute_fuel
+                self.format_nemomod_table_re_min_production_target(
+                    df_elec_trajectories,
+                    attribute_fuel = attribute_fuel,
+                    regions = regions
                 )
             )
             # RETagTechnology
             dict_out.update(
                 self.format_nemomod_table_re_tag_technology(
-                    df_elec_trajectories
+                    df_elec_trajectories,
+                    regions = regions
                 )
             )
             # SpecifiedAnnualDemand
@@ -6719,32 +7076,37 @@ class ElectricEnergy:
                 self.format_nemomod_table_specified_annual_demand(
                     df_elec_trajectories, 
                     attribute_time_period = attribute_time_period, 
+                    regions = regions,
                     tuple_enfu_production_and_demands = tuple_enfu_production_and_demands
                 )
             )
             # StorageMaxChargeRate (if included), StorageMaxDishargeRate (if included), and StorageStartLevel
             dict_out.update(
                 self.format_nemomod_table_storage_attributes(
-                    df_elec_trajectories
+                    df_elec_trajectories,
+                    regions = regions
                 )
             )
             # TotalAnnualMax/MinCapacity +/-Investment
             dict_out.update(
                 self.format_nemomod_table_total_capacity_tables(
-                    df_elec_trajectories
+                    df_elec_trajectories,
+                    regions = regions
                 )
             )
             # TotalAnnualMax/MinCapacity +/-Investment Storage
             dict_out.update(
                 self.format_nemomod_table_total_capacity_storage_tables(
-                    df_elec_trajectories
+                    df_elec_trajectories,
+                    regions = regions
                 )
             )
             # TotalTechnologyAnnualActivityLowerLimit
             dict_out.update(
                 self.format_nemomod_table_total_technology_activity_lower_limit(
                     df_elec_trajectories, 
-                    attribute_technology = attribute_technology
+                    attribute_technology = attribute_technology,
+                    regions = regions
                 )
             )
 
@@ -6754,14 +7116,17 @@ class ElectricEnergy:
                 self.format_nemomod_table_capacity_factor(
                     df_reference_capacity_factor,
                     attribute_technology = attribute_technology,
-                    attribute_region = attribute_region
+                    attribute_region = attribute_region,
+                    regions = regions
                 )
             )
         # SpecifiedDemandProfile
         if df_reference_specified_demand_profile is not None:
             dict_out.update(
                 self.format_nemomod_table_specified_demand_profile(
-                    df_reference_specified_demand_profile
+                    df_reference_specified_demand_profile,
+                    attribute_region = attribute_region,
+                    regions = regions
                 )
             )
 
@@ -6841,6 +7206,7 @@ class ElectricEnergy:
         fp_database: str = None,
         dict_ref_tables: dict = None,
         missing_vals_on_error: Union[int, float] = 0.0,
+        regions: Union[List[str], None] = None,
         return_blank_df_on_error: bool = False,
         solver: str = None,
         vector_calc_time_periods: list = None
@@ -6866,6 +7232,8 @@ class ElectricEnergy:
             ElectricEnergy.dict_nemomod_reference_tables (initialization data)
         - missing_vals_on_error: if a data frame is returned on an error, fill 
             with this value
+        - regions: list of regions or str defining region to run. If None, 
+            defaults to configuration specification
         - return_blank_df_on_error: on a NemoMod error (such as an 
             infeasibility), return a data frame filled with 
             missing_vals_on_error?
@@ -6931,6 +7299,7 @@ class ElectricEnergy:
             df_elec_trajectories,
             dict_ref_tables.get(self.model_attributes.table_nemomod_capacity_factor),
             dict_ref_tables.get(self.model_attributes.table_nemomod_specified_demand_profile),
+            regions = regions,
             tuple_enfu_production_and_demands = tuple_enfu_production_and_demands
         )
 
