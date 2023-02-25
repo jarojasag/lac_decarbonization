@@ -458,6 +458,8 @@ class ModelAttributes:
         self._check_crosswalk_wali_trww()
         self._check_attribute_table_waso()
 
+        return None
+
 
 
     def _initialize_all_primary_category_flags(self,
@@ -479,7 +481,6 @@ class ModelAttributes:
 
 
 
-    ##  function to retrieve and format attribute tables for use
     def _initialize_attribute_tables(self,
         dir_att: str,
         table_name_attr_sector: str = "abbreviation_sector",
@@ -601,6 +602,8 @@ class ModelAttributes:
         self.table_name_attr_sector = table_name_attr_sector
         self.table_name_attr_subsector = table_name_attr_subsector
 
+        return None
+
 
 
     def _initialize_basic_dimensions_of_analysis(self,
@@ -643,6 +646,8 @@ class ModelAttributes:
         # some common shared fields
         self.field_dim_year = "year"
 
+        return None
+        
 
 
     def _initialize_basic_other_properties(self,
@@ -660,6 +665,8 @@ class ModelAttributes:
         self.delim_multicats = "|"
         self.field_emissions_total_flag = "emissions_total_by_gas_component"
         self.matchstring_landuse_to_forests = "forests_"
+
+        return None
 
 
 
@@ -3757,7 +3764,8 @@ class ModelAttributes:
         force_boundary_restriction: bool = True,
         expand_to_all_cats: bool = False,
         all_cats_missing_val: float = 0.0,
-        return_num_type: type = np.float64
+        return_num_type: type = np.float64,
+        throw_error_on_missing_fields: bool = True
     ) -> pd.DataFrame:
 
         """
@@ -3790,6 +3798,10 @@ class ModelAttributes:
             * "array_base" (np.ndarray not corrected for configuration 
                 emissions)
             * "array_units_corrected" (emissions corrected for configuration)
+        - throw_error_on_missing_fields: set to True to throw an error if the
+            fields associated with modvar are not found in df_in.
+            * If False, returns None if fields implied by modvar are not found 
+                in df_in
         - var_bounds: Default is None (no bounds). Otherwise, gives boundaries 
             to enforce variables that are retrieved. For example, some variables 
             may be restricted to the range (0, 1). Use a list-like structure to 
@@ -3802,9 +3814,15 @@ class ModelAttributes:
 
         if modvar not in self.dict_model_variables_to_variables.keys():
             raise ValueError(f"Invalid variable specified in get_standard_variables: variable '{modvar}' not found.")
-        else:
-            flds = self.dict_model_variables_to_variables[modvar]
-            flds = flds[0] if ((len(flds) == 1) and not override_vector_for_single_mv_q) else flds
+
+        flds = self.dict_model_variables_to_variables.get(modvar)
+        flds = flds[0] if ((len(flds) == 1) and not override_vector_for_single_mv_q) else flds
+
+        flds_check = set([flds]) if isinstance(flds, str) else set(flds)
+        if not flds_check.issubset(set(df_in.columns)):
+            if throw_error_on_missing_fields:
+                raise ValueError(f"Invalid variable specified in get_standard_variables: variable '{modvar}' not found.")
+            return None
 
         # check some types
         self.check_restricted_value_argument(

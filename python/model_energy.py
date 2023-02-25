@@ -10,11 +10,11 @@ import time
 from typing import *
 
 
-###########################
-###                     ###
-###     ENERGY MODEL    ###
-###                     ###
-###########################
+###############################################
+###                                         ###
+###     NON-FUEL PRODUCTION ENERGY MODEL    ###
+###                                         ###
+###############################################
 
 class NonElectricEnergy:
     """
@@ -30,6 +30,7 @@ class NonElectricEnergy:
         self.model_attributes = attributes
 
         self._initialize_subsector_names()
+        self._initialize_input_output_components()
 
         # initialize model variables, categories, and fields
         self._initialize_subsector_vars_ccsq()
@@ -40,7 +41,6 @@ class NonElectricEnergy:
         self._initialize_subsector_vars_trde()
         self._initialize_subsector_vars_trns()
 
-
         # valid subsectors in .project()
         self.valid_projection_subsecs = [
             self.subsec_name_ccsq,
@@ -49,14 +49,10 @@ class NonElectricEnergy:
             self.subsec_name_scoe,
             self.subsec_name_trns
         ]
-        # initialize dynamic variables
-        self.required_dimensions = self.get_required_dimensions()
-        self.required_subsectors, self.required_base_subsectors = self.get_required_subsectors()
-        self.required_variables, self.output_variables = self.get_neenergy_input_output_fields()
-        # variables from other sectors (NOTE: AFOLU INTEGRATION VARIABLES MUST BE SET HERE, CANNOT INITIALIZE AFOLU CLASS)
+
+        # variables from other sectors (NOTE: AFOLU INTEGRATION VARIABLES MUST BE SET HERE, CANNOT INITIALIZE AFOLU CLASS DUE TO DAG)
         self.modvar_agrc_yield = "Crop Yield"
         self.modvar_lvst_total_animal_mass = "Total Domestic Animal Mass"
- 
         # 
         self._initialize_models()
 
@@ -64,9 +60,7 @@ class NonElectricEnergy:
         self._set_integrated_variables()
 
         ##  MISCELLANEOUS VARIABLES
-
         self.time_periods, self.n_time_periods = self.model_attributes.get_time_periods()
-
 
 
 
@@ -182,17 +176,19 @@ class NonElectricEnergy:
 
     def get_required_subsectors(self):
         ## TEMPORARY
-        subsectors = [self.subsec_name_enfu, self.subsec_name_inen, self.subsec_name_trns, self.subsec_name_trde, self.subsec_name_scoe]#self.subsec_name_enfu,#self.model_attributes.get_setor_subsectors("Energy")
+        subsectors = [
+            self.subsec_name_ccsq,
+            self.subsec_name_enfu,
+            self.subsec_name_fgtv,
+            self.subsec_name_inen, 
+            self.subsec_name_trns, 
+            self.subsec_name_trde, 
+            self.subsec_name_scoe
+        ]#self.subsec_name_enfu,#self.model_attributes.get_setor_subsectors("Energy")
         subsectors_base = subsectors.copy()
         subsectors += [self.subsec_name_econ, self.subsec_name_gnrl]
         return subsectors, subsectors_base
 
-
-
-    def get_required_dimensions(self):
-        ## TEMPORARY - derive from attributes later
-        required_doa = [self.model_attributes.dim_time_period]
-        return required_doa
 
 
 
@@ -237,6 +233,57 @@ class NonElectricEnergy:
         list_out = [dict_map.get(x) for x in valid_subsectors_project if (x in list_out) or (dict_map.get(x) in list_out)]
 
         return list_out
+
+
+
+    def _initialize_input_output_components(self,
+    ) -> None:
+        """
+        Set a range of input components, including required dimensions, 
+            subsectors, input and output fields, and integration variables.
+            Sets the following properties:
+
+            * self.output_variables
+            * self.required_dimensions
+            * self.required_subsectors
+            * self.required_base_subsectors
+            * self.required_variables
+            
+        """
+
+        ##  START WITH REQUIRED DIMENSIONS (TEMPORARY - derive from attributes later)
+
+        required_doa = [self.model_attributes.dim_time_period]
+        self.required_dimensions = required_doa
+
+
+        ##  ADD REQUIRED SUBSECTORS (TEMPORARY - derive from attributes)
+
+        subsectors = [
+            self.subsec_name_ccsq,
+            self.subsec_name_enfu,
+            self.subsec_name_fgtv,
+            self.subsec_name_inen, 
+            self.subsec_name_trns, 
+            self.subsec_name_trde, 
+            self.subsec_name_scoe
+        ]#self.subsec_name_enfu,#self.model_attributes.get_setor_subsectors("Energy")
+        subsectors_base = subsectors.copy()
+        subsectors += [self.subsec_name_econ, self.subsec_name_gnrl]
+
+        self.required_subsectors = subsectors
+        self.required_base_subsectors = subsectors_base
+
+
+        ##  SET ELECTRICITY INPUT/OUTPUT FIELDS
+
+        required_doa = [self.model_attributes.dim_time_period]
+        required_vars, output_vars = self.model_attributes.get_input_output_fields(subsectors)
+
+        self.required_variables = required_vars + required_doa
+        self.output_variables = output_vars
+
+        return None
 
 
     
@@ -840,6 +887,208 @@ class NonElectricEnergy:
         return dict_out
 
 
+    
+    def get_fgtv_demands_and_trade(self,
+        df_neenergy_trajectories: pd.DataFrame
+    ) -> Tuple[pd.DataFrame]:
+        """
+        Fugitive Emissions can be run downstream of all of NonElectricEnergy 
+            models OR downstream of ElectricEnergy. 
+            
+            * If run with ElectricEnergy, aggregate demands are taken from 
+                df_neenergy_trajectories. 
+            * If run without ElectricEnergy, aggregate demands (excluding ENTC), 
+                imports, production, and adjusted exports (= Exports) are 
+                calculated internally and returned in a data frame. 
+            
+        This function checks for the presence of the following variables to
+            determine whether or not it was run downstream of ElectricEnergy:
+
+            - NonElectricEnergy.modvar_enfu_energy_demand_by_fuel_total
+            - NonElectricEnergy.modvar_enfu_exports_adjusted_fuel
+            - NonElectricEnergy.modvar_enfu_imports_fuel
+            - NonElectricEnergy.modvar_enfu_production_fuel
+
+        Returns a tuple of the form:
+
+            tuple_out = (
+                arr_fgtv_demands, 
+                arr_demands_distribution, 
+                arr_fgtv_export, 
+                arr_fgtv_imports, 
+                arr_fgtv_production,
+                df_out
+            ),
+        
+        where all arrays are in configuration energy units.
+
+        Function Arguments
+        ------------------
+        - df_neenergy_trajectories: input data
+
+        Keyword Arguments
+        -----------------
+        
+        """
+
+        # initialize some outputs that are conditional
+        arr_demands_distribution = None
+        df_out = None
+
+        ##  TRY TO GET FROM df_neenergy_trajectories OUTPUTS FROM ElectricEnergy
+
+        # demands
+        arr_fgtv_demands = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories,
+            self.modvar_enfu_energy_demand_by_fuel_total,
+            expand_to_all_cats = True,
+            return_type = "array_base",
+            throw_error_on_missing_fields = False
+        )
+        if (arr_fgtv_demands is not None):
+            arr_fgtv_demands *= self.model_attributes.get_scalar(
+                self.modvar_enfu_energy_demand_by_fuel_total, 
+                "energy"
+            )
+
+        # exports
+        arr_fgtv_exports = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories,
+            self.modvar_enfu_exports_adjusted_fuel,
+            expand_to_all_cats = True,
+            return_type = "array_base",
+            throw_error_on_missing_fields = False
+        )
+        if (arr_fgtv_exports is not None):
+            arr_fgtv_exports *= self.model_attributes.get_scalar(
+                self.modvar_enfu_exports_adjusted_fuel, 
+                "energy"
+            )
+
+        # imports
+        arr_fgtv_imports = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories,
+            self.modvar_enfu_imports_fuel,
+            expand_to_all_cats = True,
+            return_type = "array_base",
+            throw_error_on_missing_fields = False
+        )
+        if (arr_fgtv_imports is not None):
+            arr_fgtv_imports *= self.model_attributes.get_scalar(
+                self.modvar_enfu_imports_fuel, 
+                "energy"
+            )
+
+        # production 
+        arr_fgtv_production = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories,
+            self.modvar_enfu_production_fuel,
+            expand_to_all_cats = True,
+            return_type = "array_base",
+            throw_error_on_missing_fields = False
+        )
+        if (arr_fgtv_production is not None):
+            arr_fgtv_production *= self.model_attributes.get_scalar(
+                self.modvar_enfu_production_fuel, 
+                "energy"
+            )
+        
+        # get demands on distribution
+        # NOTE: If any of the previous variables are not found, then default to
+        #     the assumption that ElectricEnergy was *not* successfully run, so
+        #     the variables have to be added
+        generate_demands_distribution = (
+            arr_fgtv_demands is not None
+        ) & (
+            arr_fgtv_exports is not None
+        ) & (
+            arr_fgtv_imports is not None
+        ) & (
+            arr_fgtv_production is not None
+        )
+
+        if generate_demands_distribution:
+            # loop over outputs from other energy sectors
+            arr_demands_distribution = 0.0
+            for modvar in self.modvars_enfu_energy_demands_distribution:
+
+                scalar = self.model_attributes.get_scalar(modvar, "energy")
+                arr_tmp = 0.0
+
+                try:
+                    arr_tmp = self.model_attributes.get_standard_variables(
+                        df_neenergy_trajectories,
+                        modvar,
+                        expand_to_all_cats = True,
+                        return_type = "array_base"
+                    )
+                except:
+                    self._log(f"Warning in project_enfu_production_and_demands: Variable '{modvar}' not found in the data frame. Its fuel demands will not be included.", type_log = "warning")
+
+                arr_tmp *= scalar
+                arr_demands_distribution += arr_tmp
+
+
+        else:
+            
+            (
+                arr_fgtv_demands, 
+                arr_demands_distribution, 
+                arr_fgtv_export, 
+                arr_fgtv_imports, 
+                arr_fgtv_production
+            ) = self.project_enfu_production_and_demands(
+                df_neenergy_trajectories
+            )
+
+            df_out += [
+                self.model_attributes.array_to_df(
+                    arr_fgtv_demands/self.model_attributes.get_scalar(self.modvar_enfu_energy_demand_by_fuel_total, "energy"), 
+                    self.modvar_enfu_energy_demand_by_fuel_total, 
+                    reduce_from_all_cats_to_specified_cats = True
+                )
+            ] if (arr_fgtv_demands is not None) else []
+
+            df_out += [
+                self.model_attributes.array_to_df(
+                    arr_fgtv_export/self.model_attributes.get_scalar(self.modvar_enfu_exports_adjusted_fuel, "energy"), 
+                    self.modvar_enfu_exports_adjusted_fuel, 
+                    reduce_from_all_cats_to_specified_cats = True
+                )
+            ] if (arr_fgtv_exports is not None) else []
+
+            df_out += [
+                self.model_attributes.array_to_df(
+                    arr_fgtv_imports/self.model_attributes.get_scalar(self.modvar_enfu_imports_fuel, "energy"), 
+                    self.modvar_enfu_imports_fuel, 
+                    reduce_from_all_cats_to_specified_cats = True
+                )
+            ] if (arr_fgtv_imports is not None) else []
+
+            df_out += [
+                self.model_attributes.array_to_df(
+                    arr_fgtv_production/self.model_attributes.get_scalar(self.modvar_enfu_production_fuel, "energy"), 
+                    self.modvar_enfu_production_fuel, 
+                    reduce_from_all_cats_to_specified_cats = True
+                )
+            ] if (arr_fgtv_production is not None) else []
+            
+
+            df_out = pd.concat(df_out, axis = 0).reset_index(drop = True)
+
+        # return a tuple
+        tuple_out = (
+            arr_fgtv_demands, 
+            arr_demands_distribution, 
+            arr_fgtv_export, 
+            arr_fgtv_imports, 
+            arr_fgtv_production,
+            df_out
+        )
+
+        return tuple_out
+
+
 
     ##  project energy consumption for scoe/ccsq
     def project_energy_consumption_by_fuel_from_effvars(self,
@@ -1089,6 +1338,7 @@ class NonElectricEnergy:
         modvars_energy_distribution_demands = self.modvars_enfu_energy_demands_distribution if (modvars_energy_distribution_demands is None) else modvars_energy_distribution_demands
         modvar_energy_exports = self.modvar_enfu_exports_fuel if (modvar_energy_exports is None) else modvar_energy_exports
         modvar_import_fraction = self.modvar_enfu_frac_fuel_demand_imported if (modvar_import_fraction is None) else modvar_import_fraction
+        
         # set energy units out
         output_energy_units = target_energy_units if (self.model_attributes.get_energy_equivalent(target_energy_units) is not None) else self.model_attributes.configuration.get("energy_units")
 
@@ -1097,6 +1347,7 @@ class NonElectricEnergy:
 
         arr_demands = 0.0
         arr_demands_distribution = 0.0
+
         # loop over outputs from other energy sectors
         for modvar in modvars_energy_demands:
 
@@ -1116,8 +1367,8 @@ class NonElectricEnergy:
                 arr_tmp = self.model_attributes.get_standard_variables(
                     df_neenergy_trajectories,
                     modvar,
-                    return_type = "array_base",
-                    expand_to_all_cats = True
+                    expand_to_all_cats = True,
+                    return_type = "array_base"
                 )
             except:
                 self._log(f"Warning in project_enfu_production_and_demands: Variable '{modvar}' not found in the data frame. Its fuel demands will not be included.", type_log = "warning")
@@ -1133,8 +1384,8 @@ class NonElectricEnergy:
         arr_import_fracs = self.model_attributes.get_standard_variables(
             df_neenergy_trajectories,
             modvar_import_fraction,
-            return_type = "array_base",
             expand_to_all_cats = True,
+            return_type = "array_base",
             var_bounds = (0, 1)
         )
         arr_imports = arr_import_fracs*arr_demands
@@ -1143,8 +1394,8 @@ class NonElectricEnergy:
         arr_exports = self.model_attributes.get_standard_variables(
             df_neenergy_trajectories,
             modvar_energy_exports,
-            return_type = "array_base",
             expand_to_all_cats = True,
+            return_type = "array_base",
             var_bounds = (0, np.inf)
         )
         energy_units = self.model_attributes.get_variable_characteristic(
@@ -1365,8 +1616,7 @@ class NonElectricEnergy:
 
 
 
-    def project_fugitive_emissions(
-        self,
+    def project_fugitive_emissions(self,
         df_neenergy_trajectories: pd.DataFrame,
         dict_dims: dict = None,
         n_projection_time_periods: int = None,
@@ -1431,12 +1681,27 @@ class NonElectricEnergy:
         ############################
         #    MODEL CALCULATIONS    #
         ############################
+         
+        # get demands, exports, imports, and production, either from ElectricEnergy or from the rest of the energy sectors
+        (
+            arr_fgtv_demands, 
+            arr_demands_distribution, 
+            arr_fgtv_export, 
+            arr_fgtv_imports, 
+            arr_fgtv_production,
+            df_out
+        ) = self.get_fgtv_demands_and_trade(df_neenergy_trajectories)
 
+        # initialize the output - if demands are from ElectricEnergy, df_out is None, so will disappear on pd.concat(); otherwise, sets those output variables
+        df_out = [df_out]
+        
+        """
         # HERE--DEMANDS WILL HAVE TO COME FROM ElectricEnergy
         # get all demands, imports, exports, and production in terms of configuration units
         arr_fgtv_demands, arr_demands_distribution, arr_fgtv_export, arr_fgtv_imports, arr_fgtv_production = self.project_enfu_production_and_demands(
             df_neenergy_trajectories
         )
+        """;s
 
         # define a dictionary to relate aggregate emissions to the components
         dict_emission_to_fugitive_components = {
@@ -1488,7 +1753,7 @@ class NonElectricEnergy:
             return_type = "array_base",
             var_bounds = (0, 1)
         )
-        vec_fgtv_reduction_flared_leaks = self.model_attributes.get_standard_variables(
+        vec_fgtv_reduction_leaks = self.model_attributes.get_standard_variables(
             df_neenergy_trajectories,
             self.modvar_fgtv_frac_reduction_fugitive_leaks,
             return_type = "array_base",
@@ -1498,7 +1763,6 @@ class NonElectricEnergy:
 
         ##  LOOP OVER OUTPUT EMISSIONS TO GENERATE EMISSIONS
 
-        df_out = []
         for modvar_emission in dict_emission_to_fugitive_components.keys():
 
             # get the key emission factor arrays in terms of mass/energy
@@ -1535,12 +1799,15 @@ class NonElectricEnergy:
             arr_fgtv_ef_fv_flare = arr_fgtv_frac_vent_to_flare*arr_ef_production_flaring if (arr_ef_production_flaring is not None) else 0.0
             arr_fgtv_ef_fv_vent = (1 - arr_fgtv_frac_vent_to_flare)*arr_ef_production_venting if (arr_ef_production_flaring is not None) else 0.0
             arr_fgtv_ef_fv = arr_fgtv_ef_fv_flare + arr_fgtv_ef_fv_vent
+            arr_fgtv_ef_fv += sf.do_array_mult(arr_ef_production_fugitive, 1 - vec_fgtv_reduction_leaks)
             
             # distribution, production, and transmission emissions
             arr_fgtv_emit_distribution = arr_demands_distribution*arr_ef_distribution if (arr_ef_distribution is not None) else 0.0
+            arr_fgtv_emit_distribution = sf.do_array_mult(arr_fgtv_emit_distribution, 1 - vec_fgtv_reduction_leaks)
             arr_fgtv_emit_production = arr_fgtv_production*arr_fgtv_ef_fv
             arr_fgtv_emit_transmission = arr_ef_transmission*(arr_fgtv_production + arr_fgtv_imports) if (arr_ef_transmission is not None) else 0.0
-            
+            arr_fgtv_emit_transmission = sf.do_array_mult(arr_fgtv_emit_transmission, 1 - vec_fgtv_reduction_leaks)
+
             # get total and determine scalar
             arr_fgtv_emissions_cur = arr_fgtv_emit_distribution + arr_fgtv_emit_production + arr_fgtv_emit_transmission
             emission = self.model_attributes.get_variable_characteristic(
@@ -1558,9 +1825,10 @@ class NonElectricEnergy:
                 )
             )
 
+        """
         # set additional output
         arr_fgtv_imports /= self.model_attributes.get_scalar(self.modvar_enfu_imports_fuel, "energy")
-        arr_fgtv_production /= self.model_attributes.get_scalar(self.modvar_enfu_imports_fuel, "energy")
+        arr_fgtv_production /= self.model_attributes.get_scalar(self.modvar_enfu_production_fuel, "energy")
 
         df_out += [
             self.model_attributes.array_to_df(
@@ -1573,6 +1841,7 @@ class NonElectricEnergy:
                 arr_fgtv_production, self.modvar_enfu_production_fuel, reduce_from_all_cats_to_specified_cats = True
             )
         ]
+        """;
 
         # concatenate and add subsector emission totals
         df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")

@@ -99,3 +99,41 @@ Finally, the total consumption of each fuel :math:`i`--the driver of greenhouse 
    :label: consumption_projection_by_fuel
 
    C_{it} = D_{it}e_{it}^{-1}.
+
+
+Transmission Losses
+-------------------
+* To model transmission losses in the absence of a network, electricity 
+      demands are modeled by inflating two key model elements by the 
+      factor \*= 1/(1 - loss):
+         1. the InputActivityRatio for electricity-consuming
+            technologies (edogenizes transmission loss for fuel 
+            production) and
+         2. demands from other energy sectors, which are passed in
+               SpecifiedAnnualDemand.
+      The retrieve_nemomod_tables_fuel_production_demand_and_trade() method accounts for this increase by scaling production and 
+      demands by \*= (1 - loss) and assigning the total loss.
+
+* Demands that are returned EXCLUDE transmission losses, keeping with 
+      the demands for fuels from other sectors. This is logically 
+      consistent with the approach taken with fuel "consumption" by 
+      energy subsectors (how much is actually used) versus fuel demands
+      by other subsectors (point of use). Here, fuel is demanded to meet
+      consumption requirements; what is produced in excess of demand--
+      accounting for systemic inefficencies--does not count toward demand
+      but consumption (or production in this case). 
+
+* The mass balance equations are as follows:
+
+      (demands + exports)/(1 - transmission_loss_fractions)
+      =
+      (production + imports)
+
+      Fuel Imports includes electricity eventually lost to transmission 
+      because it represents how much electricity originates from other 
+      regions (before loss reaches point of use demand). 
+      
+      Conversely, Fuel Exports does *not* include transmission loss 
+      because it represents how much arrives in the other region, which 
+      occurs *after* within-region transmission loss between production 
+      and exporting.

@@ -2276,8 +2276,8 @@ class AFOLU:
         arr_soil_ef4_n_volatilisation = self.model_attributes.get_standard_variables(
             df_afolu_trajectories,
             self.modvar_soil_ef4_n_volatilisation,
-            return_type = "array_base",
-            expand_to_all_cats = True
+            expand_to_all_cats = True,
+            return_type = "array_base"
         )
         # get EF4 for land use categories based on dry/wet (only applies to grassland)
         arr_lndu_ef4_n_volatilisation = 0.0
@@ -2297,13 +2297,23 @@ class AFOLU:
         fields_lndu_forest_ordered = [self.model_attributes.matchstring_landuse_to_forests + x for x in self.model_attributes.dict_attributes[pycat_frst].key_values]
         arr_area_frst = np.array(df_land_use[self.model_attributes.build_varlist(self.subsec_name_lndu, variable_subsec = self.modvar_lndu_area_by_cat, restrict_to_category_values = fields_lndu_forest_ordered)])
         # get different variables
-        arr_frst_ef_sequestration = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_sq_co2, True, "array_units_corrected")
+        arr_frst_ef_sequestration = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_frst_sq_co2, 
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_units_corrected"
+        )
         arr_frst_ef_sequestration *= self.model_attributes.get_variable_unit_conversion_factor(
             self.model_socioeconomic.modvar_gnrl_area,
             self.modvar_frst_sq_co2,
             "area"
         )
-        arr_frst_ef_methane = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_ef_ch4, True, "array_units_corrected")
+        arr_frst_ef_methane = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_frst_ef_ch4, 
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_units_corrected"
+        )
         arr_frst_ef_methane *= self.model_attributes.get_variable_unit_conversion_factor(
             self.model_socioeconomic.modvar_gnrl_area,
             self.modvar_frst_ef_ch4,
@@ -2319,10 +2329,30 @@ class AFOLU:
         ##  FOREST FIRES
 
         # initialize some variables that are called below
-        arr_frst_frac_burned = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_average_fraction_burned_annually, True, "array_base", expand_to_all_cats = True, var_bounds = (0, 1))
-        arr_frst_ef_co2_fires = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_ef_co2_fires, True, "array_base", expand_to_all_cats = True)
+        arr_frst_frac_burned = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_frst_average_fraction_burned_annually, 
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_base", 
+            expand_to_all_cats = True, 
+            var_bounds = (0, 1)
+        )
+        arr_frst_ef_co2_fires = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_frst_ef_co2_fires, 
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_base", 
+            expand_to_all_cats = True
+        )
         # temperate biomass burned
-        arr_frst_biomass_consumed_temperate = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_biomass_consumed_fire_temperate, True, "array_base", expand_to_all_cats = True, var_bounds = (0, 1))
+        arr_frst_biomass_consumed_temperate = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_frst_biomass_consumed_fire_temperate, 
+            expand_to_all_cats = True, 
+            override_vector_for_single_mv_q = True,
+            return_type = "array_base", 
+            var_bounds = (0, 1)
+        )
         arr_frst_biomass_consumed_temperate *= self.model_attributes.get_scalar(self.modvar_frst_biomass_consumed_fire_temperate, "mass")
         arr_frst_biomass_consumed_temperate /= self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_frst_biomass_consumed_fire_temperate,
@@ -2330,7 +2360,14 @@ class AFOLU:
             "area"
         )
         # tropical biomass burned
-        arr_frst_biomass_consumed_tropical = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_biomass_consumed_fire_tropical, True, "array_base", expand_to_all_cats = True, var_bounds = (0, 1))
+        arr_frst_biomass_consumed_tropical = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_frst_biomass_consumed_fire_tropical, 
+            expand_to_all_cats = True, 
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_base", 
+            var_bounds = (0, 1)
+        )
         arr_frst_biomass_consumed_tropical *= self.model_attributes.get_scalar(self.modvar_frst_biomass_consumed_fire_tropical, "mass")
         arr_frst_biomass_consumed_tropical /= self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_frst_biomass_consumed_fire_tropical,
@@ -2349,7 +2386,12 @@ class AFOLU:
             # soil category
             cat_soil = clean_schema(self.model_attributes.get_variable_attribute(modvar, pycat_soil))
             ind_soil = attr_soil.get_key_value_index(cat_soil)
-            self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_frst_ef_ch4, True, "array_units_corrected")
+            self.model_attributes.get_standard_variables(
+                df_afolu_trajectories, 
+                self.modvar_frst_ef_ch4, 
+                override_vector_for_single_mv_q = True, 
+                return_type = "array_units_corrected"
+            )
             # get forest area
             arr_frst_area_temptrop_burned_cur = arr_area_frst*dict_arrs_frst_frac_temptrop[modvar]*arr_frst_frac_burned
             arr_frst_total_dry_mass_burned_cur = arr_frst_area_temptrop_burned_cur*dict_frst_modvar_to_array_forest_fires[modvar]
@@ -2389,7 +2431,13 @@ class AFOLU:
         arr_agrc_frac_cropland_area = self.check_cropland_fractions(df_agrc_frac_cropland, "calculated")
         arr_agrc_crop_area = (arr_agrc_frac_cropland_area.transpose()*vec_cropland_area.transpose()).transpose()
         # unit-corrected emission factors - ch4
-        arr_agrc_ef_ch4 = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_ch4, True, "array_units_corrected", expand_to_all_cats = True)
+        arr_agrc_ef_ch4 = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_agrc_ef_ch4,
+            expand_to_all_cats = True,
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_units_corrected"
+        )
         arr_agrc_ef_ch4 *= self.model_attributes.get_variable_unit_conversion_factor(
             self.model_socioeconomic.modvar_gnrl_area,
             self.modvar_agrc_ef_ch4,
@@ -2397,7 +2445,13 @@ class AFOLU:
         )
 
         # biomass
-        arr_agrc_ef_co2_biomass = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_agrc_ef_co2_biomass, True, "array_units_corrected", expand_to_all_cats = True)
+        arr_agrc_ef_co2_biomass = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_agrc_ef_co2_biomass, 
+            expand_to_all_cats = True,
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_units_corrected"
+        )
         arr_agrc_ef_co2_biomass *= self.model_attributes.get_variable_unit_conversion_factor(
             self.model_socioeconomic.modvar_gnrl_area,
             self.modvar_agrc_ef_co2_biomass,
@@ -2422,7 +2476,13 @@ class AFOLU:
         field_lvst_graze_array = self.model_attributes.build_varlist(self.subsec_name_lndu, variable_subsec = self.modvar_lndu_area_by_cat, restrict_to_category_values = [self.cat_lndu_grass])[0]
         vec_lvst_graze_area = np.array(df_land_use[field_lvst_graze_array])
         # estimate the total number of livestock that are raised - arr_lvst_pop is a direct output of project_integrated_land_use
-        arr_lvst_total_weight = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_animal_weight, True, "array_base", expand_to_all_cats = True)
+        arr_lvst_total_weight = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_lvst_animal_weight,
+            expand_to_all_cats = True,
+            override_vector_for_single_mv_q = True,
+            return_type = "array_base"
+        )
         arr_lvst_total_animal_mass = arr_lvst_pop*arr_lvst_total_weight
         arr_lvst_aggregate_animal_mass = np.sum(arr_lvst_total_animal_mass, axis = 1)
         arr_lvst_aggregate_animal_mass *= self.model_attributes.get_variable_unit_conversion_factor(
@@ -2431,7 +2491,12 @@ class AFOLU:
             "mass"
         )
         # get the enteric fermentation emission factor
-        arr_lvst_emissions_ch4_ef = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_ef_ch4_ef, True, "array_units_corrected")
+        arr_lvst_emissions_ch4_ef = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_lvst_ef_ch4_ef, 
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_units_corrected"
+        )
         # add to output dataframe
         df_out += [
             self.model_attributes.array_to_df(arr_lvst_emissions_ch4_ef*arr_lvst_pop, self.modvar_lvst_emissions_ch4_ef),
@@ -2443,11 +2508,29 @@ class AFOLU:
         ##  MANURE MANAGEMENT DATA
 
         # nitrogen and volative solids generated (passed to manure management--unitless, so they take the mass of modvar_lvst_animal_weight)
-        arr_lvst_nitrogen = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_genfactor_nitrogen, True, "array_base", expand_to_all_cats = True)
+        arr_lvst_nitrogen = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_lvst_genfactor_nitrogen,
+            expand_to_all_cats = True,
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_base"
+        )
         arr_lvst_nitrogen *= arr_lvst_total_animal_mass*self.model_attributes.configuration.get("days_per_year")
-        arr_lvst_volatile_solids = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_genfactor_volatile_solids, True, "array_base", expand_to_all_cats = True)
+        arr_lvst_volatile_solids = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_lvst_genfactor_volatile_solids,
+            expand_to_all_cats = True,
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_base"
+        )
         arr_lvst_volatile_solids *= arr_lvst_total_animal_mass*self.model_attributes.configuration.get("days_per_year")
-        arr_lvst_b0 = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_b0_manure_ch4, True, "array_units_corrected_gas", expand_to_all_cats = True)
+        arr_lvst_b0 = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_lvst_b0_manure_ch4,
+            expand_to_all_cats = True,
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_units_corrected_gas"
+        )
         # get ratio of n to volatile solids
         arr_lvst_ratio_vs_to_n = arr_lvst_volatile_solids/arr_lvst_nitrogen
 
@@ -2465,22 +2548,92 @@ class AFOLU:
             msg_append = "Energy fractions by category do not sum to 1. See definition of dict_arrs_inen_frac_energy."
         )
 
-        # get variables that can be indexed below
-        arr_lsmm_ef_direct_n2o = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lsmm_ef_direct_n2o, True, "array_base", expand_to_all_cats = True)
-        arr_lsmm_frac_lost_leaching = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lsmm_frac_loss_leaching, True, "array_base", expand_to_all_cats = True, var_bounds = (0, 1))
-        arr_lsmm_frac_lost_volatilisation = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lsmm_frac_loss_volatilisation, True, "array_base", expand_to_all_cats = True, var_bounds = (0, 1))
-        arr_lsmm_frac_used_for_fertilizer = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lsmm_frac_n_available_used, True, "array_base", expand_to_all_cats = True, var_bounds = (0, 1))
-        arr_lsmm_mcf_by_pathway = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lsmm_mcf_by_pathway, True, "array_base", expand_to_all_cats = True, var_bounds = (0, 1))
-        arr_lsmm_n_from_bedding = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lsmm_n_from_bedding, True, "array_base", expand_to_all_cats = True)
-        arr_lsmm_n_from_codigestates = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lsmm_n_from_codigestates, True, "array_base", expand_to_all_cats = True, var_bounds = (0, np.inf))
-        arr_lsmm_rf_biogas = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lsmm_rf_biogas, True, "array_base", expand_to_all_cats = True, var_bounds = (0, 1))
-        vec_lsmm_frac_n_in_dung = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lvst_frac_exc_n_in_dung, False, "array_base", var_bounds = (0, 1))
-        vec_lsmm_ratio_n2_to_n2o = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_lsmm_ratio_n2_to_n2o, False, "array_base")
+        # get variables that can be indexed below 
+        arr_lsmm_ef_direct_n2o = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_lsmm_ef_direct_n2o,
+            expand_to_all_cats = True, 
+            override_vector_for_single_mv_q = True,
+            return_type = "array_base"
+        )
+        arr_lsmm_frac_lost_leaching = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_lsmm_frac_loss_leaching,
+            expand_to_all_cats = True,
+            override_vector_for_single_mv_q = True,
+            return_type = "array_base",
+            var_bounds = (0, 1)
+        )
+        arr_lsmm_frac_lost_volatilisation = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_lsmm_frac_loss_volatilisation,
+            expand_to_all_cats = True, 
+            override_vector_for_single_mv_q = True,
+            return_type = "array_base", 
+            var_bounds = (0, 1)
+        )
+        arr_lsmm_frac_used_for_fertilizer = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_lsmm_frac_n_available_used,
+            expand_to_all_cats = True, 
+            override_vector_for_single_mv_q = True,
+            return_type = "array_base", 
+            var_bounds = (0, 1)
+        )
+        arr_lsmm_mcf_by_pathway = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_lsmm_mcf_by_pathway,
+            expand_to_all_cats = True, 
+            override_vector_for_single_mv_q = True,
+            return_type = "array_base",
+            var_bounds = (0, 1)
+        )
+        arr_lsmm_n_from_bedding = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_lsmm_n_from_bedding,
+            expand_to_all_cats = True, 
+            override_vector_for_single_mv_q = True,
+            return_type = "array_base"
+        )
+        arr_lsmm_n_from_codigestates = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_lsmm_n_from_codigestates,
+            expand_to_all_cats = True,  
+            override_vector_for_single_mv_q = True,
+            return_type = "array_base",
+            var_bounds = (0, np.inf)
+        )
+        arr_lsmm_rf_biogas = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_lsmm_rf_biogas,
+            expand_to_all_cats = True, 
+            override_vector_for_single_mv_q = True,
+            return_type = "array_base", 
+            var_bounds = (0, 1)
+        )
+        vec_lsmm_frac_n_in_dung = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_lvst_frac_exc_n_in_dung, 
+            override_vector_for_single_mv_q = False,
+            return_type = "array_base",
+            var_bounds = (0, 1)
+        )
+        vec_lsmm_ratio_n2_to_n2o = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_lsmm_ratio_n2_to_n2o, 
+            override_vector_for_single_mv_q = False,
+            return_type = "array_base"
+        )
 
         # soil EF4/EF5 from Table 11.3 - use average fractions from grasslands
         vec_soil_ef_ef4 = attr_lndu.get_key_value_index(self.cat_lndu_grass)
         vec_soil_ef_ef4 = arr_lndu_ef4_n_volatilisation[:, vec_soil_ef_ef4]
-        vec_soil_ef_ef5 = self.model_attributes.get_standard_variables(df_afolu_trajectories, self.modvar_soil_ef5_n_leaching, False, "array_base")
+        vec_soil_ef_ef5 = self.model_attributes.get_standard_variables(
+            df_afolu_trajectories, 
+            self.modvar_soil_ef5_n_leaching, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base"
+        )
 
         # convert bedding/co-digestates to animal weight masses
         arr_lsmm_n_from_bedding *= self.model_attributes.get_variable_unit_conversion_factor(

@@ -216,7 +216,6 @@ class ElectricEnergy:
         self.required_variables = required_vars + required_doa
         self.output_variables = output_vars
 
-
         return None
 
 
@@ -1168,7 +1167,7 @@ class ElectricEnergy:
 
 
 
-    def addRGN_multifields_from_key_values(self,
+    def add_multifields_from_key_values(self,
         df_input_base: pd.DataFrame,
         fields_to_add: list,
         time_period_as_year: bool = None,
@@ -1264,7 +1263,7 @@ class ElectricEnergy:
             self.field_nemomod_value
         ]
         fields_for_multifield.append(self.field_nemomod_mode) if (cost_type == "variable") else None
-        df_out = self.addRGN_multifields_from_key_values(
+        df_out = self.add_multifields_from_key_values(
             df_out, 
             fields_for_multifield,
             override_time_period_transformation = override_time_period_transformation
@@ -1903,7 +1902,7 @@ class ElectricEnergy:
             scalar_correct /= self.get_nemomod_energy_scalar(modvar)
             
             # get the model variable and pivot
-            df_tmp = self.formatRGN_model_variable_as_nemomod_table(
+            df_tmp = self.format_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 modvar,
                 "TMP",
@@ -1926,7 +1925,7 @@ class ElectricEnergy:
             
             
         ##  prepare output dataframe
-        df_out = self.addRGN_multifields_from_key_values(
+        df_out = self.add_multifields_from_key_values(
             pd.concat(df_out, axis = 0),
             [
                 self.field_nemomod_id,
@@ -2091,7 +2090,7 @@ class ElectricEnergy:
             
         
         ##  prepare output dataframe
-        df_out = self.addRGN_multifields_from_key_values(
+        df_out = self.add_multifields_from_key_values(
             pd.concat(df_out, axis = 0),
             [
                 self.field_nemomod_id,
@@ -2332,7 +2331,7 @@ class ElectricEnergy:
         ##  GET PRICES AND DENSITY
 
         # Fuel costs (enter as supply) - Gravimetric price in configuration Monetary/Mass (mass of modvar_enfu_energy_density_gravimetric)
-        df_price = self.formatRGN_model_variable_as_nemomod_table(
+        df_price = self.format_model_variable_as_nemomod_table(
             df_elec_trajectories,
             self.modvar_enfu_price_gravimetric,
             self.model_attributes.table_nemomod_variable_cost,
@@ -2350,7 +2349,7 @@ class ElectricEnergy:
         )
 
         # get the energy density in terms of configuration Energy/Mass (mass of modvar_enfu_energy_density_gravimetric)
-        df_density = self.formatRGN_model_variable_as_nemomod_table(
+        df_density = self.format_model_variable_as_nemomod_table(
             df_elec_trajectories,
             self.modvar_enfu_energy_density_gravimetric,
             self.model_attributes.table_nemomod_variable_cost,
@@ -2428,7 +2427,7 @@ class ElectricEnergy:
         ##  GET PRICES AND DENSITY
 
         # Fuel costs (enter as supply) - Volumetric price in configuration Monetary/Mass (mass of modvar_enfu_energy_density_gravimetric)
-        df_price = self.formatRGN_model_variable_as_nemomod_table(
+        df_price = self.format_model_variable_as_nemomod_table(
             df_elec_trajectories,
             self.modvar_enfu_price_volumetric,
             self.model_attributes.table_nemomod_variable_cost,
@@ -2445,7 +2444,7 @@ class ElectricEnergy:
         )
 
         # get the energy density in terms of configuration Energy/Mass (mass of modvar_enfu_energy_density_gravimetric)
-        df_density = self.formatRGN_model_variable_as_nemomod_table(
+        df_density = self.format_model_variable_as_nemomod_table(
             df_elec_trajectories,
             self.modvar_enfu_energy_density_volumetric,
             self.model_attributes.table_nemomod_variable_cost,
@@ -2607,7 +2606,7 @@ class ElectricEnergy:
 
 
 
-    def formatRGN_model_variable_as_nemomod_table(self,
+    def format_model_variable_as_nemomod_table(self,
         df_elec_trajectories: pd.DataFrame,
         modvar: str,
         table_nemomod: str,
@@ -2703,7 +2702,7 @@ class ElectricEnergy:
         df_out = df_out[~df_out[self.field_nemomod_value].isin([drop_flag])] if (drop_flag is not None) else df_out
         if isinstance(df_append, pd.DataFrame):
             df_out = pd.concat([df_out, df_append[df_out.columns]], axis = 0).reset_index(drop = True)
-        df_out = self.addRGN_multifields_from_key_values(df_out,
+        df_out = self.add_multifields_from_key_values(df_out,
             fields_index_nemomod,
             override_time_period_transformation = override_time_period_transformation,
             regions = regions
@@ -3237,7 +3236,7 @@ class ElectricEnergy:
         # concatenate and order hierarchically
         df_out = pd.concat(df_out, axis = 0)
         df_out = df_out[~df_out["drop_flag"].isin([drop_flag])].drop(["drop_flag"], axis = 1)
-        df_out = self.addRGN_multifields_from_key_values(
+        df_out = self.add_multifields_from_key_values(
             df_out,
             [
                 self.field_nemomod_id,
@@ -3312,7 +3311,7 @@ class ElectricEnergy:
             self.field_nemomod_value
         )
         # add output fields
-        df_out = self.addRGN_multifields_from_key_values(
+        df_out = self.add_multifields_from_key_values(
             df_out,
             [
                 self.field_nemomod_id,
@@ -3360,7 +3359,7 @@ class ElectricEnergy:
 
         if return_type == "table":
             df_out = pd.DataFrame({self.field_nemomod_value: [cau]})
-            df_out = self.addRGN_multifields_from_key_values(
+            df_out = self.add_multifields_from_key_values(
                 df_out, 
                 [
                     self.field_nemomod_id,
@@ -3428,7 +3427,7 @@ class ElectricEnergy:
         ) if ("CapitalCost" in tables_with_dummy) else None
 
         dict_return.update(
-            self.formatRGN_model_variable_as_nemomod_table(
+            self.format_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_entc_nemomod_capital_cost,
                 self.model_attributes.table_nemomod_capital_cost,
@@ -3453,7 +3452,7 @@ class ElectricEnergy:
         ) if ("FixedCost" in tables_with_dummy) else None
         
         dict_return.update(
-            self.formatRGN_model_variable_as_nemomod_table(
+            self.format_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_entc_nemomod_fixed_cost,
                 self.model_attributes.table_nemomod_fixed_cost,
@@ -3483,7 +3482,7 @@ class ElectricEnergy:
         ) if ("VariableCost" in tables_with_dummy) else None
 
         dict_return.update(
-            self.formatRGN_model_variable_as_nemomod_table(
+            self.format_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_entc_nemomod_variable_cost,
                 self.model_attributes.table_nemomod_variable_cost,
@@ -3549,7 +3548,7 @@ class ElectricEnergy:
 
         # CapitalCostStorage
         dict_return.update(
-            self.formatRGN_model_variable_as_nemomod_table(
+            self.format_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_enst_nemomod_capital_cost_storage,
                 self.model_attributes.table_nemomod_capital_cost_storage,
@@ -3608,7 +3607,7 @@ class ElectricEnergy:
         # build output table
         df_out = attribute_nemomod_table.table[[attribute_nemomod_table.key]].copy().rename(columns = {attribute_nemomod_table.key: self.field_nemomod_table_name})
         df_out[self.field_nemomod_value] = df_out[self.field_nemomod_table_name].replace(dict_repl)
-        df_out = self.addRGN_multifields_from_key_values(
+        df_out = self.add_multifields_from_key_values(
             df_out,
             [
                 self.field_nemomod_id
@@ -3643,7 +3642,7 @@ class ElectricEnergy:
         df_out = pd.DataFrame({self.field_nemomod_value: [discount_rate]})
 
         if return_type == "table":
-            df_out = self.addRGN_multifields_from_key_values(
+            df_out = self.add_multifields_from_key_values(
                 df_out, 
                 [
                     self.field_nemomod_id, 
@@ -3819,7 +3818,7 @@ class ElectricEnergy:
             df_out = df_out[~df_out[self.field_nemomod_technology].isin([cat_entc_pp_waste])]
             df_out = pd.concat([df_out, df_enfu_efs_waste], axis = 0).reset_index(drop = True)
 
-        df_out = self.addRGN_multifields_from_key_values(
+        df_out = self.add_multifields_from_key_values(
             df_out,
             [
                 self.field_nemomod_id,
@@ -3865,7 +3864,7 @@ class ElectricEnergy:
         )
 
         # add keys and clean up
-        df_out = self.addRGN_multifields_from_key_values(
+        df_out = self.add_multifields_from_key_values(
             df_out,
             [
                 self.field_nemomod_id,
@@ -3965,6 +3964,15 @@ class ElectricEnergy:
             from efficiencies of 0
         - regions: regions to specify. If None, defaults to configuration 
             regions
+
+        Model Notes
+        -----------
+        To model transmission losses in the absence of a network, the 
+            InputActivityRatio for electricity-consuming technologies is 
+            inflated by *= 1/(1 - loss). Upon extraction, demands are reduced by 
+            *= (1 - loss) in the 
+            retrieve_nemomod_tables_fuel_production_demand_and_trade()
+            method.
         """
 
         ##  CATEGORY AND ATTRIBUTE INITIALIZATION
@@ -4000,7 +4008,7 @@ class ElectricEnergy:
 
         # Initialize InputActivityRatio
         dict_return.update(
-            self.formatRGN_model_variable_as_nemomod_table(
+            self.format_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_entc_efficiency_factor_technology,
                 self.model_attributes.table_nemomod_input_activity_ratio,
@@ -4023,7 +4031,7 @@ class ElectricEnergy:
         # convert efficiency to input_activity_ratio_ratio
         df_iar[self.field_nemomod_value] = np.nan_to_num(1/np.array(df_iar[self.field_nemomod_value]), max_ratio, posinf = max_ratio)
         # re-sort using hierarchy
-        df_iar = self.addRGN_multifields_from_key_values(
+        df_iar = self.add_multifields_from_key_values(
             df_iar,
             [
                 self.field_nemomod_id,
@@ -4035,7 +4043,7 @@ class ElectricEnergy:
                 self.field_nemomod_value
             ],
             regions = regions,
-            # the time period transformation was already applied in formatRGN_model_variable_as_nemomod_table, so we override additional transformation
+            # the time period transformation was already applied in format_model_variable_as_nemomod_table, so we override additional transformation
             override_time_period_transformation = True
         )
         
@@ -4058,7 +4066,7 @@ class ElectricEnergy:
 
             if modvar_iar is not None:
 
-                df_tmp = self.formatRGN_model_variable_as_nemomod_table( 
+                df_tmp = self.format_model_variable_as_nemomod_table( 
                     df_elec_trajectories,
                     modvar_iar,
                     self.model_attributes.table_nemomod_input_activity_ratio,
@@ -4103,7 +4111,7 @@ class ElectricEnergy:
         df_iar_dummies[self.field_nemomod_mode] = self.cat_enmo_gnrt
 
         # add key values, like year
-        df_iar_dummies = self.addRGN_multifields_from_key_values(
+        df_iar_dummies = self.add_multifields_from_key_values(
             df_iar_dummies,
             [
                 self.field_nemomod_id,
@@ -4118,12 +4126,43 @@ class ElectricEnergy:
         )
 
         df_append.append(df_iar_dummies)
-        #HEREFORDUMMYFUEL;
 
+        
+        ##  ADD IN TRANSMISSION LOSS IN ELECTRICITY
 
-        # re-sort using hierarchy
-        df_append = self.addRGN_multifields_from_key_values(
+        df_transmission_loss = self.format_model_variable_as_nemomod_table( 
+            df_elec_trajectories,
+            self.modvar_enfu_transmission_loss_frac_electricity,
+            "TMP",
+            [
+                self.field_nemomod_year,
+                self.field_nemomod_region
+            ],
+            self.field_nemomod_fuel,
+            regions = regions,
+            var_bounds = (0, 1)
+        ).get("TMP")
+        df_transmission_loss[self.field_nemomod_value] *= -1.0
+        df_transmission_loss[self.field_nemomod_value] += 1.0
+
+        # merge, multiply, and drop the scalar
+        field_transmission_merge = "TRANSMISSION_TMP"
+        df_transmission_loss.rename(columns = {self.field_nemomod_value: field_transmission_merge}, inplace = True)
+        
+        df_out = pd.merge(
             pd.concat(df_append, axis = 0),
+            df_transmission_loss,
+            how = "left"
+        ).fillna(1.0)
+
+        df_out[self.field_nemomod_value] = np.array(df_out[self.field_nemomod_value])/np.array(df_out[field_transmission_merge])
+        df_out.drop([field_transmission_merge], axis = 1, inplace = True)
+
+
+        ##  RE-SORT USING HIERARCHY AND PREP FOR NEMOMOD
+
+        df_append = self.add_multifields_from_key_values(
+            df_out,
             [
                 self.field_nemomod_id,
                 self.field_nemomod_fuel,
@@ -4133,7 +4172,7 @@ class ElectricEnergy:
                 self.field_nemomod_year,
                 self.field_nemomod_value
             ],
-            # the time period transformation was already applied in formatRGN_model_variable_as_nemomod_table, so we override additional transformation
+            # the time period transformation was already applied in format_model_variable_as_nemomod_table, so we override additional transformation
             override_time_period_transformation = True,
             regions = regions
         )
@@ -4144,12 +4183,12 @@ class ElectricEnergy:
 
 
 
-    ##  format MinShareProduction for NemoMod
     def format_nemomod_table_min_share_production(self,
         df_elec_trajectories: pd.DataFrame,
         attribute_fuel: Union[AttributeTable, None] = None,
         modvar_import_fraction: str = None,
         regions: Union[List[str], None] = None,
+        tuple_enfu_production_and_demands: Union[Tuple[pd.DataFrame], None] = None,
     ) -> pd.DataFrame:
         """
         Format the MinShareProduction input table for NemoMod based on SISEPUEDE 
@@ -4169,14 +4208,72 @@ class ElectricEnergy:
             NonElectricEnergy.modvar_enfu_frac_fuel_demand_imported
         - regions: regions to specify. If None, defaults to configuration 
             regions
+        - tuple_enfu_production_and_demands: optional tuple of energy fuel 
+            demands produced by 
+            self.model_energy.project_enfu_production_and_demands():
+
+            (
+                arr_enfu_demands, 
+                arr_enfu_demands_distribution, 
+                arr_enfu_export, 
+                arr_enfu_imports, 
+                arr_enfu_production
+            )
         """
-        # perform some initialization
+        # do some initialization
         attribute_fuel = self.model_attributes.get_attribute_table(self.subsec_name_enfu) if (attribute_fuel is None) else attribute_fuel
         modvar_import_fraction = self.modvar_enfu_frac_fuel_demand_imported if (modvar_import_fraction is None) else modvar_import_fraction
+        
+        # get production, imports, exports, and demands to adjust import fractions
+        if (tuple_enfu_production_and_demands is None) and (df_elec_trajectories is None):
+            raise ValueError(f"Error in format_nemomod_table_min_share_production: tuple_enfu_production_and_demands and df_elec_trajectories cannot both be None.")
+
+        tuple_enfu_production_and_demands = (
+            self.model_energy.project_enfu_production_and_demands(
+                df_elec_trajectories, 
+                target_energy_units = self.model_attributes.configuration.get("energy_units_nemomod")
+            )
+            if tuple_enfu_production_and_demands is None
+            else tuple_enfu_production_and_demands
+        )
+
+
+        ##  ADJUST IMPORT FRACTIONS TO ACCOUNT FOR THE INCLUSION OF EXPORTS IN SpecifiedAnnualDemands
+
+        arr_enfu_import_fractions = self.model_attributes.get_standard_variables(
+            df_elec_trajectories,
+            modvar_import_fraction,
+            expand_to_all_cats = True,
+            return_type = "array_base"
+        )
+
+        # scale import fractions by ratio of demands to (demands + exports)
+        arr_enfu_import_fractions_adj = np.nan_to_num(
+            tuple_enfu_production_and_demands[0]/(tuple_enfu_production_and_demands[0] + tuple_enfu_production_and_demands[2]),
+            1.0,
+            posinf = 1.0
+        )
+        arr_enfu_import_fractions_adj *= arr_enfu_import_fractions
+
+        # pass via dummy dataframe
+        df_fracs_adj = [
+            df_elec_trajectories[
+                [x for x in df_elec_trajectories.columns if x in self.model_attributes.sort_ordered_dimensions_of_analysis]
+            ].copy()
+        ]
+        df_fracs_adj += [
+            self.model_attributes.array_to_df(
+                arr_enfu_import_fractions_adj,
+                modvar_import_fraction,
+                reduce_from_all_cats_to_specified_cats = True
+            )
+        ]
+        df_fracs_adj = pd.concat(df_fracs_adj, axis = 1)
+
 
         # import fractions are set as minimum shares of production and add technology
-        df_out = self.formatRGN_model_variable_as_nemomod_table( 
-            df_elec_trajectories,
+        df_out = self.format_model_variable_as_nemomod_table( 
+            df_fracs_adj,
             modvar_import_fraction,
             self.model_attributes.table_nemomod_min_share_production,
             [
@@ -4192,7 +4289,7 @@ class ElectricEnergy:
         df_out[self.field_nemomod_technology] = df_out[self.field_nemomod_fuel].replace(self.get_dummy_fuel_techs())
 
         # setup for NemoMod
-        df_out = self.addRGN_multifields_from_key_values(
+        df_out = self.add_multifields_from_key_values(
             df_out,
             [
                 self.field_nemomod_id,
@@ -4252,7 +4349,7 @@ class ElectricEnergy:
             self.field_nemomod_value: [dict_strg_to_min_charge.get(x) for x in all_storage]
         })
 
-        df_out = self.addRGN_multifields_from_key_values(
+        df_out = self.add_multifields_from_key_values(
             df_out,
             [
                 self.field_nemomod_id,
@@ -4414,12 +4511,12 @@ class ElectricEnergy:
 
         # add required fields
         fields_reg = [self.field_nemomod_id, self.field_nemomod_region]
-        df_operational_life = self.addRGN_multifields_from_key_values(
+        df_operational_life = self.add_multifields_from_key_values(
             df_operational_life, 
             fields_reg,
             regions = regions
         )
-        df_operational_life_storage = self.addRGN_multifields_from_key_values(
+        df_operational_life_storage = self.add_multifields_from_key_values(
             df_operational_life_storage, 
             fields_reg,
             regions = regions
@@ -4485,7 +4582,7 @@ class ElectricEnergy:
         df_oar[self.field_nemomod_mode] = self.cat_enmo_gnrt
 
         # add key values, like year
-        df_oar = self.addRGN_multifields_from_key_values(
+        df_oar = self.add_multifields_from_key_values(
             df_oar,
             [
                 self.field_nemomod_id,
@@ -4513,7 +4610,7 @@ class ElectricEnergy:
 
             if modvar_oar is not None:
 
-                df_tmp = self.formatRGN_model_variable_as_nemomod_table( 
+                df_tmp = self.format_model_variable_as_nemomod_table( 
                     df_elec_trajectories,
                     modvar_oar,
                     self.model_attributes.table_nemomod_output_activity_ratio,
@@ -4543,7 +4640,6 @@ class ElectricEnergy:
 
         ## ADD DUMMY FUEL-TECH THAT FEEDS DUMMY FUEL (USED FOR ACCOUNTING)
 
-        #HEREFORDUMMYFUEL
         # add dummy fuel for tech production accounting from dummy techs
         df_append = pd.DataFrame({
             self.field_nemomod_fuel: [self.get_dummy_fuel_name()],
@@ -4552,7 +4648,7 @@ class ElectricEnergy:
             self.field_nemomod_mode: [self.cat_enmo_gnrt]
         })
         # format with dimensions
-        df_append = self.addRGN_multifields_from_key_values(
+        df_append = self.add_multifields_from_key_values(
             df_append,
             [
                 self.field_nemomod_id,
@@ -4568,9 +4664,10 @@ class ElectricEnergy:
         # append to output
         df_out.append(df_append)
 
-                
-        # re-sort using hierarchy
-        df_out = self.addRGN_multifields_from_key_values(
+
+        ##  SORT USING HIERARCHY AND PREPARE FOR NEMOMOD
+
+        df_out = self.add_multifields_from_key_values(
             pd.concat(df_out, axis = 0),
             [
                 self.field_nemomod_id,
@@ -4581,7 +4678,7 @@ class ElectricEnergy:
                 self.field_nemomod_year,
                 self.field_nemomod_value
             ],
-            # the time period transformation was already applied in formatRGN_model_variable_as_nemomod_table, so we override additional transformation
+            # the time period transformation was already applied in format_model_variable_as_nemomod_table, so we override additional transformation
             override_time_period_transformation = True,
             regions = regions
         )
@@ -4669,7 +4766,7 @@ class ElectricEnergy:
         df_return[self.model_attributes.dim_time_period] = list(df_elec_trajectories[self.model_attributes.dim_time_period])
 
         # check technologies that are optional from optional input
-        df_return = self.formatRGN_model_variable_as_nemomod_table(
+        df_return = self.format_model_variable_as_nemomod_table(
             df_return,
             self.modvar_enfu_nemomod_renewable_production_target,
             "TMP",
@@ -4720,7 +4817,7 @@ class ElectricEnergy:
         """
 
         # check technologies that are optional from optional input
-        df_entc_re_tag = self.formatRGN_model_variable_as_nemomod_table(
+        df_entc_re_tag = self.format_model_variable_as_nemomod_table(
             df_elec_trajectories,
             self.modvar_entc_nemomod_renewable_tag_technology,
             "TMP",
@@ -4745,7 +4842,7 @@ class ElectricEnergy:
             self.field_nemomod_value
         )
 
-        df_entc_re_tag = self.addRGN_multifields_from_key_values(
+        df_entc_re_tag = self.add_multifields_from_key_values(
             df_entc_re_tag,
             [
                 self.field_nemomod_id,
@@ -4786,7 +4883,7 @@ class ElectricEnergy:
         dict_return = {}
         # ReserveMargin
         dict_return.update(
-            self.formatRGN_model_variable_as_nemomod_table(
+            self.format_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_entc_nemomod_reserve_margin,
                 self.model_attributes.table_nemomod_reserve_margin,
@@ -4826,7 +4923,7 @@ class ElectricEnergy:
         })
 
         # add dimensions
-        df_out = self.addRGN_multifields_from_key_values(
+        df_out = self.add_multifields_from_key_values(
             df_out,
             [
                 self.field_nemomod_id,
@@ -4866,7 +4963,7 @@ class ElectricEnergy:
         dict_return = {}
         # ReserveMarginTagTechnology
         dict_return.update(
-            self.formatRGN_model_variable_as_nemomod_table(
+            self.format_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_entc_nemomod_reserve_margin_tag_technology,
                 self.model_attributes.table_nemomod_reserve_margin_tag_technology,
@@ -4909,7 +5006,7 @@ class ElectricEnergy:
         scalar_residual_capacity = self.model_attributes.get_scalar(self.modvar_entc_nemomod_residual_capacity, "power")
         # ResidualCapacity
         dict_return.update(
-            self.formatRGN_model_variable_as_nemomod_table(
+            self.format_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_entc_nemomod_residual_capacity,
                 self.model_attributes.table_nemomod_residual_capacity,
@@ -4953,7 +5050,7 @@ class ElectricEnergy:
         scalar_cost_capital_storage = self.get_nemomod_energy_scalar(self.modvar_enst_nemomod_residual_capacity)
         # ResidualCapacity
         dict_return.update(
-            self.formatRGN_model_variable_as_nemomod_table(
+            self.format_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_enst_nemomod_residual_capacity,
                 self.model_attributes.table_nemomod_residual_storage_capacity,
@@ -5008,7 +5105,15 @@ class ElectricEnergy:
                 arr_enfu_imports, 
                 arr_enfu_production
             )
-            
+        
+        Model Notes
+        -----------
+        To model transmission losses in the absence of a network, the 
+            SpecifiedAnnualDemand for fuel_electricity is inflated by 
+            *= 1/(1 - loss). Upon extraction, demands are reduced by 
+            *= (1 - loss) in the 
+            retrieve_nemomod_tables_fuel_production_demand_and_trade()
+            method.
         """
 
         attribute_fuel = self.model_attributes.get_attribute_table(self.subsec_name_enfu) if (attribute_fuel is None) else attribute_fuel
@@ -5026,9 +5131,10 @@ class ElectricEnergy:
         
         # updated 20230211 - NemoMod now solves for imports due to endogeneity of certain fuels. Demand is passed as production + imports, and import fractions are specified in MinShareProduction
         arr_enfu_production += arr_enfu_imports 
-        
+
         # get transmission loss and calculate final demand
-        vec_transmission_loss = self.model_attributes.get_standard_variables(
+        #   NOTE: transmission loss in ENTC is modeled as an increase in input activity ratio *= (1/(1 - loss))
+        arr_transmission_loss = self.model_attributes.get_standard_variables(
             df_elec_trajectories, 
             self.modvar_enfu_transmission_loss_frac_electricity, 
             override_vector_for_single_mv_q = False, 
@@ -5036,7 +5142,7 @@ class ElectricEnergy:
             expand_to_all_cats = True, 
             var_bounds = (0, 1)
         )
-        arr_enfu_production[:, self.ind_enfu_elec] = np.nan_to_num(arr_enfu_production[:, self.ind_enfu_elec]/(1 - vec_transmission_loss[:, self.ind_enfu_elec]), 0.0, posinf = 0.0)
+        arr_enfu_production[:, self.ind_enfu_elec] = np.nan_to_num(arr_enfu_production[:, self.ind_enfu_elec]/(1 - arr_transmission_loss[:, self.ind_enfu_elec]), 0.0, posinf = 0.0)
 
         # drop fields that are associated with dummy techs + those with all zeros
         fields_drop = list(
@@ -5069,7 +5175,7 @@ class ElectricEnergy:
         )
 
         # add additional required fields, then sort
-        df_enfu_production = self.addRGN_multifields_from_key_values(
+        df_enfu_production = self.add_multifields_from_key_values(
             df_enfu_production,
             [
                 self.field_nemomod_id,
@@ -5162,7 +5268,7 @@ class ElectricEnergy:
             self.field_nemomod_time_slice,
             self.field_nemomod_year
         ]
-        df_out = self.addRGN_multifields_from_key_values(
+        df_out = self.add_multifields_from_key_values(
             df_out, 
             fields_required_0,
             regions = regions
@@ -5180,7 +5286,7 @@ class ElectricEnergy:
         df_append = sf.explode_merge(df_fuels_to_specify, df_time_slices)
         
         # setup to the same structure as df_out to allow concatendation, then concategnate
-        df_append = self.addRGN_multifields_from_key_values(
+        df_append = self.add_multifields_from_key_values(
             df_append, 
             fields_required_0,
             regions = regions
@@ -5199,7 +5305,7 @@ class ElectricEnergy:
 
         # CLEAN, SORT AND ADD IDS
 
-        df_out = self.addRGN_multifields_from_key_values(
+        df_out = self.add_multifields_from_key_values(
             df_out, 
             [
                 self.field_nemomod_id, 
@@ -5257,7 +5363,7 @@ class ElectricEnergy:
         dict_return = {}
         # StorageStartLevel
         dict_return.update(
-            self.formatRGN_model_variable_as_nemomod_table(
+            self.format_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_enst_nemomod_storage_start_level,
                 self.model_attributes.table_nemomod_storage_level_start,
@@ -5362,7 +5468,7 @@ class ElectricEnergy:
         df_tech_from_storage = df_storage_techs_to_storage.copy()
         df_tech_from_storage[self.field_nemomod_mode] = self.cat_enmo_gnrt
         df_tech_from_storage[self.field_nemomod_value] = 1.0
-        df_tech_from_storage = self.addRGN_multifields_from_key_values(
+        df_tech_from_storage = self.add_multifields_from_key_values(
             df_tech_from_storage, 
             [
                 self.field_nemomod_id, 
@@ -5376,7 +5482,7 @@ class ElectricEnergy:
         df_tech_to_storage = df_storage_techs_to_storage.copy()
         df_tech_to_storage[self.field_nemomod_mode] = self.cat_enmo_stor
         df_tech_to_storage[self.field_nemomod_value] = 1.0
-        df_tech_to_storage = self.addRGN_multifields_from_key_values(
+        df_tech_to_storage = self.add_multifields_from_key_values(
             df_tech_to_storage, 
             [
                 self.field_nemomod_id,
@@ -5454,7 +5560,7 @@ class ElectricEnergy:
             }
         )
         df_year_split = pd.merge(df_year_split, df_ltsgroup[[self.field_nemomod_time_slice, self.field_nemomod_id]], how = "left")
-        df_year_split = self.addRGN_multifields_from_key_values(
+        df_year_split = self.add_multifields_from_key_values(
             df_year_split, 
             [
                 self.field_nemomod_id, 
@@ -5588,7 +5694,7 @@ class ElectricEnergy:
 
         # TotalAnnualMaxCapacity
         dict_return.update(
-            self.formatRGN_model_variable_as_nemomod_table(
+            self.format_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_entc_nemomod_total_annual_max_capacity,
                 self.model_attributes.table_nemomod_total_annual_max_capacity,
@@ -5616,7 +5722,7 @@ class ElectricEnergy:
 
         # TotalAnnualMaxCapacityInvestment
         dict_return.update(
-            self.formatRGN_model_variable_as_nemomod_table(
+            self.format_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_entc_nemomod_total_annual_max_capacity_investment,
                 self.model_attributes.table_nemomod_total_annual_max_capacity_investment,
@@ -5633,7 +5739,7 @@ class ElectricEnergy:
         )
         # TotalAnnualMinCapacity
         dict_return.update(
-            self.formatRGN_model_variable_as_nemomod_table(
+            self.format_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_entc_nemomod_total_annual_min_capacity,
                 self.model_attributes.table_nemomod_total_annual_min_capacity,
@@ -5650,7 +5756,7 @@ class ElectricEnergy:
         )
         # TotalAnnualMinCapacityInvestment
         dict_return.update(
-            self.formatRGN_model_variable_as_nemomod_table(
+            self.format_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_entc_nemomod_total_annual_min_capacity_investment,
                 self.model_attributes.table_nemomod_total_annual_min_capacity_investment,
@@ -5740,7 +5846,7 @@ class ElectricEnergy:
 
         # TotalAnnualMaxCapacityStorage
         dict_return.update(
-            self.formatRGN_model_variable_as_nemomod_table(
+            self.format_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_enst_nemomod_total_annual_max_capacity_storage,
                 self.model_attributes.table_nemomod_total_annual_max_capacity_storage,
@@ -5757,7 +5863,7 @@ class ElectricEnergy:
         )
         # TotalAnnualMaxCapacityInvestmentStorage
         dict_return.update(
-            self.formatRGN_model_variable_as_nemomod_table(
+            self.format_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_enst_nemomod_total_annual_max_capacity_investment_storage,
                 self.model_attributes.table_nemomod_total_annual_max_capacity_investment_storage,
@@ -5774,7 +5880,7 @@ class ElectricEnergy:
         )
         # TotalAnnualMinCapacityStorage
         dict_return.update(
-            self.formatRGN_model_variable_as_nemomod_table(
+            self.format_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_enst_nemomod_total_annual_min_capacity_storage,
                 self.model_attributes.table_nemomod_total_annual_min_capacity_storage,
@@ -5791,7 +5897,7 @@ class ElectricEnergy:
         )
         # TotalAnnualMinCapacityInvestmentStorage
         dict_return.update(
-            self.formatRGN_model_variable_as_nemomod_table(
+            self.format_model_variable_as_nemomod_table(
                 df_elec_trajectories,
                 self.modvar_enst_nemomod_total_annual_min_capacity_investment_storage,
                 self.model_attributes.table_nemomod_total_annual_min_capacity_investment_storage,
@@ -5950,7 +6056,7 @@ class ElectricEnergy:
             direction = self.direction_exchange_year_time_period
         )
         # add key values
-        df_out = self.addRGN_multifields_from_key_values(df_out,
+        df_out = self.add_multifields_from_key_values(df_out,
             [
                 self.field_nemomod_id,
                 self.field_nemomod_region,
@@ -6276,6 +6382,7 @@ class ElectricEnergy:
     def retrieve_nemomod_fuel_sectoral_demands_and_imports(self,
         engine: sqlalchemy.engine.Engine,
         vector_reference_time_period: Union[list, np.ndarray],
+        arr_transmission_loss_frac: Union[np.ndarray, None] = None,
         attribute_fuel: Union[AttributeTable, None] = None,
         table_name: Union[str, None] = None,
         table_name_demands: Union[str, None] = None,
@@ -6312,6 +6419,9 @@ class ElectricEnergy:
 
         Keyword Arguments
         -----------------
+        - arr_transmission_loss_frac: optional array specifying the transmission
+            loss fraction by fuel (expanded to all categories). If passed,
+            adjusts demands and imports downwards *= (1 - loss_frac)
         - table_name: name in the database of the Discounted Capital Investment 
             table. If None, use ModelAttributes deault.
         - table_name_demands: table name storing
@@ -6338,7 +6448,7 @@ class ElectricEnergy:
             annual demand (see # 7) to get to sectoral demand for the upstream 
             fuel, which then replaces the downstream fuel.
 
-            major pain in the ass
+            this adjustment is a major pAiN iN tHe AsS
         """
         # 1. get raw data frames, then perform adjustments for upstream fuel use
         dict_upstream = self.get_enfu_upstream_fuel_to_replace_downstream_fuel_consumption_map(
@@ -6421,6 +6531,42 @@ class ElectricEnergy:
         )
         df_out_enfu_imports /= scalar_div if (scalar_div is not None) else 1
 
+
+        ##  PERFORM ANY ADJUSTMENTS FOR TRANSMISSION LOSS IF NECESSARY
+
+        arr_transmission_loss_frac = (
+            None
+            if arr_transmission_loss_frac.shape != (len(df_out_enfu_demand_entc), attribute_fuel.n_key_values)
+            else arr_transmission_loss_frac
+        )
+
+        if arr_transmission_loss_frac is not None:
+            dict_dfs = {
+                self.modvar_enfu_energy_demand_by_fuel_entc: df_out_enfu_demand_entc
+                # self.modvar_enfu_imports_fuel: df_out_enfu_imports - don't adjust imports
+            }
+            for modvar in dict_dfs.keys():
+                arr_cur = self.model_attributes.get_standard_variables(
+                    dict_dfs.get(modvar), 
+                    modvar,
+                    expand_to_all_cats = True,
+                    return_type = "array_base"
+                )
+
+                dict_dfs.update(
+                    {
+                        modvar: self.model_attributes.array_to_df(
+                            arr_cur*(1 - arr_transmission_loss_frac),
+                            modvar,
+                            reduce_from_all_cats_to_specified_cats = True
+                        )
+                    }
+                )
+
+            df_out_enfu_demand_entc = dict_dfs.get(self.modvar_enfu_energy_demand_by_fuel_entc)
+            # df_out_enfu_imports = dict_dfs.get(self.modvar_enfu_imports_fuel)
+
+        
         return df_out_enfu_demand_entc, df_out_enfu_imports 
 
 
@@ -6469,9 +6615,9 @@ class ElectricEnergy:
     def retrieve_nemomod_tables_fuel_production_demand_and_trade(self,
         engine: sqlalchemy.engine.Engine,
         vector_reference_time_period: Union[list, np.ndarray],
+        df_elec_trajectories: Union[pd.DataFrame, None],
         attribute_fuel: Union[AttributeTable, None] = None,
         attribute_technology: Union[AttributeTable, None] = None,
-        df_elec_trajectories: Union[pd.DataFrame, None] = None,
         table_name_demand_annual: str = None,
         table_name_production_by_technology: str = None,
         transform_time_period: bool = True,
@@ -6487,6 +6633,9 @@ class ElectricEnergy:
         - vector_reference_time_period: reference time periods to use in 
             merge--e.g., 
             df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
+        - df_elec_trajectories: data frame containing trajectories of input
+            variables to SISEPUEDE for NonElectricEnergy. 
+            * NOTE: required for extracting transmission losses
 
         Keyword Arguments
         -----------------
@@ -6494,9 +6643,6 @@ class ElectricEnergy:
             None, uses self.model_attributes defaults
         - attribute_technology: attribute table used to obtain dummy 
             technologies. If None, use ModelAttributes default.
-        - df_elec_trajectories: data frame containing trajectories of input
-            variables to SISEPUEDE for NonElectricEnergy. 
-            * NOTE: Only required if tuple_enfu_production_and_demands is None
         - table_name_demand_annual: 
         - table_name_production_by_technology: name in the database of the 
             annual production by technology table. If None, use ModelAttributes 
@@ -6515,13 +6661,47 @@ class ElectricEnergy:
                 arr_enfu_production
             )
 
-            * NOTE: MUST BE IN NEMO MOD ENERGY UNITS
-        """
-        # input verification
-        if (df_elec_trajectories is None) and (tuple_enfu_production_and_demands is None):
-            self._log(f"In retrieve_nemomod_tables_fuel_production_demand_and_trade: both `df_elec_trajectories` and `tuple_enfu_production_and_demands` cannot be None.", type_log = "warning")
-            return None
+            * NOTES: 
+                * MUST BE IN NEMO MOD ENERGY UNITS
+                * If None, extracts from df_elec_trajectories
+        
+        Model Notes
+        -----------
+        * To model transmission losses in the absence of a network, electricity 
+            demands are modeled by inflating two key model elements by the 
+            factor *= 1/(1 - loss):
+                1. the InputActivityRatio for electricity-consuming
+                    technologies (edogenizes transmission loss for fuel 
+                    production) and
+                2. demands from other energy sectors, which are passed in
+                     SpecifiedAnnualDemand.
+            This method() accounts for this increase by scaling production and 
+            demands by *= (1 - loss) and assigning the total loss.
 
+        * Demands that are returned EXCLUDE transmission losses, keeping with 
+            the demands for fuels from other sectors. This is logically 
+            consistent with the approach taken with fuel "consumption" by 
+            energy subsectors (how much is actually used) versus fuel demands
+            by other subsectors (point of use). Here, fuel is demanded to meet
+            consumption requirements; what is produced in excess of demand--
+            accounting for systemic inefficencies--does not count toward demand
+            but consumption (or production in this case). 
+
+        * The mass balance equations are as follows:
+
+            (demands + exports)/(1 - transmission_loss_fractions)
+            =
+            (production + imports)
+
+            Fuel Imports includes electricity eventually lost to transmission 
+            because it represents how much electricity originates from other 
+            regions (before loss reaches point of use demand). 
+            
+            Conversely, Fuel Exports does *not* include transmission loss 
+            because it represents how much arrives in the other region, which 
+            occurs *after* within-region transmission loss between production 
+            and exporting.
+        """
         # initialize some pieces
         attribute_fuel = self.model_attributes.get_attribute_table(self.subsec_name_enfu) if (attribute_fuel is None) else attribute_fuel
         table_name_demand_annual = self.model_attributes.table_nemomod_annual_demand_nn if (table_name_demand_annual is None) else table_name_demand_annual
@@ -6553,12 +6733,23 @@ class ElectricEnergy:
 
 
         ##  GET FUEL DEMANDS WITHIN ENTC AND IMPORTS, FUEL PRODUCTION, AND FUEL DEMANDS
-    
-        # 1. get demands in ENTC + imports
+
+        # 1. retrieve transmission loss fraction (adjusts demands)
+        arr_transmission_loss_frac = self.model_attributes.get_standard_variables(
+            df_elec_trajectories, 
+            self.modvar_enfu_transmission_loss_frac_electricity, 
+            expand_to_all_cats = True, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base",
+            var_bounds = (0, 1)
+        )
+
+        # 2. get demands in ENTC + imports
         #  These have units self.modvar_enfu_energy_demand_by_fuel_entc and self.modvar_enfu_imports_fuel
         df_enfu_demands_entc, df_enfu_imports = self.retrieve_nemomod_fuel_sectoral_demands_and_imports(
             engine,
             vector_reference_time_period,
+            arr_transmission_loss_frac = arr_transmission_loss_frac,
             attribute_fuel = attribute_fuel,
             transform_time_period = transform_time_period
         )
@@ -6572,7 +6763,7 @@ class ElectricEnergy:
         )
         arr_enfu_imports *= self.get_nemomod_energy_scalar(self.modvar_enfu_imports_fuel)
 
-        # 2. add fuel production
+        # 3. add fuel production
         df_fuel_production = self.get_enfu_fuel_production_from_total_production(
             df_production_by_technology,
             vector_reference_time_period,
@@ -6583,7 +6774,7 @@ class ElectricEnergy:
         )
         df_out += [df_fuel_production]
 
-        # 3. get fuel production array for use in calculating adjusted exports
+        # 4. get fuel production array for use in calculating adjusted exports
         arr_enfu_production = self.model_attributes.get_standard_variables(
             df_fuel_production,
             self.modvar_enfu_production_fuel,
@@ -6592,7 +6783,7 @@ class ElectricEnergy:
         )
         arr_enfu_production *= self.get_nemomod_energy_scalar(self.modvar_enfu_production_fuel)
 
-        # 4. get demands from other subsectors (pull from here) - option is self.get_enfu_non_entc_fuel_demands_from_annual_demand
+        # 5. get demands from other subsectors (pull from here) - option is self.get_enfu_non_entc_fuel_demands_from_annual_demand
         arr_enfu_demand_entc = self.model_attributes.get_standard_variables(
             df_enfu_demands_entc,
             self.modvar_enfu_energy_demand_by_fuel_entc,
@@ -6600,9 +6791,13 @@ class ElectricEnergy:
             return_type = "array_base"
         )
         arr_enfu_demand_entc *= self.get_nemomod_energy_scalar(self.modvar_enfu_energy_demand_by_fuel_entc)
-        arr_enfu_demands = arr_enfu_demands_no_entc + arr_enfu_demand_entc
+        # demands WITHOUT losses to transmission
+        arr_enfu_demands = arr_enfu_demands_no_entc + arr_enfu_demand_entc 
 
-        scalar_div = self.get_nemomod_energy_scalar(self.modvar_enfu_energy_demand_by_fuel_total, force_modvar_to_config_on_none = True)
+        scalar_div = self.get_nemomod_energy_scalar(
+            self.modvar_enfu_energy_demand_by_fuel_total, 
+            force_modvar_to_config_on_none = True
+        )
         df_enfu_demands = self.model_attributes.array_to_df(
             arr_enfu_demands/scalar_div,
             self.modvar_enfu_energy_demand_by_fuel_total,
@@ -6610,12 +6805,19 @@ class ElectricEnergy:
         )
         df_out += [df_enfu_demands]
 
-        ###
-        ###  NEED TO ADD IN TRANSMISSION LOSSES--HERE, 20230218
-        ###
+        # add in transmission loss totals
+        arr_enfu_transmission_losses = (arr_enfu_production + arr_enfu_imports)*arr_transmission_loss_frac
+        scalar_div = self.get_nemomod_energy_scalar(self.modvar_enfu_transmission_loss_electricity)
+        df_enfu_transmission_losses = self.model_attributes.array_to_df(
+            arr_enfu_transmission_losses/scalar_div,
+            self.modvar_enfu_transmission_loss_electricity,
+            reduce_from_all_cats_to_specified_cats = True
+        )
+        df_out += [df_enfu_transmission_losses]
 
         # get adjust exports as production + imports - demands
-        arr_enfu_exports_adj = arr_enfu_production + arr_enfu_imports - arr_enfu_demands
+        arr_enfu_exports_adj = arr_enfu_production + arr_enfu_imports - arr_enfu_transmission_losses - arr_enfu_demands
+        arr_enfu_exports_adj = sf.vec_bounds(arr_enfu_exports_adj, (0, np.inf))
         scalar_div = self.get_nemomod_energy_scalar(self.modvar_enfu_exports_adjusted_fuel)
         df_enfu_exports_adj = self.model_attributes.array_to_df(
             arr_enfu_exports_adj/scalar_div,
@@ -6812,10 +7014,10 @@ class ElectricEnergy:
         df_elec_trajectories: pd.DataFrame,
         df_reference_capacity_factor: pd.DataFrame,
         df_reference_specified_demand_profile: pd.DataFrame,
-        dict_attributes: dict = {},
+        dict_attributes: Dict[str, pd.DataFrame] = {},
         regions: Union[List[str], None] = None,
         tuple_enfu_production_and_demands: Union[Tuple[pd.DataFrame], None] = None,
-    ) -> dict:
+    ) -> Dict[str, pd.DataFrame]:
         """
         Retrieve tables from applicable inputs and format as dictionary. 
             Returns a dictionary of the form
@@ -6871,8 +7073,17 @@ class ElectricEnergy:
         attribute_time_period = dict_attributes.get("attribute_time_period")
         attribute_time_slice = dict_attributes.get("attribute_time_slice")
         
-        # check specification of regions
+        # check specification of regions and check energy production and demand inputs
         regions = self.model_attributes.get_region_list_filtered(regions, attribute_region = attribute_region)
+        tuple_enfu_production_and_demands = (
+            self.model_energy.project_enfu_production_and_demands(
+                df_elec_trajectories, 
+                target_energy_units = self.model_attributes.configuration.get("energy_units_nemomod")
+            )
+            if tuple_enfu_production_and_demands is None
+            else tuple_enfu_production_and_demands
+        )
+
 
         ##  BUILD TABLES FOR NEMOMOD
 
@@ -7008,7 +7219,8 @@ class ElectricEnergy:
                 self.format_nemomod_table_min_share_production(
                     df_elec_trajectories, 
                     attribute_fuel = attribute_fuel,
-                    regions = regions
+                    regions = regions,
+                    tuple_enfu_production_and_demands = tuple_enfu_production_and_demands
                 )
             )
             # MinStorageCharge
@@ -7178,13 +7390,36 @@ class ElectricEnergy:
 
         df_out = [
             df_elec_trajectories[[self.model_attributes.dim_time_period]],
-            self.retrieve_nemomod_table_discounted_capital_invesment(engine, vec_time_period),
-            self.retrieve_nemomod_table_discounted_capital_invesment_storage(engine, vec_time_period),
-            self.retrieve_nemomod_table_discounted_operating_cost(engine, vec_time_period),
-            self.retrieve_nemomod_table_discounted_operating_cost_storage(engine, vec_time_period),
-            self.retrieve_nemomod_table_emissions_by_technology(engine, vec_time_period),
-            self.retrieve_nemomod_table_total_capacity(engine, vec_time_period),
-            self.retrieve_nemomod_tables_fuel_production_demand_and_trade(engine, vec_time_period, tuple_enfu_production_and_demands = tuple_enfu_production_and_demands)
+            self.retrieve_nemomod_table_discounted_capital_invesment(
+                engine, 
+                vec_time_period
+            ),
+            self.retrieve_nemomod_table_discounted_capital_invesment_storage(
+                engine, 
+                vec_time_period
+            ),
+            self.retrieve_nemomod_table_discounted_operating_cost(
+                engine, 
+                vec_time_period
+            ),
+            self.retrieve_nemomod_table_discounted_operating_cost_storage(
+                engine, 
+                vec_time_period
+            ),
+            self.retrieve_nemomod_table_emissions_by_technology(
+                engine, 
+                vec_time_period
+            ),
+            self.retrieve_nemomod_table_total_capacity(
+                engine, 
+                vec_time_period
+            ),
+            self.retrieve_nemomod_tables_fuel_production_demand_and_trade(
+                engine, 
+                vec_time_period, 
+                df_elec_trajectories,
+                tuple_enfu_production_and_demands = tuple_enfu_production_and_demands
+            )
         ]
 
         df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
@@ -7292,7 +7527,10 @@ class ElectricEnergy:
             engine = sqlalchemy.create_engine(f"{str_prepend_sqlite}{fp_database}")
 
         # get shared energy variables that are required before and after NemoMod runs
-        tuple_enfu_production_and_demands = self.model_energy.project_enfu_production_and_demands(df_elec_trajectories, target_energy_units = self.model_attributes.configuration.get("energy_units_nemomod"))
+        tuple_enfu_production_and_demands = self.model_energy.project_enfu_production_and_demands(
+            df_elec_trajectories, 
+            target_energy_units = self.model_attributes.configuration.get("energy_units_nemomod")
+        )
 
         # get data for the database
         dict_to_sql = self.generate_input_tables_for_sql(
