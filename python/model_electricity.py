@@ -725,7 +725,7 @@ class ElectricEnergy:
         self.modvar_enfu_energy_density_gravimetric = "Gravimetric Energy Density"
         self.modvar_enfu_energy_density_volumetric = "Volumetric Energy Density"
         self.modvar_enfu_exports_fuel = "Fuel Exports"
-        self.modvar_enfu_exports_adjusted_fuel = "Adjusted Fuel Exports"
+        self.modvar_enfu_exports_fuel_adjusted = "Adjusted Fuel Exports"
         self.modvar_enfu_frac_fuel_demand_imported = "Fraction of Fuel Demand Imported"
         self.modvar_enfu_imports_fuel = "Fuel Imports"
         self.modvar_enfu_minimum_frac_fuel_used_for_electricity = "Minimum Fraction of Fuel Used for Electricity Generation"
@@ -6818,10 +6818,10 @@ class ElectricEnergy:
         # get adjust exports as production + imports - demands
         arr_enfu_exports_adj = arr_enfu_production + arr_enfu_imports - arr_enfu_transmission_losses - arr_enfu_demands
         arr_enfu_exports_adj = sf.vec_bounds(arr_enfu_exports_adj, (0, np.inf))
-        scalar_div = self.get_nemomod_energy_scalar(self.modvar_enfu_exports_adjusted_fuel)
+        scalar_div = self.get_nemomod_energy_scalar(self.modvar_enfu_exports_fuel_adjusted)
         df_enfu_exports_adj = self.model_attributes.array_to_df(
             arr_enfu_exports_adj/scalar_div,
-            self.modvar_enfu_exports_adjusted_fuel,
+            self.modvar_enfu_exports_fuel_adjusted,
             reduce_from_all_cats_to_specified_cats = True
         )
         df_out += [df_enfu_exports_adj]

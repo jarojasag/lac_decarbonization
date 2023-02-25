@@ -123,7 +123,11 @@ class NonElectricEnergy:
             self.modvar_enfu_energy_demand_by_fuel_entc,
             self.modvar_enfu_energy_demand_by_fuel_inen,
             self.modvar_enfu_energy_demand_by_fuel_scoe,
-            self.modvar_enfu_energy_demand_by_fuel_trns
+            self.modvar_enfu_energy_demand_by_fuel_trns,
+            self.modvar_enfu_energy_demand_by_fuel_total,
+            self.modvar_enfu_exports_fuel_adjusted,
+            self.modvar_enfu_imports_fuel,
+            self.modvar_enfu_production_fuel
         ]
 
 
@@ -408,6 +412,7 @@ class NonElectricEnergy:
         self.modvar_enfu_energy_density_gravimetric = "Gravimetric Energy Density"
         self.modvar_enfu_energy_density_volumetric = "Volumetric Energy Density"
         self.modvar_enfu_exports_fuel = "Fuel Exports"
+        self.modvar_enfu_exports_fuel_adjusted = "Adjusted Fuel Exports"
         self.modvar_enfu_frac_fuel_demand_imported = "Fraction of Fuel Demand Imported"
         self.modvar_enfu_imports_fuel = "Fuel Imports"
         self.modvar_enfu_minimum_frac_fuel_used_for_electricity = "Minimum Fraction of Fuel Used for Electricity Generation"
@@ -764,7 +769,6 @@ class NonElectricEnergy:
 
 
 
-    ##  support for project_fugitive_emissions
     def get_array_for_fugitive_emissions(self,
         df_neenergy_trajectories: pd.DataFrame,
         modvar_cur: str,
@@ -772,14 +776,19 @@ class NonElectricEnergy:
         modvar_energy_density: str = None
     ) -> np.ndarray:
         """
-            Format an array for fugitive emissions calculations. Convert from mass/volume (input/input) to mass/energy (config/config)
+        Format an array for fugitive emissions calculations. Convert from 
+            mass/volume (input/input) to mass/energy (config/config)
 
-            Function Arguments
-            ------------------
-            - df_neenergy_trajectories: input data frame of trajectories
-            - modvar_cur: mass/volume fuel emission factor model variable (used for units conversion)
-            - array_energy_density: array of volumetric energy density (energy/volume)
-            - modvar_energy_density: model variable giving volumetric density (used for units conversion). If none, defaults to NonElectricEnergy.modvar_enfu_energy_density_volumetric
+        Function Arguments
+        ------------------
+        - df_neenergy_trajectories: input data frame of trajectories
+        - modvar_cur: mass/volume fuel emission factor model variable (used for 
+            units conversion)
+        - array_energy_density: array of volumetric energy density 
+            (energy/volume)
+        - modvar_energy_density: model variable giving volumetric density (used 
+            for units conversion). If none, defaults to 
+            NonElectricEnergy.modvar_enfu_energy_density_volumetric
         """
         # check model variable input
         if modvar_cur is None:
@@ -791,6 +800,7 @@ class NonElectricEnergy:
         arr_ef_mass_per_volume = self.model_attributes.get_standard_variables(
             df_neenergy_trajectories,
             modvar_cur,
+            override_vector_for_single_mv_q = True,
             return_type = "array_units_corrected_gas",
             expand_to_all_cats = True
         )
@@ -905,7 +915,7 @@ class NonElectricEnergy:
             determine whether or not it was run downstream of ElectricEnergy:
 
             - NonElectricEnergy.modvar_enfu_energy_demand_by_fuel_total
-            - NonElectricEnergy.modvar_enfu_exports_adjusted_fuel
+            - NonElectricEnergy.modvar_enfu_exports_fuel_adjusted
             - NonElectricEnergy.modvar_enfu_imports_fuel
             - NonElectricEnergy.modvar_enfu_production_fuel
 
@@ -954,14 +964,14 @@ class NonElectricEnergy:
         # exports
         arr_fgtv_exports = self.model_attributes.get_standard_variables(
             df_neenergy_trajectories,
-            self.modvar_enfu_exports_adjusted_fuel,
+            self.modvar_enfu_exports_fuel_adjusted,
             expand_to_all_cats = True,
             return_type = "array_base",
             throw_error_on_missing_fields = False
         )
         if (arr_fgtv_exports is not None):
             arr_fgtv_exports *= self.model_attributes.get_scalar(
-                self.modvar_enfu_exports_adjusted_fuel, 
+                self.modvar_enfu_exports_fuel_adjusted, 
                 "energy"
             )
 
@@ -1028,7 +1038,6 @@ class NonElectricEnergy:
                 arr_tmp *= scalar
                 arr_demands_distribution += arr_tmp
 
-
         else:
             
             (
@@ -1041,6 +1050,9 @@ class NonElectricEnergy:
                 df_neenergy_trajectories
             )
 
+            df_out = []
+
+            # add DEMANDS in terms of self.modvar_enfu_energy_demand_by_fuel_total variable units
             df_out += [
                 self.model_attributes.array_to_df(
                     arr_fgtv_demands/self.model_attributes.get_scalar(self.modvar_enfu_energy_demand_by_fuel_total, "energy"), 
@@ -1049,14 +1061,16 @@ class NonElectricEnergy:
                 )
             ] if (arr_fgtv_demands is not None) else []
 
+            # add ADJUSTED EXPORTS (in this case, equal to EXPORTS) in terms of self.modvar_enfu_exports_fuel_adjusted variable units
             df_out += [
                 self.model_attributes.array_to_df(
-                    arr_fgtv_export/self.model_attributes.get_scalar(self.modvar_enfu_exports_adjusted_fuel, "energy"), 
-                    self.modvar_enfu_exports_adjusted_fuel, 
+                    arr_fgtv_exports/self.model_attributes.get_scalar(self.modvar_enfu_exports_fuel_adjusted, "energy"), 
+                    self.modvar_enfu_exports_fuel_adjusted, 
                     reduce_from_all_cats_to_specified_cats = True
                 )
             ] if (arr_fgtv_exports is not None) else []
 
+            # add IMPORTS in terms of self.modvar_enfu_imports_fuel variable units
             df_out += [
                 self.model_attributes.array_to_df(
                     arr_fgtv_imports/self.model_attributes.get_scalar(self.modvar_enfu_imports_fuel, "energy"), 
@@ -1065,6 +1079,7 @@ class NonElectricEnergy:
                 )
             ] if (arr_fgtv_imports is not None) else []
 
+            # add PRODUCTION in terms of self.modvar_enfu_production_fuel variable units
             df_out += [
                 self.model_attributes.array_to_df(
                     arr_fgtv_production/self.model_attributes.get_scalar(self.modvar_enfu_production_fuel, "energy"), 
@@ -1073,14 +1088,14 @@ class NonElectricEnergy:
                 )
             ] if (arr_fgtv_production is not None) else []
             
+            df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")
 
-            df_out = pd.concat(df_out, axis = 0).reset_index(drop = True)
 
         # return a tuple
         tuple_out = (
             arr_fgtv_demands, 
             arr_demands_distribution, 
-            arr_fgtv_export, 
+            arr_fgtv_exports, 
             arr_fgtv_imports, 
             arr_fgtv_production,
             df_out
@@ -1701,7 +1716,7 @@ class NonElectricEnergy:
         arr_fgtv_demands, arr_demands_distribution, arr_fgtv_export, arr_fgtv_imports, arr_fgtv_production = self.project_enfu_production_and_demands(
             df_neenergy_trajectories
         )
-        """;s
+        """;
 
         # define a dictionary to relate aggregate emissions to the components
         dict_emission_to_fugitive_components = {
@@ -1759,6 +1774,7 @@ class NonElectricEnergy:
             return_type = "array_base",
             var_bounds = (0, 1)
         )
+        arr_enfu_zeros = np.zeros((len(df_neenergy_trajectories), attr_enfu.n_key_values))
 
 
         ##  LOOP OVER OUTPUT EMISSIONS TO GENERATE EMISSIONS
@@ -1802,11 +1818,17 @@ class NonElectricEnergy:
             arr_fgtv_ef_fv += sf.do_array_mult(arr_ef_production_fugitive, 1 - vec_fgtv_reduction_leaks)
             
             # distribution, production, and transmission emissions
-            arr_fgtv_emit_distribution = arr_demands_distribution*arr_ef_distribution if (arr_ef_distribution is not None) else 0.0
-            arr_fgtv_emit_distribution = sf.do_array_mult(arr_fgtv_emit_distribution, 1 - vec_fgtv_reduction_leaks)
+            arr_fgtv_emit_distribution = (
+                sf.do_array_mult(arr_demands_distribution*arr_ef_distribution, 1 - vec_fgtv_reduction_leaks) 
+                if (arr_ef_distribution is not None) 
+                else arr_enfu_zeros
+            )
             arr_fgtv_emit_production = arr_fgtv_production*arr_fgtv_ef_fv
-            arr_fgtv_emit_transmission = arr_ef_transmission*(arr_fgtv_production + arr_fgtv_imports) if (arr_ef_transmission is not None) else 0.0
-            arr_fgtv_emit_transmission = sf.do_array_mult(arr_fgtv_emit_transmission, 1 - vec_fgtv_reduction_leaks)
+            arr_fgtv_emit_transmission = (
+                sf.do_array_mult(arr_ef_transmission*(arr_fgtv_production + arr_fgtv_imports), 1 - vec_fgtv_reduction_leaks) 
+                if (arr_ef_transmission is not None) 
+                else arr_enfu_zeros
+            )
 
             # get total and determine scalar
             arr_fgtv_emissions_cur = arr_fgtv_emit_distribution + arr_fgtv_emit_production + arr_fgtv_emit_transmission
@@ -1842,7 +1864,8 @@ class NonElectricEnergy:
             )
         ]
         """;
-
+        global df_out_exp
+        df_out_exp = df_out
         # concatenate and add subsector emission totals
         df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")
         self.model_attributes.add_subsector_emissions_aggregates(df_out, [self.subsec_name_fgtv], False)
