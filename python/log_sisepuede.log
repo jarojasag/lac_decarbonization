@@ -90,3 +90,123 @@
 2023-02-25 16:05:01,836 - DEBUG - argc = c_int(0)
 2023-02-25 16:05:01,837 - DEBUG - calling jl_init_with_image(/Applications/Julia-1.8.app/Contents/Resources/julia/bin, /Applications/Julia-1.8.app/Contents/Resources/julia/lib/julia/sys.dylib)
 2023-02-25 16:05:02,167 - DEBUG - seems to work...
+2023-02-25 16:05:13,326 - DEBUG - exception occured? None
+2023-02-25 16:05:13,326 - DEBUG - exception occured? None
+2023-02-25 16:05:13,326 - DEBUG - exception occured? None
+2023-02-25 16:05:13,326 - DEBUG - exception occured? None
+2023-02-25 16:05:13,326 - DEBUG - exception occured? None
+2023-02-25 16:05:13,399 - DEBUG - exception occured? None
+2023-02-25 16:05:13,399 - DEBUG - exception occured? None
+2023-02-25 16:05:13,405 - DEBUG - exception occured? None
+2023-02-25 16:05:13,407 - DEBUG - exception occured? None
+2023-02-25 16:05:13,407 - DEBUG - exception occured? None
+2023-02-25 16:05:13,553 - DEBUG - 	Successfully activated Julia with compiled_modules = False
+2023-02-25 16:05:13,555 - DEBUG - 
+2023-02-25 16:05:13,556 - DEBUG - exception occured? None
+2023-02-25 16:05:13,556 - DEBUG - exception occured? None
+2023-02-25 16:05:13,557 - DEBUG - exception occured? None
+2023-02-25 16:05:13,557 - DEBUG - exception occured? None
+2023-02-25 16:05:13,557 - DEBUG - exception occured? None
+2023-02-25 16:05:13,557 - DEBUG - exception occured? None
+2023-02-25 16:05:13,557 - DEBUG - exception occured? None
+2023-02-25 16:05:13,558 - DEBUG - exception occured? None
+2023-02-25 16:05:13,558 - DEBUG - exception occured? None
+2023-02-25 16:05:13,558 - DEBUG - exception occured? None
+2023-02-25 16:05:13,558 - DEBUG - exception occured? None
+2023-02-25 16:05:13,558 - DEBUG - exception occured? None
+2023-02-25 16:05:13,559 - DEBUG - 	Successfully imported julia.Base
+2023-02-25 16:05:13,560 - DEBUG - 	Successfully imported julia.Main
+2023-02-25 16:05:13,561 - DEBUG - exception occured? 5021708544
+2023-02-25 16:05:13,795 - DEBUG - exception occured? None
+2023-02-25 16:05:13,796 - DEBUG - exception occured? None
+2023-02-25 16:05:13,796 - DEBUG - 	Successfully imported julia.Pkg
+2023-02-25 16:05:13,797 - DEBUG - exception occured? None
+2023-02-25 16:05:13,797 - DEBUG - exception occured? None
+2023-02-25 16:05:13,797 - DEBUG - exception occured? None
+2023-02-25 16:05:13,798 - DEBUG - exception occured? None
+2023-02-25 16:05:13,798 - DEBUG - exception occured? None
+2023-02-25 16:05:13,798 - DEBUG - exception occured? None
+2023-02-25 16:05:13,798 - DEBUG - exception occured? None
+2023-02-25 16:05:13,798 - DEBUG - exception occured? None
+2023-02-25 16:05:13,799 - DEBUG - exception occured? None
+2023-02-25 16:05:14,570 - DEBUG - 	Available Packages:
+		'CSV'
+		 'CUDA'
+		 'Statistics'
+		 'GLPK'
+		 'Revise'
+		 'SQLite'
+		 'Random'
+		 'Clp'
+		 'Atom'
+		 'StructArrays'
+		 'JuMP'
+		 'Graphs'
+		 'Shapefile'
+		 'ExcelReaders'
+		 'Juniper'
+		 'LatinHypercubeSampling'
+		 'Ipopt'
+		 'PyCall'
+		 'IJulia'
+		 'LazySets'
+		 'Flux'
+		 'Plots'
+		 'GeoInterface'
+		 'SCIP'
+		 'NEOSServer'
+		 'XLSX'
+		 'Cbc'
+		 'DataFrames'
+		 'DistributedArrays'
+		 'Gurobi'
+		 'MathOptInterface'
+		 'PlotlyJS'
+2023-02-25 16:05:14,571 - DEBUG - exception occured? None
+2023-02-25 16:05:14,571 - DEBUG - exception occured? None
+2023-02-25 16:05:14,571 - DEBUG - exception occured? None
+2023-02-25 16:05:15,181 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
+2023-02-25 16:05:15,182 - DEBUG - exception occured? 4986163968
+2023-02-25 16:06:16,905 - DEBUG - exception occured? None
+2023-02-25 16:06:16,906 - DEBUG - exception occured? None
+2023-02-25 16:06:16,907 - DEBUG - exception occured? 6090932528
+2023-02-25 16:06:16,936 - DEBUG - exception occured? None
+2023-02-25 16:06:16,937 - DEBUG - exception occured? None
+2023-02-25 16:06:16,937 - DEBUG - exception occured? None
+2023-02-25 16:06:16,937 - DEBUG - exception occured? None
+2023-02-25 16:06:16,937 - DEBUG - exception occured? None
+2023-02-25 16:06:16,953 - DEBUG - exception occured? None
+2023-02-25 16:06:16,954 - DEBUG - exception occured? None
+2023-02-25 16:06:16,956 - DEBUG - exception occured? None
+2023-02-25 16:06:16,957 - DEBUG - exception occured? None
+2023-02-25 16:06:16,957 - DEBUG - exception occured? None
+2023-02-25 16:06:16,957 - DEBUG - exception occured? None
+2023-02-25 16:06:16,958 - DEBUG - exception occured? None
+2023-02-25 16:06:16,958 - DEBUG - exception occured? None
+2023-02-25 16:06:16,958 - DEBUG - exception occured? None
+2023-02-25 16:06:16,959 - DEBUG - exception occured? None
+2023-02-25 16:06:16,959 - DEBUG - exception occured? None
+2023-02-25 16:06:16,967 - DEBUG - exception occured? None
+2023-02-25 16:06:16,968 - DEBUG - exception occured? None
+2023-02-25 16:06:16,969 - DEBUG - exception occured? None
+2023-02-25 16:06:16,970 - DEBUG - exception occured? None
+2023-02-25 16:06:16,971 - DEBUG - exception occured? None
+2023-02-25 16:06:16,971 - DEBUG - exception occured? None
+2023-02-25 16:06:16,971 - DEBUG - exception occured? None
+2023-02-25 16:06:17,025 - DEBUG - exception occured? None
+2023-02-25 16:06:17,025 - DEBUG - exception occured? None
+2023-02-25 16:06:17,026 - DEBUG - exception occured? None
+2023-02-25 16:06:17,026 - DEBUG - exception occured? None
+2023-02-25 16:06:17,026 - DEBUG - exception occured? None
+2023-02-25 16:06:17,027 - DEBUG - exception occured? None
+2023-02-25 16:06:17,064 - DEBUG - exception occured? 4991521568
+2023-02-25 16:06:17,951 - DEBUG - exception occured? None
+2023-02-25 16:06:17,951 - DEBUG - exception occured? None
+2023-02-25 16:06:17,951 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
+2023-02-25 16:06:17,984 - INFO - Successfully initialized SISEPUEDEModels.
+2023-02-25 16:06:18,304 - INFO - Table ANALYSIS_METADATA successfully written to database.
+2023-02-25 16:06:18,319 - INFO - Table ATTRIBUTE_DESIGN successfully written to database.
+2023-02-25 16:06:19,495 - INFO - Table ATTRIBUTE_LHC_SAMPLES_LEVER_EFFECTS successfully written to database.
+2023-02-25 16:06:26,473 - INFO - Table ATTRIBUTE_LHC_SAMPLES_EXOGENOUS_UNCERTAINTIES successfully written to database.
+2023-02-25 16:06:26,496 - INFO - Table ATTRIBUTE_STRATEGY successfully written to database.
+2023-02-25 16:06:29,717 - INFO - Table MODEL_BASE_INPUT_DATABASE successfully written to database.
