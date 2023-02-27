@@ -805,6 +805,7 @@ class ElectricEnergy:
         self.modvar_entc_nemomod_emissions_n2o_mne = "NemoMod :math:\\text{N}_2\\text{O} Emissions from Fuel Mining and Extraction"
         self.modvar_entc_nemomod_fixed_cost = "NemoMod FixedCost"
         self.modvar_entc_nemomod_generation_capacity = "NemoMod Generation Capacity"
+        self.modvar_entc_nemomod_min_share_production = "NemoMod MinShareProduction"
         self.modvar_entc_nemomod_production_by_technology = "NemoMod Production by Technology"
         self.modvar_entc_nemomod_renewable_tag_technology = "NemoMod RETagTechnology"
         self.modvar_entc_nemomod_reserve_margin = "NemoMod ReserveMargin"
@@ -2105,6 +2106,184 @@ class ElectricEnergy:
         )
 
         return df_out
+
+
+    
+    def get_entc_import_adjust_msp(self,
+        df_elec_trajectories: pd.DataFrame,
+        arr_enfu_import_fractions_adj: np.ndarray,
+        attribute_fuel: Union[AttributeTable, None] = None,
+        attribute_technology: Union[AttributeTable, None] = None,
+        dict_tech_info: Union[Dict, None] = None,
+        modvar_msp: Union[str, None] = None,
+        regions: Union[List[str], None] = None,
+    ) -> Tuple[pd.DataFrame, Dict[str, str]]:
+        """
+        Minimum share of production is used to specify import fractions; this 
+            function adjusts exogenous MinShareProduction fractions to account 
+            for imports, returning a data frame that is ready to integrate into 
+            the NemoMod input table.
+        
+        Called within the `.format_nemomod_table_min_share_production()` method.
+        
+        Returns a formatted dataframe.
+           
+        
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
+        - arr_enfu_import_fractions_adj: np.ndarray, wide by all fuel 
+            categories, of adjusted import fractions (after accounting for the 
+            integration of exports into SpecifiedAnnualDemands). This array is 
+            used to adjust downward the exogenous specifications of 
+            MinShareProduction.
+
+        Keyword Arguments
+        -----------------
+        - attribute_fuel: AttributeTable for fuel
+        - attribute_technology: AttributeTable used to denote technologies with 
+            MinShareProductions
+        - dict_tech_info: optional tech_info dictionary specified by
+            .get_tech_info_dict() method (can be passed to reduce computation)
+        - modvar_msp: model variable used to specify MinShareProduction (ENTC)
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
+        """
+        # do some initialization from inputs
+        attribute_fuel = self.model_attributes.get_attribute_table(self.subsec_name_enfu) if (attribute_fuel is None) else attribute_fuel
+        attribute_technology = self.model_attributes.get_attribute_table(self.subsec_name_entc) if (attribute_technology is None) else attribute_technology
+        dict_tech_info = self.get_tech_info_dict(attribute_technology = attribute_technology) if (dict_tech_info is None) else dict_tech_info
+        modvar_msp = self.modvar_entc_nemomod_min_share_production if (modvar_msp is None) else modvar_msp
+        
+        # initialize some shortcuts
+        cats_entc_msp = self.model_attributes.get_variable_categories(modvar_msp)
+        dict_fuel_cats = self.dict_entc_fuel_categories_to_fuel_variables
+        subsec_name_enfu = self.model_attributes.subsec_name_enfu
+        subsec_name_entc = self.model_attributes.subsec_name_entc
+        
+        # retrieve input MSP
+        arr_entc_msp = self.model_attributes.get_standard_variables(
+            df_elec_trajectories,
+            modvar_msp,
+            expand_to_all_cats = True,
+            return_type = "array_base"
+        )
+        
+        # initialize an output dictionary mapping each tech to fuel
+        dict_output_tech_to_fuel = {}
+        
+        ##  GET ADJUSTMENTS FOR NON-ELECTRIC FUELS (SPECIFIED BY InputActivityRatio/OutputActivityRatio)
+        
+        for fuel in dict_fuel_cats.keys():
+
+            # filter on output activity ratio (oar)
+            dict_iar_oar_var = dict_fuel_cats.get(fuel)
+            modvar_oar = dict_iar_oar_var.get(self.key_oar)
+
+            if modvar_oar is not None:
+                
+                # check categories
+                cats_entc = self.model_attributes.get_variable_categories(modvar_oar)
+                cats_shared = set(cats_entc_msp) & set(cats_entc)  
+                
+                if len(cats_shared) > 0:
+                    
+                    cats_shared = sorted(list(cats_shared))
+                    dict_output_tech_to_fuel.update(
+                        dict((x, fuel) for x in cats_shared)
+                    )
+                    
+                    # get some indices
+                    ind_enfu = attribute_fuel.get_key_value_index(fuel)
+                    inds_entc = [attribute_technology.get_key_value_index(x) for x in cats_shared]
+
+                    # setup normalization of input fractions, but only apply if the total exceeds 1
+                    arr_entc_msp_fracs_specified = arr_entc_msp[:, inds_entc]
+                    max_entc_msp_fracs_norm = max(
+                        sf.vec_bounds(
+                            arr_entc_msp_fracs_specified.sum(axis = 1),
+                            (1, np.inf)
+                        )
+                    )
+                    arr_entc_msp_fracs_specified /= max_entc_msp_fracs_norm
+                    
+                    # get import fraction and re-normalize again
+                    arr_entc_msp[:, inds_entc] = sf.do_array_mult(
+                        arr_entc_msp_fracs_specified,
+                        1 - arr_enfu_import_fractions_adj[:, ind_enfu]
+                    )
+                    
+                    
+        ##  NEXT, ADJUST SPECIFICATIONS FOR ELECTRICITY
+        
+        # get indices for pp techs
+        inds_entc = [
+            attribute_technology.get_key_value_index(x)
+            for x in dict_tech_info.get("all_techs_pp")
+        ]
+        
+        # setup normalization of input fractions, but only apply if the total exceeds 1
+        arr_entc_msp_fracs_specified = arr_entc_msp[:, inds_entc]
+        max_entc_msp_fracs_norm = max(
+            sf.vec_bounds(
+                arr_entc_msp_fracs_specified.sum(axis = 1),
+                (1, np.inf)
+            )
+        )
+        arr_entc_msp_fracs_specified /= max_entc_msp_fracs_norm
+        
+        # multiply by 1 - import fraction
+        arr_entc_msp[:, inds_entc] = sf.do_array_mult(
+            arr_entc_msp_fracs_specified,
+            1 - arr_enfu_import_fractions_adj[:, self.ind_enfu_elec]
+        )
+
+        
+        ##  FINAL REFORMATIONS FOR RETURN
+        
+        # finally, update the output dictionary for ease
+        dict_output_tech_to_fuel.update(
+            dict((x, self.cat_enfu_elec) for x in dict_tech_info.get("all_techs_pp"))
+        )
+        
+        # convert to data frame and return
+        df_entc_msp_formatted = self.model_attributes.array_to_df(
+            arr_entc_msp,
+            modvar_msp,
+            reduce_from_all_cats_to_specified_cats = True
+        )
+        df_entc_msp_formatted[self.model_attributes.dim_time_period] = list(df_elec_trajectories[self.model_attributes.dim_time_period])
+         
+        # get formatted data frame and drop all-0 groupings
+        df_entc_msp_formatted = self.format_model_variable_as_nemomod_table( 
+            df_entc_msp_formatted,
+            modvar_msp,
+            "TMP",
+            [
+                self.field_nemomod_id,
+                self.field_nemomod_year,
+                self.field_nemomod_region
+            ],
+            self.field_nemomod_technology,
+            regions = regions,
+            var_bounds = (0, 1)
+        ).get("TMP")
+
+        df_entc_msp_formatted[self.field_nemomod_fuel] = df_entc_msp_formatted[
+            self.field_nemomod_technology
+        ].replace(dict_output_tech_to_fuel)
+
+        # drop techs that are all 0 for a region
+        df_entc_msp_formatted = sf.filter_data_frame_by_group(
+            df_entc_msp_formatted,  
+            [
+                self.field_nemomod_region,
+                self.field_nemomod_technology
+            ],
+            self.field_nemomod_value
+        )
+
+        return df_entc_msp_formatted    
 
 
 
@@ -4186,6 +4365,7 @@ class ElectricEnergy:
     def format_nemomod_table_min_share_production(self,
         df_elec_trajectories: pd.DataFrame,
         attribute_fuel: Union[AttributeTable, None] = None,
+        attribute_technology: Union[AttributeTable, None] = None,
         modvar_import_fraction: str = None,
         regions: Union[List[str], None] = None,
         tuple_enfu_production_and_demands: Union[Tuple[pd.DataFrame], None] = None,
@@ -4203,6 +4383,8 @@ class ElectricEnergy:
         Keyword Arguments
         -----------------
         - attribute_fuel: AttributeTable for fuel
+        - attribute_technology: AttributeTable used to denote technologies with 
+            MinShareProductions
         - modvar_import_fraction: SISEPUEDE model variable giving the import 
             fraction. If None, default to 
             NonElectricEnergy.modvar_enfu_frac_fuel_demand_imported
@@ -4222,8 +4404,12 @@ class ElectricEnergy:
         """
         # do some initialization
         attribute_fuel = self.model_attributes.get_attribute_table(self.subsec_name_enfu) if (attribute_fuel is None) else attribute_fuel
+        attribute_technology = self.model_attributes.get_attribute_table(self.subsec_name_entc) if (attribute_technology is None) else attribute_technology
         modvar_import_fraction = self.modvar_enfu_frac_fuel_demand_imported if (modvar_import_fraction is None) else modvar_import_fraction
         
+        # some attribute initializations
+        dict_tech_info = self.get_tech_info_dict(attribute_technology = attribute_technology)
+
         # get production, imports, exports, and demands to adjust import fractions
         if (tuple_enfu_production_and_demands is None) and (df_elec_trajectories is None):
             raise ValueError(f"Error in format_nemomod_table_min_share_production: tuple_enfu_production_and_demands and df_elec_trajectories cannot both be None.")
@@ -4291,6 +4477,32 @@ class ElectricEnergy:
         # setup for NemoMod
         df_out = self.add_multifields_from_key_values(
             df_out,
+            [
+                self.field_nemomod_id,
+                self.field_nemomod_region,
+                self.field_nemomod_fuel,
+                self.field_nemomod_technology,
+                self.field_nemomod_year,
+                self.field_nemomod_value
+            ],
+            override_time_period_transformation = True,
+            regions = regions
+        )
+
+
+        ##  NEXT, GET EXOGENOUSLY SPECIFIED MinShareProduction VALUES (ADJUSTED FOR IMPORTS) 
+
+        df_entc_msp = self.get_entc_import_adjust_msp(
+            df_elec_trajectories,
+            arr_enfu_import_fractions_adj,
+            attribute_fuel = attribute_fuel,
+            attribute_technology = attribute_technology,
+            dict_tech_info = dict_tech_info,
+            regions = regions
+        )
+
+        df_out = self.add_multifields_from_key_values(
+            pd.concat([df_out, df_entc_msp[df_out.columns]], axis = 0),
             [
                 self.field_nemomod_id,
                 self.field_nemomod_region,
@@ -6966,7 +7178,11 @@ class ElectricEnergy:
         # build renaming dictionary
         cats_valid = self.model_attributes.get_variable_categories(modvar)
         dict_cats_to_varname = [x for x in attr.key_values if (x in list(df_source[field_pivot])) and (x in cats_valid)]
-        varnames = self.model_attributes.build_varlist(subsec, modvar, restrict_to_category_values = dict_cats_to_varname)
+        varnames = self.model_attributes.build_varlist(
+            subsec, 
+            modvar, 
+            restrict_to_category_values = dict_cats_to_varname
+        )
         dict_cats_to_varname = dict(zip(dict_cats_to_varname, varnames))
 
         # reformat using pivot
