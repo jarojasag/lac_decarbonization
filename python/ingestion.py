@@ -16,89 +16,86 @@ import warnings
 #
 class InputTemplate:
 	"""
-		The InputTemplate class is used to ingest an input data template and
-			format it for the SISEPUEDE DAG.
+	The InputTemplate class is used to ingest an input data template and format 
+		it for the SISEPUEDE DAG.
 
-		See https://sisepuede.readthedocs.io for more information on the input
-			template.
+	See https://sisepuede.readthedocs.io for more information on the input 
+		template.
 
-		Initialization Arguments
-		------------------------
-		- template: The InputTemplate can be initialized using a file path to an
-			Excel file or a dictionary of
-			* path: if initializing using a path, the template should point to
-				an Excel workbook containing the input data template. A
-				description of the workbook's format is found below under
-				"Template Formatting".
-			* dict: if initializing using a dictionary, the dictionary should
-				have the following structure:
-				{
-					"strategy_id-X0": pd.DataFrame(),
-					"strategy_id-X1": pd.DataFrame()...
-				}
+	Initialization Arguments
+	------------------------
+	- template: The InputTemplate can be initialized using a file path to an 
+		Excel file or a dictionary of
+		* path: if initializing using a path, the template should point to an 
+			Excel workbook containing the input data template. A description of 
+			the workbook's format is found below under "Template Formatting".
+		* dict: if initializing using a dictionary, the dictionary should have 
+			the following structure:
+			{
+				"strategy_id-X0": pd.DataFrame(),
+				"strategy_id-X1": pd.DataFrame()...
+			}
 
-				I.e., keys should follow the
+			I.e., keys should follow the
 
-		- model_attributes: a ModelAttributes data structure used to coordinate
-			variables and inputs
+	- model_attributes: a ModelAttributes data structure used to coordinate
+		variables and inputs
 
-		Optional Arguments
-		------------------
-		- attribute_strategy: AttributeTable used to define input strategies and
-			filter undefined.
-			* If None (default), try to read from the
-				model_attributes.dict_attributes
-			* If AttributeTable, checks key against
-				ModelAttributes.dim_strategy_id
-				* If either check is unsuccessful, will turn off filtering of
-					undefined strategies and set
-					InputTemplate.attribute_strategy = None
+	Optional Arguments
+	------------------
+	- attribute_strategy: AttributeTable used to define input strategies and
+		filter undefined.
+		* If None (default), try to read from model_attributes.dict_attributes
+		* If AttributeTable, checks key against ModelAttributes.dim_strategy_id
+			* If either check is unsuccessful, will turn off filtering of
+				undefined strategies and set 
+				InputTemplate.attribute_strategy = None
 
-		Keyword Arguments
-		-----------------
-		- field_prepend_req_attr_baseline_scenario: prepandage applied to
-			AttributeTable key to generate field required in attribute tables to
-			specify a baseline scenario. E.g.,
-			field_prepend_req_attr_baseline_scenario = "baseline_" means that
-			the baseline strategy_id is stored in field "baseline_strategy" in
-			the attribute_strategyattribute table.
-			* Only applies for attributes not passed through ModelAttributes
-		- field_req_normalize_group: Required field used to specify whether or
-			not to normalize a group (ensures always sums to 1)
-		- field_req_subsector: Required field used to define the ubsector
-			associated with a variable
-		- field_req_trajgroup_no_vary_q: Required field used to determine
-			whether or not a trajectory group may vary
-			* Note: all values in the same trajectory group must be the same
-		- field_req_uniform_scaling_q: Required field used to determine whether
-			or not a variable trjaectory should be scaled uniformly over all
-			time periods
-			* E.g., many biophysical parameters may be uncertain but not change
-				over time
-		- field_req_variable: Required field used name the variable
-			* Trajectory groups require special naming convention used to define
-				all parts:
-				(INFO HERE)
-		- field_req_variable_trajectory_group: Field used to explicitly add
-			trajectory group (added after import)
-		- field_req_variable_trajectory_group_trajectory_type: Field used to
-			explicitly add trajectory group type for variables in a trajectory
-			group (added after import)
-		- filter_invalid_strategies: filter strategies that aren't defined in an
-			attribute table
-		- logger: optional logging object to pass
-		- regex_max: re.Pattern (compiled regular expression) used to match the
-			field storing the maximum scalar values at the final time period
-		- regex_min: re.Pattern used to match the field storing the minimum
-			scalar values at the final time period
-		- regex_tp: re.Pattern used to match the field storing data values for
-			each time period
+	Keyword Arguments
+	-----------------
+	- field_prepend_req_attr_baseline_scenario: prepandage applied to 
+		AttributeTable key to generate field required in attribute tables to
+		specify a baseline scenario. E.g.,
+		field_prepend_req_attr_baseline_scenario = "baseline_" means that the 
+		baseline strategy_id is stored in field "baseline_strategy" in the 
+		attribute_strategyattribute table.
+		* Only applies for attributes not passed through ModelAttributes
+	- field_req_normalize_group: Required field used to specify whether or not 
+		to normalize a group (ensures always sums to 1)
+	- field_req_subsector: Required field used to define the subsector 
+		associated with a variable
+	- field_req_trajgroup_no_vary_q: Required field used to determine whether or 
+		not a trajectory group may vary
+		* Note: all values in the same trajectory group must be the same
+	- field_req_uniform_scaling_q: Required field used to determine whether or 
+		not a variable trjaectory should be scaled uniformly over all time 
+		periods
+		* E.g., many biophysical parameters may be uncertain but not change
+			over time
+	- field_req_variable: Required field used name the variable
+		* Trajectory groups require special naming convention used to define all 
+			parts:
+			(INFO HERE)
+	- field_req_variable_trajectory_group: Field used to explicitly add
+		trajectory group (added after import)
+	- field_req_variable_trajectory_group_trajectory_type: Field used to 
+		explicitly add trajectory group type for variables in a trajectory group 
+		(added after import)
+	- filter_invalid_strategies: filter strategies that aren't defined in an
+		attribute table
+	- logger: optional logging object to pass
+	- regex_max: re.Pattern (compiled regular expression) used to match the 
+		field storing the maximum scalar values at the final time period
+	- regex_min: re.Pattern used to match the field storing the minimum scalar 
+		values at the final time period
+	- regex_tp: re.Pattern used to match the field storing data values for each 
+		time period
 
 
-		Template Formatting
-		-------------------
+	Template Formatting
+	-------------------
 
-		(info here)
+	(info here)
 
 
 	"""
@@ -357,6 +354,7 @@ class InputTemplate:
 			if df_cur is not None:
 				# add in variable info and pivot to wide by time period
 				df_cur = pd.merge(df_cur, df_var_info, how = "left")
+
 				df_cur = sf.pivot_df_clean(
 					df_cur,
 					[field_time_period],

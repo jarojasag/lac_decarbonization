@@ -3441,7 +3441,7 @@ class ModelAttributes:
             variable = variable_subsec, 
             variable_type = variable_type
         )
-       
+
         # build variables that apply to all categories
         vars_out = self.build_vars_basic(
             dict_vr_vvs, 
@@ -3453,6 +3453,7 @@ class ModelAttributes:
             ), 
             category
         )
+
         if len(dict_vr_vvs_outer) > 0:
             vars_out += self.build_vars_outer(
                 dict_vr_vvs_outer,
@@ -3524,8 +3525,8 @@ class ModelAttributes:
                     return None
 
             # get valid/invalid categories
-            valid_cats = [x for x in categories_to_restrict_to if x in attribute_table.key_values]
-            invalid_cats = [x for x in categories_to_restrict_to if (x not in attribute_table.key_values)]
+            valid_cats = [x for x in attribute_table.key_values if x in categories_to_restrict_to]
+            invalid_cats = sorted([x for x in categories_to_restrict_to if (x not in attribute_table.key_values)])
 
             if len(invalid_cats) > 0:
                 missing_cats = sf.format_print_list(invalid_cats)
@@ -3558,7 +3559,11 @@ class ModelAttributes:
                 dict_in.update({k: "none"})
             else:
                 cats = dict_in[k].replace("`", "").split(delim)
-                dict_in.update({k: [x for x in cats if x in all_category_values]})
+                dict_in.update(
+                    {
+                        k: [x for x in all_category_values if x in cats]
+                    }
+                )
                 missing_vals = [x for x in cats if x not in dict_in[k]]
                 if len(missing_vals) > 0:
                     missing_vals = sf.format_print_list(missing_vals)
@@ -3706,13 +3711,16 @@ class ModelAttributes:
 
 
 
-    ##  function to return an optional variable if another (integrated) variable is not passed
     def get_optional_or_integrated_standard_variable(self,
         df_in: pd.DataFrame,
         var_integrated: str,
         var_optional: str,
         **kwargs
     ) -> tuple:
+        """
+        Function to return an optional variable if another (integrated) variable 
+            is not passed
+        """
         # get fields needed
         subsector_integrated = self.get_variable_subsector(var_integrated)
         fields_check = self.build_varlist(subsector_integrated, var_integrated)
@@ -3738,16 +3746,34 @@ class ModelAttributes:
         var_type = None
     ) -> tuple:
         """
-        Build a dictionary of categories applicable to a give variable; 
-            split by unidim/outer
+        Build a dictionary of categories applicable to a give variable; split by 
+            unidim/outer
         """
         key_attribute = self.get_subsector_attribute(subsector, key_type)
-        valid_cats = self.check_category_restrictions(restrict_to_category_values, self.dict_attributes[self.get_subsector_attribute(subsector, "pycategory_primary")])
-
+        valid_cats = self.check_category_restrictions(
+            restrict_to_category_values, 
+            self.dict_attributes[self.get_subsector_attribute(subsector, "pycategory_primary")]
+        )
+    
         if key_attribute != None:
-            dict_vr_vvs_cats_ud, dict_vr_vvs_cats_outer = self.separate_varreq_dict_for_outer(subsector, key_type, category_outer_tuple, target_field = "categories", variable = variable_in, variable_type = var_type)
-            dict_vr_vvs_cats_ud = self.clean_partial_category_dictionary(dict_vr_vvs_cats_ud, valid_cats, delim)
-            dict_vr_vvs_cats_outer = self.clean_partial_category_dictionary(dict_vr_vvs_cats_outer, valid_cats, delim)
+            dict_vr_vvs_cats_ud, dict_vr_vvs_cats_outer = self.separate_varreq_dict_for_outer(
+                subsector, 
+                key_type, 
+                category_outer_tuple, 
+                target_field = "categories", 
+                variable = variable_in,
+                variable_type = var_type
+            )
+            dict_vr_vvs_cats_ud = self.clean_partial_category_dictionary(
+                dict_vr_vvs_cats_ud, 
+                valid_cats, 
+                delim
+            )
+            dict_vr_vvs_cats_outer = self.clean_partial_category_dictionary(
+                dict_vr_vvs_cats_outer, 
+                valid_cats, 
+                delim
+            )
 
             return dict_vr_vvs_cats_ud, dict_vr_vvs_cats_outer
         else:

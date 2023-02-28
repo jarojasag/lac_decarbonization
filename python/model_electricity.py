@@ -6622,8 +6622,6 @@ class ElectricEnergy:
 
         Function Arguments
         ------------------
-        - attribute_fuel: AttributeTable used to define universe of fuels. If 
-            None, uses self.model_attributes default
         - engine: SQLalchemy Engine used to retrieve this table
         - vector_reference_time_period: reference time periods to use in merge--
             e.g., 
@@ -6634,6 +6632,8 @@ class ElectricEnergy:
         - arr_transmission_loss_frac: optional array specifying the transmission
             loss fraction by fuel (expanded to all categories). If passed,
             adjusts demands and imports downwards *= (1 - loss_frac)
+        - attribute_fuel: AttributeTable used to define universe of fuels. If 
+            None, uses self.model_attributes default
         - table_name: name in the database of the Discounted Capital Investment 
             table. If None, use ModelAttributes deault.
         - table_name_demands: table name storing
@@ -7070,11 +7070,11 @@ class ElectricEnergy:
         table_name: str,
         vector_reference_time_period: Union[list, np.ndarray],
         dict_agg_info: Union[Dict, None] = None,
-        dict_filter_override: dict = None,
-        dict_repl_values: dict = None,
-        field_pivot: str = None,
-        query_append: str = None,
-        techs_to_pivot: list = ["all_techs_pp"],
+        dict_filter_override: Union[Dict, None] = None,
+        dict_repl_values: Union[Dict[str, str], None] = None,
+        field_pivot: Union[str, None] = None,
+        query_append: Union[str, None] = None,
+        techs_to_pivot: Union[List[str], None] = ["all_techs_pp"],
         transform_time_period: bool = True
     ) -> pd.DataFrame:
         """

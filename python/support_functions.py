@@ -865,7 +865,8 @@ def filter_df_on_reference_df_rows(
     fields_index: List[str],
     fields_compare: List[str],
     fields_groupby: Union[List[str], None] = None,
-    filter_method: str = "any"
+    filter_method: str = "any",
+    keep_comparison: bool = False
 ) -> pd.DataFrame:
     """
     Compare two data frames and drop rows from df_filter that are contained in
@@ -892,6 +893,7 @@ def filter_df_on_reference_df_rows(
             fields_compare is different.
         * Set to "any" to keep rows where *all* fields contained in
             fields_compare are different.
+    - keep_comparison: keep fields used for comparison?
     """
     # check field specifications
     set_fields_both = set(df_filter.columns) & set(df_reference.columns)
@@ -941,6 +943,13 @@ def filter_df_on_reference_df_rows(
             df_return.append(df) if append_df else None
 
         df_return = pd.concat(df_return, axis = 0).reset_index(drop = True) if (len(df_return) > 0) else None
+
+    if df_return is not None:
+        df_return.drop(
+            [x for x in df_return.columns if x in fields_compare_ref], 
+            axis = 1,
+            inplace = True
+        ) if not keep_comparison else None
 
     return df_return
 
@@ -1012,7 +1021,7 @@ def match_df_to_target_df(
         on = fields_index
     )
     df_out.fillna(fillna_value, inplace = True)
-    df_out = df_out[df_target.columns]
+    df_out = df_out[df_target.columns].reset_index(drop = True)
 
     return df_out
 

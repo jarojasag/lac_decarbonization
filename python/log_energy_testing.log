@@ -1,59 +1,61 @@
-2023-02-17 09:51:17,869 - INFO - Calling Julia API...
-2023-02-17 09:51:17,870 - DEBUG - 
-2023-02-17 09:51:19,985 - DEBUG - pyprogramname = /Users/jsyme/anaconda3/bin/python
-2023-02-17 09:51:19,985 - DEBUG - sys.executable = /Users/jsyme/anaconda3/bin/python
-2023-02-17 09:51:19,985 - DEBUG - bindir = /Applications/Julia-1.8.app/Contents/Resources/julia/bin
-2023-02-17 09:51:19,985 - DEBUG - libjulia_path = /Applications/Julia-1.8.app/Contents/Resources/julia/lib/libjulia.1.8.dylib
-2023-02-17 09:51:20,010 - DEBUG - py_libpython = None
-2023-02-17 09:51:20,011 - DEBUG - jl_libpython = /Users/jsyme/anaconda3/lib/libpython3.8.dylib
-2023-02-17 09:51:20,011 - DEBUG - is_compatible_python = False
-2023-02-17 09:51:20,011 - DEBUG - compiled_modules = 'no'
-2023-02-17 09:51:20,012 - DEBUG - argv_list = [b'/Users/jsyme/anaconda3/bin/python', b'--compiled-modules', b'no']
-2023-02-17 09:51:20,012 - DEBUG - argc = c_int(3)
-2023-02-17 09:51:20,012 - DEBUG - jl_parse_opts called
-2023-02-17 09:51:20,012 - DEBUG - argc = c_int(0)
-2023-02-17 09:51:20,012 - DEBUG - calling jl_init_with_image(/Applications/Julia-1.8.app/Contents/Resources/julia/bin, /Applications/Julia-1.8.app/Contents/Resources/julia/lib/julia/sys.dylib)
-2023-02-17 09:51:20,403 - DEBUG - seems to work...
-2023-02-17 09:51:32,242 - DEBUG - exception occured? None
-2023-02-17 09:51:32,242 - DEBUG - exception occured? None
-2023-02-17 09:51:32,242 - DEBUG - exception occured? None
-2023-02-17 09:51:32,242 - DEBUG - exception occured? None
-2023-02-17 09:51:32,243 - DEBUG - exception occured? None
-2023-02-17 09:51:32,296 - DEBUG - exception occured? None
-2023-02-17 09:51:32,296 - DEBUG - exception occured? None
-2023-02-17 09:51:32,301 - DEBUG - exception occured? None
-2023-02-17 09:51:32,302 - DEBUG - exception occured? None
-2023-02-17 09:51:32,303 - DEBUG - exception occured? None
-2023-02-17 09:51:32,418 - DEBUG - 	Successfully activated Julia with compiled_modules = False
-2023-02-17 09:51:32,420 - DEBUG - 
-2023-02-17 09:51:32,420 - DEBUG - exception occured? None
-2023-02-17 09:51:32,420 - DEBUG - exception occured? None
-2023-02-17 09:51:32,420 - DEBUG - exception occured? None
-2023-02-17 09:51:32,420 - DEBUG - exception occured? None
-2023-02-17 09:51:32,420 - DEBUG - exception occured? None
-2023-02-17 09:51:32,420 - DEBUG - exception occured? None
-2023-02-17 09:51:32,421 - DEBUG - exception occured? None
-2023-02-17 09:51:32,421 - DEBUG - exception occured? None
-2023-02-17 09:51:32,421 - DEBUG - exception occured? None
-2023-02-17 09:51:32,421 - DEBUG - exception occured? None
-2023-02-17 09:51:32,421 - DEBUG - exception occured? None
-2023-02-17 09:51:32,422 - DEBUG - exception occured? None
-2023-02-17 09:51:32,422 - DEBUG - 	Successfully imported julia.Base
-2023-02-17 09:51:32,423 - DEBUG - 	Successfully imported julia.Main
-2023-02-17 09:51:32,424 - DEBUG - exception occured? 6144399056
-2023-02-17 09:51:32,657 - DEBUG - exception occured? None
-2023-02-17 09:51:32,658 - DEBUG - exception occured? None
-2023-02-17 09:51:32,658 - DEBUG - 	Successfully imported julia.Pkg
-2023-02-17 09:51:32,659 - DEBUG - exception occured? None
-2023-02-17 09:51:32,659 - DEBUG - exception occured? None
-2023-02-17 09:51:32,659 - DEBUG - exception occured? None
-2023-02-17 09:51:32,659 - DEBUG - exception occured? None
-2023-02-17 09:51:32,659 - DEBUG - exception occured? None
-2023-02-17 09:51:32,659 - DEBUG - exception occured? None
-2023-02-17 09:51:32,660 - DEBUG - exception occured? None
-2023-02-17 09:51:32,660 - DEBUG - exception occured? None
-2023-02-17 09:51:32,660 - DEBUG - exception occured? None
-2023-02-17 09:51:33,497 - DEBUG - 	Available Packages:
+2023-02-27 17:14:27,689 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-02-27 17:14:27,694 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-02-27 17:14:27,758 - INFO - Calling Julia API...
+2023-02-27 17:14:27,759 - DEBUG - 
+2023-02-27 17:14:28,924 - DEBUG - pyprogramname = /Users/jsyme/anaconda3/bin/python
+2023-02-27 17:14:28,925 - DEBUG - sys.executable = /Users/jsyme/anaconda3/bin/python
+2023-02-27 17:14:28,925 - DEBUG - bindir = /Applications/Julia-1.8.app/Contents/Resources/julia/bin
+2023-02-27 17:14:28,925 - DEBUG - libjulia_path = /Applications/Julia-1.8.app/Contents/Resources/julia/lib/libjulia.1.8.dylib
+2023-02-27 17:14:28,952 - DEBUG - py_libpython = None
+2023-02-27 17:14:28,953 - DEBUG - jl_libpython = /Users/jsyme/anaconda3/lib/libpython3.8.dylib
+2023-02-27 17:14:28,953 - DEBUG - is_compatible_python = False
+2023-02-27 17:14:28,953 - DEBUG - compiled_modules = 'no'
+2023-02-27 17:14:28,954 - DEBUG - argv_list = [b'/Users/jsyme/anaconda3/bin/python', b'--compiled-modules', b'no']
+2023-02-27 17:14:28,954 - DEBUG - argc = c_int(3)
+2023-02-27 17:14:28,954 - DEBUG - jl_parse_opts called
+2023-02-27 17:14:28,954 - DEBUG - argc = c_int(0)
+2023-02-27 17:14:28,954 - DEBUG - calling jl_init_with_image(/Applications/Julia-1.8.app/Contents/Resources/julia/bin, /Applications/Julia-1.8.app/Contents/Resources/julia/lib/julia/sys.dylib)
+2023-02-27 17:14:29,582 - DEBUG - seems to work...
+2023-02-27 17:14:39,897 - DEBUG - exception occured? None
+2023-02-27 17:14:39,897 - DEBUG - exception occured? None
+2023-02-27 17:14:39,897 - DEBUG - exception occured? None
+2023-02-27 17:14:39,897 - DEBUG - exception occured? None
+2023-02-27 17:14:39,897 - DEBUG - exception occured? None
+2023-02-27 17:14:39,955 - DEBUG - exception occured? None
+2023-02-27 17:14:39,955 - DEBUG - exception occured? None
+2023-02-27 17:14:39,960 - DEBUG - exception occured? None
+2023-02-27 17:14:39,961 - DEBUG - exception occured? None
+2023-02-27 17:14:39,962 - DEBUG - exception occured? None
+2023-02-27 17:14:40,075 - DEBUG - 	Successfully activated Julia with compiled_modules = False
+2023-02-27 17:14:40,077 - DEBUG - 
+2023-02-27 17:14:40,078 - DEBUG - exception occured? None
+2023-02-27 17:14:40,078 - DEBUG - exception occured? None
+2023-02-27 17:14:40,078 - DEBUG - exception occured? None
+2023-02-27 17:14:40,078 - DEBUG - exception occured? None
+2023-02-27 17:14:40,078 - DEBUG - exception occured? None
+2023-02-27 17:14:40,078 - DEBUG - exception occured? None
+2023-02-27 17:14:40,078 - DEBUG - exception occured? None
+2023-02-27 17:14:40,079 - DEBUG - exception occured? None
+2023-02-27 17:14:40,079 - DEBUG - exception occured? None
+2023-02-27 17:14:40,079 - DEBUG - exception occured? None
+2023-02-27 17:14:40,079 - DEBUG - exception occured? None
+2023-02-27 17:14:40,079 - DEBUG - exception occured? None
+2023-02-27 17:14:40,079 - DEBUG - 	Successfully imported julia.Base
+2023-02-27 17:14:40,080 - DEBUG - 	Successfully imported julia.Main
+2023-02-27 17:14:40,081 - DEBUG - exception occured? 6204848720
+2023-02-27 17:14:40,304 - DEBUG - exception occured? None
+2023-02-27 17:14:40,304 - DEBUG - exception occured? None
+2023-02-27 17:14:40,304 - DEBUG - 	Successfully imported julia.Pkg
+2023-02-27 17:14:40,305 - DEBUG - exception occured? None
+2023-02-27 17:14:40,306 - DEBUG - exception occured? None
+2023-02-27 17:14:40,306 - DEBUG - exception occured? None
+2023-02-27 17:14:40,306 - DEBUG - exception occured? None
+2023-02-27 17:14:40,306 - DEBUG - exception occured? None
+2023-02-27 17:14:40,306 - DEBUG - exception occured? None
+2023-02-27 17:14:40,307 - DEBUG - exception occured? None
+2023-02-27 17:14:40,307 - DEBUG - exception occured? None
+2023-02-27 17:14:40,307 - DEBUG - exception occured? None
+2023-02-27 17:14:41,036 - DEBUG - 	Available Packages:
 		'CSV'
 		 'CUDA'
 		 'Statistics'
@@ -86,184 +88,138 @@
 		 'Gurobi'
 		 'MathOptInterface'
 		 'PlotlyJS'
-2023-02-17 09:51:33,499 - DEBUG - exception occured? None
-2023-02-17 09:51:33,499 - DEBUG - exception occured? None
-2023-02-17 09:51:33,499 - DEBUG - exception occured? None
-2023-02-17 09:51:34,177 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
-2023-02-17 09:51:34,178 - DEBUG - exception occured? 5025881648
-2023-02-17 09:52:35,751 - DEBUG - exception occured? None
-2023-02-17 09:52:35,751 - DEBUG - exception occured? None
-2023-02-17 09:52:35,752 - DEBUG - exception occured? 5017815440
-2023-02-17 09:52:35,766 - DEBUG - exception occured? None
-2023-02-17 09:52:35,766 - DEBUG - exception occured? None
-2023-02-17 09:52:35,767 - DEBUG - exception occured? None
-2023-02-17 09:52:35,767 - DEBUG - exception occured? None
-2023-02-17 09:52:35,767 - DEBUG - exception occured? None
-2023-02-17 09:52:35,782 - DEBUG - exception occured? None
-2023-02-17 09:52:35,782 - DEBUG - exception occured? None
-2023-02-17 09:52:35,783 - DEBUG - exception occured? None
-2023-02-17 09:52:35,784 - DEBUG - exception occured? None
-2023-02-17 09:52:35,784 - DEBUG - exception occured? None
-2023-02-17 09:52:35,784 - DEBUG - exception occured? None
-2023-02-17 09:52:35,784 - DEBUG - exception occured? None
-2023-02-17 09:52:35,785 - DEBUG - exception occured? None
-2023-02-17 09:52:35,785 - DEBUG - exception occured? None
-2023-02-17 09:52:35,785 - DEBUG - exception occured? None
-2023-02-17 09:52:35,785 - DEBUG - exception occured? None
-2023-02-17 09:52:35,791 - DEBUG - exception occured? None
-2023-02-17 09:52:35,792 - DEBUG - exception occured? None
-2023-02-17 09:52:35,792 - DEBUG - exception occured? None
-2023-02-17 09:52:35,792 - DEBUG - exception occured? None
-2023-02-17 09:52:35,792 - DEBUG - exception occured? None
-2023-02-17 09:52:35,792 - DEBUG - exception occured? None
-2023-02-17 09:52:35,793 - DEBUG - exception occured? None
-2023-02-17 09:52:35,832 - DEBUG - exception occured? None
-2023-02-17 09:52:35,833 - DEBUG - exception occured? None
-2023-02-17 09:52:35,833 - DEBUG - exception occured? None
-2023-02-17 09:52:35,833 - DEBUG - exception occured? None
-2023-02-17 09:52:35,834 - DEBUG - exception occured? None
-2023-02-17 09:52:35,834 - DEBUG - exception occured? None
-2023-02-17 09:52:35,866 - DEBUG - exception occured? 5037233904
-2023-02-17 09:52:36,758 - DEBUG - exception occured? None
-2023-02-17 09:52:36,759 - DEBUG - exception occured? None
-2023-02-17 09:52:36,759 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
-2023-02-17 10:00:23,376 - INFO - 	Path to temporary NemoMod database '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/tmp/nemomod_intermediate_database.sqlite' not found. Creating...
-2023-02-17 10:00:23,390 - DEBUG - exception occured? None
-2023-02-17 10:00:23,393 - DEBUG - exception occured? None
-2023-02-17 10:00:23,394 - DEBUG - exception occured? None
-2023-02-17 10:00:26,448 - DEBUG - exception occured? None
-2023-02-17 10:00:26,448 - DEBUG - exception occured? None
-2023-02-17 10:00:26,448 - DEBUG - exception occured? None
-2023-02-17 10:00:26,460 - DEBUG - exception occured? None
-2023-02-17 10:00:26,460 - DEBUG - exception occured? None
-2023-02-17 10:00:26,460 - DEBUG - exception occured? None
-2023-02-17 10:00:28,396 - DEBUG - exception occured? None
-2023-02-17 10:00:28,396 - DEBUG - exception occured? None
-2023-02-17 10:00:28,396 - DEBUG - exception occured? None
-2023-02-17 10:00:28,485 - DEBUG - exception occured? None
-2023-02-17 10:00:28,485 - DEBUG - exception occured? None
-2023-02-17 10:00:28,486 - DEBUG - exception occured? None
-2023-02-17 10:01:44,646 - DEBUG - exception occured? 8114183872
-2023-02-17 10:01:44,647 - DEBUG - exception occured? None
-2023-02-17 10:01:44,647 - DEBUG - exception occured? 8114186256
-2023-02-17 10:01:44,647 - DEBUG - exception occured? None
-2023-02-17 10:01:44,648 - DEBUG - exception occured? 8114188640
-2023-02-17 10:01:44,648 - DEBUG - exception occured? None
-2023-02-17 10:01:44,648 - DEBUG - exception occured? 8114191024
-2023-02-17 10:01:44,649 - DEBUG - exception occured? None
-2023-02-17 10:01:44,649 - DEBUG - exception occured? 8114308112
-2023-02-17 10:01:44,649 - DEBUG - exception occured? None
-2023-02-17 10:01:44,650 - DEBUG - exception occured? 8114310528
-2023-02-17 10:01:44,650 - DEBUG - exception occured? None
-2023-02-17 10:01:44,650 - DEBUG - exception occured? 8114312976
-2023-02-17 10:01:44,651 - DEBUG - exception occured? None
-2023-02-17 10:01:44,651 - DEBUG - exception occured? 8114315392
-2023-02-17 10:01:44,651 - DEBUG - exception occured? None
-2023-02-17 10:01:44,654 - DEBUG - exception occured? 8114317776
-2023-02-17 10:01:44,655 - DEBUG - exception occured? None
-2023-02-17 10:01:44,655 - DEBUG - exception occured? 8114320160
-2023-02-17 10:01:44,655 - DEBUG - exception occured? None
-2023-02-17 10:01:44,656 - DEBUG - exception occured? 8114322544
-2023-02-17 10:01:44,656 - DEBUG - exception occured? None
-2023-02-17 10:01:44,657 - DEBUG - exception occured? 8114406864
-2023-02-17 10:01:44,657 - DEBUG - exception occured? None
-2023-02-17 10:01:44,657 - DEBUG - exception occured? 8114409248
-2023-02-17 10:01:44,658 - DEBUG - exception occured? None
-2023-02-17 10:01:44,658 - DEBUG - exception occured? 8114411664
-2023-02-17 10:01:44,658 - DEBUG - exception occured? None
-2023-02-17 10:01:44,659 - DEBUG - exception occured? 8114414112
-2023-02-17 10:01:44,659 - DEBUG - exception occured? None
-2023-02-17 10:01:44,659 - DEBUG - exception occured? 8114416528
-2023-02-17 10:01:44,660 - DEBUG - exception occured? None
-2023-02-17 10:06:08,971 - DEBUG - exception occured? 8114418912
-2023-02-17 10:06:08,972 - DEBUG - exception occured? None
-2023-02-17 10:06:08,973 - DEBUG - exception occured? 8114421296
-2023-02-17 10:06:08,973 - DEBUG - exception occured? None
-2023-02-17 10:06:08,974 - DEBUG - exception occured? 8114571152
-2023-02-17 10:06:08,974 - DEBUG - exception occured? None
-2023-02-17 10:06:08,975 - DEBUG - exception occured? 8114573536
-2023-02-17 10:06:08,975 - DEBUG - exception occured? None
-2023-02-17 10:06:08,976 - DEBUG - exception occured? 8114575920
-2023-02-17 10:06:08,976 - DEBUG - exception occured? None
-2023-02-17 10:06:08,977 - DEBUG - exception occured? 8114578336
-2023-02-17 10:06:08,977 - DEBUG - exception occured? None
-2023-02-17 10:06:08,978 - DEBUG - exception occured? 8114580784
-2023-02-17 10:06:08,978 - DEBUG - exception occured? None
-2023-02-17 10:06:08,979 - DEBUG - exception occured? 8114583200
-2023-02-17 10:06:08,979 - DEBUG - exception occured? None
-2023-02-17 10:06:08,982 - DEBUG - exception occured? 8114585584
-2023-02-17 10:06:08,982 - DEBUG - exception occured? None
-2023-02-17 10:06:08,983 - DEBUG - exception occured? 8114702672
-2023-02-17 10:06:08,983 - DEBUG - exception occured? None
-2023-02-17 10:06:08,984 - DEBUG - exception occured? 8114705056
-2023-02-17 10:06:08,984 - DEBUG - exception occured? None
-2023-02-17 10:06:08,985 - DEBUG - exception occured? 8114707440
-2023-02-17 10:06:08,985 - DEBUG - exception occured? None
-2023-02-17 10:06:08,986 - DEBUG - exception occured? 8114709824
-2023-02-17 10:06:08,986 - DEBUG - exception occured? None
-2023-02-17 10:06:08,987 - DEBUG - exception occured? 8114712240
-2023-02-17 10:06:08,987 - DEBUG - exception occured? None
-2023-02-17 10:06:08,988 - DEBUG - exception occured? 8114714688
-2023-02-17 10:06:08,988 - DEBUG - exception occured? None
-2023-02-17 10:06:08,989 - DEBUG - exception occured? 8114831808
-2023-02-17 10:06:08,989 - DEBUG - exception occured? None
-2023-02-17 10:06:33,362 - DEBUG - exception occured? 8114834192
-2023-02-17 10:06:33,363 - DEBUG - exception occured? None
-2023-02-17 10:06:33,364 - DEBUG - exception occured? 8114836576
-2023-02-17 10:06:33,364 - DEBUG - exception occured? None
-2023-02-17 10:06:33,364 - DEBUG - exception occured? 8114838960
-2023-02-17 10:06:33,365 - DEBUG - exception occured? None
-2023-02-17 10:06:33,365 - DEBUG - exception occured? 8114841344
-2023-02-17 10:06:33,366 - DEBUG - exception occured? None
-2023-02-17 10:06:33,366 - DEBUG - exception occured? 8114843728
-2023-02-17 10:06:33,367 - DEBUG - exception occured? None
-2023-02-17 10:06:33,367 - DEBUG - exception occured? 8114846144
-2023-02-17 10:06:33,368 - DEBUG - exception occured? None
-2023-02-17 10:06:33,368 - DEBUG - exception occured? 8114963296
-2023-02-17 10:06:33,369 - DEBUG - exception occured? None
-2023-02-17 10:06:33,369 - DEBUG - exception occured? 8114965712
-2023-02-17 10:06:33,370 - DEBUG - exception occured? None
-2023-02-17 10:06:33,372 - DEBUG - exception occured? 8114968096
-2023-02-17 10:06:33,372 - DEBUG - exception occured? None
-2023-02-17 10:06:33,373 - DEBUG - exception occured? 8114970480
-2023-02-17 10:06:33,373 - DEBUG - exception occured? None
-2023-02-17 10:06:33,374 - DEBUG - exception occured? 8114972864
-2023-02-17 10:06:33,374 - DEBUG - exception occured? None
-2023-02-17 10:06:33,375 - DEBUG - exception occured? 8114975248
-2023-02-17 10:06:33,375 - DEBUG - exception occured? None
-2023-02-17 10:06:33,376 - DEBUG - exception occured? 8114977632
-2023-02-17 10:06:33,376 - DEBUG - exception occured? None
-2023-02-17 10:06:33,377 - DEBUG - exception occured? 8115078368
-2023-02-17 10:06:33,377 - DEBUG - exception occured? None
-2023-02-17 10:06:33,378 - DEBUG - exception occured? 8115080816
-2023-02-17 10:06:33,378 - DEBUG - exception occured? None
-2023-02-17 10:06:33,379 - DEBUG - exception occured? 8115083232
-2023-02-17 10:06:33,379 - DEBUG - exception occured? None
-2023-02-17 20:26:17,884 - INFO - Calling Julia API...
-2023-02-17 20:26:17,888 - DEBUG - 
-2023-02-17 20:26:17,922 - DEBUG - exception occured? None
-2023-02-17 20:26:17,925 - DEBUG - exception occured? None
-2023-02-17 20:26:17,928 - DEBUG - exception occured? None
-2023-02-17 20:26:17,929 - DEBUG - exception occured? None
-2023-02-17 20:26:17,929 - DEBUG - exception occured? None
-2023-02-17 20:26:17,936 - DEBUG - exception occured? None
-2023-02-17 20:26:17,945 - DEBUG - exception occured? None
-2023-02-17 20:26:17,963 - DEBUG - exception occured? None
-2023-02-17 20:26:17,967 - DEBUG - exception occured? None
-2023-02-17 20:26:17,967 - DEBUG - 	Successfully activated Julia with compiled_modules = False
-2023-02-17 20:26:17,967 - DEBUG - 	Successfully imported julia.Base
-2023-02-17 20:26:17,968 - DEBUG - 	Successfully imported julia.Main
-2023-02-17 20:26:17,969 - DEBUG - 	Successfully imported julia.Pkg
-2023-02-17 20:26:17,971 - DEBUG - exception occured? None
-2023-02-17 20:26:17,973 - DEBUG - exception occured? None
-2023-02-17 20:26:17,973 - DEBUG - exception occured? None
-2023-02-17 20:26:17,974 - DEBUG - exception occured? None
-2023-02-17 20:26:17,975 - DEBUG - exception occured? None
-2023-02-17 20:26:17,975 - DEBUG - exception occured? None
-2023-02-17 20:26:17,982 - DEBUG - exception occured? None
-2023-02-17 20:26:17,983 - DEBUG - exception occured? None
-2023-02-17 20:26:17,984 - DEBUG - exception occured? None
-2023-02-17 20:26:18,325 - DEBUG - 	Available Packages:
+2023-02-27 17:14:41,037 - DEBUG - exception occured? None
+2023-02-27 17:14:41,037 - DEBUG - exception occured? None
+2023-02-27 17:14:41,037 - DEBUG - exception occured? None
+2023-02-27 17:14:41,625 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
+2023-02-27 17:14:41,626 - DEBUG - exception occured? 5077461840
+2023-02-27 17:15:38,459 - DEBUG - exception occured? None
+2023-02-27 17:15:38,460 - DEBUG - exception occured? None
+2023-02-27 17:15:38,461 - DEBUG - exception occured? 5062787600
+2023-02-27 17:15:38,475 - DEBUG - exception occured? None
+2023-02-27 17:15:38,475 - DEBUG - exception occured? None
+2023-02-27 17:15:38,476 - DEBUG - exception occured? None
+2023-02-27 17:15:38,476 - DEBUG - exception occured? None
+2023-02-27 17:15:38,476 - DEBUG - exception occured? None
+2023-02-27 17:15:38,496 - DEBUG - exception occured? None
+2023-02-27 17:15:38,496 - DEBUG - exception occured? None
+2023-02-27 17:15:38,498 - DEBUG - exception occured? None
+2023-02-27 17:15:38,498 - DEBUG - exception occured? None
+2023-02-27 17:15:38,498 - DEBUG - exception occured? None
+2023-02-27 17:15:38,499 - DEBUG - exception occured? None
+2023-02-27 17:15:38,499 - DEBUG - exception occured? None
+2023-02-27 17:15:38,499 - DEBUG - exception occured? None
+2023-02-27 17:15:38,500 - DEBUG - exception occured? None
+2023-02-27 17:15:38,500 - DEBUG - exception occured? None
+2023-02-27 17:15:38,500 - DEBUG - exception occured? None
+2023-02-27 17:15:38,509 - DEBUG - exception occured? None
+2023-02-27 17:15:38,509 - DEBUG - exception occured? None
+2023-02-27 17:15:38,509 - DEBUG - exception occured? None
+2023-02-27 17:15:38,510 - DEBUG - exception occured? None
+2023-02-27 17:15:38,510 - DEBUG - exception occured? None
+2023-02-27 17:15:38,510 - DEBUG - exception occured? None
+2023-02-27 17:15:38,510 - DEBUG - exception occured? None
+2023-02-27 17:15:38,562 - DEBUG - exception occured? None
+2023-02-27 17:15:38,563 - DEBUG - exception occured? None
+2023-02-27 17:15:38,563 - DEBUG - exception occured? None
+2023-02-27 17:15:38,563 - DEBUG - exception occured? None
+2023-02-27 17:15:38,564 - DEBUG - exception occured? None
+2023-02-27 17:15:38,564 - DEBUG - exception occured? None
+2023-02-27 17:15:38,598 - DEBUG - exception occured? 5077696288
+2023-02-27 17:15:39,468 - DEBUG - exception occured? None
+2023-02-27 17:15:39,469 - DEBUG - exception occured? None
+2023-02-27 17:15:39,469 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
+2023-02-27 17:32:52,471 - DEBUG - exception occured? 6240128320
+2023-02-27 17:32:52,473 - DEBUG - exception occured? None
+2023-02-27 17:32:52,474 - DEBUG - exception occured? 6240130720
+2023-02-27 17:32:52,474 - DEBUG - exception occured? None
+2023-02-27 17:32:52,475 - DEBUG - exception occured? 6240133152
+2023-02-27 17:32:52,475 - DEBUG - exception occured? None
+2023-02-27 17:32:52,476 - DEBUG - exception occured? 6240136336
+2023-02-27 17:32:52,476 - DEBUG - exception occured? None
+2023-02-27 17:32:52,477 - DEBUG - exception occured? 6240138960
+2023-02-27 17:32:52,477 - DEBUG - exception occured? None
+2023-02-27 17:32:52,478 - DEBUG - exception occured? 6240158128
+2023-02-27 17:32:52,478 - DEBUG - exception occured? None
+2023-02-27 17:32:52,478 - DEBUG - exception occured? 6240160624
+2023-02-27 17:32:52,479 - DEBUG - exception occured? None
+2023-02-27 17:32:52,479 - DEBUG - exception occured? 6240163648
+2023-02-27 17:32:52,480 - DEBUG - exception occured? None
+2023-02-27 17:32:52,482 - DEBUG - exception occured? 6240166544
+2023-02-27 17:32:52,482 - DEBUG - exception occured? None
+2023-02-27 17:32:52,483 - DEBUG - exception occured? 6240169088
+2023-02-27 17:32:52,483 - DEBUG - exception occured? None
+2023-02-27 17:32:52,484 - DEBUG - exception occured? 6240171696
+2023-02-27 17:32:52,484 - DEBUG - exception occured? None
+2023-02-27 17:32:52,485 - DEBUG - exception occured? 6240174480
+2023-02-27 17:32:52,485 - DEBUG - exception occured? None
+2023-02-27 17:32:52,485 - DEBUG - exception occured? 6240177040
+2023-02-27 17:32:52,486 - DEBUG - exception occured? None
+2023-02-27 17:32:52,486 - DEBUG - exception occured? 6240179792
+2023-02-27 17:32:52,486 - DEBUG - exception occured? None
+2023-02-27 17:32:52,487 - DEBUG - exception occured? 6240182528
+2023-02-27 17:32:52,487 - DEBUG - exception occured? None
+2023-02-27 17:32:52,488 - DEBUG - exception occured? 6240185376
+2023-02-27 17:32:52,488 - DEBUG - exception occured? None
+2023-02-27 17:48:02,326 - DEBUG - exception occured? 6240188032
+2023-02-27 17:48:02,328 - DEBUG - exception occured? None
+2023-02-27 17:48:02,329 - DEBUG - exception occured? 6240223488
+2023-02-27 17:48:02,329 - DEBUG - exception occured? None
+2023-02-27 17:48:02,330 - DEBUG - exception occured? 6240226112
+2023-02-27 17:48:02,330 - DEBUG - exception occured? None
+2023-02-27 17:48:02,331 - DEBUG - exception occured? 6240228800
+2023-02-27 17:48:02,331 - DEBUG - exception occured? None
+2023-02-27 17:48:02,332 - DEBUG - exception occured? 6240231488
+2023-02-27 17:48:02,332 - DEBUG - exception occured? None
+2023-02-27 17:48:02,333 - DEBUG - exception occured? 6240234144
+2023-02-27 17:48:02,333 - DEBUG - exception occured? None
+2023-02-27 17:48:02,334 - DEBUG - exception occured? 6240236720
+2023-02-27 17:48:02,334 - DEBUG - exception occured? None
+2023-02-27 17:48:02,335 - DEBUG - exception occured? 6240239280
+2023-02-27 17:48:02,335 - DEBUG - exception occured? None
+2023-02-27 17:48:02,338 - DEBUG - exception occured? 6240274656
+2023-02-27 17:48:02,338 - DEBUG - exception occured? None
+2023-02-27 17:48:02,339 - DEBUG - exception occured? 6240277040
+2023-02-27 17:48:02,339 - DEBUG - exception occured? None
+2023-02-27 17:48:02,340 - DEBUG - exception occured? 6240279552
+2023-02-27 17:48:02,340 - DEBUG - exception occured? None
+2023-02-27 17:48:02,341 - DEBUG - exception occured? 6240282576
+2023-02-27 17:48:02,341 - DEBUG - exception occured? None
+2023-02-27 17:48:02,342 - DEBUG - exception occured? 6240285680
+2023-02-27 17:48:02,342 - DEBUG - exception occured? None
+2023-02-27 17:48:02,343 - DEBUG - exception occured? 6240288496
+2023-02-27 17:48:02,343 - DEBUG - exception occured? None
+2023-02-27 17:48:02,344 - DEBUG - exception occured? 6240307776
+2023-02-27 17:48:02,344 - DEBUG - exception occured? None
+2023-02-27 17:48:02,345 - DEBUG - exception occured? 6240310752
+2023-02-27 17:48:02,345 - DEBUG - exception occured? None
+2023-02-28 10:05:42,071 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-02-28 10:05:42,076 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-02-28 10:05:42,155 - INFO - Calling Julia API...
+2023-02-28 10:05:42,156 - DEBUG - 
+2023-02-28 10:05:42,192 - DEBUG - exception occured? None
+2023-02-28 10:05:42,193 - DEBUG - exception occured? None
+2023-02-28 10:05:42,193 - DEBUG - exception occured? None
+2023-02-28 10:05:42,193 - DEBUG - exception occured? None
+2023-02-28 10:05:42,195 - DEBUG - exception occured? None
+2023-02-28 10:05:42,199 - DEBUG - exception occured? None
+2023-02-28 10:05:42,208 - DEBUG - exception occured? None
+2023-02-28 10:05:42,224 - DEBUG - exception occured? None
+2023-02-28 10:05:42,226 - DEBUG - exception occured? None
+2023-02-28 10:05:42,226 - DEBUG - 	Successfully activated Julia with compiled_modules = False
+2023-02-28 10:05:42,227 - DEBUG - 	Successfully imported julia.Base
+2023-02-28 10:05:42,228 - DEBUG - 	Successfully imported julia.Main
+2023-02-28 10:05:42,228 - DEBUG - 	Successfully imported julia.Pkg
+2023-02-28 10:05:42,231 - DEBUG - exception occured? None
+2023-02-28 10:05:42,232 - DEBUG - exception occured? None
+2023-02-28 10:05:42,233 - DEBUG - exception occured? None
+2023-02-28 10:05:42,239 - DEBUG - exception occured? None
+2023-02-28 10:05:42,240 - DEBUG - exception occured? None
+2023-02-28 10:05:42,241 - DEBUG - exception occured? None
+2023-02-28 10:05:42,244 - DEBUG - exception occured? None
+2023-02-28 10:05:42,245 - DEBUG - exception occured? None
+2023-02-28 10:05:42,245 - DEBUG - exception occured? None
+2023-02-28 10:05:42,581 - DEBUG - 	Available Packages:
 		'CSV'
 		 'HiGHS'
 		 'SQLite'
@@ -275,92 +231,414 @@
 		 'DataFrames'
 		 'Gurobi'
 		 'MathOptInterface'
-2023-02-17 20:26:18,326 - DEBUG - exception occured? None
-2023-02-17 20:26:18,327 - DEBUG - exception occured? None
-2023-02-17 20:26:18,327 - DEBUG - exception occured? None
-2023-02-17 20:26:19,108 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
-2023-02-17 20:26:19,110 - DEBUG - exception occured? None
-2023-02-17 20:26:19,110 - DEBUG - exception occured? None
-2023-02-17 20:26:19,110 - DEBUG - exception occured? None
-2023-02-17 20:26:19,132 - DEBUG - exception occured? None
-2023-02-17 20:26:19,132 - DEBUG - exception occured? None
-2023-02-17 20:26:19,133 - DEBUG - exception occured? None
-2023-02-17 20:26:19,133 - DEBUG - exception occured? None
-2023-02-17 20:26:19,134 - DEBUG - exception occured? None
-2023-02-17 20:26:19,135 - DEBUG - exception occured? None
-2023-02-17 20:26:19,135 - DEBUG - exception occured? None
-2023-02-17 20:26:19,135 - DEBUG - exception occured? None
-2023-02-17 20:26:19,136 - DEBUG - exception occured? None
-2023-02-17 20:26:19,136 - DEBUG - exception occured? None
-2023-02-17 20:26:19,136 - DEBUG - exception occured? None
-2023-02-17 20:26:19,136 - DEBUG - exception occured? None
-2023-02-17 20:26:19,137 - DEBUG - exception occured? None
-2023-02-17 20:26:19,137 - DEBUG - exception occured? None
-2023-02-17 20:26:19,137 - DEBUG - exception occured? None
-2023-02-17 20:26:19,138 - DEBUG - exception occured? None
-2023-02-17 20:26:19,138 - DEBUG - exception occured? None
-2023-02-17 20:26:19,138 - DEBUG - exception occured? None
-2023-02-17 20:26:19,138 - DEBUG - exception occured? None
-2023-02-17 20:26:19,139 - DEBUG - exception occured? None
-2023-02-17 20:26:19,139 - DEBUG - exception occured? None
-2023-02-17 20:26:19,192 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
-2023-02-17 20:30:02,426 - DEBUG - exception occured? 8139458400
-2023-02-17 20:30:02,427 - DEBUG - exception occured? None
-2023-02-17 20:30:02,428 - DEBUG - exception occured? 8139460784
-2023-02-17 20:30:02,429 - DEBUG - exception occured? None
-2023-02-17 20:30:02,429 - DEBUG - exception occured? 8139463168
-2023-02-17 20:30:02,430 - DEBUG - exception occured? None
-2023-02-17 20:30:02,431 - DEBUG - exception occured? 8139465552
-2023-02-17 20:30:02,432 - DEBUG - exception occured? None
-2023-02-17 20:30:02,432 - DEBUG - exception occured? 8139467936
-2023-02-17 20:30:02,433 - DEBUG - exception occured? None
-2023-02-17 20:30:02,433 - DEBUG - exception occured? 8139470352
-2023-02-17 20:30:02,434 - DEBUG - exception occured? None
-2023-02-17 20:30:02,434 - DEBUG - exception occured? 8139472800
-2023-02-17 20:30:02,435 - DEBUG - exception occured? None
-2023-02-17 20:30:02,437 - DEBUG - exception occured? 8139917600
-2023-02-17 20:30:02,437 - DEBUG - exception occured? None
-2023-02-17 20:30:02,444 - DEBUG - exception occured? 8139919984
-2023-02-17 20:30:02,444 - DEBUG - exception occured? None
-2023-02-17 20:30:02,445 - DEBUG - exception occured? 8139922368
-2023-02-17 20:30:02,445 - DEBUG - exception occured? None
-2023-02-17 20:30:02,446 - DEBUG - exception occured? 8139924752
-2023-02-17 20:30:02,446 - DEBUG - exception occured? None
-2023-02-17 20:30:02,447 - DEBUG - exception occured? 8139927136
-2023-02-17 20:30:02,447 - DEBUG - exception occured? None
-2023-02-17 20:30:02,448 - DEBUG - exception occured? 8139929520
-2023-02-17 20:30:02,448 - DEBUG - exception occured? None
-2023-02-17 20:30:02,449 - DEBUG - exception occured? 8139981104
-2023-02-17 20:30:02,450 - DEBUG - exception occured? None
-2023-02-17 20:30:02,450 - DEBUG - exception occured? 8139983552
-2023-02-17 20:30:02,451 - DEBUG - exception occured? None
-2023-02-17 20:30:02,451 - DEBUG - exception occured? 8139985968
-2023-02-17 20:30:02,452 - DEBUG - exception occured? None
-2023-02-17 20:30:15,814 - INFO - Calling Julia API...
-2023-02-17 20:30:15,815 - DEBUG - 
-2023-02-17 20:30:15,819 - DEBUG - exception occured? None
-2023-02-17 20:30:15,820 - DEBUG - exception occured? None
-2023-02-17 20:30:15,820 - DEBUG - exception occured? None
-2023-02-17 20:30:15,820 - DEBUG - exception occured? None
-2023-02-17 20:30:15,820 - DEBUG - exception occured? None
-2023-02-17 20:30:15,821 - DEBUG - exception occured? None
-2023-02-17 20:30:15,821 - DEBUG - exception occured? None
-2023-02-17 20:30:15,822 - DEBUG - exception occured? None
-2023-02-17 20:30:15,822 - DEBUG - exception occured? None
-2023-02-17 20:30:15,822 - DEBUG - 	Successfully activated Julia with compiled_modules = False
-2023-02-17 20:30:15,823 - DEBUG - 	Successfully imported julia.Base
-2023-02-17 20:30:15,823 - DEBUG - 	Successfully imported julia.Main
-2023-02-17 20:30:15,824 - DEBUG - 	Successfully imported julia.Pkg
-2023-02-17 20:30:15,826 - DEBUG - exception occured? None
-2023-02-17 20:30:15,826 - DEBUG - exception occured? None
-2023-02-17 20:30:15,826 - DEBUG - exception occured? None
-2023-02-17 20:30:15,827 - DEBUG - exception occured? None
-2023-02-17 20:30:15,827 - DEBUG - exception occured? None
-2023-02-17 20:30:15,827 - DEBUG - exception occured? None
-2023-02-17 20:30:15,828 - DEBUG - exception occured? None
-2023-02-17 20:30:15,828 - DEBUG - exception occured? None
-2023-02-17 20:30:15,828 - DEBUG - exception occured? None
-2023-02-17 20:30:15,879 - DEBUG - 	Available Packages:
+2023-02-28 10:05:42,582 - DEBUG - exception occured? None
+2023-02-28 10:05:42,583 - DEBUG - exception occured? None
+2023-02-28 10:05:42,583 - DEBUG - exception occured? None
+2023-02-28 10:05:43,363 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
+2023-02-28 10:05:43,365 - DEBUG - exception occured? None
+2023-02-28 10:05:43,365 - DEBUG - exception occured? None
+2023-02-28 10:05:43,365 - DEBUG - exception occured? None
+2023-02-28 10:05:43,374 - DEBUG - exception occured? None
+2023-02-28 10:05:43,374 - DEBUG - exception occured? None
+2023-02-28 10:05:43,375 - DEBUG - exception occured? None
+2023-02-28 10:05:43,375 - DEBUG - exception occured? None
+2023-02-28 10:05:43,375 - DEBUG - exception occured? None
+2023-02-28 10:05:43,376 - DEBUG - exception occured? None
+2023-02-28 10:05:43,376 - DEBUG - exception occured? None
+2023-02-28 10:05:43,377 - DEBUG - exception occured? None
+2023-02-28 10:05:43,377 - DEBUG - exception occured? None
+2023-02-28 10:05:43,377 - DEBUG - exception occured? None
+2023-02-28 10:05:43,378 - DEBUG - exception occured? None
+2023-02-28 10:05:43,378 - DEBUG - exception occured? None
+2023-02-28 10:05:43,378 - DEBUG - exception occured? None
+2023-02-28 10:05:43,379 - DEBUG - exception occured? None
+2023-02-28 10:05:43,379 - DEBUG - exception occured? None
+2023-02-28 10:05:43,379 - DEBUG - exception occured? None
+2023-02-28 10:05:43,379 - DEBUG - exception occured? None
+2023-02-28 10:05:43,380 - DEBUG - exception occured? None
+2023-02-28 10:05:43,380 - DEBUG - exception occured? None
+2023-02-28 10:05:43,380 - DEBUG - exception occured? None
+2023-02-28 10:05:43,380 - DEBUG - exception occured? None
+2023-02-28 10:05:43,414 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
+2023-02-28 10:13:41,882 - DEBUG - exception occured? 5106190080
+2023-02-28 10:13:41,886 - DEBUG - exception occured? None
+2023-02-28 10:13:41,886 - DEBUG - exception occured? 5106192592
+2023-02-28 10:13:41,887 - DEBUG - exception occured? None
+2023-02-28 10:13:41,888 - DEBUG - exception occured? 5106196336
+2023-02-28 10:13:41,889 - DEBUG - exception occured? None
+2023-02-28 10:13:41,891 - DEBUG - exception occured? 5106199264
+2023-02-28 10:13:41,891 - DEBUG - exception occured? None
+2023-02-28 10:13:41,892 - DEBUG - exception occured? 5106202416
+2023-02-28 10:13:41,892 - DEBUG - exception occured? None
+2023-02-28 10:13:41,893 - DEBUG - exception occured? 5107663392
+2023-02-28 10:13:41,894 - DEBUG - exception occured? None
+2023-02-28 10:13:41,894 - DEBUG - exception occured? 5107666416
+2023-02-28 10:13:41,895 - DEBUG - exception occured? None
+2023-02-28 10:13:41,898 - DEBUG - exception occured? 5107669328
+2023-02-28 10:13:41,898 - DEBUG - exception occured? None
+2023-02-28 10:13:41,906 - DEBUG - exception occured? 5107672448
+2023-02-28 10:13:41,907 - DEBUG - exception occured? None
+2023-02-28 10:13:41,908 - DEBUG - exception occured? 5107675280
+2023-02-28 10:13:41,908 - DEBUG - exception occured? None
+2023-02-28 10:13:41,909 - DEBUG - exception occured? 5109433616
+2023-02-28 10:13:41,909 - DEBUG - exception occured? None
+2023-02-28 10:13:41,911 - DEBUG - exception occured? 5109437360
+2023-02-28 10:13:41,911 - DEBUG - exception occured? None
+2023-02-28 10:13:41,912 - DEBUG - exception occured? 5109441120
+2023-02-28 10:13:41,912 - DEBUG - exception occured? None
+2023-02-28 10:13:41,913 - DEBUG - exception occured? 5109444160
+2023-02-28 10:13:41,914 - DEBUG - exception occured? None
+2023-02-28 10:13:41,914 - DEBUG - exception occured? 5109447312
+2023-02-28 10:13:41,915 - DEBUG - exception occured? None
+2023-02-28 10:13:41,916 - DEBUG - exception occured? 5110253312
+2023-02-28 10:13:41,916 - DEBUG - exception occured? None
+2023-02-28 10:14:54,638 - DEBUG - exception occured? 5110256688
+2023-02-28 10:14:54,639 - DEBUG - exception occured? None
+2023-02-28 10:14:54,640 - DEBUG - exception occured? 5110260528
+2023-02-28 10:14:54,640 - DEBUG - exception occured? None
+2023-02-28 10:14:54,642 - DEBUG - exception occured? 5110263872
+2023-02-28 10:14:54,642 - DEBUG - exception occured? None
+2023-02-28 10:14:54,643 - DEBUG - exception occured? 5110267712
+2023-02-28 10:14:54,643 - DEBUG - exception occured? None
+2023-02-28 10:14:54,644 - DEBUG - exception occured? 5110270704
+2023-02-28 10:14:54,645 - DEBUG - exception occured? None
+2023-02-28 10:14:54,646 - DEBUG - exception occured? 5110273584
+2023-02-28 10:14:54,646 - DEBUG - exception occured? None
+2023-02-28 10:14:54,647 - DEBUG - exception occured? 5110276480
+2023-02-28 10:14:54,648 - DEBUG - exception occured? None
+2023-02-28 10:14:54,649 - DEBUG - exception occured? 5110279088
+2023-02-28 10:14:54,649 - DEBUG - exception occured? None
+2023-02-28 10:14:54,652 - DEBUG - exception occured? 5110281696
+2023-02-28 10:14:54,653 - DEBUG - exception occured? None
+2023-02-28 10:14:54,654 - DEBUG - exception occured? 5112365760
+2023-02-28 10:14:54,654 - DEBUG - exception occured? None
+2023-02-28 10:14:54,655 - DEBUG - exception occured? 5112368896
+2023-02-28 10:14:54,655 - DEBUG - exception occured? None
+2023-02-28 10:14:54,656 - DEBUG - exception occured? 5112371776
+2023-02-28 10:14:54,657 - DEBUG - exception occured? None
+2023-02-28 10:14:54,657 - DEBUG - exception occured? 5112375040
+2023-02-28 10:14:54,658 - DEBUG - exception occured? None
+2023-02-28 10:14:54,658 - DEBUG - exception occured? 5112377888
+2023-02-28 10:14:54,659 - DEBUG - exception occured? None
+2023-02-28 10:14:54,659 - DEBUG - exception occured? 5112380640
+2023-02-28 10:14:54,660 - DEBUG - exception occured? None
+2023-02-28 10:14:54,660 - DEBUG - exception occured? 5118183184
+2023-02-28 10:14:54,661 - DEBUG - exception occured? None
+2023-02-28 10:15:04,485 - DEBUG - exception occured? 5118185952
+2023-02-28 10:15:04,485 - DEBUG - exception occured? None
+2023-02-28 10:15:04,486 - DEBUG - exception occured? 5118189040
+2023-02-28 10:15:04,486 - DEBUG - exception occured? None
+2023-02-28 10:15:04,487 - DEBUG - exception occured? 5118192256
+2023-02-28 10:15:04,487 - DEBUG - exception occured? None
+2023-02-28 10:15:04,489 - DEBUG - exception occured? 5118195008
+2023-02-28 10:15:04,490 - DEBUG - exception occured? None
+2023-02-28 10:15:04,490 - DEBUG - exception occured? 5118197648
+2023-02-28 10:15:04,491 - DEBUG - exception occured? None
+2023-02-28 10:15:04,491 - DEBUG - exception occured? 5118462272
+2023-02-28 10:15:04,492 - DEBUG - exception occured? None
+2023-02-28 10:15:04,493 - DEBUG - exception occured? 5118464912
+2023-02-28 10:15:04,493 - DEBUG - exception occured? None
+2023-02-28 10:15:04,494 - DEBUG - exception occured? 5118467600
+2023-02-28 10:15:04,495 - DEBUG - exception occured? None
+2023-02-28 10:15:04,498 - DEBUG - exception occured? 5118470432
+2023-02-28 10:15:04,498 - DEBUG - exception occured? None
+2023-02-28 10:15:04,499 - DEBUG - exception occured? 5118473040
+2023-02-28 10:15:04,500 - DEBUG - exception occured? None
+2023-02-28 10:15:04,501 - DEBUG - exception occured? 5118558320
+2023-02-28 10:15:04,501 - DEBUG - exception occured? None
+2023-02-28 10:15:04,502 - DEBUG - exception occured? 5118561472
+2023-02-28 10:15:04,503 - DEBUG - exception occured? None
+2023-02-28 10:15:04,503 - DEBUG - exception occured? 5118564448
+2023-02-28 10:15:04,504 - DEBUG - exception occured? None
+2023-02-28 10:15:04,504 - DEBUG - exception occured? 5118567488
+2023-02-28 10:15:04,506 - DEBUG - exception occured? None
+2023-02-28 10:15:04,506 - DEBUG - exception occured? 5118570960
+2023-02-28 10:15:04,507 - DEBUG - exception occured? None
+2023-02-28 10:15:04,508 - DEBUG - exception occured? 5118573664
+2023-02-28 10:15:04,509 - DEBUG - exception occured? None
+2023-02-28 10:15:26,582 - DEBUG - exception occured? 5119003008
+2023-02-28 10:15:26,583 - DEBUG - exception occured? None
+2023-02-28 10:15:26,584 - DEBUG - exception occured? 5119005952
+2023-02-28 10:15:26,584 - DEBUG - exception occured? None
+2023-02-28 10:15:26,585 - DEBUG - exception occured? 5119009200
+2023-02-28 10:15:26,585 - DEBUG - exception occured? None
+2023-02-28 10:15:26,586 - DEBUG - exception occured? 5119011856
+2023-02-28 10:15:26,586 - DEBUG - exception occured? None
+2023-02-28 10:15:26,587 - DEBUG - exception occured? 5119014560
+2023-02-28 10:15:26,587 - DEBUG - exception occured? None
+2023-02-28 10:15:26,588 - DEBUG - exception occured? 5119623376
+2023-02-28 10:15:26,589 - DEBUG - exception occured? None
+2023-02-28 10:15:26,590 - DEBUG - exception occured? 5119625984
+2023-02-28 10:15:26,591 - DEBUG - exception occured? None
+2023-02-28 10:15:26,592 - DEBUG - exception occured? 5119628560
+2023-02-28 10:15:26,592 - DEBUG - exception occured? None
+2023-02-28 10:15:26,595 - DEBUG - exception occured? 5119630976
+2023-02-28 10:15:26,595 - DEBUG - exception occured? None
+2023-02-28 10:15:26,596 - DEBUG - exception occured? 5119634160
+2023-02-28 10:15:26,596 - DEBUG - exception occured? None
+2023-02-28 10:15:26,597 - DEBUG - exception occured? 5119637280
+2023-02-28 10:15:26,598 - DEBUG - exception occured? None
+2023-02-28 10:15:26,598 - DEBUG - exception occured? 5119738752
+2023-02-28 10:15:26,599 - DEBUG - exception occured? None
+2023-02-28 10:15:26,600 - DEBUG - exception occured? 5119742080
+2023-02-28 10:15:26,601 - DEBUG - exception occured? None
+2023-02-28 10:15:26,602 - DEBUG - exception occured? 5119745408
+2023-02-28 10:15:26,602 - DEBUG - exception occured? None
+2023-02-28 10:15:26,603 - DEBUG - exception occured? 5119748352
+2023-02-28 10:15:26,603 - DEBUG - exception occured? None
+2023-02-28 10:15:26,604 - DEBUG - exception occured? 5119751392
+2023-02-28 10:15:26,605 - DEBUG - exception occured? None
+2023-02-28 10:15:43,400 - DEBUG - exception occured? 5119754128
+2023-02-28 10:15:43,401 - DEBUG - exception occured? None
+2023-02-28 10:15:43,402 - DEBUG - exception occured? 5119806704
+2023-02-28 10:15:43,403 - DEBUG - exception occured? None
+2023-02-28 10:15:43,403 - DEBUG - exception occured? 5119809520
+2023-02-28 10:15:43,404 - DEBUG - exception occured? None
+2023-02-28 10:15:43,404 - DEBUG - exception occured? 5119812224
+2023-02-28 10:15:43,405 - DEBUG - exception occured? None
+2023-02-28 10:15:43,405 - DEBUG - exception occured? 5119814608
+2023-02-28 10:15:43,406 - DEBUG - exception occured? None
+2023-02-28 10:15:43,406 - DEBUG - exception occured? 5119817440
+2023-02-28 10:15:43,407 - DEBUG - exception occured? None
+2023-02-28 10:15:43,407 - DEBUG - exception occured? 5119853152
+2023-02-28 10:15:43,408 - DEBUG - exception occured? None
+2023-02-28 10:15:43,409 - DEBUG - exception occured? 5119856576
+2023-02-28 10:15:43,410 - DEBUG - exception occured? None
+2023-02-28 10:15:43,412 - DEBUG - exception occured? 5119859248
+2023-02-28 10:15:43,413 - DEBUG - exception occured? None
+2023-02-28 10:15:43,413 - DEBUG - exception occured? 5119862896
+2023-02-28 10:15:43,414 - DEBUG - exception occured? None
+2023-02-28 10:15:43,414 - DEBUG - exception occured? 5119865952
+2023-02-28 10:15:43,415 - DEBUG - exception occured? None
+2023-02-28 10:15:43,415 - DEBUG - exception occured? 5119868528
+2023-02-28 10:15:43,416 - DEBUG - exception occured? None
+2023-02-28 10:15:43,416 - DEBUG - exception occured? 5120035040
+2023-02-28 10:15:43,417 - DEBUG - exception occured? None
+2023-02-28 10:15:43,417 - DEBUG - exception occured? 5120038032
+2023-02-28 10:15:43,418 - DEBUG - exception occured? None
+2023-02-28 10:15:43,419 - DEBUG - exception occured? 5120040912
+2023-02-28 10:15:43,419 - DEBUG - exception occured? None
+2023-02-28 10:15:43,420 - DEBUG - exception occured? 5120043968
+2023-02-28 10:15:43,420 - DEBUG - exception occured? None
+2023-02-28 10:20:11,954 - DEBUG - exception occured? 5120047392
+2023-02-28 10:20:11,955 - DEBUG - exception occured? None
+2023-02-28 10:20:11,956 - DEBUG - exception occured? 5120263520
+2023-02-28 10:20:11,956 - DEBUG - exception occured? None
+2023-02-28 10:20:11,957 - DEBUG - exception occured? 5120267200
+2023-02-28 10:20:11,957 - DEBUG - exception occured? None
+2023-02-28 10:20:11,958 - DEBUG - exception occured? 5120270160
+2023-02-28 10:20:11,958 - DEBUG - exception occured? None
+2023-02-28 10:20:11,959 - DEBUG - exception occured? 5120272848
+2023-02-28 10:20:11,960 - DEBUG - exception occured? None
+2023-02-28 10:20:11,961 - DEBUG - exception occured? 5120275744
+2023-02-28 10:20:11,961 - DEBUG - exception occured? None
+2023-02-28 10:20:11,962 - DEBUG - exception occured? 5120278304
+2023-02-28 10:20:11,963 - DEBUG - exception occured? None
+2023-02-28 10:20:11,963 - DEBUG - exception occured? 5120739840
+2023-02-28 10:20:11,964 - DEBUG - exception occured? None
+2023-02-28 10:20:11,966 - DEBUG - exception occured? 5120742528
+2023-02-28 10:20:11,967 - DEBUG - exception occured? None
+2023-02-28 10:20:11,968 - DEBUG - exception occured? 5120745280
+2023-02-28 10:20:11,968 - DEBUG - exception occured? None
+2023-02-28 10:20:11,969 - DEBUG - exception occured? 5120747840
+2023-02-28 10:20:11,970 - DEBUG - exception occured? None
+2023-02-28 10:20:11,970 - DEBUG - exception occured? 5120751536
+2023-02-28 10:20:11,971 - DEBUG - exception occured? None
+2023-02-28 10:20:11,971 - DEBUG - exception occured? 6183256608
+2023-02-28 10:20:11,971 - DEBUG - exception occured? None
+2023-02-28 10:20:11,972 - DEBUG - exception occured? 6183259344
+2023-02-28 10:20:11,973 - DEBUG - exception occured? None
+2023-02-28 10:20:11,973 - DEBUG - exception occured? 6183262272
+2023-02-28 10:20:11,974 - DEBUG - exception occured? None
+2023-02-28 10:20:11,975 - DEBUG - exception occured? 6183264752
+2023-02-28 10:20:11,975 - DEBUG - exception occured? None
+2023-02-28 10:26:14,102 - DEBUG - exception occured? 6183267392
+2023-02-28 10:26:14,103 - DEBUG - exception occured? None
+2023-02-28 10:26:14,104 - DEBUG - exception occured? 6183270464
+2023-02-28 10:26:14,104 - DEBUG - exception occured? None
+2023-02-28 10:26:14,105 - DEBUG - exception occured? 6183306192
+2023-02-28 10:26:14,105 - DEBUG - exception occured? None
+2023-02-28 10:26:14,106 - DEBUG - exception occured? 6183309472
+2023-02-28 10:26:14,106 - DEBUG - exception occured? None
+2023-02-28 10:26:14,106 - DEBUG - exception occured? 6183314576
+2023-02-28 10:26:14,107 - DEBUG - exception occured? None
+2023-02-28 10:26:14,108 - DEBUG - exception occured? 6183317792
+2023-02-28 10:26:14,109 - DEBUG - exception occured? None
+2023-02-28 10:26:14,109 - DEBUG - exception occured? 6183567712
+2023-02-28 10:26:14,110 - DEBUG - exception occured? None
+2023-02-28 10:26:14,110 - DEBUG - exception occured? 6183570624
+2023-02-28 10:26:14,111 - DEBUG - exception occured? None
+2023-02-28 10:26:14,113 - DEBUG - exception occured? 6183574464
+2023-02-28 10:26:14,114 - DEBUG - exception occured? None
+2023-02-28 10:26:14,114 - DEBUG - exception occured? 6183577600
+2023-02-28 10:26:14,115 - DEBUG - exception occured? None
+2023-02-28 10:26:14,116 - DEBUG - exception occured? 6183580320
+2023-02-28 10:26:14,116 - DEBUG - exception occured? None
+2023-02-28 10:26:14,118 - DEBUG - exception occured? 6183583296
+2023-02-28 10:26:14,118 - DEBUG - exception occured? None
+2023-02-28 10:26:14,119 - DEBUG - exception occured? 6183832192
+2023-02-28 10:26:14,120 - DEBUG - exception occured? None
+2023-02-28 10:26:14,120 - DEBUG - exception occured? 6183834912
+2023-02-28 10:26:14,121 - DEBUG - exception occured? None
+2023-02-28 10:26:14,121 - DEBUG - exception occured? 6183837712
+2023-02-28 10:26:14,122 - DEBUG - exception occured? None
+2023-02-28 10:26:14,123 - DEBUG - exception occured? 6183840400
+2023-02-28 10:26:14,124 - DEBUG - exception occured? None
+2023-02-28 10:34:00,511 - DEBUG - exception occured? 6183843232
+2023-02-28 10:34:00,512 - DEBUG - exception occured? None
+2023-02-28 10:34:00,514 - DEBUG - exception occured? 6183845744
+2023-02-28 10:34:00,515 - DEBUG - exception occured? None
+2023-02-28 10:34:00,516 - DEBUG - exception occured? 6183848832
+2023-02-28 10:34:00,516 - DEBUG - exception occured? None
+2023-02-28 10:34:00,517 - DEBUG - exception occured? 6183855248
+2023-02-28 10:34:00,517 - DEBUG - exception occured? None
+2023-02-28 10:34:00,518 - DEBUG - exception occured? 6183858304
+2023-02-28 10:34:00,518 - DEBUG - exception occured? None
+2023-02-28 10:34:00,519 - DEBUG - exception occured? 6183861008
+2023-02-28 10:34:00,520 - DEBUG - exception occured? None
+2023-02-28 10:34:00,520 - DEBUG - exception occured? 6183962832
+2023-02-28 10:34:00,521 - DEBUG - exception occured? None
+2023-02-28 10:34:00,521 - DEBUG - exception occured? 6183965712
+2023-02-28 10:34:00,522 - DEBUG - exception occured? None
+2023-02-28 10:34:00,525 - DEBUG - exception occured? 6183969104
+2023-02-28 10:34:00,525 - DEBUG - exception occured? None
+2023-02-28 10:34:00,526 - DEBUG - exception occured? 6183972528
+2023-02-28 10:34:00,526 - DEBUG - exception occured? None
+2023-02-28 10:34:00,527 - DEBUG - exception occured? 6183975680
+2023-02-28 10:34:00,528 - DEBUG - exception occured? None
+2023-02-28 10:34:00,528 - DEBUG - exception occured? 6185305536
+2023-02-28 10:34:00,529 - DEBUG - exception occured? None
+2023-02-28 10:34:00,529 - DEBUG - exception occured? 6185307952
+2023-02-28 10:34:00,530 - DEBUG - exception occured? None
+2023-02-28 10:34:00,531 - DEBUG - exception occured? 6185310720
+2023-02-28 10:34:00,531 - DEBUG - exception occured? None
+2023-02-28 10:34:00,532 - DEBUG - exception occured? 6185313232
+2023-02-28 10:34:00,532 - DEBUG - exception occured? None
+2023-02-28 10:34:00,533 - DEBUG - exception occured? 6185316288
+2023-02-28 10:34:00,533 - DEBUG - exception occured? None
+2023-02-28 10:34:30,470 - DEBUG - exception occured? 6185319392
+2023-02-28 10:34:30,471 - DEBUG - exception occured? None
+2023-02-28 10:34:30,472 - DEBUG - exception occured? 6185404016
+2023-02-28 10:34:30,472 - DEBUG - exception occured? None
+2023-02-28 10:34:30,473 - DEBUG - exception occured? 6185406816
+2023-02-28 10:34:30,474 - DEBUG - exception occured? None
+2023-02-28 10:34:30,474 - DEBUG - exception occured? 6185409456
+2023-02-28 10:34:30,475 - DEBUG - exception occured? None
+2023-02-28 10:34:30,475 - DEBUG - exception occured? 6185412208
+2023-02-28 10:34:30,476 - DEBUG - exception occured? None
+2023-02-28 10:34:30,477 - DEBUG - exception occured? 6185414816
+2023-02-28 10:34:30,477 - DEBUG - exception occured? None
+2023-02-28 10:34:30,478 - DEBUG - exception occured? 6185417488
+2023-02-28 10:34:30,479 - DEBUG - exception occured? None
+2023-02-28 10:34:30,479 - DEBUG - exception occured? 6186518016
+2023-02-28 10:34:30,480 - DEBUG - exception occured? None
+2023-02-28 10:34:30,482 - DEBUG - exception occured? 6186521936
+2023-02-28 10:34:30,483 - DEBUG - exception occured? None
+2023-02-28 10:34:30,483 - DEBUG - exception occured? 6186525184
+2023-02-28 10:34:30,484 - DEBUG - exception occured? None
+2023-02-28 10:34:30,484 - DEBUG - exception occured? 6186527984
+2023-02-28 10:34:30,485 - DEBUG - exception occured? None
+2023-02-28 10:34:30,485 - DEBUG - exception occured? 6186530544
+2023-02-28 10:34:30,486 - DEBUG - exception occured? None
+2023-02-28 10:34:30,486 - DEBUG - exception occured? 6188351856
+2023-02-28 10:34:30,487 - DEBUG - exception occured? None
+2023-02-28 10:34:30,487 - DEBUG - exception occured? 6188355280
+2023-02-28 10:34:30,488 - DEBUG - exception occured? None
+2023-02-28 10:34:30,489 - DEBUG - exception occured? 6188358928
+2023-02-28 10:34:30,489 - DEBUG - exception occured? None
+2023-02-28 10:34:30,490 - DEBUG - exception occured? 6188361744
+2023-02-28 10:34:30,490 - DEBUG - exception occured? None
+2023-02-28 10:42:55,473 - DEBUG - exception occured? 6188364464
+2023-02-28 10:42:55,473 - DEBUG - exception occured? None
+2023-02-28 10:42:55,474 - DEBUG - exception occured? 6188367072
+2023-02-28 10:42:55,474 - DEBUG - exception occured? None
+2023-02-28 10:42:55,474 - DEBUG - exception occured? 6188649040
+2023-02-28 10:42:55,475 - DEBUG - exception occured? None
+2023-02-28 10:42:55,476 - DEBUG - exception occured? 6188652240
+2023-02-28 10:42:55,476 - DEBUG - exception occured? None
+2023-02-28 10:42:55,477 - DEBUG - exception occured? 6188655088
+2023-02-28 10:42:55,477 - DEBUG - exception occured? None
+2023-02-28 10:42:55,478 - DEBUG - exception occured? 6188657616
+2023-02-28 10:42:55,478 - DEBUG - exception occured? None
+2023-02-28 10:42:55,478 - DEBUG - exception occured? 6188660864
+2023-02-28 10:42:55,479 - DEBUG - exception occured? None
+2023-02-28 10:42:55,479 - DEBUG - exception occured? 6188811696
+2023-02-28 10:42:55,479 - DEBUG - exception occured? None
+2023-02-28 10:42:55,481 - DEBUG - exception occured? 6188815568
+2023-02-28 10:42:55,481 - DEBUG - exception occured? None
+2023-02-28 10:42:55,482 - DEBUG - exception occured? 6188819008
+2023-02-28 10:42:55,483 - DEBUG - exception occured? None
+2023-02-28 10:42:55,483 - DEBUG - exception occured? 6188821504
+2023-02-28 10:42:55,483 - DEBUG - exception occured? None
+2023-02-28 10:42:55,484 - DEBUG - exception occured? 6188824272
+2023-02-28 10:42:55,484 - DEBUG - exception occured? None
+2023-02-28 10:42:55,485 - DEBUG - exception occured? 6188926208
+2023-02-28 10:42:55,485 - DEBUG - exception occured? None
+2023-02-28 10:42:55,485 - DEBUG - exception occured? 6188929168
+2023-02-28 10:42:55,486 - DEBUG - exception occured? None
+2023-02-28 10:42:55,486 - DEBUG - exception occured? 6188932048
+2023-02-28 10:42:55,487 - DEBUG - exception occured? None
+2023-02-28 10:42:55,488 - DEBUG - exception occured? 6188935520
+2023-02-28 10:42:55,489 - DEBUG - exception occured? None
+2023-02-28 10:45:39,885 - DEBUG - exception occured? 6188938960
+2023-02-28 10:45:39,886 - DEBUG - exception occured? None
+2023-02-28 10:45:39,886 - DEBUG - exception occured? 6189581920
+2023-02-28 10:45:39,887 - DEBUG - exception occured? None
+2023-02-28 10:45:39,887 - DEBUG - exception occured? 6189585664
+2023-02-28 10:45:39,887 - DEBUG - exception occured? None
+2023-02-28 10:45:39,888 - DEBUG - exception occured? 6189588816
+2023-02-28 10:45:39,888 - DEBUG - exception occured? None
+2023-02-28 10:45:39,888 - DEBUG - exception occured? 6189591536
+2023-02-28 10:45:39,889 - DEBUG - exception occured? None
+2023-02-28 10:45:39,889 - DEBUG - exception occured? 6189594592
+2023-02-28 10:45:39,890 - DEBUG - exception occured? None
+2023-02-28 10:45:39,890 - DEBUG - exception occured? 6189957712
+2023-02-28 10:45:39,890 - DEBUG - exception occured? None
+2023-02-28 10:45:39,891 - DEBUG - exception occured? 6189960160
+2023-02-28 10:45:39,891 - DEBUG - exception occured? None
+2023-02-28 10:45:39,893 - DEBUG - exception occured? 6189963936
+2023-02-28 10:45:39,894 - DEBUG - exception occured? None
+2023-02-28 10:45:39,895 - DEBUG - exception occured? 6189966576
+2023-02-28 10:45:39,895 - DEBUG - exception occured? None
+2023-02-28 10:45:39,895 - DEBUG - exception occured? 6189969136
+2023-02-28 10:45:39,896 - DEBUG - exception occured? None
+2023-02-28 10:45:39,897 - DEBUG - exception occured? 6189971984
+2023-02-28 10:45:39,898 - DEBUG - exception occured? None
+2023-02-28 10:45:39,898 - DEBUG - exception occured? 6190078592
+2023-02-28 10:45:39,898 - DEBUG - exception occured? None
+2023-02-28 10:45:39,899 - DEBUG - exception occured? 6190081872
+2023-02-28 10:45:39,899 - DEBUG - exception occured? None
+2023-02-28 10:45:39,900 - DEBUG - exception occured? 6190085296
+2023-02-28 10:45:39,900 - DEBUG - exception occured? None
+2023-02-28 10:45:39,901 - DEBUG - exception occured? 6190858512
+2023-02-28 10:45:39,901 - DEBUG - exception occured? None
+2023-02-28 10:46:20,086 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-02-28 10:46:20,091 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-02-28 10:46:20,173 - INFO - Calling Julia API...
+2023-02-28 10:46:20,176 - DEBUG - 
+2023-02-28 10:46:20,177 - DEBUG - exception occured? None
+2023-02-28 10:46:20,177 - DEBUG - exception occured? None
+2023-02-28 10:46:20,177 - DEBUG - exception occured? None
+2023-02-28 10:46:20,177 - DEBUG - exception occured? None
+2023-02-28 10:46:20,177 - DEBUG - exception occured? None
+2023-02-28 10:46:20,177 - DEBUG - exception occured? None
+2023-02-28 10:46:20,179 - DEBUG - exception occured? None
+2023-02-28 10:46:20,179 - DEBUG - exception occured? None
+2023-02-28 10:46:20,180 - DEBUG - exception occured? None
+2023-02-28 10:46:20,180 - DEBUG - 	Successfully activated Julia with compiled_modules = False
+2023-02-28 10:46:20,181 - DEBUG - 	Successfully imported julia.Base
+2023-02-28 10:46:20,181 - DEBUG - 	Successfully imported julia.Main
+2023-02-28 10:46:20,182 - DEBUG - 	Successfully imported julia.Pkg
+2023-02-28 10:46:20,183 - DEBUG - exception occured? None
+2023-02-28 10:46:20,184 - DEBUG - exception occured? None
+2023-02-28 10:46:20,184 - DEBUG - exception occured? None
+2023-02-28 10:46:20,185 - DEBUG - exception occured? None
+2023-02-28 10:46:20,185 - DEBUG - exception occured? None
+2023-02-28 10:46:20,185 - DEBUG - exception occured? None
+2023-02-28 10:46:20,186 - DEBUG - exception occured? None
+2023-02-28 10:46:20,186 - DEBUG - exception occured? None
+2023-02-28 10:46:20,187 - DEBUG - exception occured? None
+2023-02-28 10:46:20,192 - DEBUG - 	Available Packages:
 		'CSV'
 		 'HiGHS'
 		 'SQLite'
@@ -372,92 +650,62 @@
 		 'DataFrames'
 		 'Gurobi'
 		 'MathOptInterface'
-2023-02-17 20:30:15,881 - DEBUG - exception occured? None
-2023-02-17 20:30:15,882 - DEBUG - exception occured? None
-2023-02-17 20:30:15,882 - DEBUG - exception occured? None
-2023-02-17 20:30:15,918 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
-2023-02-17 20:30:15,920 - DEBUG - exception occured? None
-2023-02-17 20:30:15,921 - DEBUG - exception occured? None
-2023-02-17 20:30:15,921 - DEBUG - exception occured? None
-2023-02-17 20:30:15,935 - DEBUG - exception occured? None
-2023-02-17 20:30:15,935 - DEBUG - exception occured? None
-2023-02-17 20:30:15,935 - DEBUG - exception occured? None
-2023-02-17 20:30:15,936 - DEBUG - exception occured? None
-2023-02-17 20:30:15,936 - DEBUG - exception occured? None
-2023-02-17 20:30:15,936 - DEBUG - exception occured? None
-2023-02-17 20:30:15,937 - DEBUG - exception occured? None
-2023-02-17 20:30:15,937 - DEBUG - exception occured? None
-2023-02-17 20:30:15,938 - DEBUG - exception occured? None
-2023-02-17 20:30:15,939 - DEBUG - exception occured? None
-2023-02-17 20:30:15,939 - DEBUG - exception occured? None
-2023-02-17 20:30:15,939 - DEBUG - exception occured? None
-2023-02-17 20:30:15,940 - DEBUG - exception occured? None
-2023-02-17 20:30:15,940 - DEBUG - exception occured? None
-2023-02-17 20:30:15,940 - DEBUG - exception occured? None
-2023-02-17 20:30:15,942 - DEBUG - exception occured? None
-2023-02-17 20:30:15,942 - DEBUG - exception occured? None
-2023-02-17 20:30:15,943 - DEBUG - exception occured? None
-2023-02-17 20:30:15,943 - DEBUG - exception occured? None
-2023-02-17 20:30:15,943 - DEBUG - exception occured? None
-2023-02-17 20:30:15,944 - DEBUG - exception occured? None
-2023-02-17 20:30:16,065 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
-2023-02-17 20:30:16,246 - DEBUG - exception occured? 8141853728
-2023-02-17 20:30:16,246 - DEBUG - exception occured? None
-2023-02-17 20:30:16,247 - DEBUG - exception occured? 8141856112
-2023-02-17 20:30:16,248 - DEBUG - exception occured? None
-2023-02-17 20:30:16,249 - DEBUG - exception occured? 8141858496
-2023-02-17 20:30:16,249 - DEBUG - exception occured? None
-2023-02-17 20:30:16,250 - DEBUG - exception occured? 8141860880
-2023-02-17 20:30:16,250 - DEBUG - exception occured? None
-2023-02-17 20:30:16,252 - DEBUG - exception occured? 8141863264
-2023-02-17 20:30:16,253 - DEBUG - exception occured? None
-2023-02-17 20:30:16,254 - DEBUG - exception occured? 8142422752
-2023-02-17 20:30:16,254 - DEBUG - exception occured? None
-2023-02-17 20:30:16,255 - DEBUG - exception occured? 8142425200
-2023-02-17 20:30:16,255 - DEBUG - exception occured? None
-2023-02-17 20:30:16,256 - DEBUG - exception occured? 8142427616
-2023-02-17 20:30:16,256 - DEBUG - exception occured? None
-2023-02-17 20:30:16,259 - DEBUG - exception occured? 8142430000
-2023-02-17 20:30:16,259 - DEBUG - exception occured? None
-2023-02-17 20:30:16,261 - DEBUG - exception occured? 8142432384
-2023-02-17 20:30:16,261 - DEBUG - exception occured? None
-2023-02-17 20:30:16,262 - DEBUG - exception occured? 8142434768
-2023-02-17 20:30:16,262 - DEBUG - exception occured? None
-2023-02-17 20:30:16,263 - DEBUG - exception occured? 8142437152
-2023-02-17 20:30:16,264 - DEBUG - exception occured? None
-2023-02-17 20:30:16,265 - DEBUG - exception occured? 8142472320
-2023-02-17 20:30:16,265 - DEBUG - exception occured? None
-2023-02-17 20:30:16,266 - DEBUG - exception occured? 8142474736
-2023-02-17 20:30:16,267 - DEBUG - exception occured? None
-2023-02-17 20:30:16,268 - DEBUG - exception occured? 8142477184
-2023-02-17 20:30:16,268 - DEBUG - exception occured? None
-2023-02-17 20:30:16,269 - DEBUG - exception occured? 8142479600
-2023-02-17 20:30:16,269 - DEBUG - exception occured? None
-2023-02-17 20:35:37,533 - INFO - Calling Julia API...
-2023-02-17 20:35:37,533 - DEBUG - 
-2023-02-17 20:35:37,534 - DEBUG - exception occured? None
-2023-02-17 20:35:37,534 - DEBUG - exception occured? None
-2023-02-17 20:35:37,534 - DEBUG - exception occured? None
-2023-02-17 20:35:37,534 - DEBUG - exception occured? None
-2023-02-17 20:35:37,534 - DEBUG - exception occured? None
-2023-02-17 20:35:37,535 - DEBUG - exception occured? None
-2023-02-17 20:35:37,535 - DEBUG - exception occured? None
-2023-02-17 20:35:37,535 - DEBUG - exception occured? None
-2023-02-17 20:35:37,535 - DEBUG - exception occured? None
-2023-02-17 20:35:37,535 - DEBUG - 	Successfully activated Julia with compiled_modules = False
-2023-02-17 20:35:37,536 - DEBUG - 	Successfully imported julia.Base
-2023-02-17 20:35:37,537 - DEBUG - 	Successfully imported julia.Main
-2023-02-17 20:35:37,537 - DEBUG - 	Successfully imported julia.Pkg
-2023-02-17 20:35:37,538 - DEBUG - exception occured? None
-2023-02-17 20:35:37,538 - DEBUG - exception occured? None
-2023-02-17 20:35:37,539 - DEBUG - exception occured? None
-2023-02-17 20:35:37,539 - DEBUG - exception occured? None
-2023-02-17 20:35:37,539 - DEBUG - exception occured? None
-2023-02-17 20:35:37,539 - DEBUG - exception occured? None
-2023-02-17 20:35:37,540 - DEBUG - exception occured? None
-2023-02-17 20:35:37,540 - DEBUG - exception occured? None
-2023-02-17 20:35:37,541 - DEBUG - exception occured? None
-2023-02-17 20:35:37,593 - DEBUG - 	Available Packages:
+2023-02-28 10:46:20,193 - DEBUG - exception occured? None
+2023-02-28 10:46:20,194 - DEBUG - exception occured? None
+2023-02-28 10:46:20,194 - DEBUG - exception occured? None
+2023-02-28 10:46:20,204 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
+2023-02-28 10:46:20,205 - DEBUG - exception occured? None
+2023-02-28 10:46:20,205 - DEBUG - exception occured? None
+2023-02-28 10:46:20,205 - DEBUG - exception occured? None
+2023-02-28 10:46:20,218 - DEBUG - exception occured? None
+2023-02-28 10:46:20,218 - DEBUG - exception occured? None
+2023-02-28 10:46:20,219 - DEBUG - exception occured? None
+2023-02-28 10:46:20,219 - DEBUG - exception occured? None
+2023-02-28 10:46:20,219 - DEBUG - exception occured? None
+2023-02-28 10:46:20,220 - DEBUG - exception occured? None
+2023-02-28 10:46:20,220 - DEBUG - exception occured? None
+2023-02-28 10:46:20,220 - DEBUG - exception occured? None
+2023-02-28 10:46:20,220 - DEBUG - exception occured? None
+2023-02-28 10:46:20,221 - DEBUG - exception occured? None
+2023-02-28 10:46:20,221 - DEBUG - exception occured? None
+2023-02-28 10:46:20,221 - DEBUG - exception occured? None
+2023-02-28 10:46:20,222 - DEBUG - exception occured? None
+2023-02-28 10:46:20,222 - DEBUG - exception occured? None
+2023-02-28 10:46:20,222 - DEBUG - exception occured? None
+2023-02-28 10:46:20,223 - DEBUG - exception occured? None
+2023-02-28 10:46:20,223 - DEBUG - exception occured? None
+2023-02-28 10:46:20,223 - DEBUG - exception occured? None
+2023-02-28 10:46:20,224 - DEBUG - exception occured? None
+2023-02-28 10:46:20,224 - DEBUG - exception occured? None
+2023-02-28 10:46:20,224 - DEBUG - exception occured? None
+2023-02-28 10:46:20,268 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
+2023-02-28 10:46:30,839 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-02-28 10:46:30,843 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-02-28 10:46:30,913 - INFO - Calling Julia API...
+2023-02-28 10:46:30,914 - DEBUG - 
+2023-02-28 10:46:30,914 - DEBUG - exception occured? None
+2023-02-28 10:46:30,914 - DEBUG - exception occured? None
+2023-02-28 10:46:30,915 - DEBUG - exception occured? None
+2023-02-28 10:46:30,915 - DEBUG - exception occured? None
+2023-02-28 10:46:30,915 - DEBUG - exception occured? None
+2023-02-28 10:46:30,915 - DEBUG - exception occured? None
+2023-02-28 10:46:30,915 - DEBUG - exception occured? None
+2023-02-28 10:46:30,916 - DEBUG - exception occured? None
+2023-02-28 10:46:30,916 - DEBUG - exception occured? None
+2023-02-28 10:46:30,916 - DEBUG - 	Successfully activated Julia with compiled_modules = False
+2023-02-28 10:46:30,917 - DEBUG - 	Successfully imported julia.Base
+2023-02-28 10:46:30,918 - DEBUG - 	Successfully imported julia.Main
+2023-02-28 10:46:30,918 - DEBUG - 	Successfully imported julia.Pkg
+2023-02-28 10:46:30,919 - DEBUG - exception occured? None
+2023-02-28 10:46:30,919 - DEBUG - exception occured? None
+2023-02-28 10:46:30,920 - DEBUG - exception occured? None
+2023-02-28 10:46:30,920 - DEBUG - exception occured? None
+2023-02-28 10:46:30,920 - DEBUG - exception occured? None
+2023-02-28 10:46:30,920 - DEBUG - exception occured? None
+2023-02-28 10:46:30,921 - DEBUG - exception occured? None
+2023-02-28 10:46:30,921 - DEBUG - exception occured? None
+2023-02-28 10:46:30,921 - DEBUG - exception occured? None
+2023-02-28 10:46:30,930 - DEBUG - 	Available Packages:
 		'CSV'
 		 'HiGHS'
 		 'SQLite'
@@ -469,124 +717,382 @@
 		 'DataFrames'
 		 'Gurobi'
 		 'MathOptInterface'
-2023-02-17 20:35:37,594 - DEBUG - exception occured? None
-2023-02-17 20:35:37,594 - DEBUG - exception occured? None
-2023-02-17 20:35:37,595 - DEBUG - exception occured? None
-2023-02-17 20:35:37,622 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
-2023-02-17 20:35:37,623 - DEBUG - exception occured? None
-2023-02-17 20:35:37,624 - DEBUG - exception occured? None
-2023-02-17 20:35:37,624 - DEBUG - exception occured? None
-2023-02-17 20:35:37,635 - DEBUG - exception occured? None
-2023-02-17 20:35:37,636 - DEBUG - exception occured? None
-2023-02-17 20:35:37,636 - DEBUG - exception occured? None
-2023-02-17 20:35:37,636 - DEBUG - exception occured? None
-2023-02-17 20:35:37,637 - DEBUG - exception occured? None
-2023-02-17 20:35:37,637 - DEBUG - exception occured? None
-2023-02-17 20:35:37,637 - DEBUG - exception occured? None
-2023-02-17 20:35:37,637 - DEBUG - exception occured? None
-2023-02-17 20:35:37,638 - DEBUG - exception occured? None
-2023-02-17 20:35:37,638 - DEBUG - exception occured? None
-2023-02-17 20:35:37,638 - DEBUG - exception occured? None
-2023-02-17 20:35:37,639 - DEBUG - exception occured? None
-2023-02-17 20:35:37,639 - DEBUG - exception occured? None
-2023-02-17 20:35:37,639 - DEBUG - exception occured? None
-2023-02-17 20:35:37,640 - DEBUG - exception occured? None
-2023-02-17 20:35:37,640 - DEBUG - exception occured? None
-2023-02-17 20:35:37,641 - DEBUG - exception occured? None
-2023-02-17 20:35:37,641 - DEBUG - exception occured? None
-2023-02-17 20:35:37,641 - DEBUG - exception occured? None
-2023-02-17 20:35:37,642 - DEBUG - exception occured? None
-2023-02-17 20:35:37,642 - DEBUG - exception occured? None
-2023-02-17 20:35:37,716 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
-2023-02-17 20:35:37,823 - DEBUG - exception occured? 8144314592
-2023-02-17 20:35:37,823 - DEBUG - exception occured? None
-2023-02-17 20:35:37,824 - DEBUG - exception occured? 8144316976
-2023-02-17 20:35:37,825 - DEBUG - exception occured? None
-2023-02-17 20:35:37,825 - DEBUG - exception occured? 8144319360
-2023-02-17 20:35:37,826 - DEBUG - exception occured? None
-2023-02-17 20:35:37,826 - DEBUG - exception occured? 8144321744
-2023-02-17 20:35:37,827 - DEBUG - exception occured? None
-2023-02-17 20:35:37,828 - DEBUG - exception occured? 8144979504
-2023-02-17 20:35:37,828 - DEBUG - exception occured? None
-2023-02-17 20:35:37,829 - DEBUG - exception occured? 8144981920
-2023-02-17 20:35:37,829 - DEBUG - exception occured? None
-2023-02-17 20:35:37,830 - DEBUG - exception occured? 8144984368
-2023-02-17 20:35:37,831 - DEBUG - exception occured? None
-2023-02-17 20:35:37,831 - DEBUG - exception occured? 8144986784
-2023-02-17 20:35:37,832 - DEBUG - exception occured? None
-2023-02-17 20:35:37,835 - DEBUG - exception occured? 8144989168
-2023-02-17 20:35:37,836 - DEBUG - exception occured? None
-2023-02-17 20:35:37,836 - DEBUG - exception occured? 8144991552
-2023-02-17 20:35:37,837 - DEBUG - exception occured? None
-2023-02-17 20:35:37,837 - DEBUG - exception occured? 8144993936
-2023-02-17 20:35:37,838 - DEBUG - exception occured? None
-2023-02-17 20:35:37,838 - DEBUG - exception occured? 8145078256
-2023-02-17 20:35:37,839 - DEBUG - exception occured? None
-2023-02-17 20:35:37,839 - DEBUG - exception occured? 8145080640
-2023-02-17 20:35:37,840 - DEBUG - exception occured? None
-2023-02-17 20:35:37,840 - DEBUG - exception occured? 8145083056
-2023-02-17 20:35:37,841 - DEBUG - exception occured? None
-2023-02-17 20:35:37,841 - DEBUG - exception occured? 8145085504
-2023-02-17 20:35:37,842 - DEBUG - exception occured? None
-2023-02-17 20:35:37,843 - DEBUG - exception occured? 8145087920
-2023-02-17 20:35:37,843 - DEBUG - exception occured? None
-2023-02-17 20:36:05,461 - DEBUG - exception occured? 8145090304
-2023-02-17 20:36:05,462 - DEBUG - exception occured? None
-2023-02-17 20:36:05,463 - DEBUG - exception occured? 8145141856
-2023-02-17 20:36:05,464 - DEBUG - exception occured? None
-2023-02-17 20:36:05,464 - DEBUG - exception occured? 8145144240
-2023-02-17 20:36:05,465 - DEBUG - exception occured? None
-2023-02-17 20:36:05,465 - DEBUG - exception occured? 8145146624
-2023-02-17 20:36:05,466 - DEBUG - exception occured? None
-2023-02-17 20:36:05,466 - DEBUG - exception occured? 8145149008
-2023-02-17 20:36:05,467 - DEBUG - exception occured? None
-2023-02-17 20:36:05,468 - DEBUG - exception occured? 8145151424
-2023-02-17 20:36:05,468 - DEBUG - exception occured? None
-2023-02-17 20:36:05,469 - DEBUG - exception occured? 8145153872
-2023-02-17 20:36:05,469 - DEBUG - exception occured? None
-2023-02-17 20:36:05,470 - DEBUG - exception occured? 8145156288
-2023-02-17 20:36:05,470 - DEBUG - exception occured? None
-2023-02-17 20:36:05,473 - DEBUG - exception occured? 8145175072
-2023-02-17 20:36:05,474 - DEBUG - exception occured? None
-2023-02-17 20:36:05,475 - DEBUG - exception occured? 8145177456
-2023-02-17 20:36:05,475 - DEBUG - exception occured? None
-2023-02-17 20:36:05,476 - DEBUG - exception occured? 8145179840
-2023-02-17 20:36:05,476 - DEBUG - exception occured? None
-2023-02-17 20:36:05,477 - DEBUG - exception occured? 8145182224
-2023-02-17 20:36:05,477 - DEBUG - exception occured? None
-2023-02-17 20:36:05,478 - DEBUG - exception occured? 8145184608
-2023-02-17 20:36:05,478 - DEBUG - exception occured? None
-2023-02-17 20:36:05,479 - DEBUG - exception occured? 8145187024
-2023-02-17 20:36:05,480 - DEBUG - exception occured? None
-2023-02-17 20:36:05,480 - DEBUG - exception occured? 8145189472
-2023-02-17 20:36:05,481 - DEBUG - exception occured? None
-2023-02-17 20:36:05,482 - DEBUG - exception occured? 8145273824
-2023-02-17 20:36:05,483 - DEBUG - exception occured? None
-2023-02-17 20:38:52,668 - INFO - Calling Julia API...
-2023-02-17 20:38:52,669 - DEBUG - 
-2023-02-17 20:38:52,670 - DEBUG - exception occured? None
-2023-02-17 20:38:52,670 - DEBUG - exception occured? None
-2023-02-17 20:38:52,670 - DEBUG - exception occured? None
-2023-02-17 20:38:52,670 - DEBUG - exception occured? None
-2023-02-17 20:38:52,670 - DEBUG - exception occured? None
-2023-02-17 20:38:52,670 - DEBUG - exception occured? None
-2023-02-17 20:38:52,670 - DEBUG - exception occured? None
-2023-02-17 20:38:52,671 - DEBUG - exception occured? None
-2023-02-17 20:38:52,671 - DEBUG - exception occured? None
-2023-02-17 20:38:52,671 - DEBUG - 	Successfully activated Julia with compiled_modules = False
-2023-02-17 20:38:52,672 - DEBUG - 	Successfully imported julia.Base
-2023-02-17 20:38:52,672 - DEBUG - 	Successfully imported julia.Main
-2023-02-17 20:38:52,673 - DEBUG - 	Successfully imported julia.Pkg
-2023-02-17 20:38:52,674 - DEBUG - exception occured? None
-2023-02-17 20:38:52,675 - DEBUG - exception occured? None
-2023-02-17 20:38:52,675 - DEBUG - exception occured? None
-2023-02-17 20:38:52,675 - DEBUG - exception occured? None
-2023-02-17 20:38:52,676 - DEBUG - exception occured? None
-2023-02-17 20:38:52,676 - DEBUG - exception occured? None
-2023-02-17 20:38:52,676 - DEBUG - exception occured? None
-2023-02-17 20:38:52,677 - DEBUG - exception occured? None
-2023-02-17 20:38:52,677 - DEBUG - exception occured? None
-2023-02-17 20:38:52,688 - DEBUG - 	Available Packages:
+2023-02-28 10:46:30,931 - DEBUG - exception occured? None
+2023-02-28 10:46:30,932 - DEBUG - exception occured? None
+2023-02-28 10:46:30,932 - DEBUG - exception occured? None
+2023-02-28 10:46:30,939 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
+2023-02-28 10:46:30,941 - DEBUG - exception occured? None
+2023-02-28 10:46:30,941 - DEBUG - exception occured? None
+2023-02-28 10:46:30,942 - DEBUG - exception occured? None
+2023-02-28 10:46:30,951 - DEBUG - exception occured? None
+2023-02-28 10:46:30,952 - DEBUG - exception occured? None
+2023-02-28 10:46:30,952 - DEBUG - exception occured? None
+2023-02-28 10:46:30,953 - DEBUG - exception occured? None
+2023-02-28 10:46:30,953 - DEBUG - exception occured? None
+2023-02-28 10:46:30,953 - DEBUG - exception occured? None
+2023-02-28 10:46:30,954 - DEBUG - exception occured? None
+2023-02-28 10:46:30,954 - DEBUG - exception occured? None
+2023-02-28 10:46:30,954 - DEBUG - exception occured? None
+2023-02-28 10:46:30,955 - DEBUG - exception occured? None
+2023-02-28 10:46:30,955 - DEBUG - exception occured? None
+2023-02-28 10:46:30,956 - DEBUG - exception occured? None
+2023-02-28 10:46:30,956 - DEBUG - exception occured? None
+2023-02-28 10:46:30,957 - DEBUG - exception occured? None
+2023-02-28 10:46:30,957 - DEBUG - exception occured? None
+2023-02-28 10:46:30,957 - DEBUG - exception occured? None
+2023-02-28 10:46:30,957 - DEBUG - exception occured? None
+2023-02-28 10:46:30,958 - DEBUG - exception occured? None
+2023-02-28 10:46:30,958 - DEBUG - exception occured? None
+2023-02-28 10:46:30,959 - DEBUG - exception occured? None
+2023-02-28 10:46:30,959 - DEBUG - exception occured? None
+2023-02-28 10:46:30,999 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
+2023-02-28 10:47:34,679 - DEBUG - exception occured? 6202561568
+2023-02-28 10:47:34,680 - DEBUG - exception occured? None
+2023-02-28 10:47:34,680 - DEBUG - exception occured? 6202565488
+2023-02-28 10:47:34,681 - DEBUG - exception occured? None
+2023-02-28 10:47:34,681 - DEBUG - exception occured? 6202568048
+2023-02-28 10:47:34,683 - DEBUG - exception occured? None
+2023-02-28 10:47:34,684 - DEBUG - exception occured? 6202570816
+2023-02-28 10:47:34,684 - DEBUG - exception occured? None
+2023-02-28 10:47:34,685 - DEBUG - exception occured? 6203147072
+2023-02-28 10:47:34,685 - DEBUG - exception occured? None
+2023-02-28 10:47:34,686 - DEBUG - exception occured? 6203150016
+2023-02-28 10:47:34,686 - DEBUG - exception occured? None
+2023-02-28 10:47:34,687 - DEBUG - exception occured? 6203152608
+2023-02-28 10:47:34,687 - DEBUG - exception occured? None
+2023-02-28 10:47:34,688 - DEBUG - exception occured? 6203155072
+2023-02-28 10:47:34,688 - DEBUG - exception occured? None
+2023-02-28 10:47:34,691 - DEBUG - exception occured? 6203157680
+2023-02-28 10:47:34,692 - DEBUG - exception occured? None
+2023-02-28 10:47:34,692 - DEBUG - exception occured? 6203160672
+2023-02-28 10:47:34,693 - DEBUG - exception occured? None
+2023-02-28 10:47:34,693 - DEBUG - exception occured? 6204834368
+2023-02-28 10:47:34,694 - DEBUG - exception occured? None
+2023-02-28 10:47:34,694 - DEBUG - exception occured? 6204837216
+2023-02-28 10:47:34,695 - DEBUG - exception occured? None
+2023-02-28 10:47:34,696 - DEBUG - exception occured? 6204840016
+2023-02-28 10:47:34,697 - DEBUG - exception occured? None
+2023-02-28 10:47:34,697 - DEBUG - exception occured? 6204842624
+2023-02-28 10:47:34,698 - DEBUG - exception occured? None
+2023-02-28 10:47:34,699 - DEBUG - exception occured? 6204845376
+2023-02-28 10:47:34,699 - DEBUG - exception occured? None
+2023-02-28 10:47:34,700 - DEBUG - exception occured? 6204848176
+2023-02-28 10:47:34,700 - DEBUG - exception occured? None
+2023-02-28 10:47:43,195 - DEBUG - exception occured? 6205162256
+2023-02-28 10:47:43,196 - DEBUG - exception occured? None
+2023-02-28 10:47:43,197 - DEBUG - exception occured? 6205165264
+2023-02-28 10:47:43,197 - DEBUG - exception occured? None
+2023-02-28 10:47:43,198 - DEBUG - exception occured? 6205168000
+2023-02-28 10:47:43,199 - DEBUG - exception occured? None
+2023-02-28 10:47:43,200 - DEBUG - exception occured? 6205170640
+2023-02-28 10:47:43,200 - DEBUG - exception occured? None
+2023-02-28 10:47:43,201 - DEBUG - exception occured? 6205173520
+2023-02-28 10:47:43,202 - DEBUG - exception occured? None
+2023-02-28 10:47:43,203 - DEBUG - exception occured? 6205176160
+2023-02-28 10:47:43,203 - DEBUG - exception occured? None
+2023-02-28 10:47:43,204 - DEBUG - exception occured? 6205998176
+2023-02-28 10:47:43,205 - DEBUG - exception occured? None
+2023-02-28 10:47:43,205 - DEBUG - exception occured? 6206000896
+2023-02-28 10:47:43,206 - DEBUG - exception occured? None
+2023-02-28 10:47:43,209 - DEBUG - exception occured? 6206003344
+2023-02-28 10:47:43,209 - DEBUG - exception occured? None
+2023-02-28 10:47:43,210 - DEBUG - exception occured? 6206006272
+2023-02-28 10:47:43,211 - DEBUG - exception occured? None
+2023-02-28 10:47:43,212 - DEBUG - exception occured? 6206009280
+2023-02-28 10:47:43,212 - DEBUG - exception occured? None
+2023-02-28 10:47:43,213 - DEBUG - exception occured? 6206012000
+2023-02-28 10:47:43,214 - DEBUG - exception occured? None
+2023-02-28 10:47:43,215 - DEBUG - exception occured? 6206244096
+2023-02-28 10:47:43,215 - DEBUG - exception occured? None
+2023-02-28 10:47:43,216 - DEBUG - exception occured? 6206247040
+2023-02-28 10:47:43,216 - DEBUG - exception occured? None
+2023-02-28 10:47:43,217 - DEBUG - exception occured? 6206249712
+2023-02-28 10:47:43,218 - DEBUG - exception occured? None
+2023-02-28 10:47:43,218 - DEBUG - exception occured? 6206252880
+2023-02-28 10:47:43,219 - DEBUG - exception occured? None
+2023-02-28 10:47:59,103 - DEBUG - exception occured? 6206256176
+2023-02-28 10:47:59,104 - DEBUG - exception occured? None
+2023-02-28 10:47:59,105 - DEBUG - exception occured? 6206521376
+2023-02-28 10:47:59,105 - DEBUG - exception occured? None
+2023-02-28 10:47:59,106 - DEBUG - exception occured? 6206523984
+2023-02-28 10:47:59,106 - DEBUG - exception occured? None
+2023-02-28 10:47:59,107 - DEBUG - exception occured? 6206526608
+2023-02-28 10:47:59,107 - DEBUG - exception occured? None
+2023-02-28 10:47:59,108 - DEBUG - exception occured? 6206529472
+2023-02-28 10:47:59,108 - DEBUG - exception occured? None
+2023-02-28 10:47:59,109 - DEBUG - exception occured? 6206532768
+2023-02-28 10:47:59,110 - DEBUG - exception occured? None
+2023-02-28 10:47:59,110 - DEBUG - exception occured? 6206535424
+2023-02-28 10:47:59,111 - DEBUG - exception occured? None
+2023-02-28 10:47:59,111 - DEBUG - exception occured? 6207291616
+2023-02-28 10:47:59,112 - DEBUG - exception occured? None
+2023-02-28 10:47:59,114 - DEBUG - exception occured? 6207294096
+2023-02-28 10:47:59,115 - DEBUG - exception occured? None
+2023-02-28 10:47:59,115 - DEBUG - exception occured? 6207297088
+2023-02-28 10:47:59,116 - DEBUG - exception occured? None
+2023-02-28 10:47:59,116 - DEBUG - exception occured? 6207300336
+2023-02-28 10:47:59,117 - DEBUG - exception occured? None
+2023-02-28 10:47:59,117 - DEBUG - exception occured? 6207303312
+2023-02-28 10:47:59,118 - DEBUG - exception occured? None
+2023-02-28 10:47:59,118 - DEBUG - exception occured? 6207306144
+2023-02-28 10:47:59,119 - DEBUG - exception occured? None
+2023-02-28 10:47:59,119 - DEBUG - exception occured? 6208144560
+2023-02-28 10:47:59,120 - DEBUG - exception occured? None
+2023-02-28 10:47:59,121 - DEBUG - exception occured? 6208147440
+2023-02-28 10:47:59,121 - DEBUG - exception occured? None
+2023-02-28 10:47:59,122 - DEBUG - exception occured? 6208150368
+2023-02-28 10:47:59,122 - DEBUG - exception occured? None
+2023-02-28 10:50:40,170 - DEBUG - exception occured? 6208153088
+2023-02-28 10:50:40,171 - DEBUG - exception occured? None
+2023-02-28 10:50:40,172 - DEBUG - exception occured? 6208156048
+2023-02-28 10:50:40,173 - DEBUG - exception occured? None
+2023-02-28 10:50:40,173 - DEBUG - exception occured? 6208159152
+2023-02-28 10:50:40,174 - DEBUG - exception occured? None
+2023-02-28 10:50:40,175 - DEBUG - exception occured? 6211799424
+2023-02-28 10:50:40,175 - DEBUG - exception occured? None
+2023-02-28 10:50:40,176 - DEBUG - exception occured? 6211802736
+2023-02-28 10:50:40,177 - DEBUG - exception occured? None
+2023-02-28 10:50:40,178 - DEBUG - exception occured? 6211806512
+2023-02-28 10:50:40,178 - DEBUG - exception occured? None
+2023-02-28 10:50:40,179 - DEBUG - exception occured? 6211809360
+2023-02-28 10:50:40,180 - DEBUG - exception occured? None
+2023-02-28 10:50:40,181 - DEBUG - exception occured? 6211811936
+2023-02-28 10:50:40,182 - DEBUG - exception occured? None
+2023-02-28 10:50:40,186 - DEBUG - exception occured? 6211896656
+2023-02-28 10:50:40,186 - DEBUG - exception occured? None
+2023-02-28 10:50:40,187 - DEBUG - exception occured? 6211899264
+2023-02-28 10:50:40,187 - DEBUG - exception occured? None
+2023-02-28 10:50:40,189 - DEBUG - exception occured? 6211902000
+2023-02-28 10:50:40,190 - DEBUG - exception occured? None
+2023-02-28 10:50:40,191 - DEBUG - exception occured? 6211904672
+2023-02-28 10:50:40,192 - DEBUG - exception occured? None
+2023-02-28 10:50:40,193 - DEBUG - exception occured? 6211907184
+2023-02-28 10:50:40,193 - DEBUG - exception occured? None
+2023-02-28 10:50:40,194 - DEBUG - exception occured? 6211909760
+2023-02-28 10:50:40,195 - DEBUG - exception occured? None
+2023-02-28 10:50:40,195 - DEBUG - exception occured? 6212059952
+2023-02-28 10:50:40,196 - DEBUG - exception occured? None
+2023-02-28 10:50:40,197 - DEBUG - exception occured? 6212062736
+2023-02-28 10:50:40,197 - DEBUG - exception occured? None
+2023-02-28 11:03:23,170 - DEBUG - exception occured? 6212065248
+2023-02-28 11:03:23,171 - DEBUG - exception occured? None
+2023-02-28 11:03:23,172 - DEBUG - exception occured? 6212068000
+2023-02-28 11:03:23,172 - DEBUG - exception occured? None
+2023-02-28 11:03:23,173 - DEBUG - exception occured? 6212071008
+2023-02-28 11:03:23,174 - DEBUG - exception occured? None
+2023-02-28 11:03:23,175 - DEBUG - exception occured? 6212074128
+2023-02-28 11:03:23,175 - DEBUG - exception occured? None
+2023-02-28 11:03:23,176 - DEBUG - exception occured? 6212339200
+2023-02-28 11:03:23,176 - DEBUG - exception occured? None
+2023-02-28 11:03:23,178 - DEBUG - exception occured? 6212341840
+2023-02-28 11:03:23,179 - DEBUG - exception occured? None
+2023-02-28 11:03:23,179 - DEBUG - exception occured? 6212344432
+2023-02-28 11:03:23,180 - DEBUG - exception occured? None
+2023-02-28 11:03:23,180 - DEBUG - exception occured? 6212347056
+2023-02-28 11:03:23,181 - DEBUG - exception occured? None
+2023-02-28 11:03:23,184 - DEBUG - exception occured? 6212349616
+2023-02-28 11:03:23,184 - DEBUG - exception occured? None
+2023-02-28 11:03:23,185 - DEBUG - exception occured? 6212352208
+2023-02-28 11:03:23,185 - DEBUG - exception occured? None
+2023-02-28 11:03:23,186 - DEBUG - exception occured? 6212518544
+2023-02-28 11:03:23,186 - DEBUG - exception occured? None
+2023-02-28 11:03:23,188 - DEBUG - exception occured? 6212521248
+2023-02-28 11:03:23,188 - DEBUG - exception occured? None
+2023-02-28 11:03:23,189 - DEBUG - exception occured? 6212523856
+2023-02-28 11:03:23,189 - DEBUG - exception occured? None
+2023-02-28 11:03:23,190 - DEBUG - exception occured? 6212526784
+2023-02-28 11:03:23,190 - DEBUG - exception occured? None
+2023-02-28 11:03:23,192 - DEBUG - exception occured? 6212529504
+2023-02-28 11:03:23,193 - DEBUG - exception occured? None
+2023-02-28 11:03:23,194 - DEBUG - exception occured? 6212532656
+2023-02-28 11:03:23,194 - DEBUG - exception occured? None
+2023-02-28 11:03:36,422 - DEBUG - exception occured? 6212732016
+2023-02-28 11:03:36,423 - DEBUG - exception occured? None
+2023-02-28 11:03:36,423 - DEBUG - exception occured? 6212734912
+2023-02-28 11:03:36,424 - DEBUG - exception occured? None
+2023-02-28 11:03:36,424 - DEBUG - exception occured? 6212737520
+2023-02-28 11:03:36,425 - DEBUG - exception occured? None
+2023-02-28 11:03:36,426 - DEBUG - exception occured? 6212740048
+2023-02-28 11:03:36,426 - DEBUG - exception occured? None
+2023-02-28 11:03:36,427 - DEBUG - exception occured? 6212742832
+2023-02-28 11:03:36,427 - DEBUG - exception occured? None
+2023-02-28 11:03:36,428 - DEBUG - exception occured? 6212745360
+2023-02-28 11:03:36,428 - DEBUG - exception occured? None
+2023-02-28 11:03:36,429 - DEBUG - exception occured? 6212797168
+2023-02-28 11:03:36,429 - DEBUG - exception occured? None
+2023-02-28 11:03:36,430 - DEBUG - exception occured? 6212799792
+2023-02-28 11:03:36,432 - DEBUG - exception occured? None
+2023-02-28 11:03:36,435 - DEBUG - exception occured? 6212803056
+2023-02-28 11:03:36,435 - DEBUG - exception occured? None
+2023-02-28 11:03:36,436 - DEBUG - exception occured? 6212805712
+2023-02-28 11:03:36,436 - DEBUG - exception occured? None
+2023-02-28 11:03:36,437 - DEBUG - exception occured? 6212808336
+2023-02-28 11:03:36,437 - DEBUG - exception occured? None
+2023-02-28 11:03:36,438 - DEBUG - exception occured? 6212810880
+2023-02-28 11:03:36,438 - DEBUG - exception occured? None
+2023-02-28 11:03:36,439 - DEBUG - exception occured? 6212829840
+2023-02-28 11:03:36,439 - DEBUG - exception occured? None
+2023-02-28 11:03:36,440 - DEBUG - exception occured? 6212832608
+2023-02-28 11:03:36,441 - DEBUG - exception occured? None
+2023-02-28 11:03:36,441 - DEBUG - exception occured? 6212836000
+2023-02-28 11:03:36,442 - DEBUG - exception occured? None
+2023-02-28 11:03:36,443 - DEBUG - exception occured? 6212838576
+2023-02-28 11:03:36,443 - DEBUG - exception occured? None
+2023-02-28 11:03:42,177 - DEBUG - exception occured? 6212841392
+2023-02-28 11:03:42,177 - DEBUG - exception occured? None
+2023-02-28 11:03:42,178 - DEBUG - exception occured? 6212844432
+2023-02-28 11:03:42,178 - DEBUG - exception occured? None
+2023-02-28 11:03:42,179 - DEBUG - exception occured? 6212929536
+2023-02-28 11:03:42,179 - DEBUG - exception occured? None
+2023-02-28 11:03:42,180 - DEBUG - exception occured? 6212932416
+2023-02-28 11:03:42,181 - DEBUG - exception occured? None
+2023-02-28 11:03:42,181 - DEBUG - exception occured? 6212935504
+2023-02-28 11:03:42,183 - DEBUG - exception occured? None
+2023-02-28 11:03:42,183 - DEBUG - exception occured? 6212938624
+2023-02-28 11:03:42,184 - DEBUG - exception occured? None
+2023-02-28 11:03:42,184 - DEBUG - exception occured? 6212943456
+2023-02-28 11:03:42,185 - DEBUG - exception occured? None
+2023-02-28 11:03:42,185 - DEBUG - exception occured? 6215584032
+2023-02-28 11:03:42,186 - DEBUG - exception occured? None
+2023-02-28 11:03:42,188 - DEBUG - exception occured? 6215586752
+2023-02-28 11:03:42,189 - DEBUG - exception occured? None
+2023-02-28 11:03:42,189 - DEBUG - exception occured? 6215589584
+2023-02-28 11:03:42,190 - DEBUG - exception occured? None
+2023-02-28 11:03:42,190 - DEBUG - exception occured? 6215592064
+2023-02-28 11:03:42,191 - DEBUG - exception occured? None
+2023-02-28 11:03:42,192 - DEBUG - exception occured? 6215595056
+2023-02-28 11:03:42,192 - DEBUG - exception occured? None
+2023-02-28 11:03:42,193 - DEBUG - exception occured? 6215598032
+2023-02-28 11:03:42,193 - DEBUG - exception occured? None
+2023-02-28 11:03:42,194 - DEBUG - exception occured? 6215928352
+2023-02-28 11:03:42,194 - DEBUG - exception occured? None
+2023-02-28 11:03:42,195 - DEBUG - exception occured? 6215931408
+2023-02-28 11:03:42,195 - DEBUG - exception occured? None
+2023-02-28 11:03:42,196 - DEBUG - exception occured? 6215935744
+2023-02-28 11:03:42,196 - DEBUG - exception occured? None
+2023-02-28 11:04:24,134 - DEBUG - exception occured? 6215938368
+2023-02-28 11:04:24,135 - DEBUG - exception occured? None
+2023-02-28 11:04:24,135 - DEBUG - exception occured? 6215941280
+2023-02-28 11:04:24,136 - DEBUG - exception occured? None
+2023-02-28 11:04:24,137 - DEBUG - exception occured? 6216748096
+2023-02-28 11:04:24,137 - DEBUG - exception occured? None
+2023-02-28 11:04:24,138 - DEBUG - exception occured? 6216752064
+2023-02-28 11:04:24,138 - DEBUG - exception occured? None
+2023-02-28 11:04:24,139 - DEBUG - exception occured? 6216755472
+2023-02-28 11:04:24,139 - DEBUG - exception occured? None
+2023-02-28 11:04:24,140 - DEBUG - exception occured? 6216758944
+2023-02-28 11:04:24,140 - DEBUG - exception occured? None
+2023-02-28 11:04:24,141 - DEBUG - exception occured? 6239618208
+2023-02-28 11:04:24,141 - DEBUG - exception occured? None
+2023-02-28 11:04:24,143 - DEBUG - exception occured? 6239622864
+2023-02-28 11:04:24,143 - DEBUG - exception occured? None
+2023-02-28 11:04:24,146 - DEBUG - exception occured? 6239626560
+2023-02-28 11:04:24,146 - DEBUG - exception occured? None
+2023-02-28 11:04:24,147 - DEBUG - exception occured? 6239630256
+2023-02-28 11:04:24,147 - DEBUG - exception occured? None
+2023-02-28 11:04:24,148 - DEBUG - exception occured? 6239633952
+2023-02-28 11:04:24,148 - DEBUG - exception occured? None
+2023-02-28 11:04:24,149 - DEBUG - exception occured? 6239637568
+2023-02-28 11:04:24,149 - DEBUG - exception occured? None
+2023-02-28 11:04:24,150 - DEBUG - exception occured? 6239641168
+2023-02-28 11:04:24,150 - DEBUG - exception occured? None
+2023-02-28 11:04:24,151 - DEBUG - exception occured? 6239645408
+2023-02-28 11:04:24,151 - DEBUG - exception occured? None
+2023-02-28 11:04:24,152 - DEBUG - exception occured? 6239649600
+2023-02-28 11:04:24,153 - DEBUG - exception occured? None
+2023-02-28 11:04:24,153 - DEBUG - exception occured? 6239654736
+2023-02-28 11:04:24,153 - DEBUG - exception occured? None
+2023-02-28 11:14:23,110 - DEBUG - exception occured? 6239658928
+2023-02-28 11:14:23,114 - DEBUG - exception occured? None
+2023-02-28 11:14:23,115 - DEBUG - exception occured? 6239664208
+2023-02-28 11:14:23,116 - DEBUG - exception occured? None
+2023-02-28 11:14:23,117 - DEBUG - exception occured? 6239668064
+2023-02-28 11:14:23,117 - DEBUG - exception occured? None
+2023-02-28 11:14:23,118 - DEBUG - exception occured? 6239671728
+2023-02-28 11:14:23,119 - DEBUG - exception occured? None
+2023-02-28 11:14:23,120 - DEBUG - exception occured? 6239675200
+2023-02-28 11:14:23,120 - DEBUG - exception occured? None
+2023-02-28 11:14:23,121 - DEBUG - exception occured? 6239678128
+2023-02-28 11:14:23,122 - DEBUG - exception occured? None
+2023-02-28 11:14:23,122 - DEBUG - exception occured? 6239681088
+2023-02-28 11:14:23,123 - DEBUG - exception occured? None
+2023-02-28 11:14:23,124 - DEBUG - exception occured? 6239683840
+2023-02-28 11:14:23,124 - DEBUG - exception occured? None
+2023-02-28 11:14:23,127 - DEBUG - exception occured? 6239687264
+2023-02-28 11:14:23,128 - DEBUG - exception occured? None
+2023-02-28 11:14:23,129 - DEBUG - exception occured? 6239690384
+2023-02-28 11:14:23,129 - DEBUG - exception occured? None
+2023-02-28 11:14:23,130 - DEBUG - exception occured? 6239693456
+2023-02-28 11:14:23,131 - DEBUG - exception occured? None
+2023-02-28 11:14:23,131 - DEBUG - exception occured? 6239696192
+2023-02-28 11:14:23,132 - DEBUG - exception occured? None
+2023-02-28 11:14:23,133 - DEBUG - exception occured? 6239715872
+2023-02-28 11:14:23,133 - DEBUG - exception occured? None
+2023-02-28 11:14:23,134 - DEBUG - exception occured? 6239718928
+2023-02-28 11:14:23,135 - DEBUG - exception occured? None
+2023-02-28 11:14:23,135 - DEBUG - exception occured? 6239724448
+2023-02-28 11:14:23,136 - DEBUG - exception occured? None
+2023-02-28 11:14:23,136 - DEBUG - exception occured? 6239727008
+2023-02-28 11:14:23,137 - DEBUG - exception occured? None
+2023-02-28 11:15:17,216 - DEBUG - exception occured? 6239729568
+2023-02-28 11:15:17,217 - DEBUG - exception occured? None
+2023-02-28 11:15:17,218 - DEBUG - exception occured? 6239732272
+2023-02-28 11:15:17,219 - DEBUG - exception occured? None
+2023-02-28 11:15:17,220 - DEBUG - exception occured? 6239734784
+2023-02-28 11:15:17,221 - DEBUG - exception occured? None
+2023-02-28 11:15:17,222 - DEBUG - exception occured? 6239737344
+2023-02-28 11:15:17,222 - DEBUG - exception occured? None
+2023-02-28 11:15:17,223 - DEBUG - exception occured? 6239740080
+2023-02-28 11:15:17,223 - DEBUG - exception occured? None
+2023-02-28 11:15:17,224 - DEBUG - exception occured? 6239742672
+2023-02-28 11:15:17,224 - DEBUG - exception occured? None
+2023-02-28 11:15:17,225 - DEBUG - exception occured? 6239745264
+2023-02-28 11:15:17,225 - DEBUG - exception occured? None
+2023-02-28 11:15:17,226 - DEBUG - exception occured? 6239748016
+2023-02-28 11:15:17,226 - DEBUG - exception occured? None
+2023-02-28 11:15:17,228 - DEBUG - exception occured? 6239767072
+2023-02-28 11:15:17,229 - DEBUG - exception occured? None
+2023-02-28 11:15:17,229 - DEBUG - exception occured? 6239770336
+2023-02-28 11:15:17,230 - DEBUG - exception occured? None
+2023-02-28 11:15:17,231 - DEBUG - exception occured? 6239773200
+2023-02-28 11:15:17,231 - DEBUG - exception occured? None
+2023-02-28 11:15:17,232 - DEBUG - exception occured? 6239775952
+2023-02-28 11:15:17,232 - DEBUG - exception occured? None
+2023-02-28 11:15:17,233 - DEBUG - exception occured? 6239778816
+2023-02-28 11:15:17,233 - DEBUG - exception occured? None
+2023-02-28 11:15:17,234 - DEBUG - exception occured? 6239798096
+2023-02-28 11:15:17,235 - DEBUG - exception occured? None
+2023-02-28 11:15:17,236 - DEBUG - exception occured? 6239801520
+2023-02-28 11:15:17,236 - DEBUG - exception occured? None
+2023-02-28 11:15:17,237 - DEBUG - exception occured? 6239804544
+2023-02-28 11:15:17,237 - DEBUG - exception occured? None
+2023-02-28 11:21:57,747 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-02-28 11:21:57,752 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-02-28 11:21:57,828 - INFO - Calling Julia API...
+2023-02-28 11:21:57,829 - DEBUG - 
+2023-02-28 11:21:57,831 - DEBUG - exception occured? None
+2023-02-28 11:21:57,831 - DEBUG - exception occured? None
+2023-02-28 11:21:57,831 - DEBUG - exception occured? None
+2023-02-28 11:21:57,831 - DEBUG - exception occured? None
+2023-02-28 11:21:57,831 - DEBUG - exception occured? None
+2023-02-28 11:21:57,831 - DEBUG - exception occured? None
+2023-02-28 11:21:57,832 - DEBUG - exception occured? None
+2023-02-28 11:21:57,833 - DEBUG - exception occured? None
+2023-02-28 11:21:57,833 - DEBUG - exception occured? None
+2023-02-28 11:21:57,833 - DEBUG - 	Successfully activated Julia with compiled_modules = False
+2023-02-28 11:21:57,834 - DEBUG - 	Successfully imported julia.Base
+2023-02-28 11:21:57,835 - DEBUG - 	Successfully imported julia.Main
+2023-02-28 11:21:57,836 - DEBUG - 	Successfully imported julia.Pkg
+2023-02-28 11:21:57,837 - DEBUG - exception occured? None
+2023-02-28 11:21:57,837 - DEBUG - exception occured? None
+2023-02-28 11:21:57,837 - DEBUG - exception occured? None
+2023-02-28 11:21:57,838 - DEBUG - exception occured? None
+2023-02-28 11:21:57,838 - DEBUG - exception occured? None
+2023-02-28 11:21:57,839 - DEBUG - exception occured? None
+2023-02-28 11:21:57,839 - DEBUG - exception occured? None
+2023-02-28 11:21:57,840 - DEBUG - exception occured? None
+2023-02-28 11:21:57,840 - DEBUG - exception occured? None
+2023-02-28 11:21:57,856 - DEBUG - 	Available Packages:
 		'CSV'
 		 'HiGHS'
 		 'SQLite'
@@ -598,1638 +1104,32 @@
 		 'DataFrames'
 		 'Gurobi'
 		 'MathOptInterface'
-2023-02-17 20:38:52,689 - DEBUG - exception occured? None
-2023-02-17 20:38:52,689 - DEBUG - exception occured? None
-2023-02-17 20:38:52,690 - DEBUG - exception occured? None
-2023-02-17 20:38:52,705 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
-2023-02-17 20:38:52,707 - DEBUG - exception occured? None
-2023-02-17 20:38:52,707 - DEBUG - exception occured? None
-2023-02-17 20:38:52,707 - DEBUG - exception occured? None
-2023-02-17 20:38:52,718 - DEBUG - exception occured? None
-2023-02-17 20:38:52,718 - DEBUG - exception occured? None
-2023-02-17 20:38:52,719 - DEBUG - exception occured? None
-2023-02-17 20:38:52,719 - DEBUG - exception occured? None
-2023-02-17 20:38:52,720 - DEBUG - exception occured? None
-2023-02-17 20:38:52,720 - DEBUG - exception occured? None
-2023-02-17 20:38:52,720 - DEBUG - exception occured? None
-2023-02-17 20:38:52,721 - DEBUG - exception occured? None
-2023-02-17 20:38:52,721 - DEBUG - exception occured? None
-2023-02-17 20:38:52,722 - DEBUG - exception occured? None
-2023-02-17 20:38:52,723 - DEBUG - exception occured? None
-2023-02-17 20:38:52,723 - DEBUG - exception occured? None
-2023-02-17 20:38:52,723 - DEBUG - exception occured? None
-2023-02-17 20:38:52,723 - DEBUG - exception occured? None
-2023-02-17 20:38:52,723 - DEBUG - exception occured? None
-2023-02-17 20:38:52,724 - DEBUG - exception occured? None
-2023-02-17 20:38:52,724 - DEBUG - exception occured? None
-2023-02-17 20:38:52,724 - DEBUG - exception occured? None
-2023-02-17 20:38:52,725 - DEBUG - exception occured? None
-2023-02-17 20:38:52,725 - DEBUG - exception occured? None
-2023-02-17 20:38:52,725 - DEBUG - exception occured? None
-2023-02-17 20:38:52,797 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
-2023-02-17 20:38:53,071 - DEBUG - exception occured? 8147370960
-2023-02-17 20:38:53,071 - DEBUG - exception occured? None
-2023-02-17 20:38:53,072 - DEBUG - exception occured? 8147373344
-2023-02-17 20:38:53,072 - DEBUG - exception occured? None
-2023-02-17 20:38:53,073 - DEBUG - exception occured? 8147375728
-2023-02-17 20:38:53,073 - DEBUG - exception occured? None
-2023-02-17 20:38:53,074 - DEBUG - exception occured? 8147378112
-2023-02-17 20:38:53,074 - DEBUG - exception occured? None
-2023-02-17 20:38:53,075 - DEBUG - exception occured? 8147380496
-2023-02-17 20:38:53,075 - DEBUG - exception occured? None
-2023-02-17 20:38:53,076 - DEBUG - exception occured? 8147382912
-2023-02-17 20:38:53,076 - DEBUG - exception occured? None
-2023-02-17 20:38:53,077 - DEBUG - exception occured? 8147385360
-2023-02-17 20:38:53,078 - DEBUG - exception occured? None
-2023-02-17 20:38:53,079 - DEBUG - exception occured? 8147813776
-2023-02-17 20:38:53,079 - DEBUG - exception occured? None
-2023-02-17 20:38:53,082 - DEBUG - exception occured? 8147816160
-2023-02-17 20:38:53,082 - DEBUG - exception occured? None
-2023-02-17 20:38:53,083 - DEBUG - exception occured? 8147818544
-2023-02-17 20:38:53,083 - DEBUG - exception occured? None
-2023-02-17 20:38:53,084 - DEBUG - exception occured? 8147820928
-2023-02-17 20:38:53,084 - DEBUG - exception occured? None
-2023-02-17 20:38:53,085 - DEBUG - exception occured? 8147823312
-2023-02-17 20:38:53,085 - DEBUG - exception occured? None
-2023-02-17 20:38:53,086 - DEBUG - exception occured? 8147825696
-2023-02-17 20:38:53,086 - DEBUG - exception occured? None
-2023-02-17 20:38:53,087 - DEBUG - exception occured? 8147828112
-2023-02-17 20:38:53,087 - DEBUG - exception occured? None
-2023-02-17 20:38:53,088 - DEBUG - exception occured? 8147846960
-2023-02-17 20:38:53,088 - DEBUG - exception occured? None
-2023-02-17 20:38:53,089 - DEBUG - exception occured? 8147849376
-2023-02-17 20:38:53,090 - DEBUG - exception occured? None
-2023-02-17 20:39:24,473 - INFO - Calling Julia API...
-2023-02-17 20:39:24,475 - DEBUG - 
-2023-02-17 20:39:24,477 - DEBUG - exception occured? None
-2023-02-17 20:39:24,477 - DEBUG - exception occured? None
-2023-02-17 20:39:24,477 - DEBUG - exception occured? None
-2023-02-17 20:39:24,477 - DEBUG - exception occured? None
-2023-02-17 20:39:24,477 - DEBUG - exception occured? None
-2023-02-17 20:39:24,477 - DEBUG - exception occured? None
-2023-02-17 20:39:24,478 - DEBUG - exception occured? None
-2023-02-17 20:39:24,479 - DEBUG - exception occured? None
-2023-02-17 20:39:24,479 - DEBUG - exception occured? None
-2023-02-17 20:39:24,479 - DEBUG - 	Successfully activated Julia with compiled_modules = False
-2023-02-17 20:39:24,480 - DEBUG - 	Successfully imported julia.Base
-2023-02-17 20:39:24,481 - DEBUG - 	Successfully imported julia.Main
-2023-02-17 20:39:24,482 - DEBUG - 	Successfully imported julia.Pkg
-2023-02-17 20:39:24,483 - DEBUG - exception occured? None
-2023-02-17 20:39:24,484 - DEBUG - exception occured? None
-2023-02-17 20:39:24,484 - DEBUG - exception occured? None
-2023-02-17 20:39:24,484 - DEBUG - exception occured? None
-2023-02-17 20:39:24,485 - DEBUG - exception occured? None
-2023-02-17 20:39:24,485 - DEBUG - exception occured? None
-2023-02-17 20:39:24,486 - DEBUG - exception occured? None
-2023-02-17 20:39:24,486 - DEBUG - exception occured? None
-2023-02-17 20:39:24,486 - DEBUG - exception occured? None
-2023-02-17 20:39:24,514 - DEBUG - 	Available Packages:
-		'CSV'
-		 'HiGHS'
-		 'SQLite'
-		 'Clp'
-		 'JuMP'
-		 'NemoMod'
-		 'GAMS'
-		 'Cbc'
-		 'DataFrames'
-		 'Gurobi'
-		 'MathOptInterface'
-2023-02-17 20:39:24,515 - DEBUG - exception occured? None
-2023-02-17 20:39:24,516 - DEBUG - exception occured? None
-2023-02-17 20:39:24,516 - DEBUG - exception occured? None
-2023-02-17 20:39:24,538 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
-2023-02-17 20:39:24,539 - DEBUG - exception occured? None
-2023-02-17 20:39:24,540 - DEBUG - exception occured? None
-2023-02-17 20:39:24,541 - DEBUG - exception occured? None
-2023-02-17 20:39:24,550 - DEBUG - exception occured? None
-2023-02-17 20:39:24,550 - DEBUG - exception occured? None
-2023-02-17 20:39:24,551 - DEBUG - exception occured? None
-2023-02-17 20:39:24,551 - DEBUG - exception occured? None
-2023-02-17 20:39:24,552 - DEBUG - exception occured? None
-2023-02-17 20:39:24,552 - DEBUG - exception occured? None
-2023-02-17 20:39:24,553 - DEBUG - exception occured? None
-2023-02-17 20:39:24,553 - DEBUG - exception occured? None
-2023-02-17 20:39:24,554 - DEBUG - exception occured? None
-2023-02-17 20:39:24,555 - DEBUG - exception occured? None
-2023-02-17 20:39:24,555 - DEBUG - exception occured? None
-2023-02-17 20:39:24,555 - DEBUG - exception occured? None
-2023-02-17 20:39:24,556 - DEBUG - exception occured? None
-2023-02-17 20:39:24,556 - DEBUG - exception occured? None
-2023-02-17 20:39:24,556 - DEBUG - exception occured? None
-2023-02-17 20:39:24,556 - DEBUG - exception occured? None
-2023-02-17 20:39:24,557 - DEBUG - exception occured? None
-2023-02-17 20:39:24,557 - DEBUG - exception occured? None
-2023-02-17 20:39:24,558 - DEBUG - exception occured? None
-2023-02-17 20:39:24,558 - DEBUG - exception occured? None
-2023-02-17 20:39:24,558 - DEBUG - exception occured? None
-2023-02-17 20:39:24,667 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
-2023-02-17 20:39:25,918 - DEBUG - exception occured? 8149815440
-2023-02-17 20:39:25,919 - DEBUG - exception occured? None
-2023-02-17 20:39:25,920 - DEBUG - exception occured? 8149817824
-2023-02-17 20:39:25,920 - DEBUG - exception occured? None
-2023-02-17 20:39:25,921 - DEBUG - exception occured? 8149820208
-2023-02-17 20:39:25,922 - DEBUG - exception occured? None
-2023-02-17 20:39:25,922 - DEBUG - exception occured? 8149822592
-2023-02-17 20:39:25,923 - DEBUG - exception occured? None
-2023-02-17 20:39:25,923 - DEBUG - exception occured? 8149824976
-2023-02-17 20:39:25,924 - DEBUG - exception occured? None
-2023-02-17 20:39:25,924 - DEBUG - exception occured? 8149827392
-2023-02-17 20:39:25,925 - DEBUG - exception occured? None
-2023-02-17 20:39:25,926 - DEBUG - exception occured? 8150386912
-2023-02-17 20:39:25,926 - DEBUG - exception occured? None
-2023-02-17 20:39:25,927 - DEBUG - exception occured? 8150389328
-2023-02-17 20:39:25,927 - DEBUG - exception occured? None
-2023-02-17 20:39:25,930 - DEBUG - exception occured? 8150391712
-2023-02-17 20:39:25,930 - DEBUG - exception occured? None
-2023-02-17 20:39:25,931 - DEBUG - exception occured? 8150394096
-2023-02-17 20:39:25,932 - DEBUG - exception occured? None
-2023-02-17 20:39:25,933 - DEBUG - exception occured? 8150396480
-2023-02-17 20:39:25,933 - DEBUG - exception occured? None
-2023-02-17 20:39:25,934 - DEBUG - exception occured? 8150398864
-2023-02-17 20:39:25,934 - DEBUG - exception occured? None
-2023-02-17 20:39:25,935 - DEBUG - exception occured? 8150434032
-2023-02-17 20:39:25,936 - DEBUG - exception occured? None
-2023-02-17 20:39:25,936 - DEBUG - exception occured? 8150436448
-2023-02-17 20:39:25,937 - DEBUG - exception occured? None
-2023-02-17 20:39:25,937 - DEBUG - exception occured? 8150438896
-2023-02-17 20:39:25,938 - DEBUG - exception occured? None
-2023-02-17 20:39:25,938 - DEBUG - exception occured? 8150441312
-2023-02-17 20:39:25,939 - DEBUG - exception occured? None
-2023-02-17 20:41:24,362 - INFO - Calling Julia API...
-2023-02-17 20:41:24,363 - DEBUG - 
-2023-02-17 20:41:24,363 - DEBUG - exception occured? None
-2023-02-17 20:41:24,363 - DEBUG - exception occured? None
-2023-02-17 20:41:24,363 - DEBUG - exception occured? None
-2023-02-17 20:41:24,364 - DEBUG - exception occured? None
-2023-02-17 20:41:24,364 - DEBUG - exception occured? None
-2023-02-17 20:41:24,364 - DEBUG - exception occured? None
-2023-02-17 20:41:24,364 - DEBUG - exception occured? None
-2023-02-17 20:41:24,364 - DEBUG - exception occured? None
-2023-02-17 20:41:24,365 - DEBUG - exception occured? None
-2023-02-17 20:41:24,365 - DEBUG - 	Successfully activated Julia with compiled_modules = False
-2023-02-17 20:41:24,366 - DEBUG - 	Successfully imported julia.Base
-2023-02-17 20:41:24,366 - DEBUG - 	Successfully imported julia.Main
-2023-02-17 20:41:24,367 - DEBUG - 	Successfully imported julia.Pkg
-2023-02-17 20:41:24,369 - DEBUG - exception occured? None
-2023-02-17 20:41:24,369 - DEBUG - exception occured? None
-2023-02-17 20:41:24,369 - DEBUG - exception occured? None
-2023-02-17 20:41:24,370 - DEBUG - exception occured? None
-2023-02-17 20:41:24,370 - DEBUG - exception occured? None
-2023-02-17 20:41:24,370 - DEBUG - exception occured? None
-2023-02-17 20:41:24,371 - DEBUG - exception occured? None
-2023-02-17 20:41:24,371 - DEBUG - exception occured? None
-2023-02-17 20:41:24,371 - DEBUG - exception occured? None
-2023-02-17 20:41:24,388 - DEBUG - 	Available Packages:
-		'CSV'
-		 'HiGHS'
-		 'SQLite'
-		 'Clp'
-		 'JuMP'
-		 'NemoMod'
-		 'GAMS'
-		 'Cbc'
-		 'DataFrames'
-		 'Gurobi'
-		 'MathOptInterface'
-2023-02-17 20:41:24,390 - DEBUG - exception occured? None
-2023-02-17 20:41:24,391 - DEBUG - exception occured? None
-2023-02-17 20:41:24,391 - DEBUG - exception occured? None
-2023-02-17 20:41:24,406 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
-2023-02-17 20:41:24,407 - DEBUG - exception occured? None
-2023-02-17 20:41:24,408 - DEBUG - exception occured? None
-2023-02-17 20:41:24,408 - DEBUG - exception occured? None
-2023-02-17 20:41:24,431 - DEBUG - exception occured? None
-2023-02-17 20:41:24,432 - DEBUG - exception occured? None
-2023-02-17 20:41:24,432 - DEBUG - exception occured? None
-2023-02-17 20:41:24,433 - DEBUG - exception occured? None
-2023-02-17 20:41:24,433 - DEBUG - exception occured? None
-2023-02-17 20:41:24,433 - DEBUG - exception occured? None
-2023-02-17 20:41:24,434 - DEBUG - exception occured? None
-2023-02-17 20:41:24,434 - DEBUG - exception occured? None
-2023-02-17 20:41:24,434 - DEBUG - exception occured? None
-2023-02-17 20:41:24,435 - DEBUG - exception occured? None
-2023-02-17 20:41:24,435 - DEBUG - exception occured? None
-2023-02-17 20:41:24,436 - DEBUG - exception occured? None
-2023-02-17 20:41:24,436 - DEBUG - exception occured? None
-2023-02-17 20:41:24,436 - DEBUG - exception occured? None
-2023-02-17 20:41:24,437 - DEBUG - exception occured? None
-2023-02-17 20:41:24,437 - DEBUG - exception occured? None
-2023-02-17 20:41:24,437 - DEBUG - exception occured? None
-2023-02-17 20:41:24,438 - DEBUG - exception occured? None
-2023-02-17 20:41:24,438 - DEBUG - exception occured? None
-2023-02-17 20:41:24,439 - DEBUG - exception occured? None
-2023-02-17 20:41:24,439 - DEBUG - exception occured? None
-2023-02-17 20:41:24,512 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
-2023-02-17 21:47:39,259 - DEBUG - exception occured? 8152259920
-2023-02-17 21:47:39,260 - DEBUG - exception occured? None
-2023-02-17 21:47:39,262 - DEBUG - exception occured? 8152262304
-2023-02-17 21:47:39,262 - DEBUG - exception occured? None
-2023-02-17 21:47:39,264 - DEBUG - exception occured? 8152264688
-2023-02-17 21:47:39,265 - DEBUG - exception occured? None
-2023-02-17 21:47:39,265 - DEBUG - exception occured? 8152267072
-2023-02-17 21:47:39,266 - DEBUG - exception occured? None
-2023-02-17 21:47:39,267 - DEBUG - exception occured? 8152842912
-2023-02-17 21:47:39,267 - DEBUG - exception occured? None
-2023-02-17 21:47:39,268 - DEBUG - exception occured? 8152845328
-2023-02-17 21:47:39,268 - DEBUG - exception occured? None
-2023-02-17 21:47:39,269 - DEBUG - exception occured? 8152847776
-2023-02-17 21:47:39,270 - DEBUG - exception occured? None
-2023-02-17 21:47:39,270 - DEBUG - exception occured? 8152850192
-2023-02-17 21:47:39,271 - DEBUG - exception occured? None
-2023-02-17 21:47:39,274 - DEBUG - exception occured? 8152852576
-2023-02-17 21:47:39,274 - DEBUG - exception occured? None
-2023-02-17 21:47:39,275 - DEBUG - exception occured? 8152854960
-2023-02-17 21:47:39,275 - DEBUG - exception occured? None
-2023-02-17 21:47:39,276 - DEBUG - exception occured? 8152857344
-2023-02-17 21:47:39,290 - DEBUG - exception occured? None
-2023-02-17 21:47:39,291 - DEBUG - exception occured? 8152941664
-2023-02-17 21:47:39,292 - DEBUG - exception occured? None
-2023-02-17 21:47:39,293 - DEBUG - exception occured? 8152944048
-2023-02-17 21:47:39,294 - DEBUG - exception occured? None
-2023-02-17 21:47:39,295 - DEBUG - exception occured? 8152946464
-2023-02-17 21:47:39,295 - DEBUG - exception occured? None
-2023-02-17 21:47:39,296 - DEBUG - exception occured? 8152948912
-2023-02-17 21:47:39,296 - DEBUG - exception occured? None
-2023-02-17 21:47:39,297 - DEBUG - exception occured? 8152951328
-2023-02-17 21:47:39,297 - DEBUG - exception occured? None
-2023-02-17 22:42:48,401 - DEBUG - exception occured? 8152953712
-2023-02-17 22:42:48,415 - DEBUG - exception occured? None
-2023-02-17 22:42:48,416 - DEBUG - exception occured? 8152956096
-2023-02-17 22:42:48,417 - DEBUG - exception occured? None
-2023-02-17 22:42:48,419 - DEBUG - exception occured? 8152974880
-2023-02-17 22:42:48,420 - DEBUG - exception occured? None
-2023-02-17 22:42:48,423 - DEBUG - exception occured? 8152977264
-2023-02-17 22:42:48,424 - DEBUG - exception occured? None
-2023-02-17 22:42:48,425 - DEBUG - exception occured? 8152979648
-2023-02-17 22:42:48,426 - DEBUG - exception occured? None
-2023-02-17 22:42:48,427 - DEBUG - exception occured? 8152982064
-2023-02-17 22:42:48,428 - DEBUG - exception occured? None
-2023-02-17 22:42:48,430 - DEBUG - exception occured? 8152984512
-2023-02-17 22:42:48,431 - DEBUG - exception occured? None
-2023-02-17 22:42:48,433 - DEBUG - exception occured? 8152986928
-2023-02-17 22:42:48,434 - DEBUG - exception occured? None
-2023-02-17 22:42:48,437 - DEBUG - exception occured? 8152989312
-2023-02-17 22:42:48,438 - DEBUG - exception occured? None
-2023-02-17 22:42:48,439 - DEBUG - exception occured? 8153008096
-2023-02-17 22:42:48,439 - DEBUG - exception occured? None
-2023-02-17 22:42:48,440 - DEBUG - exception occured? 8153010480
-2023-02-17 22:42:48,440 - DEBUG - exception occured? None
-2023-02-17 22:42:48,441 - DEBUG - exception occured? 8153012864
-2023-02-17 22:42:48,441 - DEBUG - exception occured? None
-2023-02-17 22:42:48,441 - DEBUG - exception occured? 8153015248
-2023-02-17 22:42:48,442 - DEBUG - exception occured? None
-2023-02-17 22:42:48,442 - DEBUG - exception occured? 8153017664
-2023-02-17 22:42:48,444 - DEBUG - exception occured? None
-2023-02-17 22:42:48,445 - DEBUG - exception occured? 8153020112
-2023-02-17 22:42:48,445 - DEBUG - exception occured? None
-2023-02-17 22:42:48,446 - DEBUG - exception occured? 8153104464
-2023-02-17 22:42:48,446 - DEBUG - exception occured? None
-2023-02-17 23:24:36,824 - INFO - Calling Julia API...
-2023-02-17 23:24:36,825 - DEBUG - 
-2023-02-17 23:24:36,827 - DEBUG - exception occured? None
-2023-02-17 23:24:36,827 - DEBUG - exception occured? None
-2023-02-17 23:24:36,828 - DEBUG - exception occured? None
-2023-02-17 23:24:36,828 - DEBUG - exception occured? None
-2023-02-17 23:24:36,828 - DEBUG - exception occured? None
-2023-02-17 23:24:36,828 - DEBUG - exception occured? None
-2023-02-17 23:24:36,830 - DEBUG - exception occured? None
-2023-02-17 23:24:36,832 - DEBUG - exception occured? None
-2023-02-17 23:24:36,832 - DEBUG - exception occured? None
-2023-02-17 23:24:36,832 - DEBUG - 	Successfully activated Julia with compiled_modules = False
-2023-02-17 23:24:36,833 - DEBUG - 	Successfully imported julia.Base
-2023-02-17 23:24:36,834 - DEBUG - 	Successfully imported julia.Main
-2023-02-17 23:24:36,834 - DEBUG - 	Successfully imported julia.Pkg
-2023-02-17 23:24:36,835 - DEBUG - exception occured? None
-2023-02-17 23:24:36,836 - DEBUG - exception occured? None
-2023-02-17 23:24:36,837 - DEBUG - exception occured? None
-2023-02-17 23:24:36,838 - DEBUG - exception occured? None
-2023-02-17 23:24:36,839 - DEBUG - exception occured? None
-2023-02-17 23:24:36,839 - DEBUG - exception occured? None
-2023-02-17 23:24:36,840 - DEBUG - exception occured? None
-2023-02-17 23:24:36,840 - DEBUG - exception occured? None
-2023-02-17 23:24:36,840 - DEBUG - exception occured? None
-2023-02-17 23:24:36,884 - DEBUG - 	Available Packages:
-		'CSV'
-		 'HiGHS'
-		 'SQLite'
-		 'Clp'
-		 'JuMP'
-		 'NemoMod'
-		 'GAMS'
-		 'Cbc'
-		 'DataFrames'
-		 'Gurobi'
-		 'MathOptInterface'
-2023-02-17 23:24:36,885 - DEBUG - exception occured? None
-2023-02-17 23:24:36,886 - DEBUG - exception occured? None
-2023-02-17 23:24:36,886 - DEBUG - exception occured? None
-2023-02-17 23:24:36,918 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
-2023-02-17 23:24:36,919 - DEBUG - exception occured? None
-2023-02-17 23:24:36,919 - DEBUG - exception occured? None
-2023-02-17 23:24:36,920 - DEBUG - exception occured? None
-2023-02-17 23:24:36,966 - DEBUG - exception occured? None
-2023-02-17 23:24:36,967 - DEBUG - exception occured? None
-2023-02-17 23:24:36,969 - DEBUG - exception occured? None
-2023-02-17 23:24:36,970 - DEBUG - exception occured? None
-2023-02-17 23:24:36,970 - DEBUG - exception occured? None
-2023-02-17 23:24:36,971 - DEBUG - exception occured? None
-2023-02-17 23:24:36,971 - DEBUG - exception occured? None
-2023-02-17 23:24:36,971 - DEBUG - exception occured? None
-2023-02-17 23:24:36,972 - DEBUG - exception occured? None
-2023-02-17 23:24:36,972 - DEBUG - exception occured? None
-2023-02-17 23:24:36,972 - DEBUG - exception occured? None
-2023-02-17 23:24:36,973 - DEBUG - exception occured? None
-2023-02-17 23:24:36,973 - DEBUG - exception occured? None
-2023-02-17 23:24:36,973 - DEBUG - exception occured? None
-2023-02-17 23:24:36,973 - DEBUG - exception occured? None
-2023-02-17 23:24:36,975 - DEBUG - exception occured? None
-2023-02-17 23:24:36,976 - DEBUG - exception occured? None
-2023-02-17 23:24:36,976 - DEBUG - exception occured? None
-2023-02-17 23:24:36,977 - DEBUG - exception occured? None
-2023-02-17 23:24:36,977 - DEBUG - exception occured? None
-2023-02-17 23:24:36,977 - DEBUG - exception occured? None
-2023-02-17 23:24:37,092 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
-2023-02-17 23:38:32,429 - INFO - Calling Julia API...
-2023-02-17 23:38:32,430 - DEBUG - 
-2023-02-17 23:38:32,433 - DEBUG - exception occured? None
-2023-02-17 23:38:32,433 - DEBUG - exception occured? None
-2023-02-17 23:38:32,433 - DEBUG - exception occured? None
-2023-02-17 23:38:32,433 - DEBUG - exception occured? None
-2023-02-17 23:38:32,433 - DEBUG - exception occured? None
-2023-02-17 23:38:32,433 - DEBUG - exception occured? None
-2023-02-17 23:38:32,435 - DEBUG - exception occured? None
-2023-02-17 23:38:32,435 - DEBUG - exception occured? None
-2023-02-17 23:38:32,436 - DEBUG - exception occured? None
-2023-02-17 23:38:32,436 - DEBUG - 	Successfully activated Julia with compiled_modules = False
-2023-02-17 23:38:32,437 - DEBUG - 	Successfully imported julia.Base
-2023-02-17 23:38:32,438 - DEBUG - 	Successfully imported julia.Main
-2023-02-17 23:38:32,438 - DEBUG - 	Successfully imported julia.Pkg
-2023-02-17 23:38:32,439 - DEBUG - exception occured? None
-2023-02-17 23:38:32,440 - DEBUG - exception occured? None
-2023-02-17 23:38:32,440 - DEBUG - exception occured? None
-2023-02-17 23:38:32,441 - DEBUG - exception occured? None
-2023-02-17 23:38:32,441 - DEBUG - exception occured? None
-2023-02-17 23:38:32,442 - DEBUG - exception occured? None
-2023-02-17 23:38:32,442 - DEBUG - exception occured? None
-2023-02-17 23:38:32,443 - DEBUG - exception occured? None
-2023-02-17 23:38:32,444 - DEBUG - exception occured? None
-2023-02-17 23:38:32,467 - DEBUG - 	Available Packages:
-		'CSV'
-		 'HiGHS'
-		 'SQLite'
-		 'Clp'
-		 'JuMP'
-		 'NemoMod'
-		 'GAMS'
-		 'Cbc'
-		 'DataFrames'
-		 'Gurobi'
-		 'MathOptInterface'
-2023-02-17 23:38:32,468 - DEBUG - exception occured? None
-2023-02-17 23:38:32,469 - DEBUG - exception occured? None
-2023-02-17 23:38:32,470 - DEBUG - exception occured? None
-2023-02-17 23:38:32,486 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
-2023-02-17 23:38:32,488 - DEBUG - exception occured? None
-2023-02-17 23:38:32,489 - DEBUG - exception occured? None
-2023-02-17 23:38:32,489 - DEBUG - exception occured? None
-2023-02-17 23:38:32,506 - DEBUG - exception occured? None
-2023-02-17 23:38:32,506 - DEBUG - exception occured? None
-2023-02-17 23:38:32,506 - DEBUG - exception occured? None
-2023-02-17 23:38:32,507 - DEBUG - exception occured? None
-2023-02-17 23:38:32,508 - DEBUG - exception occured? None
-2023-02-17 23:38:32,509 - DEBUG - exception occured? None
-2023-02-17 23:38:32,510 - DEBUG - exception occured? None
-2023-02-17 23:38:32,511 - DEBUG - exception occured? None
-2023-02-17 23:38:32,511 - DEBUG - exception occured? None
-2023-02-17 23:38:32,512 - DEBUG - exception occured? None
-2023-02-17 23:38:32,512 - DEBUG - exception occured? None
-2023-02-17 23:38:32,514 - DEBUG - exception occured? None
-2023-02-17 23:38:32,514 - DEBUG - exception occured? None
-2023-02-17 23:38:32,514 - DEBUG - exception occured? None
-2023-02-17 23:38:32,515 - DEBUG - exception occured? None
-2023-02-17 23:38:32,515 - DEBUG - exception occured? None
-2023-02-17 23:38:32,515 - DEBUG - exception occured? None
-2023-02-17 23:38:32,516 - DEBUG - exception occured? None
-2023-02-17 23:38:32,516 - DEBUG - exception occured? None
-2023-02-17 23:38:32,517 - DEBUG - exception occured? None
-2023-02-17 23:38:32,517 - DEBUG - exception occured? None
-2023-02-17 23:38:32,647 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
-2023-02-17 23:42:19,421 - INFO - Calling Julia API...
-2023-02-17 23:42:19,421 - DEBUG - 
-2023-02-17 23:42:19,422 - DEBUG - exception occured? None
-2023-02-17 23:42:19,423 - DEBUG - exception occured? None
-2023-02-17 23:42:19,423 - DEBUG - exception occured? None
-2023-02-17 23:42:19,423 - DEBUG - exception occured? None
-2023-02-17 23:42:19,423 - DEBUG - exception occured? None
-2023-02-17 23:42:19,424 - DEBUG - exception occured? None
-2023-02-17 23:42:19,424 - DEBUG - exception occured? None
-2023-02-17 23:42:19,424 - DEBUG - exception occured? None
-2023-02-17 23:42:19,425 - DEBUG - exception occured? None
-2023-02-17 23:42:19,425 - DEBUG - 	Successfully activated Julia with compiled_modules = False
-2023-02-17 23:42:19,425 - DEBUG - 	Successfully imported julia.Base
-2023-02-17 23:42:19,426 - DEBUG - 	Successfully imported julia.Main
-2023-02-17 23:42:19,427 - DEBUG - 	Successfully imported julia.Pkg
-2023-02-17 23:42:19,428 - DEBUG - exception occured? None
-2023-02-17 23:42:19,428 - DEBUG - exception occured? None
-2023-02-17 23:42:19,428 - DEBUG - exception occured? None
-2023-02-17 23:42:19,429 - DEBUG - exception occured? None
-2023-02-17 23:42:19,430 - DEBUG - exception occured? None
-2023-02-17 23:42:19,430 - DEBUG - exception occured? None
-2023-02-17 23:42:19,431 - DEBUG - exception occured? None
-2023-02-17 23:42:19,431 - DEBUG - exception occured? None
-2023-02-17 23:42:19,431 - DEBUG - exception occured? None
-2023-02-17 23:42:19,445 - DEBUG - 	Available Packages:
-		'CSV'
-		 'HiGHS'
-		 'SQLite'
-		 'Clp'
-		 'JuMP'
-		 'NemoMod'
-		 'GAMS'
-		 'Cbc'
-		 'DataFrames'
-		 'Gurobi'
-		 'MathOptInterface'
-2023-02-17 23:42:19,447 - DEBUG - exception occured? None
-2023-02-17 23:42:19,447 - DEBUG - exception occured? None
-2023-02-17 23:42:19,447 - DEBUG - exception occured? None
-2023-02-17 23:42:19,465 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
-2023-02-17 23:42:19,466 - DEBUG - exception occured? None
-2023-02-17 23:42:19,467 - DEBUG - exception occured? None
-2023-02-17 23:42:19,467 - DEBUG - exception occured? None
-2023-02-17 23:42:19,480 - DEBUG - exception occured? None
-2023-02-17 23:42:19,480 - DEBUG - exception occured? None
-2023-02-17 23:42:19,481 - DEBUG - exception occured? None
-2023-02-17 23:42:19,481 - DEBUG - exception occured? None
-2023-02-17 23:42:19,482 - DEBUG - exception occured? None
-2023-02-17 23:42:19,482 - DEBUG - exception occured? None
-2023-02-17 23:42:19,483 - DEBUG - exception occured? None
-2023-02-17 23:42:19,483 - DEBUG - exception occured? None
-2023-02-17 23:42:19,483 - DEBUG - exception occured? None
-2023-02-17 23:42:19,484 - DEBUG - exception occured? None
-2023-02-17 23:42:19,484 - DEBUG - exception occured? None
-2023-02-17 23:42:19,485 - DEBUG - exception occured? None
-2023-02-17 23:42:19,485 - DEBUG - exception occured? None
-2023-02-17 23:42:19,486 - DEBUG - exception occured? None
-2023-02-17 23:42:19,486 - DEBUG - exception occured? None
-2023-02-17 23:42:19,486 - DEBUG - exception occured? None
-2023-02-17 23:42:19,487 - DEBUG - exception occured? None
-2023-02-17 23:42:19,487 - DEBUG - exception occured? None
-2023-02-17 23:42:19,488 - DEBUG - exception occured? None
-2023-02-17 23:42:19,489 - DEBUG - exception occured? None
-2023-02-17 23:42:19,490 - DEBUG - exception occured? None
-2023-02-17 23:42:19,579 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
-2023-02-17 23:42:34,259 - WARNING - In retrieve_nemomod_tables_fuel_production_demand_and_trade: both `df_elec_trajectories` and `tuple_enfu_production_and_demands` cannot be None.
-2023-02-17 23:42:44,626 - DEBUG - exception occured? 8158047600
-2023-02-17 23:42:44,627 - DEBUG - exception occured? None
-2023-02-17 23:42:44,628 - DEBUG - exception occured? 8158049984
-2023-02-17 23:42:44,628 - DEBUG - exception occured? None
-2023-02-17 23:42:44,629 - DEBUG - exception occured? 8158543904
-2023-02-17 23:42:44,629 - DEBUG - exception occured? None
-2023-02-17 23:42:44,630 - DEBUG - exception occured? 8158546288
-2023-02-17 23:42:44,630 - DEBUG - exception occured? None
-2023-02-17 23:42:44,630 - DEBUG - exception occured? 8158548672
-2023-02-17 23:42:44,631 - DEBUG - exception occured? None
-2023-02-17 23:42:44,631 - DEBUG - exception occured? 8158551088
-2023-02-17 23:42:44,632 - DEBUG - exception occured? None
-2023-02-17 23:42:44,632 - DEBUG - exception occured? 8158553536
-2023-02-17 23:42:44,633 - DEBUG - exception occured? None
-2023-02-17 23:42:44,633 - DEBUG - exception occured? 8158555952
-2023-02-17 23:42:44,634 - DEBUG - exception occured? None
-2023-02-17 23:42:44,636 - DEBUG - exception occured? 8158558336
-2023-02-17 23:42:44,637 - DEBUG - exception occured? None
-2023-02-17 23:42:44,637 - DEBUG - exception occured? 8158609888
-2023-02-17 23:42:44,638 - DEBUG - exception occured? None
-2023-02-17 23:42:44,638 - DEBUG - exception occured? 8158612272
-2023-02-17 23:42:44,639 - DEBUG - exception occured? None
-2023-02-17 23:42:44,639 - DEBUG - exception occured? 8158614656
-2023-02-17 23:42:44,639 - DEBUG - exception occured? None
-2023-02-17 23:42:44,640 - DEBUG - exception occured? 8158617040
-2023-02-17 23:42:44,640 - DEBUG - exception occured? None
-2023-02-17 23:42:44,814 - DEBUG - exception occured? 8158619456
-2023-02-17 23:42:44,815 - DEBUG - exception occured? None
-2023-02-17 23:42:44,815 - DEBUG - exception occured? 8158621904
-2023-02-17 23:42:44,816 - DEBUG - exception occured? None
-2023-02-17 23:42:44,816 - DEBUG - exception occured? 8158624320
-2023-02-17 23:42:44,817 - DEBUG - exception occured? None
-2023-02-17 23:43:16,864 - INFO - Calling Julia API...
-2023-02-17 23:43:16,865 - DEBUG - 
-2023-02-17 23:43:16,866 - DEBUG - exception occured? None
-2023-02-17 23:43:16,866 - DEBUG - exception occured? None
-2023-02-17 23:43:16,866 - DEBUG - exception occured? None
-2023-02-17 23:43:16,866 - DEBUG - exception occured? None
-2023-02-17 23:43:16,867 - DEBUG - exception occured? None
-2023-02-17 23:43:16,867 - DEBUG - exception occured? None
-2023-02-17 23:43:16,867 - DEBUG - exception occured? None
-2023-02-17 23:43:16,867 - DEBUG - exception occured? None
-2023-02-17 23:43:16,868 - DEBUG - exception occured? None
-2023-02-17 23:43:16,868 - DEBUG - 	Successfully activated Julia with compiled_modules = False
-2023-02-17 23:43:16,869 - DEBUG - 	Successfully imported julia.Base
-2023-02-17 23:43:16,870 - DEBUG - 	Successfully imported julia.Main
-2023-02-17 23:43:16,871 - DEBUG - 	Successfully imported julia.Pkg
-2023-02-17 23:43:16,872 - DEBUG - exception occured? None
-2023-02-17 23:43:16,872 - DEBUG - exception occured? None
-2023-02-17 23:43:16,873 - DEBUG - exception occured? None
-2023-02-17 23:43:16,873 - DEBUG - exception occured? None
-2023-02-17 23:43:16,873 - DEBUG - exception occured? None
-2023-02-17 23:43:16,874 - DEBUG - exception occured? None
-2023-02-17 23:43:16,874 - DEBUG - exception occured? None
-2023-02-17 23:43:16,874 - DEBUG - exception occured? None
-2023-02-17 23:43:16,875 - DEBUG - exception occured? None
-2023-02-17 23:43:16,890 - DEBUG - 	Available Packages:
-		'CSV'
-		 'HiGHS'
-		 'SQLite'
-		 'Clp'
-		 'JuMP'
-		 'NemoMod'
-		 'GAMS'
-		 'Cbc'
-		 'DataFrames'
-		 'Gurobi'
-		 'MathOptInterface'
-2023-02-17 23:43:16,892 - DEBUG - exception occured? None
-2023-02-17 23:43:16,892 - DEBUG - exception occured? None
-2023-02-17 23:43:16,893 - DEBUG - exception occured? None
-2023-02-17 23:43:16,902 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
-2023-02-17 23:43:16,904 - DEBUG - exception occured? None
-2023-02-17 23:43:16,904 - DEBUG - exception occured? None
-2023-02-17 23:43:16,905 - DEBUG - exception occured? None
-2023-02-17 23:43:16,919 - DEBUG - exception occured? None
-2023-02-17 23:43:16,920 - DEBUG - exception occured? None
-2023-02-17 23:43:16,921 - DEBUG - exception occured? None
-2023-02-17 23:43:16,921 - DEBUG - exception occured? None
-2023-02-17 23:43:16,921 - DEBUG - exception occured? None
-2023-02-17 23:43:16,922 - DEBUG - exception occured? None
-2023-02-17 23:43:16,922 - DEBUG - exception occured? None
-2023-02-17 23:43:16,923 - DEBUG - exception occured? None
-2023-02-17 23:43:16,923 - DEBUG - exception occured? None
-2023-02-17 23:43:16,924 - DEBUG - exception occured? None
-2023-02-17 23:43:16,924 - DEBUG - exception occured? None
-2023-02-17 23:43:16,925 - DEBUG - exception occured? None
-2023-02-17 23:43:16,925 - DEBUG - exception occured? None
-2023-02-17 23:43:16,926 - DEBUG - exception occured? None
-2023-02-17 23:43:16,926 - DEBUG - exception occured? None
-2023-02-17 23:43:16,926 - DEBUG - exception occured? None
-2023-02-17 23:43:16,928 - DEBUG - exception occured? None
-2023-02-17 23:43:16,928 - DEBUG - exception occured? None
-2023-02-17 23:43:16,929 - DEBUG - exception occured? None
-2023-02-17 23:43:16,929 - DEBUG - exception occured? None
-2023-02-17 23:43:16,929 - DEBUG - exception occured? None
-2023-02-17 23:43:16,995 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
-2023-02-17 23:43:50,810 - INFO - Calling Julia API...
-2023-02-17 23:43:50,811 - DEBUG - 
-2023-02-17 23:43:50,811 - DEBUG - exception occured? None
-2023-02-17 23:43:50,811 - DEBUG - exception occured? None
-2023-02-17 23:43:50,811 - DEBUG - exception occured? None
-2023-02-17 23:43:50,812 - DEBUG - exception occured? None
-2023-02-17 23:43:50,812 - DEBUG - exception occured? None
-2023-02-17 23:43:50,812 - DEBUG - exception occured? None
-2023-02-17 23:43:50,812 - DEBUG - exception occured? None
-2023-02-17 23:43:50,812 - DEBUG - exception occured? None
-2023-02-17 23:43:50,813 - DEBUG - exception occured? None
-2023-02-17 23:43:50,813 - DEBUG - 	Successfully activated Julia with compiled_modules = False
-2023-02-17 23:43:50,813 - DEBUG - 	Successfully imported julia.Base
-2023-02-17 23:43:50,814 - DEBUG - 	Successfully imported julia.Main
-2023-02-17 23:43:50,815 - DEBUG - 	Successfully imported julia.Pkg
-2023-02-17 23:43:50,816 - DEBUG - exception occured? None
-2023-02-17 23:43:50,816 - DEBUG - exception occured? None
-2023-02-17 23:43:50,816 - DEBUG - exception occured? None
-2023-02-17 23:43:50,818 - DEBUG - exception occured? None
-2023-02-17 23:43:50,818 - DEBUG - exception occured? None
-2023-02-17 23:43:50,818 - DEBUG - exception occured? None
-2023-02-17 23:43:50,819 - DEBUG - exception occured? None
-2023-02-17 23:43:50,819 - DEBUG - exception occured? None
-2023-02-17 23:43:50,819 - DEBUG - exception occured? None
-2023-02-17 23:43:50,828 - DEBUG - 	Available Packages:
-		'CSV'
-		 'HiGHS'
-		 'SQLite'
-		 'Clp'
-		 'JuMP'
-		 'NemoMod'
-		 'GAMS'
-		 'Cbc'
-		 'DataFrames'
-		 'Gurobi'
-		 'MathOptInterface'
-2023-02-17 23:43:50,830 - DEBUG - exception occured? None
-2023-02-17 23:43:50,830 - DEBUG - exception occured? None
-2023-02-17 23:43:50,830 - DEBUG - exception occured? None
-2023-02-17 23:43:50,841 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
-2023-02-17 23:43:50,842 - DEBUG - exception occured? None
-2023-02-17 23:43:50,843 - DEBUG - exception occured? None
-2023-02-17 23:43:50,843 - DEBUG - exception occured? None
-2023-02-17 23:43:50,857 - DEBUG - exception occured? None
-2023-02-17 23:43:50,858 - DEBUG - exception occured? None
-2023-02-17 23:43:50,859 - DEBUG - exception occured? None
-2023-02-17 23:43:50,859 - DEBUG - exception occured? None
-2023-02-17 23:43:50,859 - DEBUG - exception occured? None
-2023-02-17 23:43:50,860 - DEBUG - exception occured? None
-2023-02-17 23:43:50,860 - DEBUG - exception occured? None
-2023-02-17 23:43:50,860 - DEBUG - exception occured? None
-2023-02-17 23:43:50,861 - DEBUG - exception occured? None
-2023-02-17 23:43:50,861 - DEBUG - exception occured? None
-2023-02-17 23:43:50,861 - DEBUG - exception occured? None
-2023-02-17 23:43:50,862 - DEBUG - exception occured? None
-2023-02-17 23:43:50,862 - DEBUG - exception occured? None
-2023-02-17 23:43:50,862 - DEBUG - exception occured? None
-2023-02-17 23:43:50,862 - DEBUG - exception occured? None
-2023-02-17 23:43:50,863 - DEBUG - exception occured? None
-2023-02-17 23:43:50,863 - DEBUG - exception occured? None
-2023-02-17 23:43:50,863 - DEBUG - exception occured? None
-2023-02-17 23:43:50,864 - DEBUG - exception occured? None
-2023-02-17 23:43:50,864 - DEBUG - exception occured? None
-2023-02-17 23:43:50,864 - DEBUG - exception occured? None
-2023-02-17 23:43:50,924 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
-2023-02-17 23:44:08,328 - INFO - Calling Julia API...
-2023-02-17 23:44:08,329 - DEBUG - 
-2023-02-17 23:44:08,330 - DEBUG - exception occured? None
-2023-02-17 23:44:08,331 - DEBUG - exception occured? None
-2023-02-17 23:44:08,331 - DEBUG - exception occured? None
-2023-02-17 23:44:08,331 - DEBUG - exception occured? None
-2023-02-17 23:44:08,331 - DEBUG - exception occured? None
-2023-02-17 23:44:08,331 - DEBUG - exception occured? None
-2023-02-17 23:44:08,331 - DEBUG - exception occured? None
-2023-02-17 23:44:08,332 - DEBUG - exception occured? None
-2023-02-17 23:44:08,332 - DEBUG - exception occured? None
-2023-02-17 23:44:08,332 - DEBUG - 	Successfully activated Julia with compiled_modules = False
-2023-02-17 23:44:08,333 - DEBUG - 	Successfully imported julia.Base
-2023-02-17 23:44:08,334 - DEBUG - 	Successfully imported julia.Main
-2023-02-17 23:44:08,334 - DEBUG - 	Successfully imported julia.Pkg
-2023-02-17 23:44:08,335 - DEBUG - exception occured? None
-2023-02-17 23:44:08,335 - DEBUG - exception occured? None
-2023-02-17 23:44:08,336 - DEBUG - exception occured? None
-2023-02-17 23:44:08,336 - DEBUG - exception occured? None
-2023-02-17 23:44:08,336 - DEBUG - exception occured? None
-2023-02-17 23:44:08,337 - DEBUG - exception occured? None
-2023-02-17 23:44:08,337 - DEBUG - exception occured? None
-2023-02-17 23:44:08,337 - DEBUG - exception occured? None
-2023-02-17 23:44:08,337 - DEBUG - exception occured? None
-2023-02-17 23:44:08,345 - DEBUG - 	Available Packages:
-		'CSV'
-		 'HiGHS'
-		 'SQLite'
-		 'Clp'
-		 'JuMP'
-		 'NemoMod'
-		 'GAMS'
-		 'Cbc'
-		 'DataFrames'
-		 'Gurobi'
-		 'MathOptInterface'
-2023-02-17 23:44:08,346 - DEBUG - exception occured? None
-2023-02-17 23:44:08,347 - DEBUG - exception occured? None
-2023-02-17 23:44:08,347 - DEBUG - exception occured? None
-2023-02-17 23:44:08,358 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
-2023-02-17 23:44:08,359 - DEBUG - exception occured? None
-2023-02-17 23:44:08,360 - DEBUG - exception occured? None
-2023-02-17 23:44:08,360 - DEBUG - exception occured? None
-2023-02-17 23:44:08,375 - DEBUG - exception occured? None
-2023-02-17 23:44:08,375 - DEBUG - exception occured? None
-2023-02-17 23:44:08,375 - DEBUG - exception occured? None
-2023-02-17 23:44:08,376 - DEBUG - exception occured? None
-2023-02-17 23:44:08,376 - DEBUG - exception occured? None
-2023-02-17 23:44:08,376 - DEBUG - exception occured? None
-2023-02-17 23:44:08,377 - DEBUG - exception occured? None
-2023-02-17 23:44:08,377 - DEBUG - exception occured? None
-2023-02-17 23:44:08,378 - DEBUG - exception occured? None
-2023-02-17 23:44:08,378 - DEBUG - exception occured? None
-2023-02-17 23:44:08,379 - DEBUG - exception occured? None
-2023-02-17 23:44:08,379 - DEBUG - exception occured? None
-2023-02-17 23:44:08,379 - DEBUG - exception occured? None
-2023-02-17 23:44:08,379 - DEBUG - exception occured? None
-2023-02-17 23:44:08,380 - DEBUG - exception occured? None
-2023-02-17 23:44:08,380 - DEBUG - exception occured? None
-2023-02-17 23:44:08,380 - DEBUG - exception occured? None
-2023-02-17 23:44:08,381 - DEBUG - exception occured? None
-2023-02-17 23:44:08,381 - DEBUG - exception occured? None
-2023-02-17 23:44:08,382 - DEBUG - exception occured? None
-2023-02-17 23:44:08,382 - DEBUG - exception occured? None
-2023-02-17 23:44:08,444 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
-2023-02-17 23:44:55,427 - INFO - Calling Julia API...
-2023-02-17 23:44:55,429 - DEBUG - 
-2023-02-17 23:44:55,430 - DEBUG - exception occured? None
-2023-02-17 23:44:55,430 - DEBUG - exception occured? None
-2023-02-17 23:44:55,430 - DEBUG - exception occured? None
-2023-02-17 23:44:55,430 - DEBUG - exception occured? None
-2023-02-17 23:44:55,430 - DEBUG - exception occured? None
-2023-02-17 23:44:55,431 - DEBUG - exception occured? None
-2023-02-17 23:44:55,431 - DEBUG - exception occured? None
-2023-02-17 23:44:55,431 - DEBUG - exception occured? None
-2023-02-17 23:44:55,432 - DEBUG - exception occured? None
-2023-02-17 23:44:55,432 - DEBUG - 	Successfully activated Julia with compiled_modules = False
-2023-02-17 23:44:55,433 - DEBUG - 	Successfully imported julia.Base
-2023-02-17 23:44:55,433 - DEBUG - 	Successfully imported julia.Main
-2023-02-17 23:44:55,434 - DEBUG - 	Successfully imported julia.Pkg
-2023-02-17 23:44:55,436 - DEBUG - exception occured? None
-2023-02-17 23:44:55,436 - DEBUG - exception occured? None
-2023-02-17 23:44:55,436 - DEBUG - exception occured? None
-2023-02-17 23:44:55,437 - DEBUG - exception occured? None
-2023-02-17 23:44:55,437 - DEBUG - exception occured? None
-2023-02-17 23:44:55,438 - DEBUG - exception occured? None
-2023-02-17 23:44:55,438 - DEBUG - exception occured? None
-2023-02-17 23:44:55,438 - DEBUG - exception occured? None
-2023-02-17 23:44:55,439 - DEBUG - exception occured? None
-2023-02-17 23:44:55,451 - DEBUG - 	Available Packages:
-		'CSV'
-		 'HiGHS'
-		 'SQLite'
-		 'Clp'
-		 'JuMP'
-		 'NemoMod'
-		 'GAMS'
-		 'Cbc'
-		 'DataFrames'
-		 'Gurobi'
-		 'MathOptInterface'
-2023-02-17 23:44:55,452 - DEBUG - exception occured? None
-2023-02-17 23:44:55,452 - DEBUG - exception occured? None
-2023-02-17 23:44:55,452 - DEBUG - exception occured? None
-2023-02-17 23:44:55,468 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
-2023-02-17 23:44:55,469 - DEBUG - exception occured? None
-2023-02-17 23:44:55,469 - DEBUG - exception occured? None
-2023-02-17 23:44:55,470 - DEBUG - exception occured? None
-2023-02-17 23:44:55,482 - DEBUG - exception occured? None
-2023-02-17 23:44:55,482 - DEBUG - exception occured? None
-2023-02-17 23:44:55,483 - DEBUG - exception occured? None
-2023-02-17 23:44:55,483 - DEBUG - exception occured? None
-2023-02-17 23:44:55,483 - DEBUG - exception occured? None
-2023-02-17 23:44:55,484 - DEBUG - exception occured? None
-2023-02-17 23:44:55,484 - DEBUG - exception occured? None
-2023-02-17 23:44:55,484 - DEBUG - exception occured? None
-2023-02-17 23:44:55,485 - DEBUG - exception occured? None
-2023-02-17 23:44:55,485 - DEBUG - exception occured? None
-2023-02-17 23:44:55,485 - DEBUG - exception occured? None
-2023-02-17 23:44:55,486 - DEBUG - exception occured? None
-2023-02-17 23:44:55,486 - DEBUG - exception occured? None
-2023-02-17 23:44:55,486 - DEBUG - exception occured? None
-2023-02-17 23:44:55,486 - DEBUG - exception occured? None
-2023-02-17 23:44:55,487 - DEBUG - exception occured? None
-2023-02-17 23:44:55,487 - DEBUG - exception occured? None
-2023-02-17 23:44:55,487 - DEBUG - exception occured? None
-2023-02-17 23:44:55,488 - DEBUG - exception occured? None
-2023-02-17 23:44:55,488 - DEBUG - exception occured? None
-2023-02-17 23:44:55,488 - DEBUG - exception occured? None
-2023-02-17 23:44:55,546 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
-2023-02-17 23:44:55,688 - DEBUG - exception occured? 8167218704
-2023-02-17 23:44:55,688 - DEBUG - exception occured? None
-2023-02-17 23:44:55,689 - DEBUG - exception occured? 8167221088
-2023-02-17 23:44:55,689 - DEBUG - exception occured? None
-2023-02-17 23:44:55,690 - DEBUG - exception occured? 8167223472
-2023-02-17 23:44:55,690 - DEBUG - exception occured? None
-2023-02-17 23:44:55,691 - DEBUG - exception occured? 8167225856
-2023-02-17 23:44:55,691 - DEBUG - exception occured? None
-2023-02-17 23:44:55,692 - DEBUG - exception occured? 8167867232
-2023-02-17 23:44:55,693 - DEBUG - exception occured? None
-2023-02-17 23:44:55,693 - DEBUG - exception occured? 8167869648
-2023-02-17 23:44:55,694 - DEBUG - exception occured? None
-2023-02-17 23:44:55,695 - DEBUG - exception occured? 8167872096
-2023-02-17 23:44:55,696 - DEBUG - exception occured? None
-2023-02-17 23:44:55,696 - DEBUG - exception occured? 8167874512
-2023-02-17 23:44:55,697 - DEBUG - exception occured? None
-2023-02-17 23:44:55,699 - DEBUG - exception occured? 8167876896
-2023-02-17 23:44:55,700 - DEBUG - exception occured? None
-2023-02-17 23:44:55,701 - DEBUG - exception occured? 8167879280
-2023-02-17 23:44:55,701 - DEBUG - exception occured? None
-2023-02-17 23:44:55,702 - DEBUG - exception occured? 8167881664
-2023-02-17 23:44:55,702 - DEBUG - exception occured? None
-2023-02-17 23:44:55,703 - DEBUG - exception occured? 8167933216
-2023-02-17 23:44:55,703 - DEBUG - exception occured? None
-2023-02-17 23:44:55,704 - DEBUG - exception occured? 8167935600
-2023-02-17 23:44:55,704 - DEBUG - exception occured? None
-2023-02-17 23:44:55,705 - DEBUG - exception occured? 8167938016
-2023-02-17 23:44:55,705 - DEBUG - exception occured? None
-2023-02-17 23:44:55,706 - DEBUG - exception occured? 8167940464
-2023-02-17 23:44:55,706 - DEBUG - exception occured? None
-2023-02-17 23:44:55,707 - DEBUG - exception occured? 8167942880
-2023-02-17 23:44:55,707 - DEBUG - exception occured? None
-2023-02-17 23:44:55,710 - DEBUG - exception occured? 8167945264
-2023-02-17 23:44:55,710 - DEBUG - exception occured? None
-2023-02-17 23:44:55,711 - DEBUG - exception occured? 8167947648
-2023-02-17 23:44:55,712 - DEBUG - exception occured? None
-2023-02-17 23:44:55,712 - DEBUG - exception occured? 8167966432
-2023-02-17 23:44:55,713 - DEBUG - exception occured? None
-2023-02-17 23:44:55,713 - DEBUG - exception occured? 8167968816
-2023-02-17 23:44:55,714 - DEBUG - exception occured? None
-2023-02-17 23:44:55,714 - DEBUG - exception occured? 8167971200
-2023-02-17 23:44:55,715 - DEBUG - exception occured? None
-2023-02-17 23:44:55,715 - DEBUG - exception occured? 8167973616
-2023-02-17 23:44:55,716 - DEBUG - exception occured? None
-2023-02-17 23:44:55,716 - DEBUG - exception occured? 8167976064
-2023-02-17 23:44:55,717 - DEBUG - exception occured? None
-2023-02-17 23:44:55,717 - DEBUG - exception occured? 8167978480
-2023-02-17 23:44:55,718 - DEBUG - exception occured? None
-2023-02-17 23:44:55,720 - DEBUG - exception occured? 8167980864
-2023-02-17 23:44:55,720 - DEBUG - exception occured? None
-2023-02-17 23:44:55,721 - DEBUG - exception occured? 8168032416
-2023-02-17 23:44:55,721 - DEBUG - exception occured? None
-2023-02-17 23:44:55,722 - DEBUG - exception occured? 8168034800
-2023-02-17 23:44:55,722 - DEBUG - exception occured? None
-2023-02-17 23:44:55,723 - DEBUG - exception occured? 8168037184
-2023-02-17 23:44:55,724 - DEBUG - exception occured? None
-2023-02-17 23:44:55,724 - DEBUG - exception occured? 8168039568
-2023-02-17 23:44:55,725 - DEBUG - exception occured? None
-2023-02-17 23:44:55,725 - DEBUG - exception occured? 8168041984
-2023-02-17 23:44:55,726 - DEBUG - exception occured? None
-2023-02-17 23:44:55,726 - DEBUG - exception occured? 8168044432
-2023-02-17 23:44:55,727 - DEBUG - exception occured? None
-2023-02-17 23:44:55,728 - DEBUG - exception occured? 8168063248
-2023-02-17 23:44:55,728 - DEBUG - exception occured? None
-2023-02-17 23:48:51,169 - DEBUG - exception occured? 8168065632
-2023-02-17 23:48:51,170 - DEBUG - exception occured? None
-2023-02-17 23:48:51,171 - DEBUG - exception occured? 8168068016
-2023-02-17 23:48:51,171 - DEBUG - exception occured? None
-2023-02-17 23:48:51,172 - DEBUG - exception occured? 8168070400
-2023-02-17 23:48:51,173 - DEBUG - exception occured? None
-2023-02-17 23:48:51,174 - DEBUG - exception occured? 8168072784
-2023-02-17 23:48:51,175 - DEBUG - exception occured? None
-2023-02-17 23:48:51,176 - DEBUG - exception occured? 8168075168
-2023-02-17 23:48:51,176 - DEBUG - exception occured? None
-2023-02-17 23:48:51,177 - DEBUG - exception occured? 8168077584
-2023-02-17 23:48:51,177 - DEBUG - exception occured? None
-2023-02-17 23:48:51,178 - DEBUG - exception occured? 8168112816
-2023-02-17 23:48:51,178 - DEBUG - exception occured? None
-2023-02-17 23:48:51,179 - DEBUG - exception occured? 8168115232
-2023-02-17 23:48:51,179 - DEBUG - exception occured? None
-2023-02-17 23:48:51,182 - DEBUG - exception occured? 8168117616
-2023-02-17 23:48:51,182 - DEBUG - exception occured? None
-2023-02-17 23:48:51,183 - DEBUG - exception occured? 8168120000
-2023-02-17 23:48:51,183 - DEBUG - exception occured? None
-2023-02-17 23:48:51,184 - DEBUG - exception occured? 8168122384
-2023-02-17 23:48:51,184 - DEBUG - exception occured? None
-2023-02-17 23:48:51,185 - DEBUG - exception occured? 8168124768
-2023-02-17 23:48:51,185 - DEBUG - exception occured? None
-2023-02-17 23:48:51,186 - DEBUG - exception occured? 8168127152
-2023-02-17 23:48:51,186 - DEBUG - exception occured? None
-2023-02-17 23:48:51,187 - DEBUG - exception occured? 8168178736
-2023-02-17 23:48:51,187 - DEBUG - exception occured? None
-2023-02-17 23:48:51,189 - DEBUG - exception occured? 8168181184
-2023-02-17 23:48:51,189 - DEBUG - exception occured? None
-2023-02-17 23:48:51,190 - DEBUG - exception occured? 8168183600
-2023-02-17 23:48:51,191 - DEBUG - exception occured? None
-2023-02-17 23:48:54,305 - DEBUG - exception occured? 8168185984
-2023-02-17 23:48:54,305 - DEBUG - exception occured? None
-2023-02-17 23:48:54,306 - DEBUG - exception occured? 8168188368
-2023-02-17 23:48:54,306 - DEBUG - exception occured? None
-2023-02-17 23:48:54,307 - DEBUG - exception occured? 8168190752
-2023-02-17 23:48:54,307 - DEBUG - exception occured? None
-2023-02-17 23:48:54,308 - DEBUG - exception occured? 8168193136
-2023-02-17 23:48:54,308 - DEBUG - exception occured? None
-2023-02-17 23:48:54,309 - DEBUG - exception occured? 8168211920
-2023-02-17 23:48:54,309 - DEBUG - exception occured? None
-2023-02-17 23:48:54,310 - DEBUG - exception occured? 8168214336
-2023-02-17 23:48:54,310 - DEBUG - exception occured? None
-2023-02-17 23:48:54,311 - DEBUG - exception occured? 8168216784
-2023-02-17 23:48:54,311 - DEBUG - exception occured? None
-2023-02-17 23:48:54,312 - DEBUG - exception occured? 8168219200
-2023-02-17 23:48:54,312 - DEBUG - exception occured? None
-2023-02-17 23:48:54,315 - DEBUG - exception occured? 8168221584
-2023-02-17 23:48:54,315 - DEBUG - exception occured? None
-2023-02-17 23:48:54,316 - DEBUG - exception occured? 8168223968
-2023-02-17 23:48:54,316 - DEBUG - exception occured? None
-2023-02-17 23:48:54,317 - DEBUG - exception occured? 8168226352
-2023-02-17 23:48:54,318 - DEBUG - exception occured? None
-2023-02-17 23:48:54,319 - DEBUG - exception occured? 8168261520
-2023-02-17 23:48:54,319 - DEBUG - exception occured? None
-2023-02-17 23:48:54,320 - DEBUG - exception occured? 8168263904
-2023-02-17 23:48:54,320 - DEBUG - exception occured? None
-2023-02-17 23:48:54,321 - DEBUG - exception occured? 8168266320
-2023-02-17 23:48:54,321 - DEBUG - exception occured? None
-2023-02-17 23:48:54,322 - DEBUG - exception occured? 8168268768
-2023-02-17 23:48:54,323 - DEBUG - exception occured? None
-2023-02-17 23:48:54,324 - DEBUG - exception occured? 8168271184
-2023-02-17 23:48:54,325 - DEBUG - exception occured? None
-2023-02-17 23:49:00,156 - DEBUG - exception occured? 8168273568
-2023-02-17 23:49:00,166 - DEBUG - exception occured? None
-2023-02-17 23:49:00,168 - DEBUG - exception occured? 8168275952
-2023-02-17 23:49:00,169 - DEBUG - exception occured? None
-2023-02-17 23:49:00,169 - DEBUG - exception occured? 8168311120
-2023-02-17 23:49:00,170 - DEBUG - exception occured? None
-2023-02-17 23:49:00,170 - DEBUG - exception occured? 8168313504
-2023-02-17 23:49:00,171 - DEBUG - exception occured? None
-2023-02-17 23:49:00,171 - DEBUG - exception occured? 8168315888
-2023-02-17 23:49:00,172 - DEBUG - exception occured? None
-2023-02-17 23:49:00,172 - DEBUG - exception occured? 8168318304
-2023-02-17 23:49:00,173 - DEBUG - exception occured? None
-2023-02-17 23:49:00,173 - DEBUG - exception occured? 8168320752
-2023-02-17 23:49:00,174 - DEBUG - exception occured? None
-2023-02-17 23:49:00,175 - DEBUG - exception occured? 8168323168
-2023-02-17 23:49:00,176 - DEBUG - exception occured? None
-2023-02-17 23:49:00,179 - DEBUG - exception occured? 8168358336
-2023-02-17 23:49:00,179 - DEBUG - exception occured? None
-2023-02-17 23:49:00,180 - DEBUG - exception occured? 8168360720
-2023-02-17 23:49:00,180 - DEBUG - exception occured? None
-2023-02-17 23:49:00,181 - DEBUG - exception occured? 8168363104
-2023-02-17 23:49:00,181 - DEBUG - exception occured? None
-2023-02-17 23:49:00,182 - DEBUG - exception occured? 8168365488
-2023-02-17 23:49:00,182 - DEBUG - exception occured? None
-2023-02-17 23:49:00,183 - DEBUG - exception occured? 8168367872
-2023-02-17 23:49:00,183 - DEBUG - exception occured? None
-2023-02-17 23:49:00,184 - DEBUG - exception occured? 8168370288
-2023-02-17 23:49:00,184 - DEBUG - exception occured? None
-2023-02-17 23:49:00,185 - DEBUG - exception occured? 8168372736
-2023-02-17 23:49:00,185 - DEBUG - exception occured? None
-2023-02-17 23:49:00,186 - DEBUG - exception occured? 8168391552
-2023-02-17 23:49:00,187 - DEBUG - exception occured? None
-2023-02-17 23:51:12,440 - INFO - Calling Julia API...
-2023-02-17 23:51:12,441 - DEBUG - 
-2023-02-17 23:51:12,442 - DEBUG - exception occured? None
-2023-02-17 23:51:12,442 - DEBUG - exception occured? None
-2023-02-17 23:51:12,442 - DEBUG - exception occured? None
-2023-02-17 23:51:12,442 - DEBUG - exception occured? None
-2023-02-17 23:51:12,442 - DEBUG - exception occured? None
-2023-02-17 23:51:12,442 - DEBUG - exception occured? None
-2023-02-17 23:51:12,443 - DEBUG - exception occured? None
-2023-02-17 23:51:12,443 - DEBUG - exception occured? None
-2023-02-17 23:51:12,443 - DEBUG - exception occured? None
-2023-02-17 23:51:12,443 - DEBUG - 	Successfully activated Julia with compiled_modules = False
-2023-02-17 23:51:12,444 - DEBUG - 	Successfully imported julia.Base
-2023-02-17 23:51:12,445 - DEBUG - 	Successfully imported julia.Main
-2023-02-17 23:51:12,445 - DEBUG - 	Successfully imported julia.Pkg
-2023-02-17 23:51:12,446 - DEBUG - exception occured? None
-2023-02-17 23:51:12,447 - DEBUG - exception occured? None
-2023-02-17 23:51:12,447 - DEBUG - exception occured? None
-2023-02-17 23:51:12,447 - DEBUG - exception occured? None
-2023-02-17 23:51:12,448 - DEBUG - exception occured? None
-2023-02-17 23:51:12,448 - DEBUG - exception occured? None
-2023-02-17 23:51:12,449 - DEBUG - exception occured? None
-2023-02-17 23:51:12,449 - DEBUG - exception occured? None
-2023-02-17 23:51:12,449 - DEBUG - exception occured? None
-2023-02-17 23:51:12,459 - DEBUG - 	Available Packages:
-		'CSV'
-		 'HiGHS'
-		 'SQLite'
-		 'Clp'
-		 'JuMP'
-		 'NemoMod'
-		 'GAMS'
-		 'Cbc'
-		 'DataFrames'
-		 'Gurobi'
-		 'MathOptInterface'
-2023-02-17 23:51:12,460 - DEBUG - exception occured? None
-2023-02-17 23:51:12,461 - DEBUG - exception occured? None
-2023-02-17 23:51:12,461 - DEBUG - exception occured? None
-2023-02-17 23:51:12,475 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
-2023-02-17 23:51:12,477 - DEBUG - exception occured? None
-2023-02-17 23:51:12,478 - DEBUG - exception occured? None
-2023-02-17 23:51:12,479 - DEBUG - exception occured? None
-2023-02-17 23:51:12,504 - DEBUG - exception occured? None
-2023-02-17 23:51:12,504 - DEBUG - exception occured? None
-2023-02-17 23:51:12,504 - DEBUG - exception occured? None
-2023-02-17 23:51:12,506 - DEBUG - exception occured? None
-2023-02-17 23:51:12,506 - DEBUG - exception occured? None
-2023-02-17 23:51:12,507 - DEBUG - exception occured? None
-2023-02-17 23:51:12,507 - DEBUG - exception occured? None
-2023-02-17 23:51:12,508 - DEBUG - exception occured? None
-2023-02-17 23:51:12,508 - DEBUG - exception occured? None
-2023-02-17 23:51:12,509 - DEBUG - exception occured? None
-2023-02-17 23:51:12,509 - DEBUG - exception occured? None
-2023-02-17 23:51:12,510 - DEBUG - exception occured? None
-2023-02-17 23:51:12,510 - DEBUG - exception occured? None
-2023-02-17 23:51:12,511 - DEBUG - exception occured? None
-2023-02-17 23:51:12,511 - DEBUG - exception occured? None
-2023-02-17 23:51:12,511 - DEBUG - exception occured? None
-2023-02-17 23:51:12,512 - DEBUG - exception occured? None
-2023-02-17 23:51:12,512 - DEBUG - exception occured? None
-2023-02-17 23:51:12,512 - DEBUG - exception occured? None
-2023-02-17 23:51:12,513 - DEBUG - exception occured? None
-2023-02-17 23:51:12,513 - DEBUG - exception occured? None
-2023-02-17 23:51:12,562 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
-2023-02-17 23:55:25,187 - DEBUG - exception occured? 8170406768
-2023-02-17 23:55:25,188 - DEBUG - exception occured? None
-2023-02-17 23:55:25,188 - DEBUG - exception occured? 8170409152
-2023-02-17 23:55:25,189 - DEBUG - exception occured? None
-2023-02-17 23:55:25,189 - DEBUG - exception occured? 8170411536
-2023-02-17 23:55:25,190 - DEBUG - exception occured? None
-2023-02-17 23:55:25,191 - DEBUG - exception occured? 8170413920
-2023-02-17 23:55:25,191 - DEBUG - exception occured? None
-2023-02-17 23:55:25,192 - DEBUG - exception occured? 8170416304
-2023-02-17 23:55:25,192 - DEBUG - exception occured? None
-2023-02-17 23:55:25,193 - DEBUG - exception occured? 8170418720
-2023-02-17 23:55:25,193 - DEBUG - exception occured? None
-2023-02-17 23:55:25,194 - DEBUG - exception occured? 8170421168
-2023-02-17 23:55:25,195 - DEBUG - exception occured? None
-2023-02-17 23:55:25,196 - DEBUG - exception occured? 8170833200
-2023-02-17 23:55:25,196 - DEBUG - exception occured? None
-2023-02-17 23:55:25,199 - DEBUG - exception occured? 8170835584
-2023-02-17 23:55:25,199 - DEBUG - exception occured? None
-2023-02-17 23:55:25,200 - DEBUG - exception occured? 8170837968
-2023-02-17 23:55:25,201 - DEBUG - exception occured? None
-2023-02-17 23:55:25,201 - DEBUG - exception occured? 8170840352
-2023-02-17 23:55:25,202 - DEBUG - exception occured? None
-2023-02-17 23:55:25,203 - DEBUG - exception occured? 8170842736
-2023-02-17 23:55:25,203 - DEBUG - exception occured? None
-2023-02-17 23:55:25,204 - DEBUG - exception occured? 8170845120
-2023-02-17 23:55:25,204 - DEBUG - exception occured? None
-2023-02-17 23:55:25,205 - DEBUG - exception occured? 8170847536
-2023-02-17 23:55:25,206 - DEBUG - exception occured? None
-2023-02-17 23:55:25,207 - DEBUG - exception occured? 8170882768
-2023-02-17 23:55:25,208 - DEBUG - exception occured? None
-2023-02-17 23:55:25,209 - DEBUG - exception occured? 8170885184
-2023-02-17 23:55:25,209 - DEBUG - exception occured? None
-2023-02-17 23:57:00,776 - INFO - Calling Julia API...
-2023-02-17 23:57:00,777 - DEBUG - 
-2023-02-17 23:57:00,779 - DEBUG - exception occured? None
-2023-02-17 23:57:00,779 - DEBUG - exception occured? None
-2023-02-17 23:57:00,779 - DEBUG - exception occured? None
-2023-02-17 23:57:00,779 - DEBUG - exception occured? None
-2023-02-17 23:57:00,779 - DEBUG - exception occured? None
-2023-02-17 23:57:00,780 - DEBUG - exception occured? None
-2023-02-17 23:57:00,780 - DEBUG - exception occured? None
-2023-02-17 23:57:00,781 - DEBUG - exception occured? None
-2023-02-17 23:57:00,782 - DEBUG - exception occured? None
-2023-02-17 23:57:00,782 - DEBUG - 	Successfully activated Julia with compiled_modules = False
-2023-02-17 23:57:00,783 - DEBUG - 	Successfully imported julia.Base
-2023-02-17 23:57:00,784 - DEBUG - 	Successfully imported julia.Main
-2023-02-17 23:57:00,785 - DEBUG - 	Successfully imported julia.Pkg
-2023-02-17 23:57:00,786 - DEBUG - exception occured? None
-2023-02-17 23:57:00,787 - DEBUG - exception occured? None
-2023-02-17 23:57:00,787 - DEBUG - exception occured? None
-2023-02-17 23:57:00,788 - DEBUG - exception occured? None
-2023-02-17 23:57:00,788 - DEBUG - exception occured? None
-2023-02-17 23:57:00,788 - DEBUG - exception occured? None
-2023-02-17 23:57:00,789 - DEBUG - exception occured? None
-2023-02-17 23:57:00,789 - DEBUG - exception occured? None
-2023-02-17 23:57:00,790 - DEBUG - exception occured? None
-2023-02-17 23:57:00,814 - DEBUG - 	Available Packages:
-		'CSV'
-		 'HiGHS'
-		 'SQLite'
-		 'Clp'
-		 'JuMP'
-		 'NemoMod'
-		 'GAMS'
-		 'Cbc'
-		 'DataFrames'
-		 'Gurobi'
-		 'MathOptInterface'
-2023-02-17 23:57:00,816 - DEBUG - exception occured? None
-2023-02-17 23:57:00,817 - DEBUG - exception occured? None
-2023-02-17 23:57:00,817 - DEBUG - exception occured? None
-2023-02-17 23:57:00,839 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
-2023-02-17 23:57:00,840 - DEBUG - exception occured? None
-2023-02-17 23:57:00,841 - DEBUG - exception occured? None
-2023-02-17 23:57:00,842 - DEBUG - exception occured? None
-2023-02-17 23:57:00,858 - DEBUG - exception occured? None
-2023-02-17 23:57:00,858 - DEBUG - exception occured? None
-2023-02-17 23:57:00,859 - DEBUG - exception occured? None
-2023-02-17 23:57:00,859 - DEBUG - exception occured? None
-2023-02-17 23:57:00,859 - DEBUG - exception occured? None
-2023-02-17 23:57:00,860 - DEBUG - exception occured? None
-2023-02-17 23:57:00,860 - DEBUG - exception occured? None
-2023-02-17 23:57:00,861 - DEBUG - exception occured? None
-2023-02-17 23:57:00,861 - DEBUG - exception occured? None
-2023-02-17 23:57:00,862 - DEBUG - exception occured? None
-2023-02-17 23:57:00,862 - DEBUG - exception occured? None
-2023-02-17 23:57:00,863 - DEBUG - exception occured? None
-2023-02-17 23:57:00,864 - DEBUG - exception occured? None
-2023-02-17 23:57:00,864 - DEBUG - exception occured? None
-2023-02-17 23:57:00,864 - DEBUG - exception occured? None
-2023-02-17 23:57:00,865 - DEBUG - exception occured? None
-2023-02-17 23:57:00,866 - DEBUG - exception occured? None
-2023-02-17 23:57:00,866 - DEBUG - exception occured? None
-2023-02-17 23:57:00,867 - DEBUG - exception occured? None
-2023-02-17 23:57:00,867 - DEBUG - exception occured? None
-2023-02-17 23:57:00,867 - DEBUG - exception occured? None
-2023-02-17 23:57:00,984 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
-2023-02-17 23:57:32,186 - DEBUG - exception occured? 8172769328
-2023-02-17 23:57:32,187 - DEBUG - exception occured? None
-2023-02-17 23:57:32,187 - DEBUG - exception occured? 8172771712
-2023-02-17 23:57:32,188 - DEBUG - exception occured? None
-2023-02-17 23:57:32,188 - DEBUG - exception occured? 8172774096
-2023-02-17 23:57:32,189 - DEBUG - exception occured? None
-2023-02-17 23:57:32,189 - DEBUG - exception occured? 8172776480
-2023-02-17 23:57:32,190 - DEBUG - exception occured? None
-2023-02-17 23:57:32,190 - DEBUG - exception occured? 8172778864
-2023-02-17 23:57:32,191 - DEBUG - exception occured? None
-2023-02-17 23:57:32,191 - DEBUG - exception occured? 8172781280
-2023-02-17 23:57:32,192 - DEBUG - exception occured? None
-2023-02-17 23:57:32,192 - DEBUG - exception occured? 8173373568
-2023-02-17 23:57:32,193 - DEBUG - exception occured? None
-2023-02-17 23:57:32,194 - DEBUG - exception occured? 8173375984
-2023-02-17 23:57:32,194 - DEBUG - exception occured? None
-2023-02-17 23:57:32,196 - DEBUG - exception occured? 8173378368
-2023-02-17 23:57:32,197 - DEBUG - exception occured? None
-2023-02-17 23:57:32,197 - DEBUG - exception occured? 8173380752
-2023-02-17 23:57:32,198 - DEBUG - exception occured? None
-2023-02-17 23:57:32,198 - DEBUG - exception occured? 8173383136
-2023-02-17 23:57:32,199 - DEBUG - exception occured? None
-2023-02-17 23:57:32,199 - DEBUG - exception occured? 8173385520
-2023-02-17 23:57:32,200 - DEBUG - exception occured? None
-2023-02-17 23:57:32,200 - DEBUG - exception occured? 8173420688
-2023-02-17 23:57:32,200 - DEBUG - exception occured? None
-2023-02-17 23:57:32,201 - DEBUG - exception occured? 8173423104
-2023-02-17 23:57:32,202 - DEBUG - exception occured? None
-2023-02-17 23:57:32,202 - DEBUG - exception occured? 8173425552
-2023-02-17 23:57:32,203 - DEBUG - exception occured? None
-2023-02-17 23:57:32,203 - DEBUG - exception occured? 8173427968
-2023-02-17 23:57:32,204 - DEBUG - exception occured? None
-2023-02-17 23:57:50,016 - DEBUG - exception occured? 8173430352
-2023-02-17 23:57:50,016 - DEBUG - exception occured? None
-2023-02-17 23:57:50,017 - DEBUG - exception occured? 8173432736
-2023-02-17 23:57:50,018 - DEBUG - exception occured? None
-2023-02-17 23:57:50,019 - DEBUG - exception occured? 8173435120
-2023-02-17 23:57:50,019 - DEBUG - exception occured? None
-2023-02-17 23:57:50,020 - DEBUG - exception occured? 8173453904
-2023-02-17 23:57:50,020 - DEBUG - exception occured? None
-2023-02-17 23:57:50,021 - DEBUG - exception occured? 8173456288
-2023-02-17 23:57:50,021 - DEBUG - exception occured? None
-2023-02-17 23:57:50,022 - DEBUG - exception occured? 8173458704
-2023-02-17 23:57:50,023 - DEBUG - exception occured? None
-2023-02-17 23:57:50,024 - DEBUG - exception occured? 8173461152
-2023-02-17 23:57:50,024 - DEBUG - exception occured? None
-2023-02-17 23:57:50,025 - DEBUG - exception occured? 8173463568
-2023-02-17 23:57:50,025 - DEBUG - exception occured? None
-2023-02-17 23:57:50,028 - DEBUG - exception occured? 8173465952
-2023-02-17 23:57:50,028 - DEBUG - exception occured? None
-2023-02-17 23:57:50,029 - DEBUG - exception occured? 8173468336
-2023-02-17 23:57:50,029 - DEBUG - exception occured? None
-2023-02-17 23:57:50,031 - DEBUG - exception occured? 8173519888
-2023-02-17 23:57:50,032 - DEBUG - exception occured? None
-2023-02-17 23:57:50,032 - DEBUG - exception occured? 8173522272
-2023-02-17 23:57:50,033 - DEBUG - exception occured? None
-2023-02-17 23:57:50,033 - DEBUG - exception occured? 8173524656
-2023-02-17 23:57:50,034 - DEBUG - exception occured? None
-2023-02-17 23:57:50,034 - DEBUG - exception occured? 8173527072
-2023-02-17 23:57:50,036 - DEBUG - exception occured? None
-2023-02-17 23:57:50,036 - DEBUG - exception occured? 8173529520
-2023-02-17 23:57:50,037 - DEBUG - exception occured? None
-2023-02-17 23:57:50,037 - DEBUG - exception occured? 8173531936
-2023-02-17 23:57:50,038 - DEBUG - exception occured? None
-2023-02-18 00:00:00,281 - DEBUG - exception occured? 8173534320
-2023-02-18 00:00:00,283 - DEBUG - exception occured? None
-2023-02-18 00:00:00,286 - DEBUG - exception occured? 8173553104
-2023-02-18 00:00:00,287 - DEBUG - exception occured? None
-2023-02-18 00:00:00,288 - DEBUG - exception occured? 8173555488
-2023-02-18 00:00:00,288 - DEBUG - exception occured? None
-2023-02-18 00:00:00,290 - DEBUG - exception occured? 8173557872
-2023-02-18 00:00:00,291 - DEBUG - exception occured? None
-2023-02-18 00:00:00,292 - DEBUG - exception occured? 8173560256
-2023-02-18 00:00:00,292 - DEBUG - exception occured? None
-2023-02-18 00:00:00,293 - DEBUG - exception occured? 8173562672
-2023-02-18 00:00:00,294 - DEBUG - exception occured? None
-2023-02-18 00:00:00,295 - DEBUG - exception occured? 8173565120
-2023-02-18 00:00:00,295 - DEBUG - exception occured? None
-2023-02-18 00:00:00,296 - DEBUG - exception occured? 8173567536
-2023-02-18 00:00:00,297 - DEBUG - exception occured? None
-2023-02-18 00:00:00,300 - DEBUG - exception occured? 8173602704
-2023-02-18 00:00:00,301 - DEBUG - exception occured? None
-2023-02-18 00:00:00,303 - DEBUG - exception occured? 8173605088
-2023-02-18 00:00:00,303 - DEBUG - exception occured? None
-2023-02-18 00:00:00,305 - DEBUG - exception occured? 8173607472
-2023-02-18 00:00:00,305 - DEBUG - exception occured? None
-2023-02-18 00:00:00,307 - DEBUG - exception occured? 8173609856
-2023-02-18 00:00:00,307 - DEBUG - exception occured? None
-2023-02-18 00:00:00,309 - DEBUG - exception occured? 8173612240
-2023-02-18 00:00:00,309 - DEBUG - exception occured? None
-2023-02-18 00:00:00,311 - DEBUG - exception occured? 8173614656
-2023-02-18 00:00:00,311 - DEBUG - exception occured? None
-2023-02-18 00:00:00,312 - DEBUG - exception occured? 8173617104
-2023-02-18 00:00:00,313 - DEBUG - exception occured? None
-2023-02-18 00:00:00,315 - DEBUG - exception occured? 8173652304
-2023-02-18 00:00:00,316 - DEBUG - exception occured? None
-2023-02-18 00:11:39,480 - DEBUG - exception occured? 8173654688
-2023-02-18 00:11:39,481 - DEBUG - exception occured? None
-2023-02-18 00:11:39,483 - DEBUG - exception occured? 8173657072
-2023-02-18 00:11:39,484 - DEBUG - exception occured? None
-2023-02-18 00:11:39,485 - DEBUG - exception occured? 8173659456
-2023-02-18 00:11:39,486 - DEBUG - exception occured? None
-2023-02-18 00:11:39,487 - DEBUG - exception occured? 8173661840
-2023-02-18 00:11:39,487 - DEBUG - exception occured? None
-2023-02-18 00:11:39,488 - DEBUG - exception occured? 8173664224
-2023-02-18 00:11:39,489 - DEBUG - exception occured? None
-2023-02-18 00:11:39,489 - DEBUG - exception occured? 8173683040
-2023-02-18 00:11:39,491 - DEBUG - exception occured? None
-2023-02-18 00:11:39,493 - DEBUG - exception occured? 8173685488
-2023-02-18 00:11:39,493 - DEBUG - exception occured? None
-2023-02-18 00:11:39,494 - DEBUG - exception occured? 8173687904
-2023-02-18 00:11:39,494 - DEBUG - exception occured? None
-2023-02-18 00:11:39,497 - DEBUG - exception occured? 8173690288
-2023-02-18 00:11:39,498 - DEBUG - exception occured? None
-2023-02-18 00:11:39,498 - DEBUG - exception occured? 8173692672
-2023-02-18 00:11:39,499 - DEBUG - exception occured? None
-2023-02-18 00:11:39,499 - DEBUG - exception occured? 8173695056
-2023-02-18 00:11:39,500 - DEBUG - exception occured? None
-2023-02-18 00:11:39,501 - DEBUG - exception occured? 8173697440
-2023-02-18 00:11:39,501 - DEBUG - exception occured? None
-2023-02-18 00:11:39,502 - DEBUG - exception occured? 8173732608
-2023-02-18 00:11:39,502 - DEBUG - exception occured? None
-2023-02-18 00:11:39,503 - DEBUG - exception occured? 8173735024
-2023-02-18 00:11:39,504 - DEBUG - exception occured? None
-2023-02-18 00:11:39,505 - DEBUG - exception occured? 8173737472
-2023-02-18 00:11:39,506 - DEBUG - exception occured? None
-2023-02-18 00:11:39,506 - DEBUG - exception occured? 8173739888
-2023-02-18 00:11:39,507 - DEBUG - exception occured? None
-2023-02-18 00:17:50,561 - INFO - Calling Julia API...
-2023-02-18 00:17:50,562 - DEBUG - 
-2023-02-18 00:17:50,565 - DEBUG - exception occured? None
-2023-02-18 00:17:50,565 - DEBUG - exception occured? None
-2023-02-18 00:17:50,565 - DEBUG - exception occured? None
-2023-02-18 00:17:50,565 - DEBUG - exception occured? None
-2023-02-18 00:17:50,565 - DEBUG - exception occured? None
-2023-02-18 00:17:50,565 - DEBUG - exception occured? None
-2023-02-18 00:17:50,566 - DEBUG - exception occured? None
-2023-02-18 00:17:50,567 - DEBUG - exception occured? None
-2023-02-18 00:17:50,567 - DEBUG - exception occured? None
-2023-02-18 00:17:50,567 - DEBUG - 	Successfully activated Julia with compiled_modules = False
-2023-02-18 00:17:50,568 - DEBUG - 	Successfully imported julia.Base
-2023-02-18 00:17:50,569 - DEBUG - 	Successfully imported julia.Main
-2023-02-18 00:17:50,569 - DEBUG - 	Successfully imported julia.Pkg
-2023-02-18 00:17:50,571 - DEBUG - exception occured? None
-2023-02-18 00:17:50,571 - DEBUG - exception occured? None
-2023-02-18 00:17:50,571 - DEBUG - exception occured? None
-2023-02-18 00:17:50,572 - DEBUG - exception occured? None
-2023-02-18 00:17:50,573 - DEBUG - exception occured? None
-2023-02-18 00:17:50,573 - DEBUG - exception occured? None
-2023-02-18 00:17:50,575 - DEBUG - exception occured? None
-2023-02-18 00:17:50,576 - DEBUG - exception occured? None
-2023-02-18 00:17:50,576 - DEBUG - exception occured? None
-2023-02-18 00:17:50,597 - DEBUG - 	Available Packages:
-		'CSV'
-		 'HiGHS'
-		 'SQLite'
-		 'Clp'
-		 'JuMP'
-		 'NemoMod'
-		 'GAMS'
-		 'Cbc'
-		 'DataFrames'
-		 'Gurobi'
-		 'MathOptInterface'
-2023-02-18 00:17:50,599 - DEBUG - exception occured? None
-2023-02-18 00:17:50,599 - DEBUG - exception occured? None
-2023-02-18 00:17:50,599 - DEBUG - exception occured? None
-2023-02-18 00:17:50,613 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
-2023-02-18 00:17:50,615 - DEBUG - exception occured? None
-2023-02-18 00:17:50,615 - DEBUG - exception occured? None
-2023-02-18 00:17:50,615 - DEBUG - exception occured? None
-2023-02-18 00:17:50,631 - DEBUG - exception occured? None
-2023-02-18 00:17:50,632 - DEBUG - exception occured? None
-2023-02-18 00:17:50,632 - DEBUG - exception occured? None
-2023-02-18 00:17:50,633 - DEBUG - exception occured? None
-2023-02-18 00:17:50,633 - DEBUG - exception occured? None
-2023-02-18 00:17:50,634 - DEBUG - exception occured? None
-2023-02-18 00:17:50,635 - DEBUG - exception occured? None
-2023-02-18 00:17:50,635 - DEBUG - exception occured? None
-2023-02-18 00:17:50,636 - DEBUG - exception occured? None
-2023-02-18 00:17:50,637 - DEBUG - exception occured? None
-2023-02-18 00:17:50,638 - DEBUG - exception occured? None
-2023-02-18 00:17:50,639 - DEBUG - exception occured? None
-2023-02-18 00:17:50,639 - DEBUG - exception occured? None
-2023-02-18 00:17:50,639 - DEBUG - exception occured? None
-2023-02-18 00:17:50,640 - DEBUG - exception occured? None
-2023-02-18 00:17:50,640 - DEBUG - exception occured? None
-2023-02-18 00:17:50,641 - DEBUG - exception occured? None
-2023-02-18 00:17:50,641 - DEBUG - exception occured? None
-2023-02-18 00:17:50,642 - DEBUG - exception occured? None
-2023-02-18 00:17:50,642 - DEBUG - exception occured? None
-2023-02-18 00:17:50,643 - DEBUG - exception occured? None
-2023-02-18 00:17:50,756 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
-2023-02-18 00:18:57,893 - INFO - Calling Julia API...
-2023-02-18 00:18:57,894 - DEBUG - 
-2023-02-18 00:18:57,895 - DEBUG - exception occured? None
-2023-02-18 00:18:57,895 - DEBUG - exception occured? None
-2023-02-18 00:18:57,895 - DEBUG - exception occured? None
-2023-02-18 00:18:57,895 - DEBUG - exception occured? None
-2023-02-18 00:18:57,895 - DEBUG - exception occured? None
-2023-02-18 00:18:57,896 - DEBUG - exception occured? None
-2023-02-18 00:18:57,896 - DEBUG - exception occured? None
-2023-02-18 00:18:57,896 - DEBUG - exception occured? None
-2023-02-18 00:18:57,897 - DEBUG - exception occured? None
-2023-02-18 00:18:57,897 - DEBUG - 	Successfully activated Julia with compiled_modules = False
-2023-02-18 00:18:57,898 - DEBUG - 	Successfully imported julia.Base
-2023-02-18 00:18:57,899 - DEBUG - 	Successfully imported julia.Main
-2023-02-18 00:18:57,899 - DEBUG - 	Successfully imported julia.Pkg
-2023-02-18 00:18:57,900 - DEBUG - exception occured? None
-2023-02-18 00:18:57,901 - DEBUG - exception occured? None
-2023-02-18 00:18:57,901 - DEBUG - exception occured? None
-2023-02-18 00:18:57,901 - DEBUG - exception occured? None
-2023-02-18 00:18:57,902 - DEBUG - exception occured? None
-2023-02-18 00:18:57,903 - DEBUG - exception occured? None
-2023-02-18 00:18:57,903 - DEBUG - exception occured? None
-2023-02-18 00:18:57,903 - DEBUG - exception occured? None
-2023-02-18 00:18:57,903 - DEBUG - exception occured? None
-2023-02-18 00:18:57,914 - DEBUG - 	Available Packages:
-		'CSV'
-		 'HiGHS'
-		 'SQLite'
-		 'Clp'
-		 'JuMP'
-		 'NemoMod'
-		 'GAMS'
-		 'Cbc'
-		 'DataFrames'
-		 'Gurobi'
-		 'MathOptInterface'
-2023-02-18 00:18:57,917 - DEBUG - exception occured? None
-2023-02-18 00:18:57,917 - DEBUG - exception occured? None
-2023-02-18 00:18:57,917 - DEBUG - exception occured? None
-2023-02-18 00:18:57,926 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
-2023-02-18 00:18:57,928 - DEBUG - exception occured? None
-2023-02-18 00:18:57,929 - DEBUG - exception occured? None
-2023-02-18 00:18:57,929 - DEBUG - exception occured? None
-2023-02-18 00:18:57,941 - DEBUG - exception occured? None
-2023-02-18 00:18:57,941 - DEBUG - exception occured? None
-2023-02-18 00:18:57,942 - DEBUG - exception occured? None
-2023-02-18 00:18:57,943 - DEBUG - exception occured? None
-2023-02-18 00:18:57,944 - DEBUG - exception occured? None
-2023-02-18 00:18:57,944 - DEBUG - exception occured? None
-2023-02-18 00:18:57,946 - DEBUG - exception occured? None
-2023-02-18 00:18:57,946 - DEBUG - exception occured? None
-2023-02-18 00:18:57,947 - DEBUG - exception occured? None
-2023-02-18 00:18:57,947 - DEBUG - exception occured? None
-2023-02-18 00:18:57,947 - DEBUG - exception occured? None
-2023-02-18 00:18:57,948 - DEBUG - exception occured? None
-2023-02-18 00:18:57,948 - DEBUG - exception occured? None
-2023-02-18 00:18:57,948 - DEBUG - exception occured? None
-2023-02-18 00:18:57,948 - DEBUG - exception occured? None
-2023-02-18 00:18:57,949 - DEBUG - exception occured? None
-2023-02-18 00:18:57,950 - DEBUG - exception occured? None
-2023-02-18 00:18:57,950 - DEBUG - exception occured? None
-2023-02-18 00:18:57,950 - DEBUG - exception occured? None
-2023-02-18 00:18:57,951 - DEBUG - exception occured? None
-2023-02-18 00:18:57,951 - DEBUG - exception occured? None
-2023-02-18 00:18:58,031 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
-2023-02-18 00:18:58,168 - DEBUG - exception occured? 8178144768
-2023-02-18 00:18:58,168 - DEBUG - exception occured? None
-2023-02-18 00:18:58,169 - DEBUG - exception occured? 8178147152
-2023-02-18 00:18:58,170 - DEBUG - exception occured? None
-2023-02-18 00:18:58,170 - DEBUG - exception occured? 8178149536
-2023-02-18 00:18:58,171 - DEBUG - exception occured? None
-2023-02-18 00:18:58,171 - DEBUG - exception occured? 8178151920
-2023-02-18 00:18:58,172 - DEBUG - exception occured? None
-2023-02-18 00:18:58,173 - DEBUG - exception occured? 8178154304
-2023-02-18 00:18:58,173 - DEBUG - exception occured? None
-2023-02-18 00:18:58,174 - DEBUG - exception occured? 8178812096
-2023-02-18 00:18:58,174 - DEBUG - exception occured? None
-2023-02-18 00:18:58,175 - DEBUG - exception occured? 8178814544
-2023-02-18 00:18:58,176 - DEBUG - exception occured? None
-2023-02-18 00:18:58,176 - DEBUG - exception occured? 8178816960
-2023-02-18 00:18:58,177 - DEBUG - exception occured? None
-2023-02-18 00:18:58,180 - DEBUG - exception occured? 8178819344
-2023-02-18 00:18:58,180 - DEBUG - exception occured? None
-2023-02-18 00:18:58,181 - DEBUG - exception occured? 8178821728
-2023-02-18 00:18:58,182 - DEBUG - exception occured? None
-2023-02-18 00:18:58,182 - DEBUG - exception occured? 8178824112
-2023-02-18 00:18:58,182 - DEBUG - exception occured? None
-2023-02-18 00:18:58,183 - DEBUG - exception occured? 8178826496
-2023-02-18 00:18:58,183 - DEBUG - exception occured? None
-2023-02-18 00:18:58,184 - DEBUG - exception occured? 8178861664
-2023-02-18 00:18:58,184 - DEBUG - exception occured? None
-2023-02-18 00:18:58,185 - DEBUG - exception occured? 8178864080
-2023-02-18 00:18:58,185 - DEBUG - exception occured? None
-2023-02-18 00:18:58,186 - DEBUG - exception occured? 8178866528
-2023-02-18 00:18:58,186 - DEBUG - exception occured? None
-2023-02-18 00:18:58,188 - DEBUG - exception occured? 8178868944
-2023-02-18 00:18:58,188 - DEBUG - exception occured? None
-2023-02-18 00:19:18,388 - INFO - Calling Julia API...
-2023-02-18 00:19:18,391 - DEBUG - 
-2023-02-18 00:19:18,391 - DEBUG - exception occured? None
-2023-02-18 00:19:18,391 - DEBUG - exception occured? None
-2023-02-18 00:19:18,392 - DEBUG - exception occured? None
-2023-02-18 00:19:18,392 - DEBUG - exception occured? None
-2023-02-18 00:19:18,392 - DEBUG - exception occured? None
-2023-02-18 00:19:18,392 - DEBUG - exception occured? None
-2023-02-18 00:19:18,392 - DEBUG - exception occured? None
-2023-02-18 00:19:18,393 - DEBUG - exception occured? None
-2023-02-18 00:19:18,393 - DEBUG - exception occured? None
-2023-02-18 00:19:18,393 - DEBUG - 	Successfully activated Julia with compiled_modules = False
-2023-02-18 00:19:18,394 - DEBUG - 	Successfully imported julia.Base
-2023-02-18 00:19:18,395 - DEBUG - 	Successfully imported julia.Main
-2023-02-18 00:19:18,395 - DEBUG - 	Successfully imported julia.Pkg
-2023-02-18 00:19:18,397 - DEBUG - exception occured? None
-2023-02-18 00:19:18,397 - DEBUG - exception occured? None
-2023-02-18 00:19:18,397 - DEBUG - exception occured? None
-2023-02-18 00:19:18,398 - DEBUG - exception occured? None
-2023-02-18 00:19:18,398 - DEBUG - exception occured? None
-2023-02-18 00:19:18,398 - DEBUG - exception occured? None
-2023-02-18 00:19:18,399 - DEBUG - exception occured? None
-2023-02-18 00:19:18,399 - DEBUG - exception occured? None
-2023-02-18 00:19:18,399 - DEBUG - exception occured? None
-2023-02-18 00:19:18,409 - DEBUG - 	Available Packages:
-		'CSV'
-		 'HiGHS'
-		 'SQLite'
-		 'Clp'
-		 'JuMP'
-		 'NemoMod'
-		 'GAMS'
-		 'Cbc'
-		 'DataFrames'
-		 'Gurobi'
-		 'MathOptInterface'
-2023-02-18 00:19:18,410 - DEBUG - exception occured? None
-2023-02-18 00:19:18,411 - DEBUG - exception occured? None
-2023-02-18 00:19:18,411 - DEBUG - exception occured? None
-2023-02-18 00:19:18,422 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
-2023-02-18 00:19:18,424 - DEBUG - exception occured? None
-2023-02-18 00:19:18,424 - DEBUG - exception occured? None
-2023-02-18 00:19:18,425 - DEBUG - exception occured? None
-2023-02-18 00:19:18,444 - DEBUG - exception occured? None
-2023-02-18 00:19:18,444 - DEBUG - exception occured? None
-2023-02-18 00:19:18,445 - DEBUG - exception occured? None
-2023-02-18 00:19:18,446 - DEBUG - exception occured? None
-2023-02-18 00:19:18,446 - DEBUG - exception occured? None
-2023-02-18 00:19:18,447 - DEBUG - exception occured? None
-2023-02-18 00:19:18,447 - DEBUG - exception occured? None
-2023-02-18 00:19:18,447 - DEBUG - exception occured? None
-2023-02-18 00:19:18,449 - DEBUG - exception occured? None
-2023-02-18 00:19:18,449 - DEBUG - exception occured? None
-2023-02-18 00:19:18,449 - DEBUG - exception occured? None
-2023-02-18 00:19:18,450 - DEBUG - exception occured? None
-2023-02-18 00:19:18,451 - DEBUG - exception occured? None
-2023-02-18 00:19:18,451 - DEBUG - exception occured? None
-2023-02-18 00:19:18,451 - DEBUG - exception occured? None
-2023-02-18 00:19:18,453 - DEBUG - exception occured? None
-2023-02-18 00:19:18,454 - DEBUG - exception occured? None
-2023-02-18 00:19:18,454 - DEBUG - exception occured? None
-2023-02-18 00:19:18,455 - DEBUG - exception occured? None
-2023-02-18 00:19:18,455 - DEBUG - exception occured? None
-2023-02-18 00:19:18,455 - DEBUG - exception occured? None
-2023-02-18 00:19:18,532 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
-2023-02-18 00:19:46,184 - INFO - Calling Julia API...
-2023-02-18 00:19:46,185 - DEBUG - 
-2023-02-18 00:19:46,186 - DEBUG - exception occured? None
-2023-02-18 00:19:46,186 - DEBUG - exception occured? None
-2023-02-18 00:19:46,186 - DEBUG - exception occured? None
-2023-02-18 00:19:46,187 - DEBUG - exception occured? None
-2023-02-18 00:19:46,187 - DEBUG - exception occured? None
-2023-02-18 00:19:46,187 - DEBUG - exception occured? None
-2023-02-18 00:19:46,187 - DEBUG - exception occured? None
-2023-02-18 00:19:46,188 - DEBUG - exception occured? None
-2023-02-18 00:19:46,188 - DEBUG - exception occured? None
-2023-02-18 00:19:46,189 - DEBUG - 	Successfully activated Julia with compiled_modules = False
-2023-02-18 00:19:46,189 - DEBUG - 	Successfully imported julia.Base
-2023-02-18 00:19:46,190 - DEBUG - 	Successfully imported julia.Main
-2023-02-18 00:19:46,191 - DEBUG - 	Successfully imported julia.Pkg
-2023-02-18 00:19:46,192 - DEBUG - exception occured? None
-2023-02-18 00:19:46,192 - DEBUG - exception occured? None
-2023-02-18 00:19:46,192 - DEBUG - exception occured? None
-2023-02-18 00:19:46,193 - DEBUG - exception occured? None
-2023-02-18 00:19:46,193 - DEBUG - exception occured? None
-2023-02-18 00:19:46,193 - DEBUG - exception occured? None
-2023-02-18 00:19:46,194 - DEBUG - exception occured? None
-2023-02-18 00:19:46,194 - DEBUG - exception occured? None
-2023-02-18 00:19:46,195 - DEBUG - exception occured? None
-2023-02-18 00:19:46,206 - DEBUG - 	Available Packages:
-		'CSV'
-		 'HiGHS'
-		 'SQLite'
-		 'Clp'
-		 'JuMP'
-		 'NemoMod'
-		 'GAMS'
-		 'Cbc'
-		 'DataFrames'
-		 'Gurobi'
-		 'MathOptInterface'
-2023-02-18 00:19:46,207 - DEBUG - exception occured? None
-2023-02-18 00:19:46,209 - DEBUG - exception occured? None
-2023-02-18 00:19:46,209 - DEBUG - exception occured? None
-2023-02-18 00:19:46,219 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
-2023-02-18 00:19:46,220 - DEBUG - exception occured? None
-2023-02-18 00:19:46,221 - DEBUG - exception occured? None
-2023-02-18 00:19:46,221 - DEBUG - exception occured? None
-2023-02-18 00:19:46,241 - DEBUG - exception occured? None
-2023-02-18 00:19:46,241 - DEBUG - exception occured? None
-2023-02-18 00:19:46,242 - DEBUG - exception occured? None
-2023-02-18 00:19:46,243 - DEBUG - exception occured? None
-2023-02-18 00:19:46,243 - DEBUG - exception occured? None
-2023-02-18 00:19:46,244 - DEBUG - exception occured? None
-2023-02-18 00:19:46,244 - DEBUG - exception occured? None
-2023-02-18 00:19:46,244 - DEBUG - exception occured? None
-2023-02-18 00:19:46,245 - DEBUG - exception occured? None
-2023-02-18 00:19:46,246 - DEBUG - exception occured? None
-2023-02-18 00:19:46,246 - DEBUG - exception occured? None
-2023-02-18 00:19:46,246 - DEBUG - exception occured? None
-2023-02-18 00:19:46,247 - DEBUG - exception occured? None
-2023-02-18 00:19:46,247 - DEBUG - exception occured? None
-2023-02-18 00:19:46,247 - DEBUG - exception occured? None
-2023-02-18 00:19:46,247 - DEBUG - exception occured? None
-2023-02-18 00:19:46,248 - DEBUG - exception occured? None
-2023-02-18 00:19:46,248 - DEBUG - exception occured? None
-2023-02-18 00:19:46,248 - DEBUG - exception occured? None
-2023-02-18 00:19:46,249 - DEBUG - exception occured? None
-2023-02-18 00:19:46,250 - DEBUG - exception occured? None
-2023-02-18 00:19:46,319 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
-2023-02-18 00:24:03,375 - INFO - 	Path to temporary NemoMod database '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/tmp/nemomod_intermediate_database.sqlite' not found. Creating...
-2023-02-18 00:24:03,379 - DEBUG - exception occured? None
-2023-02-18 00:24:03,379 - DEBUG - exception occured? None
-2023-02-18 00:24:03,380 - DEBUG - exception occured? None
-2023-02-18 00:24:03,462 - DEBUG - exception occured? 8183263664
-2023-02-18 00:24:03,463 - DEBUG - exception occured? None
-2023-02-18 00:24:03,464 - DEBUG - exception occured? 8183266048
-2023-02-18 00:24:03,464 - DEBUG - exception occured? None
-2023-02-18 00:24:03,465 - DEBUG - exception occured? 8184185952
-2023-02-18 00:24:03,465 - DEBUG - exception occured? None
-2023-02-18 00:24:03,466 - DEBUG - exception occured? 8184188336
-2023-02-18 00:24:03,467 - DEBUG - exception occured? None
-2023-02-18 00:24:03,468 - DEBUG - exception occured? 8184190720
-2023-02-18 00:24:03,468 - DEBUG - exception occured? None
-2023-02-18 00:24:03,469 - DEBUG - exception occured? 8184193136
-2023-02-18 00:24:03,470 - DEBUG - exception occured? None
-2023-02-18 00:24:03,471 - DEBUG - exception occured? 8184195584
-2023-02-18 00:24:03,471 - DEBUG - exception occured? None
-2023-02-18 00:24:03,472 - DEBUG - exception occured? 8184198000
-2023-02-18 00:24:03,473 - DEBUG - exception occured? None
-2023-02-18 00:24:03,476 - DEBUG - exception occured? 8184200384
-2023-02-18 00:24:03,476 - DEBUG - exception occured? None
-2023-02-18 00:24:03,477 - DEBUG - exception occured? 8184251936
-2023-02-18 00:24:03,478 - DEBUG - exception occured? None
-2023-02-18 00:24:03,478 - DEBUG - exception occured? 8184254320
-2023-02-18 00:24:03,479 - DEBUG - exception occured? None
-2023-02-18 00:24:03,479 - DEBUG - exception occured? 8184256704
-2023-02-18 00:24:03,480 - DEBUG - exception occured? None
-2023-02-18 00:24:03,480 - DEBUG - exception occured? 8184259088
-2023-02-18 00:24:03,481 - DEBUG - exception occured? None
-2023-02-18 00:24:03,482 - DEBUG - exception occured? 8184261504
-2023-02-18 00:24:03,483 - DEBUG - exception occured? None
-2023-02-18 00:24:03,484 - DEBUG - exception occured? 8184263952
-2023-02-18 00:24:03,484 - DEBUG - exception occured? None
-2023-02-18 00:24:03,485 - DEBUG - exception occured? 8184266368
-2023-02-18 00:24:03,486 - DEBUG - exception occured? None
-2023-02-18 00:24:32,963 - INFO - Calling Julia API...
-2023-02-18 00:24:32,965 - DEBUG - 
-2023-02-18 00:24:32,966 - DEBUG - exception occured? None
-2023-02-18 00:24:32,966 - DEBUG - exception occured? None
-2023-02-18 00:24:32,966 - DEBUG - exception occured? None
-2023-02-18 00:24:32,966 - DEBUG - exception occured? None
-2023-02-18 00:24:32,966 - DEBUG - exception occured? None
-2023-02-18 00:24:32,966 - DEBUG - exception occured? None
-2023-02-18 00:24:32,967 - DEBUG - exception occured? None
-2023-02-18 00:24:32,967 - DEBUG - exception occured? None
-2023-02-18 00:24:32,968 - DEBUG - exception occured? None
-2023-02-18 00:24:32,968 - DEBUG - 	Successfully activated Julia with compiled_modules = False
-2023-02-18 00:24:32,969 - DEBUG - 	Successfully imported julia.Base
-2023-02-18 00:24:32,970 - DEBUG - 	Successfully imported julia.Main
-2023-02-18 00:24:32,970 - DEBUG - 	Successfully imported julia.Pkg
-2023-02-18 00:24:32,971 - DEBUG - exception occured? None
-2023-02-18 00:24:32,972 - DEBUG - exception occured? None
-2023-02-18 00:24:32,972 - DEBUG - exception occured? None
-2023-02-18 00:24:32,973 - DEBUG - exception occured? None
-2023-02-18 00:24:32,973 - DEBUG - exception occured? None
-2023-02-18 00:24:32,973 - DEBUG - exception occured? None
-2023-02-18 00:24:32,974 - DEBUG - exception occured? None
-2023-02-18 00:24:32,975 - DEBUG - exception occured? None
-2023-02-18 00:24:32,975 - DEBUG - exception occured? None
-2023-02-18 00:24:32,986 - DEBUG - 	Available Packages:
-		'CSV'
-		 'HiGHS'
-		 'SQLite'
-		 'Clp'
-		 'JuMP'
-		 'NemoMod'
-		 'GAMS'
-		 'Cbc'
-		 'DataFrames'
-		 'Gurobi'
-		 'MathOptInterface'
-2023-02-18 00:24:32,987 - DEBUG - exception occured? None
-2023-02-18 00:24:32,987 - DEBUG - exception occured? None
-2023-02-18 00:24:32,988 - DEBUG - exception occured? None
-2023-02-18 00:24:32,998 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
-2023-02-18 00:24:33,000 - DEBUG - exception occured? None
-2023-02-18 00:24:33,000 - DEBUG - exception occured? None
-2023-02-18 00:24:33,001 - DEBUG - exception occured? None
-2023-02-18 00:24:33,017 - DEBUG - exception occured? None
-2023-02-18 00:24:33,018 - DEBUG - exception occured? None
-2023-02-18 00:24:33,018 - DEBUG - exception occured? None
-2023-02-18 00:24:33,019 - DEBUG - exception occured? None
-2023-02-18 00:24:33,019 - DEBUG - exception occured? None
-2023-02-18 00:24:33,020 - DEBUG - exception occured? None
-2023-02-18 00:24:33,021 - DEBUG - exception occured? None
-2023-02-18 00:24:33,022 - DEBUG - exception occured? None
-2023-02-18 00:24:33,023 - DEBUG - exception occured? None
-2023-02-18 00:24:33,024 - DEBUG - exception occured? None
-2023-02-18 00:24:33,024 - DEBUG - exception occured? None
-2023-02-18 00:24:33,024 - DEBUG - exception occured? None
-2023-02-18 00:24:33,025 - DEBUG - exception occured? None
-2023-02-18 00:24:33,025 - DEBUG - exception occured? None
-2023-02-18 00:24:33,025 - DEBUG - exception occured? None
-2023-02-18 00:24:33,026 - DEBUG - exception occured? None
-2023-02-18 00:24:33,026 - DEBUG - exception occured? None
-2023-02-18 00:24:33,027 - DEBUG - exception occured? None
-2023-02-18 00:24:33,028 - DEBUG - exception occured? None
-2023-02-18 00:24:33,028 - DEBUG - exception occured? None
-2023-02-18 00:24:33,028 - DEBUG - exception occured? None
-2023-02-18 00:24:33,098 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
-2023-02-18 00:24:35,965 - INFO - 	Path to temporary NemoMod database '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/tmp/nemomod_intermediate_database.sqlite' not found. Creating...
-2023-02-18 00:24:35,966 - DEBUG - exception occured? None
-2023-02-18 00:24:35,967 - DEBUG - exception occured? None
-2023-02-18 00:24:35,967 - DEBUG - exception occured? None
-2023-02-18 00:24:37,931 - DEBUG - exception occured? None
-2023-02-18 00:24:37,931 - DEBUG - exception occured? None
-2023-02-18 00:24:37,931 - DEBUG - exception occured? None
-2023-02-18 00:24:37,939 - DEBUG - exception occured? None
-2023-02-18 00:24:37,939 - DEBUG - exception occured? None
-2023-02-18 00:24:37,939 - DEBUG - exception occured? None
-2023-02-18 00:24:38,106 - DEBUG - exception occured? None
-2023-02-18 00:24:38,106 - DEBUG - exception occured? None
-2023-02-18 00:24:38,106 - DEBUG - exception occured? None
-2023-02-18 00:24:38,111 - DEBUG - exception occured? None
-2023-02-18 00:24:38,112 - DEBUG - exception occured? None
-2023-02-18 00:24:38,112 - DEBUG - exception occured? None
-2023-02-18 00:25:17,078 - INFO - NemoMod ran successfully with the following status: <PyCall.jlwrap OPTIMAL>
+2023-02-28 11:21:57,857 - DEBUG - exception occured? None
+2023-02-28 11:21:57,858 - DEBUG - exception occured? None
+2023-02-28 11:21:57,858 - DEBUG - exception occured? None
+2023-02-28 11:21:57,868 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
+2023-02-28 11:21:57,870 - DEBUG - exception occured? None
+2023-02-28 11:21:57,870 - DEBUG - exception occured? None
+2023-02-28 11:21:57,871 - DEBUG - exception occured? None
+2023-02-28 11:21:57,888 - DEBUG - exception occured? None
+2023-02-28 11:21:57,888 - DEBUG - exception occured? None
+2023-02-28 11:21:57,889 - DEBUG - exception occured? None
+2023-02-28 11:21:57,889 - DEBUG - exception occured? None
+2023-02-28 11:21:57,890 - DEBUG - exception occured? None
+2023-02-28 11:21:57,890 - DEBUG - exception occured? None
+2023-02-28 11:21:57,891 - DEBUG - exception occured? None
+2023-02-28 11:21:57,892 - DEBUG - exception occured? None
+2023-02-28 11:21:57,892 - DEBUG - exception occured? None
+2023-02-28 11:21:57,893 - DEBUG - exception occured? None
+2023-02-28 11:21:57,893 - DEBUG - exception occured? None
+2023-02-28 11:21:57,893 - DEBUG - exception occured? None
+2023-02-28 11:21:57,894 - DEBUG - exception occured? None
+2023-02-28 11:21:57,894 - DEBUG - exception occured? None
+2023-02-28 11:21:57,894 - DEBUG - exception occured? None
+2023-02-28 11:21:57,895 - DEBUG - exception occured? None
+2023-02-28 11:21:57,895 - DEBUG - exception occured? None
+2023-02-28 11:21:57,895 - DEBUG - exception occured? None
+2023-02-28 11:21:57,896 - DEBUG - exception occured? None
+2023-02-28 11:21:57,896 - DEBUG - exception occured? None
+2023-02-28 11:21:57,896 - DEBUG - exception occured? None
+2023-02-28 11:21:57,959 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.

@@ -416,6 +416,7 @@ class NonElectricEnergy:
         self.modvar_enfu_frac_fuel_demand_imported = "Fraction of Fuel Demand Imported"
         self.modvar_enfu_imports_fuel = "Fuel Imports"
         self.modvar_enfu_minimum_frac_fuel_used_for_electricity = "Minimum Fraction of Fuel Used for Electricity Generation"
+        self.modvar_enfu_nemomod_renewable_production_target = "NemoMod REMinProductionTarget"
         self.modvar_enfu_price_gravimetric = "Gravimetric Fuel Price"
         self.modvar_enfu_price_thermal = "Thermal Fuel Price"
         self.modvar_enfu_price_volumetric = "Volumetric Fuel Price"
