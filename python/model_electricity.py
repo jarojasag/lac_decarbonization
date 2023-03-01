@@ -2172,6 +2172,7 @@ class ElectricEnergy:
         # initialize an output dictionary mapping each tech to fuel
         dict_output_tech_to_fuel = {}
         
+        
         ##  GET ADJUSTMENTS FOR NON-ELECTRIC FUELS (SPECIFIED BY InputActivityRatio/OutputActivityRatio)
         
         for fuel in dict_fuel_cats.keys():
@@ -3590,6 +3591,7 @@ class ElectricEnergy:
 
         dict_return = {}
         flag_dummy_price = min(flag_dummy_price, -1)
+
         # get some scalars (monetary and power)
         scalar_cost_capital = self.model_attributes.get_scalar(self.modvar_entc_nemomod_capital_cost, "monetary")
         scalar_cost_capital /= self.model_attributes.get_scalar(self.modvar_entc_nemomod_capital_cost, "power")

@@ -558,6 +558,114 @@ def transformation_ccsq_increase_direct_air_capture(
 #    ENERGY TECHNOLOGY TRANSFORMATIONS    #
 ###########################################
 
+def transformation_entc_hydrogen_electrolysis(
+    df_input: pd.DataFrame,
+    magnitude: float,
+    vec_ramp: np.ndarray,
+    model_attributes: ma.ModelAttributes,
+    model_electricity: ml.ElectricEnergy,
+    cats_to_apply: List[str] = ["fp_hydrogen_electrolysis"],
+    cats_response: List[str] = [
+        "fp_hydrogen_gasification", 
+        "fp_hydrogen_reformation"
+    ],
+    field_region: str = "nation",
+    model_energy: Union[me.NonElectricEnergy, None] = None,
+    **kwargs
+) -> pd.DataFrame:
+    """
+    Implement the "Green hydrogen" transformation.
+
+    Function Arguments
+    ------------------
+    - df_input: input data frame containing baseline trajectories
+    - magnitude: magnitude of target value
+    - model_attributes: ModelAttributes object used to call strategies/variables
+    - model_electricity: ElectricEnergy model used to define variables
+    - vec_ramp: implementation ramp vector
+
+    Keyword Arguments
+    -----------------
+    - cats_to_apply: hydrogen production categories to apply magnitude to
+    - cats_response: hydrogen production categories that respond to the target
+    - field_region: field in df_input that specifies the region
+    - magnitude: final magnitude of generation capacity.
+    - model_energy: optional NonElectricEnergy object to pass to
+        transformation_general
+    - regions_apply: optional set of regions to use to define strategy. If None,
+        applies to all regions.
+    - strategy_id: optional specification of strategy id to add to output
+        dataframe (only added if integer)
+    """
+
+    attr_entc = model_attributes.get_attribute_table(model_attributes.subsec_name_entc)
+    attr_enfu = model_attributes.get_attribute_table(model_attributes.subsec_name_enfu)
+    dict_tech_info = model_electricity.get_tech_info_dict(attribute_technology = attr_entc)
+    modvar_msp = model_electricity.modvar_entc_nemomod_min_share_production
+
+    cats_to_apply = [x for x in attr_entc.key_values if x in cats_to_apply]
+    cats_response = [x for x in attr_entc.key_values if x in cats_response]
+
+    if len(cats_to_apply) == 0:
+        return df_input
+
+   
+    #vec_implementation_ramp_short = sf.vec_bounds(vec_ramp/min(vec_ramp[vec_ramp != 0]), (0, 1))
+    vec_implementation_ramp_short = sf.vec_bounds(vec_ramp*2, (0, 1))
+
+    # 
+    df_transformed = transformation_general(
+        df_input,
+        model_attributes, 
+        {
+            modvar_msp: {
+                "bounds": (0, 1),
+                "categories": cats_to_apply,
+                "magnitude": magnitude,
+                "magnitude_type": "final_value",
+                "vec_ramp": vec_ramp,
+                "time_period_baseline": get_time_period(model_attributes, "max")
+            }
+        },
+        field_region = field_region,
+        model_energy = model_energy,
+        **kwargs
+    )
+
+    # adjust other hydrogen shares
+    if len(cats_response) > 0:
+
+        vars_appplied = model_attributes.build_varlist(
+            model_attributes.subsec_name_entc,
+            modvar_msp,
+            restrict_to_category_values = cats_to_apply
+        )
+
+        vars_respond = model_attributes.build_varlist(
+            model_attributes.subsec_name_entc,
+            modvar_msp,
+            restrict_to_category_values = cats_response
+        )
+
+        arr_maintain = np.array(df_input[vars_appplied])
+        vec_total_maintain = arr_maintain.sum(axis = 1)
+        arr_adjust = np.array(df_input[vars_respond])
+        vec_total_adjust = arr_adjust.sum(axis = 1)
+
+        # if the total does not exceed 1, div by 1; if it does, divide by that total
+        vec_exceed_one = sf.vec_bounds(vec_total_maintain + vec_total_adjust - 1, (0.0, np.inf))
+        vec_scalar_adj = np.nan_to_num((vec_total_adjust - vec_exceed_one)/vec_total_adjust, 0.0, posinf = 0.0)
+
+        arr_adjust = sf.do_array_mult(arr_adjust, vec_scalar_adj)
+
+        for i, field in enumerate(vars_respond):
+            df_transformed[field] = arr_adjust[:, i]
+
+
+    return df_transformed
+
+
+
 def transformation_entc_increase_efficiency_of_electricity_production(
     df_input: pd.DataFrame,
     magnitude: float,
@@ -761,8 +869,8 @@ def transformation_entc_least_cost_solution(
     # specify ramp vec t
     # this one will eliminate MSP and REMT immediately
     # 
-    vec_implementation_ramp_short = sf.vec_bounds(vec_ramp/min(vec_ramp[vec_ramp != 0]), (0, 1))
-    #vec_implementation_ramp_short = sf.vec_bounds(vec_ramp*2, (0, 1))
+    #vec_implementation_ramp_short = sf.vec_bounds(vec_ramp/min(vec_ramp[vec_ramp != 0]), (0, 1))
+    vec_implementation_ramp_short = sf.vec_bounds(vec_ramp*2, (0, 1))
 
     # 
     df_transformed = transformation_general(
@@ -988,8 +1096,8 @@ def transformation_entc_renewable_target(
     ##  MODIFY ANY SPECIFIED MINSHARE PRODUCTION SPECIFIED
 
     # very aggressive, turns off any MSP as soon as a target goes above 0
-    vec_implementation_ramp_short = sf.vec_bounds(vec_ramp/min(vec_ramp[vec_ramp != 0]), (0, 1))
-    #vec_implementation_ramp_short = sf.vec_bounds(vec_ramp*2, (0, 1))
+    #vec_implementation_ramp_short = sf.vec_bounds(vec_ramp/min(vec_ramp[vec_ramp != 0]), (0, 1))
+    vec_implementation_ramp_short = sf.vec_bounds(vec_ramp*2, (0, 1))
 
     df_out = transformation_general(
         df_out,

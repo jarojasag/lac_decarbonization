@@ -2060,7 +2060,7 @@ class NonElectricEnergy:
             self.modvar_enfu_energy_demand_by_fuel_inen,
             "energy"
         )
-
+        ##HEREHERE
         # loop over fuels to
         for var_ener_frac in self.modvars_inen_list_fuel_fraction:
             # retrive the fuel category and index

@@ -1072,11 +1072,16 @@ class ModelAttributes:
             # get model variables
             dict_var_type, vars_by_subsector = self.get_subsector_variables(subsector)
             dict_vars_by_subsector.update(
-                {subsector: vars_by_subsector}
+                {
+                    subsector: vars_by_subsector
+                }
             )
             dict_vars_to_subsector.update(
-                dict(zip(vars_by_subsector, [subsector for x in vars_by_subsector]))
+                dict(
+                    zip(vars_by_subsector, [subsector for x in vars_by_subsector])
+                )
             )
+
             dict_vartypes_out.update(dict_var_type)
             modvars_all += sorted(vars_by_subsector)
 
@@ -4008,39 +4013,61 @@ class ModelAttributes:
 
 
 
-    ##  function to retrieve an (ordered) list of categories for a variable
-    def get_variable_categories(self, variable: str):
+    def get_variable_categories(self, 
+        variable: str
+    ) -> Union[List[str], None]:
+        """
+        Retrieve an (ordered) list of categories for a variable. Returns None if
+            the variable is not associated with any categories.
+        """
         if variable not in self.all_model_variables:
             raise ValueError(f"Invalid variable '{variable}': variable not found.")
+
         # initialize as all categories
         subsector = self.dict_model_variable_to_subsector[variable]
         all_cats = self.dict_attributes[self.get_subsector_attribute(subsector, "pycategory_primary")].key_values
+        
+        cats = all_cats
+
         if self.dict_model_variable_to_category_restriction[variable] == "partial":
+
             cats = self.get_variable_attribute(variable, "categories")
+
             if "none" not in cats.lower():
                 cats = cats.replace("`", "").split("|")
-                cats = [x for x in cats if x in all_cats]
+                cats = [x for x in all_cats if x in cats]
             else:
                 cats = None
-        else:
-            cats = all_cats
+
         return cats
 
 
 
-    ##  function for mapping variable to default characteristic (e.g., gas, units, etc.)
-    def get_variable_characteristic(self, variable: str, characteristic: str) -> str:
+    def get_variable_characteristic(self, 
+        variable: str, 
+        characteristic: str
+    ) -> str:
         """
-            use get_variable_characteristic to retrieve a characterisetic--e.g., characteristic = "$UNIT-MASS$" or characteristic = "$EMISSION-GAS$"--associated with a variable.
+        use get_variable_characteristic to retrieve a characterisetic--e.g., 
+            characteristic = "$UNIT-MASS$" or 
+            characteristic = "$EMISSION-GAS$"--associated with a variable.
         """
         var_schema = self.get_variable_attribute(variable, "variable_schema")
         dict_out = clean_schema(var_schema, return_default_dict_q = True)
+        
         return dict_out.get(characteristic)
 
 
 
-    ##  function to retrieve a variable that is associated with a category in a file (see Transportation Demand for an example)
-    def get_variable_from_category(self, subsector: str, category: str, var_type: str = "all") -> str:
+    def get_variable_from_category(self, 
+        subsector: str, 
+        category: str, 
+        var_type: str = "all"
+    ) -> str:
+        """
+        Retrieve a variable that is associated with a category in a file (see 
+            Transportation Demand for an example)
+        """
 
         # run some checks
         self.check_subsector(subsector)
@@ -4062,8 +4089,13 @@ class ModelAttributes:
 
 
 
-    ##  easy function for getting a variable subsector
-    def get_variable_subsector(self, modvar: str, throw_error_q: bool = True):
+    def get_variable_subsector(self, 
+        modvar: str, 
+        throw_error_q: bool = True
+    ) -> Union[str, None]:
+        """
+        Easy function for getting a variable subsector
+        """
         dict_check = self.dict_model_variable_to_subsector
         if modvar not in dict_check.keys():
             if throw_error_q:

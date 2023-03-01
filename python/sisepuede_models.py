@@ -221,6 +221,10 @@ class SISEPUEDEModels:
 		"""
 		Run SISEPUEDE models in appropriate order.
 
+		**WARNING** ONLY DESIGNED TO RUN ONE REGION AT A TIME RIGHT NOW. Will 
+			design multi-region specification soon.
+
+
 		Function Arguments
 		------------------
 		df_input_data: DataFrame containing SISEPUEDE inputs
