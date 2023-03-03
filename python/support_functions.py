@@ -977,7 +977,6 @@ def list_dict_keys_with_same_values(self,
 
 
 
-##  perform a merge to overwrite some values for a new sub-df
 def match_df_to_target_df(
     df_target: pd.DataFrame,
     df_source: pd.DataFrame,
@@ -986,21 +985,21 @@ def match_df_to_target_df(
     fillna_value: Union[int, float, str] = 0.0
 ) -> pd.DataFrame:
     """
-        Merge df_source to df_target, overwriting data fields in df_target with
-            those in df_source
+    Merge df_source to df_target, overwriting data fields in df_target with 
+        those in df_source
 
-        Function Arguments
-        ------------------
-        - df_target: target data frame, which will have values replaced with
-            values in df_source
-        - df_source: source data to use to replace
-        - fields_index: list of index fields
+    Function Arguments
+    ------------------
+    - df_target: target data frame, which will have values replaced with values 
+        in df_source
+    - df_source: source data to use to replace
+    - fields_index: list of index fields
 
-        Keyword Arguments
-        -----------------
-        - fields_to_replace: fields to replace in merge. If None, defaults to
-            all available.
-        - fillna_value: value to use to fill nas in data frame
+    Keyword Arguments
+    -----------------
+    - fields_to_replace: fields to replace in merge. If None, defaults to all 
+        available.
+    - fillna_value: value to use to fill nas in data frame
     """
 
     # get some fields
@@ -1012,7 +1011,7 @@ def match_df_to_target_df(
     # target fields to drop
     fields_dat_target = [x for x in df_target.columns if (x not in fields_index)]
     fields_dat_target_drop = [x for x in fields_dat_target if (x in fields_dat_source)]
-
+    
     # make a copy and rename
     df_out = pd.merge(
         df_target.drop(fields_dat_target_drop, axis = 1),

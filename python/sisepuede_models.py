@@ -258,6 +258,7 @@ class SISEPUEDEModels:
 		models_run = self.model_attributes.get_sector_list_from_projection_input(models_run)
 		regions = self.model_attributes.get_region_list_filtered(regions)
 		
+		
 		##  1. Run AFOLU and collect output
 
 		if "AFOLU" in models_run:

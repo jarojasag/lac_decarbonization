@@ -65,7 +65,8 @@ class Configuration:
         self.params_int = [
             "global_warming_potential",
             "historical_back_proj_n_periods",
-            "nemo_mod_time_periods",
+            "nemomod_solver_time_limit_seconds",
+            "nemomod_time_periods",
             "num_lhc_samples",
             "random_seed",
             "time_period_u0"
@@ -187,13 +188,13 @@ class Configuration:
         ##  MODIFY SOME PARAMETERS BEFORE CHECKING
 
         # set parameters to return as a list and ensure type return is list
-        params_list = ["region", "nemo_mod_time_periods"]
+        params_list = ["region", "nemomod_time_periods"]
         for p in params_list:
             if not isinstance(dict_conf[p], list):
                 dict_conf.update({p: [dict_conf[p]]})
 
         # set some to lower case
-        params_list = ["nemo_mod_solver", "output_method"]
+        params_list = ["nemomod_solver", "output_method"]
         for p in params_list:
             dict_conf.update({p: str(dict_conf.get(p)).lower()})
 
@@ -227,8 +228,8 @@ class Configuration:
             "land_use_reallocation_max_out_directionality": valid_lurmod,
             "length_units": valid_length,
             "monetary_units": valid_monetary,
-            "nemo_mod_solver": valid_solvers,
-            "nemo_mod_time_periods": valid_time_period,
+            "nemomod_solver": valid_solvers,
+            "nemomod_time_periods": valid_time_period,
             "output_method": valid_output_method,
             "power_units": valid_power,
             "region": valid_region,
@@ -237,7 +238,7 @@ class Configuration:
         }
 
         # allow some parameter switch values to valid values
-        dict_params_switch = {"region": ["all"], "nemo_mod_time_periods": ["all"]}
+        dict_params_switch = {"region": ["all"], "nemomod_time_periods": ["all"]}
         for p in dict_params_switch.keys():
             if dict_conf[p] == dict_params_switch[p]:
                 dict_conf.update({p: dict_checks[p].copy()})
@@ -252,6 +253,7 @@ class Configuration:
         # positive integer restriction
         dict_conf.update({
             "historical_back_proj_n_periods": max(dict_conf.get("historical_back_proj_n_periods"), 1),
+            "nemomod_solver_time_limit_seconds": max(dict_conf.get("nemomod_solver_time_limit_seconds"), 60), # set minimum solver limit to 60 seconds
             "num_lhc_samples": max(dict_conf.get("num_lhc_samples", 0), 0),
             "random_seed": max(dict_conf.get("random_seed"), 1)
         })
@@ -2358,21 +2360,22 @@ class ModelAttributes:
     #    QUICK RETRIEVAL OF FUNDAMENTAL TRANSFORMATIONS (GWP, MASS, ETC)    #
     #########################################################################
 
-    ##  internal function to get the unit equivalent scalar
     def get_unit_equivalent(self,
         unit: str,
         config_str: str,
         unit_dim_str: str,
         unit_type_str: str,
         valid_units: list,
-        unit_to_match: str = None
-    ) -> float:
+        throw_error_q: bool = True,
+        unit_to_match: Union[str, None] = None
+    ) -> Union[float, None]:
         """
-        For a given mass unit, get the scalar to convert to units unit_to_match
+        For a given unit, get the scalar to convert to units unit_to_match. 
+            Used for area, energy, length, mass, monetary, power, volume, 
+            and other conversions.
 
         Function Arguments
         ------------------
-        - area: a unit of area defined in the unit_area attribute table
         - unit: a unit from a specified unit dimension (e.g., mass)
         - config_str: the configuration parameter associated with the defualt 
             unit
@@ -2384,6 +2387,8 @@ class ModelAttributes:
         
         Keyword Arguments
         -----------------
+        - throw_error_q: throw an error on bad unit? If False and a unit is 
+            invalid, returns None
         - unit_to_match: Default is None. A unit value to match unit to. The 
             scalar `a` that is returned is multiplied by unit, i.e., 
             unit*a = unit_to_match. If None (default), return the configuration 
@@ -4054,7 +4059,7 @@ class ModelAttributes:
         """
         var_schema = self.get_variable_attribute(variable, "variable_schema")
         dict_out = clean_schema(var_schema, return_default_dict_q = True)
-        
+
         return dict_out.get(characteristic)
 
 

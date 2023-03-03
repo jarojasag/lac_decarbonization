@@ -50,6 +50,8 @@ class ElectricEnergy:
         * Set to False to access ElectricEnergy properties without initializing
             the connection to Julia.
     - logger: optional logger object to use for event logging
+    - solver_time_limit: run-time limit for solver in seconds. If None, defaults
+        to model_attributes configuration default.
 
     Requirements
     ------------
@@ -67,7 +69,8 @@ class ElectricEnergy:
         dir_jl: str,
         nemomod_reference_files: Union[str, dict],
         initialize_julia: bool = True,
-        logger: Union[logging.Logger, None] = None
+        logger: Union[logging.Logger, None] = None,
+        solver_time_limit: Union[int, None] = None,
     ):
         ##  INITIALIZE KEY PROPERTIES (ORDERED)
 
@@ -79,7 +82,7 @@ class ElectricEnergy:
         self._initialize_subsector_names()
         self._initialize_nemomod_fields()
         self._initialize_input_output_components()
-        self._initialize_other_properties()
+        self._initialize_other_properties(solver_time_limit = solver_time_limit)
 
         # initialize subsectoral model variables, categories, and indices
         self._initialize_subsector_vars_enfu()
@@ -366,7 +369,7 @@ class ElectricEnergy:
         }
 
         # check solver
-        self.solver = self.model_attributes.configuration.get("nemo_mod_solver") if (solver is None) else solver
+        self.solver = self.model_attributes.configuration.get("nemomod_solver") if (solver is None) else solver
         sf.check_set_values([self.solver], self.model_attributes.configuration.valid_solver)
         if self.solver not in self.dict_solver_to_julia_package.keys():
             self._log(f"Solver '{self.solver}' not found in _initialize_julia(); check self.dict_solver_to_julia_package to ensure it lines up with configuration.valid_solver. Resetting to best available...", type_log = "warning")
@@ -634,7 +637,8 @@ class ElectricEnergy:
         
 
     def _initialize_other_properties(self,
-        include_supply_techs_for_all_fuels: bool = True
+        include_supply_techs_for_all_fuels: bool = True,
+        solver_time_limit: Union[int, None] = None,
     ) -> None:
         """
         Initialize other properties that don't fit elsewhere. Sets the 
@@ -645,6 +649,7 @@ class ElectricEnergy:
             * self.direction_exchange_year_time_period
             * self.drop_flag_tech_capacities
             * self.include_supply_techs_for_all_fuels
+            * self.solver_time_limit
             * self.nemomod_time_period_as_year
             * self.units_energy_nemomod
 
@@ -652,6 +657,9 @@ class ElectricEnergy:
         -----------------
         - include_supply_techs_for_all_fuels: set to True to include alternative
             supplies for each fuel. 
+        - solver_time_limit: time limit to specify in seconds. If non-integer,
+            sets based on configuration default 
+            (nemomod_solver_time_limit_seconds)
 
         """
 
@@ -664,6 +672,14 @@ class ElectricEnergy:
             self.model_attributes.dim_mode,
             {"storage_category": 1}
         )[0]
+
+        # set the runtime limit
+        solver_time_limit = max(solver_time_limit, 15) if isinstance(solver_time_limit, int) else solver_time_limit
+        self.solver_time_limit = (
+            self.model_attributes.configuration.get("nemomod_solver_time_limit_seconds")
+            if not isinstance(solver_time_limit, int)
+            else solver_time_limit
+        )
 
         # other key variables
         self.drop_flag_tech_capacities = -999
@@ -739,6 +755,12 @@ class ElectricEnergy:
         self.modvar_enfu_transmission_loss_electricity = "Electrical Transmission Loss"
         self.modvar_enfu_transmission_loss_frac_electricity = "Electrical Transmission Loss Fraction"
         self.modvar_enfu_unused_fuel_exported = "Unused Fuel Exported"
+        self.modvar_enfu_value_of_fuel_ccsq = "Value of Fuel Consumed in CCSQ"
+        self.modvar_enfu_value_of_fuel_entc = "Value of Fuel Consumed in Energy Technology"
+        self.modvar_enfu_value_of_fuel_inen = "Value of Fuel Consumed in Industrial Energy"
+        self.modvar_enfu_value_of_fuel_scoe = "Value of Fuel Consumed in SCOE"
+        self.modvar_enfu_value_of_fuel_trns = "Value of Fuel Consumed in Transportation"
+        
         # key categories
         self.cat_enfu_bgas = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_enfu, {self.model_attributes.field_enfu_biogas_fuel_category: 1})[0]
         self.cat_enfu_elec = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_enfu, {self.model_attributes.field_enfu_electricity_demand_category: 1})[0]
@@ -2172,7 +2194,7 @@ class ElectricEnergy:
         # initialize an output dictionary mapping each tech to fuel
         dict_output_tech_to_fuel = {}
         
-        
+
         ##  GET ADJUSTMENTS FOR NON-ELECTRIC FUELS (SPECIFIED BY InputActivityRatio/OutputActivityRatio)
         
         for fuel in dict_fuel_cats.keys():
@@ -2497,6 +2519,7 @@ class ElectricEnergy:
 
         # get scalars to apply to prices - start with energy scalar (scale energy factor to configuration units--divide since energy is the denominator)
         scalar_energy = self.get_nemomod_energy_scalar(self.modvar_enfu_energy_density_gravimetric)
+        
         # scaling to get masses (denominators)
         scalar_mass = self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_enfu_energy_density_gravimetric,
@@ -6849,7 +6872,8 @@ class ElectricEnergy:
             df_elec_trajectories[ElectricEnergy.model_attributes.dim_time_period]
         - df_elec_trajectories: data frame containing trajectories of input
             variables to SISEPUEDE for NonElectricEnergy. 
-            * NOTE: required for extracting transmission losses
+            * NOTE: required for extracting transmission losses total fuel use
+                costs
 
         Keyword Arguments
         -----------------
@@ -6958,6 +6982,7 @@ class ElectricEnergy:
             var_bounds = (0, 1)
         )
 
+
         # 2. get demands in ENTC + imports
         #  These have units self.modvar_enfu_energy_demand_by_fuel_entc and self.modvar_enfu_imports_fuel
         df_enfu_demands_entc, df_enfu_imports = self.retrieve_nemomod_fuel_sectoral_demands_and_imports(
@@ -6977,6 +7002,7 @@ class ElectricEnergy:
         )
         arr_enfu_imports *= self.get_nemomod_energy_scalar(self.modvar_enfu_imports_fuel)
 
+
         # 3. add fuel production
         df_fuel_production = self.get_enfu_fuel_production_from_total_production(
             df_production_by_technology,
@@ -6988,6 +7014,7 @@ class ElectricEnergy:
         )
         df_out += [df_fuel_production]
 
+
         # 4. get fuel production array for use in calculating adjusted exports
         arr_enfu_production = self.model_attributes.get_standard_variables(
             df_fuel_production,
@@ -6996,6 +7023,7 @@ class ElectricEnergy:
             return_type = "array_base"
         )
         arr_enfu_production *= self.get_nemomod_energy_scalar(self.modvar_enfu_production_fuel)
+
 
         # 5. get demands from other subsectors (pull from here) - option is self.get_enfu_non_entc_fuel_demands_from_annual_demand
         arr_enfu_demand_entc = self.model_attributes.get_standard_variables(
@@ -7019,7 +7047,21 @@ class ElectricEnergy:
         )
         df_out += [df_enfu_demands]
 
-        # add in transmission loss totals
+
+        # 6. get total value of fuel CONSUMED
+        arr_entc_total_fuel_value = self.model_energy.get_enfu_fuel_costs_per_energy(
+            df_elec_trajectories,
+            modvar_for_units_energy = self.modvar_enfu_energy_demand_by_fuel_total
+        )
+        df_enfu_costs = self.model_attributes.array_to_df(
+            arr_entc_total_fuel_value*arr_enfu_demands/scalar_div,
+            self.modvar_enfu_value_of_fuel_entc,
+            reduce_from_all_cats_to_specified_cats = True
+        )
+        df_out += [df_enfu_costs]
+
+
+        # 7. add in transmission loss totals
         arr_enfu_transmission_losses = (arr_enfu_production + arr_enfu_imports)*arr_transmission_loss_frac
         scalar_div = self.get_nemomod_energy_scalar(self.modvar_enfu_transmission_loss_electricity)
         df_enfu_transmission_losses = self.model_attributes.array_to_df(
@@ -7029,7 +7071,8 @@ class ElectricEnergy:
         )
         df_out += [df_enfu_transmission_losses]
 
-        # get adjust exports as production + imports - demands
+
+        # 8. get adjusted exports as production + imports - demands
         arr_enfu_exports_adj = arr_enfu_production + arr_enfu_imports - arr_enfu_transmission_losses - arr_enfu_demands
         arr_enfu_exports_adj = sf.vec_bounds(arr_enfu_exports_adj, (0, np.inf))
         scalar_div = self.get_nemomod_energy_scalar(self.modvar_enfu_exports_fuel_adjusted)
@@ -7774,12 +7817,13 @@ class ElectricEnergy:
 
         # get calculation time periods
         attr_time_period = self.model_attributes.dict_attributes[f"dim_{self.model_attributes.dim_time_period}"]
-        vector_calc_time_periods = self.model_attributes.configuration.get("nemo_mod_time_periods") if (vector_calc_time_periods is None) else [x for x in attr_time_period.key_values if x in vector_calc_time_periods]
+        vector_calc_time_periods = self.model_attributes.configuration.get("nemomod_time_periods") if (vector_calc_time_periods is None) else [x for x in attr_time_period.key_values if x in vector_calc_time_periods]
         vector_calc_time_periods = self.transform_field_year_nemomod(vector_calc_time_periods)
 
         # get the optimizer (must reset each time)
         optimizer = self.julia_jump.Model(self.solver_module.Optimizer)
         self.julia_jump.set_optimizer_attribute(optimizer, "Solver", "cplex") if (solver == "gams_cplex") else None
+        self.julia_jump.set_time_limit_sec(optimizer, self.solver_time_limit)
         self.julia_jump.set_silent(optimizer)
 
         # set up vars to save

@@ -1034,6 +1034,8 @@ class SISEPUEDE:
 			lhs_design_cur = self.experimental_manager.dict_lhs_design.get(region)
 			region_out = self.get_output_region(region)
 
+			self._log(f"\n***\tSTARTING REGION {region}\t***\n", type_log = "info")
+
 			for design in all_designs:
 
 				df_lhs_l, df_lhs_x = lhs_design_cur.retrieve_lhs_tables_by_design(
@@ -1108,6 +1110,9 @@ class SISEPUEDE:
 
 							success = False
 
+
+							self._log(f"Trying run {self.key_primary} = {id_primary} in region {region}", type_log = "info")
+							
 							# try to run the model
 							try:
 								t0 = time.time()
@@ -1165,6 +1170,9 @@ class SISEPUEDE:
 
 			# reduce length after running
 			dict_primary_keys_run[region] = dict_primary_keys_run[region][0:iterate_inner]
+			
+			self._log(f"\n***\t REGION {region} COMPLETE\t***\n", type_log = "info")
+
 
 		# write tables to output
 		self._write_chunk_to_table(
