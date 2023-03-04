@@ -24,3 +24,4 @@ Output,:math:`\text{CO}_2` Emissions from SCOE,,``emission_co2e_$EMISSION-GAS$_s
 Output,:math:`\text{N}_2\text{O}` Emissions from SCOE,,``emission_co2e_$EMISSION-GAS$_scoe_$CAT-SCOE$`` (``$EMISSION-GAS$ = n2o``),,,,,,1,1,1,none,0,0,1
 Output,Electrical Energy Consumption from SCOE,,``energy_consumption_electricity_scoe_$CAT-SCOE$``,,,,,,1,1,1,none,0,0,0
 Output,Energy Consumption from SCOE,,``energy_consumption_scoe_$CAT-SCOE$``,,,,,,1,1,1,none,0,0,0
+Output,Heat Energy Demand in SCOE,,``energy_demand_scoe_heat_$CAT-SCOE$``,,,,,,1,1,1,none,0,0,0

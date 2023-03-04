@@ -18,14 +18,17 @@ Historical Solid Waste Method,historical_solid_waste_method,back_project," | The
 Land Use Reallocation Exhaust Transition Probabilities Directionality,land_use_reallocation_max_out_directionality,decrease_only,"Approach to use for ""maxing out"" transition probabilities for land use classes that transition into pasture and cropland states. Acceptable options are ""decrease_only"", ""increase_only"", or ""decrease_and_increase"". See the SISEPUEDE documentation for additional information.",
 Length Units,length_units,km,Default units for length. Used in reporting quantities useful to costs and benefits in the Transportation Demand sector.,
 Monetary Units,monetary_units,mm_usd,"Default reporting units for costs and benefits, including NemoMod reports.",
-NemoMod Solver,nemo_mod_solver,highs," | Solver to use to run NemoMod. Currently allowable values are: cbc, clp, cplex, gams_clpex, glpk, gurobi, highs
+NemoMod Solver,nemomod_solver,highs," | Solver to use to run NemoMod. Currently allowable values are: cbc, clp, cplex, gams_clpex, glpk, gurobi, highs
  | 
  | **Note**: If using cplex or gurobi, ensure that Julia has access to these solvers in the environment (in directory ./julia) and that proper licenses are available.
  | 
  | **Note**: Among open source solvers and cursory examples, `HiGHS <https://highs.dev/>`_ has performed particularly well.",
-NemoMod Time Periods,nemo_mod_time_periods,all,"Set of time periods to run. Acceptable values are ""all"" (entered without quotes) or pipe-delimitted time periods, e.g., 0|1|2|…",
+NemoMod Time Periods,nemomod_time_periods,all,"Set of time periods to run. Acceptable values are ""all"" (entered without quotes) or pipe-delimitted time periods, e.g., 0|1|2|…",
 Power Units,power_units,GW," | Default power units (defined in attribute_power.csv with an associted power*year value in attribute_energy.csv) for NemoMod
  | 
  |  **Note**:  Units of energy and power in NemoMod should be of (reasonably) the same order of magnitude to enable reliable solutions from the solver. Defaults of PJ and GW, for example, enable this comparison. ",
 Region,region,first,"Region to run when running DAG (does not affect .project() methods for individual models). Options include ""first"" (run the first defined region), ""all"" (run all regions), the name of a region (a valid region defined in attribute_cat_region.csv), or a pipe-delimited list of regions (e.g., region_1|region_2|…|region_n).",
+NemoMod Time Limit,nemomod_solver_time_limit_seconds,300," | Time limit, in seconds, to run a single instance of NemoMod (1 scenario in 1 region). 
+ | 
+ | **NOTE**: this is highly dependent on resolution and constraint use. More constraints will require more time to solve; however, in some cases, this prevents a hanging scenario from stopping runs.",Must be an integer.
 Volume Units,volume_units,m3,Default units for volumes. Used in reporting quantities useful to costs and benefits in the Wastewater Treatment sector.,

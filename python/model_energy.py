@@ -514,6 +514,7 @@ class NonElectricEnergy:
         self.modvar_inen_energy_consumption_electricity_agg = "Total Electrical Energy Consumption from Industrial Energy"
         self.modvar_inen_energy_consumption_total = "Energy Consumption from Industrial Energy"
         self.modvar_inen_energy_consumption_total_agg = "Total Energy Consumption from Industrial Energy"
+        self.modvar_inen_energy_demand_total = "Energy Demand in Industrial Energy"
         self.modvar_inen_en_gdp_intensity_factor = "Initial Energy Consumption Intensity of GDP"
         self.modvar_inen_en_prod_intensity_factor = "Initial Energy Consumption Intensity of Production"
         self.modvar_inen_frac_en_coal = "Industrial Energy Fuel Fraction Coal"
@@ -580,6 +581,7 @@ class NonElectricEnergy:
         self.modvar_scoe_energy_consumption_electricity_agg = "Total Electrical Energy Consumption from SCOE"
         self.modvar_scoe_energy_consumption_total = "Energy Consumption from SCOE"
         self.modvar_scoe_energy_consumption_total_agg = "Total Energy Consumption from SCOE"
+        self.modvar_scoe_energy_demand_heat_total = "Heat Energy Demand in SCOE"
         self.modvar_scoe_frac_heat_en_coal = "SCOE Fraction Heat Energy Demand Coal"
         self.modvar_scoe_frac_heat_en_diesel = "SCOE Fraction Heat Energy Demand Diesel"
         self.modvar_scoe_frac_heat_en_electricity = "SCOE Fraction Heat Energy Demand Electricity"
@@ -1378,12 +1380,20 @@ class NonElectricEnergy:
         arr_elastic_driver: Union[np.ndarray, None],
         dict_fuel_fracs: dict,
         dict_fuel_frac_to_eff: dict = None
-    ) -> np.ndarray:
+    ) -> Tuple[np.ndarray, Dict[str, np.ndarray]]:
 
         """
         Project energy consumption--in terms of configuration units for energy--
             for a consumption variable for each fuel specified as a key in 
-            self.modvar_dict_scoe_fuel_fractions_to_efficiency_factors
+            self.modvar_dict_scoe_fuel_fractions_to_efficiency_factors.
+
+        Returns a tuple of the form
+
+            (
+                arr_demand, # array of point of use demand
+                dict_consumption_by_fuel_out # dictionary of consumption by fuel
+            )
+
 
         Function Arguments
         ------------------
@@ -1462,7 +1472,12 @@ class NonElectricEnergy:
         # project demand forward
         arr_demand = np.nan_to_num(arr_consumption/arr_frac_norm, 0.0)
         if (arr_elastic_driver is not None) and (arr_elasticity is not None):
-            arr_growth_demand = sf.project_growth_scalar_from_elasticity(arr_elastic_driver, arr_elasticity, False, "standard")
+            arr_growth_demand = sf.project_growth_scalar_from_elasticity(
+                arr_elastic_driver, 
+                arr_elasticity, 
+                False, 
+                "standard"
+            )
             arr_demand = sf.do_array_mult(arr_demand[0]*arr_growth_demand, arr_activity)
         else:
             self._log("Missing elasticity information found in 'project_energy_consumption_by_fuel_from_effvars': using specified future demands.", type_log = "debug")
@@ -1485,7 +1500,7 @@ class NonElectricEnergy:
             arr_consumption_fuel = np.nan_to_num(arr_demand*arr_frac/arr_efficiency, 0.0)
             dict_consumption_by_fuel_out.update({modvar_fuel_frac: arr_consumption_fuel})
 
-        return dict_consumption_by_fuel_out
+        return arr_demand, dict_consumption_by_fuel_out
 
 
 
@@ -1503,6 +1518,13 @@ class NonElectricEnergy:
         Project energy consumption--in terms of units of the input vector
             vec_consumption_initial--given changing demand fractions and
             efficiency factors
+
+        Returns a tuple of the form
+
+            (
+                arr_demand, # array of point of use demand
+                dict_consumption_by_fuel_out # dictionary of consumption by fuel
+            )
 
         Function Arguments
         ------------------
@@ -1567,7 +1589,7 @@ class NonElectricEnergy:
             arr_consumption_fuel = np.nan_to_num((arr_demand*arr_frac).transpose()/vec_efficiency, nan = 0.0, posinf = 0.0).transpose()
             dict_consumption_by_fuel_out.update({modvar_fuel_frac: arr_consumption_fuel})
 
-        return dict_consumption_by_fuel_out
+        return arr_demand, dict_consumption_by_fuel_out
 
 
 
@@ -1797,7 +1819,7 @@ class NonElectricEnergy:
             df_neenergy_trajectories, 
             self.modvar_ccsq_frac_en_heat, True, "array_base", expand_to_all_cats = True)
         # next, use fuel mix + efficiencies to determine demands from final fuel consumption for heat energy_to_match (this will return the fractions of sequestration by consumption)
-        dict_ccsq_demands_by_fuel_heat = self.project_energy_consumption_by_fuel_from_effvars(
+        arr_ccsq_demand_energy, dict_ccsq_demands_by_fuel_heat = self.project_energy_consumption_by_fuel_from_effvars(
             df_neenergy_trajectories,
             self.modvar_ccsq_total_sequestration,
             None, None, None,
@@ -2270,26 +2292,34 @@ class NonElectricEnergy:
         # get production-based emissions - start with industrial production, energy demand
         arr_inen_prod = self.model_attributes.get_standard_variables(
             df_neenergy_trajectories, 
-            self.model_ippu.modvar_ippu_qty_total_production, True, "array_base", expand_to_all_cats = True)
+            self.model_ippu.modvar_ippu_qty_total_production, 
+            expand_to_all_cats = True,
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_base"
+        )
         arr_inen_prod_energy_intensity = self.model_attributes.get_standard_variables(
             df_neenergy_trajectories, 
-            self.modvar_inen_en_prod_intensity_factor, True, "array_base", expand_to_all_cats = True)
+            self.modvar_inen_en_prod_intensity_factor, 
+            expand_to_all_cats = True,
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_base"
+        )
 
         # get agricultural and livestock production + intensities (in terms of self.model_ippu.modvar_ippu_qty_total_production (mass) and self.modvar_inen_en_prod_intensity_factor (energy), respectively)
         index_inen_agrc, vec_inen_energy_intensity_agrc_lvst, vec_inen_prod_agrc_lvst = self.get_agrc_lvst_prod_and_intensity(df_neenergy_trajectories)
         arr_inen_prod[:, index_inen_agrc] += vec_inen_prod_agrc_lvst
 
-        # build dictionary for projection
+        # build dictionary for projection 
         dict_inen_fuel_frac_to_eff_cat = self.dict_inen_fuel_categories_to_fuel_variables.copy()
         for k in dict_inen_fuel_frac_to_eff_cat.keys():
             val = dict_inen_fuel_frac_to_eff_cat[k]["fuel_fraction"]
             dict_inen_fuel_frac_to_eff_cat.update({k: val})
         dict_inen_fuel_frac_to_eff_cat = sf.reverse_dict(dict_inen_fuel_frac_to_eff_cat)
 
-        # energy consumption at time 0 due to production in terms of units modvar_ippu_qty_total_production
+        # energy consumption at time 0 due to production in terms of units modvar_ippu_qty_total_production HEREHERE
         arr_inen_energy_consumption_intensity_prod = arr_inen_prod_energy_intensity*self.model_attributes.get_variable_unit_conversion_factor(
-            self.modvar_inen_en_prod_intensity_factor,
             self.model_ippu.modvar_ippu_qty_total_production,
+            self.modvar_inen_en_prod_intensity_factor,
             "mass"
         )
 
@@ -2297,7 +2327,7 @@ class NonElectricEnergy:
         arr_inen_energy_consumption_intensity_prod[:, index_inen_agrc] += vec_inen_energy_intensity_agrc_lvst
 
         # project future consumption
-        dict_inen_energy_consumption_prod = self.project_energy_consumption_by_fuel_from_fuel_cats(
+        arr_inen_demand_energy_prod, dict_inen_energy_consumption_prod = self.project_energy_consumption_by_fuel_from_fuel_cats(
             df_neenergy_trajectories,
             arr_inen_energy_consumption_intensity_prod[0],
             arr_inen_prod,
@@ -2309,13 +2339,17 @@ class NonElectricEnergy:
         # gdp-based emissions - get intensity, multiply by gdp, and scale to match energy units of production
         arr_inen_energy_consumption_intensity_gdp = self.model_attributes.get_standard_variables(
             df_neenergy_trajectories, 
-            self.modvar_inen_en_gdp_intensity_factor, True, "array_base", expand_to_all_cats = True)
+            self.modvar_inen_en_gdp_intensity_factor,
+            expand_to_all_cats = True,
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_base"
+        )
         arr_inen_energy_consumption_intensity_gdp *= self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_inen_en_gdp_intensity_factor,
             self.modvar_inen_en_prod_intensity_factor,
             "energy"
         ) 
-        dict_inen_energy_consumption_gdp = self.project_energy_consumption_by_fuel_from_fuel_cats(
+        arr_inen_demand_energy_gdp, dict_inen_energy_consumption_gdp = self.project_energy_consumption_by_fuel_from_fuel_cats(
             df_neenergy_trajectories,
             arr_inen_energy_consumption_intensity_gdp[0],
             vec_gdp,
@@ -2407,7 +2441,7 @@ class NonElectricEnergy:
         arr_inen_emissions_co2 = arr_inen_emissions_co2.transpose()
         arr_inen_emissions_n2o = arr_inen_emissions_n2o.transpose()
 
-        # set energy data frames
+        # get scalar to transform units of self.modvar_inen_en_prod_intensity_factor -> configuration units
         scalar_energy = self.model_attributes.get_scalar(self.modvar_inen_en_prod_intensity_factor, "energy")
 
 
@@ -2475,6 +2509,12 @@ class NonElectricEnergy:
             self.model_attributes.array_to_df(
                 arr_inen_demand_total_total*scalar_energy, 
                 self.modvar_inen_energy_consumption_total_agg
+            ),
+            # POINT OF USE DEMAND BY CATEGORY
+            self.model_attributes.array_to_df(
+                (arr_inen_demand_energy_prod + arr_inen_demand_energy_gdp)*scalar_energy, 
+                self.modvar_inen_energy_demand_total, 
+                reduce_from_all_cats_to_specified_cats = True
             )
         ]
 
@@ -2564,30 +2604,62 @@ class NonElectricEnergy:
         # get initial per-activity demands (can use to get true demands)
         arr_scoe_deminit_hh_elec = self.model_attributes.get_standard_variables(
             df_neenergy_trajectories, 
-            self.modvar_scoe_consumpinit_energy_per_hh_elec, True, "array_base", expand_to_all_cats = True)
+            self.modvar_scoe_consumpinit_energy_per_hh_elec, 
+            expand_to_all_cats = True,
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_base"
+        )
         arr_scoe_deminit_hh_heat = self.model_attributes.get_standard_variables(
             df_neenergy_trajectories, 
-            self.modvar_scoe_consumpinit_energy_per_hh_heat, True, "array_base", expand_to_all_cats = True)
+            self.modvar_scoe_consumpinit_energy_per_hh_heat, 
+            expand_to_all_cats = True,
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_base"
+        )
         arr_scoe_deminit_mmmgdp_elec = self.model_attributes.get_standard_variables(
             df_neenergy_trajectories, 
-            self.modvar_scoe_consumpinit_energy_per_mmmgdp_elec, True, "array_base", expand_to_all_cats = True)
+            self.modvar_scoe_consumpinit_energy_per_mmmgdp_elec, 
+            expand_to_all_cats = True,
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_base"
+        )
         arr_scoe_deminit_mmmgdp_heat = self.model_attributes.get_standard_variables(
             df_neenergy_trajectories, 
-            self.modvar_scoe_consumpinit_energy_per_mmmgdp_heat, True, "array_base", expand_to_all_cats = True)
+            self.modvar_scoe_consumpinit_energy_per_mmmgdp_heat, 
+            expand_to_all_cats = True,
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_base"
+        )
         
         # get elasticities
         arr_scoe_enerdem_elasticity_hh_elec = self.model_attributes.get_standard_variables(
             df_neenergy_trajectories, 
-            self.modvar_scoe_elasticity_hh_energy_demand_electric_to_gdppc, True, "array_base", expand_to_all_cats = True)
+            self.modvar_scoe_elasticity_hh_energy_demand_electric_to_gdppc, 
+            expand_to_all_cats = True,
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_base"
+        )
         arr_scoe_enerdem_elasticity_hh_heat = self.model_attributes.get_standard_variables(
             df_neenergy_trajectories, 
-            self.modvar_scoe_elasticity_hh_energy_demand_heat_to_gdppc, True, "array_base", expand_to_all_cats = True)
+            self.modvar_scoe_elasticity_hh_energy_demand_heat_to_gdppc, 
+            expand_to_all_cats = True,
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_base"
+        )
         arr_scoe_enerdem_elasticity_mmmgdp_elec = self.model_attributes.get_standard_variables(
             df_neenergy_trajectories, 
-            self.modvar_scoe_elasticity_mmmgdp_energy_demand_elec_to_gdppc, True, "array_base", expand_to_all_cats = True)
+            self.modvar_scoe_elasticity_mmmgdp_energy_demand_elec_to_gdppc, 
+            expand_to_all_cats = True,
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_base"
+        )
         arr_scoe_enerdem_elasticity_mmmgdp_heat = self.model_attributes.get_standard_variables(
             df_neenergy_trajectories, 
-            self.modvar_scoe_elasticity_mmmgdp_energy_demand_heat_to_gdppc, True, "array_base", expand_to_all_cats = True)
+            self.modvar_scoe_elasticity_mmmgdp_energy_demand_heat_to_gdppc,
+            expand_to_all_cats = True,
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_base"
+        )
         
         # get demand for electricity for households and gdp driven demands
         arr_scoe_growth_demand_hh_elec = sf.project_growth_scalar_from_elasticity(vec_rates_gdp_per_capita, arr_scoe_enerdem_elasticity_hh_elec, False, "standard")
@@ -2616,7 +2688,7 @@ class NonElectricEnergy:
         )
 
         # next, use fuel mix + efficiencies to determine demands from final fuel consumption for heat energy_to_match
-        dict_scoe_demands_by_fuel_heat_hh = self.project_energy_consumption_by_fuel_from_effvars(
+        arr_scoe_demand_heat_energy_hh, dict_scoe_demands_by_fuel_heat_hh = self.project_energy_consumption_by_fuel_from_effvars(
             df_neenergy_trajectories,
             self.modvar_scoe_consumpinit_energy_per_hh_heat,
             vec_hh,
@@ -2624,7 +2696,7 @@ class NonElectricEnergy:
             vec_rates_gdp_per_capita,
             dict_arrs_scoe_frac_energy
         )
-        dict_scoe_demands_by_fuel_heat_mmmgdp = self.project_energy_consumption_by_fuel_from_effvars(
+        arr_scoe_demand_heat_energy_mmgdp, dict_scoe_demands_by_fuel_heat_mmmgdp = self.project_energy_consumption_by_fuel_from_effvars(
             df_neenergy_trajectories,
             self.modvar_scoe_consumpinit_energy_per_mmmgdp_heat,
             vec_gdp,
@@ -2754,25 +2826,30 @@ class NonElectricEnergy:
                 self.modvar_enfu_value_of_fuel_scoe, 
                 reduce_from_all_cats_to_specified_cats = True
             ),
-            # ELECTRICITY DEMAND BY CATEGORY
+            # ELECTRICITY CONSUMPTION BY CATEGORY
             self.model_attributes.array_to_df(
                 arr_scoe_demand_electricity, 
                 self.modvar_scoe_energy_consumption_electricity
             ),
-            # ELECTRICITY DEMAND (AGGREGATE)
+            # ELECTRICITY CONSUMPTION (AGGREGATE)
             self.model_attributes.array_to_df(
                 arr_scoe_demand_electricity_total, 
                 self.modvar_scoe_energy_consumption_electricity_agg
             ),
-            # TOTAL ENERGY DEMAND BY CATEGORY
+            # TOTAL ENERGY CONSUMPTION BY CATEGORY
             self.model_attributes.array_to_df(
                 arr_scoe_demand_non_electric + arr_scoe_demand_electricity, 
                 self.modvar_scoe_energy_consumption_total
             ),
-            # TOTAL ENERGY DEMAND (AGGREGATE)
+            # TOTAL ENERGY CONSUMPTION (AGGREGATE)
             self.model_attributes.array_to_df(
                 arr_scoe_demand_non_electric_total + arr_scoe_demand_electricity_total, 
                 self.modvar_scoe_energy_consumption_total_agg
+            ),
+            # POINT OF USE DEMAND BY CATEGORY
+            self.model_attributes.array_to_df(
+                arr_scoe_demand_heat_energy_hh + arr_scoe_demand_heat_energy_mmgdp, 
+                self.modvar_scoe_energy_demand_heat_total
             )
         ]
 
