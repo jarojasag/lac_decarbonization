@@ -2,3 +2,4 @@
 Batteries,``st_batteries``,,,,,0.05,0,0,0,``st_batteries``
 Compressed Air,``st_compressed_air``,,,,,0,0,0,0,``st_compressed_air``
 Flywheels,``st_flywheels``,,,,,0,0,0,0,``st_flywheels``
+Pumped Hydro Storage,``st_pumped_hydro``,,,,,0,0,0,0,``st_pumped_hydro``

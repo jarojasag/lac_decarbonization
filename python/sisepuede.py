@@ -1105,7 +1105,8 @@ class SISEPUEDE:
 							).sort_values(
 								by = [self.model_attributes.dim_time_period]
 							).drop(
-								[x for x in df_input.columns if x in self.keys_index], axis = 1
+								[x for x in df_input.columns if x in self.keys_index], 
+								axis = 1
 							)
 
 							success = False

@@ -940,7 +940,7 @@ class NonElectricEnergy:
             expand_to_all_cats = True,
             return_type = "array_base",
             var_bounds = (0, np.inf)
-        ) * scalar_pivot
+        )/scalar_pivot
         
         # convert to price per unit of energy, then convert to energy units
         arr_price_per_energy = np.nan_to_num(arr_price/arr_density, 0.0, posinf = 0.0)

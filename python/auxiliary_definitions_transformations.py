@@ -272,7 +272,6 @@ def transformation_general(
         # check for bounds
         bounds = dict_modvar_specs_cur.get("bounds")
         bounds = None if not (isinstance(bounds, tuple) and len(bounds) == 2) else bounds
-        # check special case
         verified_modvar = ((bounds is not None) & verified_modvar) if (magnitude_type == "baseline_scalar_diff_reduction") else verified_modvar
 
         # check for categories
@@ -430,7 +429,7 @@ def transformation_general(
                 else:
 
                     # CASE WITH MOST STANDARD MODIFICATIONS
-
+                    
                     arr_base = np.array(df_in_new[fields_adjust])
                     arr_base = sf.vec_bounds(arr_base, bounds) if (bounds is not None) else arr_base
 
@@ -459,8 +458,8 @@ def transformation_general(
                 # check if bounds need to be applied
                 arr_final = sf.vec_bounds(arr_final, bounds) if (bounds is not None) else arr_final
                 vec_ramp = sf.vec_bounds(vec_ramp, (0, 1))
-                arr_transform = sf.do_array_mult(1 - vec_ramp, arr_base)
-                arr_transform += sf.do_array_mult(vec_ramp, arr_final)
+                arr_transform = sf.do_array_mult(arr_base, 1 - vec_ramp)
+                arr_transform += sf.do_array_mult(arr_final, vec_ramp)
 
                 # update dataframe if needed
                 for fld in enumerate(fields_adjust):
@@ -468,6 +467,7 @@ def transformation_general(
                     df_in_new[fld] = arr_transform[:, i]
 
         df_out.append(df_in_new)
+
 
     # concatenate and add strategy if applicable
     df_out = pd.concat(df_out, axis = 0).reset_index(drop = True)
@@ -660,7 +660,6 @@ def transformation_entc_hydrogen_electrolysis(
 
         for i, field in enumerate(vars_respond):
             df_transformed[field] = arr_adjust[:, i]
-
 
     return df_transformed
 
@@ -988,9 +987,12 @@ def transformation_entc_renewable_target(
         "fp_hydrogen_gasification",
         "fp_hydrogen_reformation"
     ],
+    dict_cats_entc_max_investment: Union[Dict[str, np.ndarray], None] = None,
+    factor_vec_ramp_msp: Union[float, int, None] = None,
     field_region: str = "nation",
     fuel_elec: str = "fuel_electricity",
     fuel_hydg: str = "fuel_hydrogen",
+    magnitude_renewables: Union[Dict[str, float], float, None] = None,
     model_energy: Union[me.NonElectricEnergy, None] = None,
     **kwargs
 ) -> pd.DataFrame:
@@ -1016,8 +1018,36 @@ def transformation_entc_renewable_target(
     -----------------
     - cats_entc_hydrogen: categories used to produce hydrogen (may be subject to
         renewable energy targets)
+    - dict_cats_entc_max_investment: dictionary of categories to place a cap on
+        maximum investment for. Each key maps to a dictionary with two elements;
+        one is a vector of values to use for the cap (-999 is used to implement
+        no maximum--key "vec"), and the other is the type of vector, which can
+        be either
+            * "value" (use raw values) or 
+            * "scalar" (scalar applied to maximum residual capacity over periods
+                where vec_ramp = 0
+
+        The dictionary should take the following form
+        
+            dict_cats_entc_max_investment = {
+                cat_entc_1: {
+                    "vec": [m_0, m_1, ... , m_{t - 1}],
+                    "type": "value"
+                },
+                ...
+            }
+
+        where `cat_entc_i` is a category, `vec` gives values as numpy vector, and
+        `type` gives the type of the time series.
+    - factor_vec_ramp_msp: factor used to accelerate the rate at which
+        MinShareProduction declines to 0 for non-renewable energy technologies.
+        If None, defaults to 1.5 (1 is the same rate).
     - field_region: field in df_input that specifies the region
-    - magnitude: final magnitude of generation capacity.
+    - magnitude_renewables: Dict mapping renewable categories to target minimum
+        shares of production by the final time period OR float giving a uniform 
+        value to apply to all renewable categories (as defined in 
+        `cats_renewable`). If None, the renewable minimum share of production 
+        for each renewable category is kept stable as soon as vec_remp != 0.
     - model_energy: optional NonElectricEnergy object to pass to
         transformation_general
     - regions_apply: optional set of regions to use to define strategy. If None,
@@ -1025,23 +1055,89 @@ def transformation_entc_renewable_target(
     - strategy_id: optional specification of strategy id to add to output
         dataframe (only added if integer)
     """
+    
+    ##  INITIALIZATION
 
+    # initialize some key elements
     attr_entc = model_attributes.get_attribute_table(model_attributes.subsec_name_entc)
     attr_enfu = model_attributes.get_attribute_table(model_attributes.subsec_name_enfu)
     cats_renewable = [x for x in attr_entc.key_values if x in cats_renewable]
     inds_renewable = [attr_entc.get_key_value_index(x) for x in cats_renewable]
 
+    # get fuel categories and technology dictionary
     fuel_elec = model_electricity.cat_enfu_elec if (fuel_elec not in attr_enfu.key_values) else fuel_elec
     fuel_hydg = "fuel_hydrogen" if (fuel_hydg not in attr_enfu.key_values) else fuel_hydg
-
     dict_tech_info = model_electricity.get_tech_info_dict()
-    
+
+
+    ##  CHECK AND CLEAN RENEWABLE PRODUCTION TARGET SPECIFICATION
+
+    magnitude_renewables = (
+        dict(
+            (k, min(max(v, 0.0), 1.0)) 
+            for k, v in magnitude_renewables.items() 
+            if (k in cats_renewable) 
+            and (isinstance(v, float) or isinstance(v, int)) 
+        ) 
+        if isinstance(magnitude_renewables, dict)
+        else (
+            None
+            if not (isinstance(magnitude_renewables, float) or isinstance(magnitude_renewables, int)) 
+            else min(max(magnitude_renewables, 0.0), 1.0)
+        )
+    )
+
+
+    ##  CHECK SPECIFICATION OF INVESTMENT CAPS
+
+    if isinstance(dict_cats_entc_max_investment, dict):
+        keys_check = list(dict_cats_entc_max_investment.keys())
+
+        for cat in keys_check:
+            # check specification of tech
+            keep_q = (cat in attr_entc.key_values)
+
+            # check that value is a dictionary
+            val = dict_cats_entc_max_investment.get(cat)
+            keep_q = keep_q & isinstance(val, dict)
+
+            # check that vectors are properly specified
+            if keep_q:
+                keep_q = keep_q & isinstance(dict_cats_entc_max_investment.get(cat).get("vec"), np.ndarray)
+                keep_q = keep_q & (dict_cats_entc_max_investment.get(cat).get("type") in ["value", "scalar"])
+
+            # remove the key if invalid
+            if not keep_q:
+                del dict_cats_entc_max_investment[cat]
+
+    dict_cats_entc_max_investment = None if not isinstance(dict_cats_entc_max_investment, dict) else (
+        None
+        if len(dict_cats_entc_max_investment) == 0
+        else dict_cats_entc_max_investment
+    )
+
+
+    ##  INITIALIZE OUTPUT AND LOOP OVER REGION GROUPS
+
+    # technologies to reduce MinShareProduction values to 0 and those to *avoid* reducing to 0
+    cats_entc_drop = [x for x in dict_tech_info.get("all_techs_pp") if x not in cats_renewable]
+    cats_entc_no_drop = [x for x in dict_tech_info.get("all_techs_pp") if x not in cats_entc_drop]
+    inds_entc_no_drop = [attr_entc.get_key_value_index(x) for x in cats_entc_no_drop]
+
+    # first index where vec_ramp starts to deviate from zero
+    ind_vec_ramp_first_zero_deviation = np.where(np.array(vec_ramp) != 0)[0][0]
+
     dfs = df_input.groupby(field_region)
     df_out = []
-
+    tmpi = None
     for df in dfs:
         
         tup, df = df
+
+        ##################################################
+        #    1. IMPLEMENT RENEWABLE GENERATION TARGET    #
+        ##################################################
+
         # setup renewable specification
         for cat in attr_entc.key_values:
             var_names = model_attributes.build_varlist(
@@ -1058,7 +1154,6 @@ def transformation_entc_renewable_target(
 
         # setup magnitude of change
         if magnitude == "VEC_FIRST_RAMP":
-            w = np.where(np.array(vec_ramp) != 0)[0][0]
 
             arr_entc_residual_capacity = model_attributes.get_standard_variables(
                 df,
@@ -1067,7 +1162,8 @@ def transformation_entc_renewable_target(
                 return_type = "array_base"
             )
 
-            magnitude = arr_entc_residual_capacity[w, inds_renewable].sum()/arr_entc_residual_capacity[w, :].sum()
+            magnitude = arr_entc_residual_capacity[ind_vec_ramp_first_zero_deviation, inds_renewable].sum()/arr_entc_residual_capacity[ind_vec_ramp_first_zero_deviation, :].sum()
+
 
         # iterate over categories to modify output data frame -- will use to copy into new variables
         df_transformed = transformation_general(
@@ -1088,7 +1184,169 @@ def transformation_entc_renewable_target(
             **kwargs
         )
 
+        
+        #########################################################
+        #    2. ADD IN MINIMUM SHARES FOR CERTAIN RENEWABLES    #
+        #########################################################
+
+        """
+        - Note: renewables should not decline as MSP diminishes and increase
+            again as renewable targets increase. This step ensures that 
+            renewables stay stable and are scaled appropriately with the 
+            renewable generation target.
+        """;
+
+        # get the target total magnitude of MSP of renewables and a scalar to apply to them to ensure they do not exceed REMinProductionTarget
+        # verify sum and scale if necessary; 
+        #    if magnitude > total_magnitude_msp_renewables, returns a scalar of 1 (no modifiation necessary)
+        #    if magnitude < total_magnitude_msp_renewables, returns scalar to apply to specified MSP to ensure does not exceed magnitude
+        arr_entc_min_share_production = model_attributes.get_standard_variables(
+            df_transformed,
+            model_electricity.modvar_entc_nemomod_min_share_production,
+            expand_to_all_cats = True,
+            return_type = "array_base"
+        )
+
+        # get the total magnitude of MSP of renewables
+        total_magnitude_msp_renewables = (
+            np.array(list(magnitude_renewables.values())).sum() 
+            if isinstance(magnitude_renewables, dict)
+            else magnitude_renewables*len(cats_renewable)
+        ) if (magnitude_renewables is not None) else (
+            arr_entc_min_share_production[ind_vec_ramp_first_zero_deviation, inds_renewable].sum()
+        )
+        scalar_renewables_div = min(magnitude/total_magnitude_msp_renewables, 1.0)
+
+        if isinstance(magnitude_renewables, dict):
+            
+            # apply to each category
+            for cat in magnitude_renewables.keys():
+                df_transformed = transformation_general(
+                    df_transformed,
+                    model_attributes, 
+                    {
+                        model_electricity.modvar_entc_nemomod_min_share_production: {
+                            "bounds": (0, 1),
+                            "categories": [cat],
+                            "magnitude": magnitude_renewables.get(cat)*scalar_renewables_div,
+                            "magnitude_type": "final_value",
+                            "vec_ramp": vec_ramp,
+                            "time_period_baseline": get_time_period(model_attributes, "max")
+                        }
+                    },
+                    field_region = field_region,
+                    model_energy = model_energy,
+                    **kwargs
+                )
+
+        elif isinstance(magnitude_renewables, float):
+
+            scalar_renewables_div = min(magnitude/total_magnitude_msp_renewables, 1.0)
+
+            # apply to all categories at once
+            df_transformed = transformation_general(
+                    df_transformed,
+                    model_attributes, 
+                    {
+                        model_electricity.modvar_entc_nemomod_min_share_production: {
+                            "bounds": (0, 1),
+                            "categories": cats_entc_no_drop,
+                            "magnitude": magnitude_renewables*scalar_renewables_div,
+                            "magnitude_type": "final_value",
+                            "vec_ramp": vec_ramp,
+                            "time_period_baseline": get_time_period(model_attributes, "max")
+                        }
+                    },
+                    field_region = field_region,
+                    model_energy = model_energy,
+                    **kwargs
+                )
+
+        else:
+            # maintain final value
+            for cat in cats_entc_no_drop:
+                
+                ind_cat_cur = attr_entc.get_key_value_index(cat)
+
+                df_transformed = transformation_general(
+                    df_transformed,
+                    model_attributes, 
+                    {
+                        model_electricity.modvar_entc_nemomod_min_share_production: {
+                            "bounds": (0, 1),
+                            "categories": [cat],
+                            "magnitude": arr_entc_min_share_production[ind_vec_ramp_first_zero_deviation, ind_cat_cur]*scalar_renewables_div,
+                            "magnitude_type": "final_value",
+                            "vec_ramp": vec_ramp,
+                            "time_period_baseline": get_time_period(model_attributes, "max")
+                        }
+                    },
+                    field_region = field_region,
+                    model_energy = model_energy,
+                    **kwargs
+                )
+
+
+
+        #################################################
+        #    3. ADD IN MAXIMUM TECHNOLOGY INVESTMENT    #
+        #################################################
+
+        if (dict_cats_entc_max_investment is not None):
+            
+            arr_entc_max_investment = model_attributes.get_standard_variables(
+                df_transformed,
+                model_electricity.modvar_entc_nemomod_total_annual_max_capacity_investment,
+                expand_to_all_cats = True,
+                return_type = "array_base"
+            )
+
+            # get maximum residual capacities by technology
+            vec_entc_max_capacites = model_attributes.get_standard_variables(
+                df_transformed,
+                model_electricity.modvar_entc_nemomod_residual_capacity,
+                expand_to_all_cats = True,
+                return_type = "array_base"
+            )
+            vec_entc_max_capacites = np.max(vec_entc_max_capacites, axis = 0)
+
+            # iterate over categories
+            for cat in dict_cats_entc_max_investment.keys():
+                
+                dict_cur = dict_cats_entc_max_investment.get(cat)
+
+                vec_repl = dict_cur.get("vec").copy()
+                type_repl = dict_cur.get("type")
+                
+                if len(vec_repl) == len(arr_entc_max_investment):
+
+                    # get category index
+                    ind_repl = attr_entc.get_key_value_index(cat)
+
+                    # clean and prepareinput vector
+                    np.put(vec_repl, np.where(vec_repl < 0)[0], model_electricity.drop_flag_tech_capacities)
+                    w = np.where(vec_repl != model_electricity.drop_flag_tech_capacities)
+                    
+                    vals_new = vec_repl[w]*vec_entc_max_capacites[ind_repl]
+                    np.put(vec_repl, w, vals_new) if (type_repl == "scalar") else None
+
+                    # overwrite if valid
+                    arr_entc_max_investment[:, ind_repl] = vec_repl
+
+            
+            arr_entc_max_investment = model_attributes.array_to_df(
+                arr_entc_max_investment, 
+                model_electricity.modvar_entc_nemomod_total_annual_max_capacity_investment,
+                reduce_from_all_cats_to_specified_cats = True
+            )
+
+            # overwrite in df_transformed
+            for fld in arr_entc_max_investment.columns:
+                if fld in df_transformed.columns:
+                    df_transformed[fld] = np.array(arr_entc_max_investment[fld])
+
         df_out.append(df_transformed)
+
     
     df_out = pd.concat(df_out, axis = 0).reset_index(drop = True)
 
@@ -1097,7 +1355,11 @@ def transformation_entc_renewable_target(
 
     # very aggressive, turns off any MSP as soon as a target goes above 0
     #vec_implementation_ramp_short = sf.vec_bounds(vec_ramp/min(vec_ramp[vec_ramp != 0]), (0, 1))
-    vec_implementation_ramp_short = sf.vec_bounds(vec_ramp*2, (0, 1))
+    factor_vec_ramp_msp = 1.25 if not (isinstance(factor_vec_ramp_msp, float) or isinstance(factor_vec_ramp_msp, int)) else max(1.0, factor_vec_ramp_msp)
+    vec_implementation_ramp_short = sf.vec_bounds(vec_ramp*factor_vec_ramp_msp, (0.0, 1.0))
+
+    global df_out_adt
+    df_out_adt = df_out
 
     df_out = transformation_general(
         df_out,
@@ -1105,7 +1367,7 @@ def transformation_entc_renewable_target(
         {
             model_electricity.modvar_entc_nemomod_min_share_production: {
                 "bounds": (0, 1),
-                "categories": dict_tech_info.get("all_techs_pp"),
+                "categories": cats_entc_drop,
                 "magnitude": 0.0,
                 "magnitude_type": "final_value",
                 "vec_ramp": vec_implementation_ramp_short,
@@ -1116,51 +1378,6 @@ def transformation_entc_renewable_target(
         model_energy = model_energy,
         **kwargs
     )
-    
-    """
-    arr_scale = model_attributes.get_standard_variables(
-        df_out,
-        model_electricity.modvar_entc_nemomod_min_share_production,
-        expand_to_all_cats = True,
-        return_type = "array_base",
-        var_bounds = (0.0, 1.0)
-    )
-
-    # get categories and associated indices
-    cats_entc_pp = dict_tech_info.get("all_techs_pp")
-    cats_entc_hydrogen = [x for x in attr_entc.key_values if x in cats_entc_hydrogen]
-    inds_entc_pp = [attr_entc.get_key_value_index(x) for x in cats_entc_pp]
-    inds_entc_hydrogen = [attr_entc.get_key_value_index(x) for x in cats_entc_hydrogen]
-
-    # get any specification of a target renewable energy production
-    arr_re_target = model_attributes.get_standard_variables(
-        df_out,
-        model_electricity.modvar_enfu_nemomod_renewable_production_target,
-        expand_to_all_cats = True,
-        override_vector_for_single_mv_q = True,
-        return_type = "array_base",
-        var_bounds = (0.0, 1.0)
-    )
-    
-    ind_enfu_elec = attr_enfu.get_key_value_index(fuel_elec)
-    ind_enfu_hydg = attr_enfu.get_key_value_index(fuel_hydg)
-
-    # scale down MSP in electricity
-    arr_elec_adj = sf.do_array_mult(arr_scale[:, inds_entc_pp], 1 - arr_re_target[:, ind_enfu_elec])
-    arr_scale[:, inds_entc_pp] = arr_elec_adj
-    arr_hydg_adj = sf.do_array_mult(arr_scale[:, inds_entc_hydrogen], 1 - arr_re_target[:, ind_enfu_hydg])
-    arr_scale[:, inds_entc_hydrogen] = arr_hydg_adj
-
-    # convert to dataframe, then overwrite
-    arr_scale = model_attributes.array_to_df(
-        arr_scale,
-        model_electricity.modvar_entc_nemomod_min_share_production, 
-        reduce_from_all_cats_to_specified_cats = True
-    )
-
-    for field in arr_scale.columns:
-        df_out[field] = np.array(arr_scale[field])
-    """
 
     return df_out
 
@@ -1484,7 +1701,7 @@ def transformation_inen_maximize_energy_efficiency(
         model_attributes,
         {
             model_energy.modvar_enfu_efficiency_factor_industrial_energy: {
-                "bounds": (0, 0.95),
+                "bounds": (0, np.inf),
                 "magnitude": magnitude,
                 "magnitude_type": "baseline_additive",
                 "time_period_baseline": get_time_period(model_attributes, "max"),
@@ -1626,6 +1843,7 @@ def transformation_inen_shift_modvars(
 
     subsec = model_attributes.subsec_name_inen
 
+
     ##  ITERATE OVER REGIONS AND MODVARS TO BUILD TRANSFORMATION
 
     for region in all_regions:
@@ -1654,13 +1872,14 @@ def transformation_inen_shift_modvars(
                 val_final_target = sum(vec_final_vals)
 
                 target_value = float(sf.vec_bounds(magnitude + val_initial_target, (0.0, 1.0)))#*dict_modvar_specs.get(modvar_target)
-                scale_non_elec = 1 - target_value
+                scale_non_elec = (1 - target_value)/(1 - val_final_target)
 
                 target_distribution = magnitude*np.array([dict_modvar_specs.get(x) for x in modvars_target]) + val_initial_target*vec_initial_distribution
-                target_distribution /= (magnitude + val_initial_target)
+                target_distribution /= max(magnitude + val_initial_target, 1.0) 
                 target_distribution = np.nan_to_num(target_distribution, 0.0, posinf = 0.0)
 
-                # get model variables that need to be adjusted
+                dict_target_distribution = dict((x, target_distribution[i]) for i, x in enumerate(modvars_target))
+
                 modvars_adjust = []
                 for modvar in modvars:
                     modvars_adjust.append(modvar) if cat in model_attributes.get_variable_categories(modvar) else None
@@ -1674,7 +1893,11 @@ def transformation_inen_shift_modvars(
                     )[0]
                     vec_old = np.array(df_in[field_cur])
                     val_final = vec_old[n_tp - 1]
-                    val_new = (val_final/(1 - val_final_target))*scale_non_elec if (modvar not in modvars_target) else magnitude*dict_modvar_specs.get(modvar)
+                    val_new = (
+                        np.nan_to_num(val_final, 0.0, posinf = 0.0)*scale_non_elec 
+                        if (modvar not in modvars_target) 
+                        else dict_target_distribution.get(modvar)#magnitude*dict_modvar_specs.get(modvar)
+                    )
                     vec_new = vec_ramp*val_new + (1 - vec_ramp)*vec_old
 
                     df_in_new[field_cur] = vec_new

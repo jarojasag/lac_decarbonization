@@ -508,13 +508,13 @@ class ElectricEnergy:
             self.model_attributes.table_nemomod_operating_cost_discounted,
             self.model_attributes.table_nemomod_production_by_technology,
             self.model_attributes.table_nemomod_total_annual_capacity,
-            self.model_attributes.table_nemomod_use_by_technology,
-            "vnewstoragecapacity",#TEMP
-            "vrateofstoragechargenn",
-            "vrateofstoragechargenodal",
-            "vrateofstoragedischargenn",
-            "vstoragelevelyearendnn",
-            "vusenn"
+            self.model_attributes.table_nemomod_use_by_technology
+            #"vnewstoragecapacity",#TEMP
+            #"vrateofstoragechargenn",
+            #"vrateofstoragechargenodal",
+            #"vrateofstoragedischargenn",
+            #"vstoragelevelyearendnn",
+            #"vusenn"
         ]
 
         return None
@@ -5877,7 +5877,6 @@ class ElectricEnergy:
 
 
 
-    ##  format TotalAnnualMaxCapacity, TotalAnnualMaxCapacityInvestment, TotalAnnualMinCapacity, TotalAnnualMinCapacityInvestment for NemoMod
     def format_nemomod_table_total_capacity_tables(self,
         df_elec_trajectories: pd.DataFrame,
         df_total_technology_activity_lower_limit: Union[dict, pd.DataFrame, None] = None,
@@ -5914,6 +5913,7 @@ class ElectricEnergy:
         tablename_lower_lim = self.model_attributes.table_nemomod_total_technology_annual_activity_lower_limit
         if isinstance(df_total_technology_activity_lower_limit, dict):
             df_total_technology_activity_lower_limit = df_total_technology_activity_lower_limit.get(tablename_lower_lim)
+
         # check if it's none (applicable if entered as none or if the input dictionary fails)
         if df_total_technology_activity_lower_limit is None:
             df_total_technology_activity_lower_limit = self.format_nemomod_table_total_technology_activity_lower_limit(
@@ -5974,6 +5974,7 @@ class ElectricEnergy:
                 scalar_to_nemomod_units = scalar_total_annual_max_capacity_investment
             )
         )
+
         # TotalAnnualMinCapacity
         dict_return.update(
             self.format_model_variable_as_nemomod_table(
@@ -5991,6 +5992,7 @@ class ElectricEnergy:
                 scalar_to_nemomod_units = scalar_total_annual_min_capacity
             )
         )
+        
         # TotalAnnualMinCapacityInvestment
         dict_return.update(
             self.format_model_variable_as_nemomod_table(
@@ -6189,7 +6191,6 @@ class ElectricEnergy:
 
 
 
-    ##  format TotalTechnologyAnnualActivityLowerLimit for NemoMod
     def format_nemomod_table_total_technology_activity_lower_limit(self,
         df_elec_trajectories: pd.DataFrame,
         attribute_technology: AttributeTable = None,
@@ -6200,6 +6201,12 @@ class ElectricEnergy:
         Format the TotalTechnologyAnnualActivityLowerLimit input tables for 
             NemoMod based on SISEPUEDE configuration parameters, input 
             variables, integrated model outputs, and reference tables.
+
+        In SISEPUEDE, this table is used in conjunction with 
+            TotalTechnologyAnnualActivityUpperLimit to pass biogas and waste
+            incineration production from collection in Circular Economy and 
+            AFOLU.
+
 
         Function Arguments
         ------------------
@@ -6314,6 +6321,142 @@ class ElectricEnergy:
         }
 
         return dict_return
+
+
+
+    def format_nemomod_table_total_technology_activity_upper_limit(self,
+        df_elec_trajectories: pd.DataFrame,
+        attribute_technology: AttributeTable = None,
+        regions: Union[List[str], None] = None, 
+        return_type: str = "NemoMod"
+    ) -> pd.DataFrame:
+        """
+        Format the TotalTechnologyAnnualActivityUpperLimit input tables for 
+            NemoMod based on SISEPUEDE configuration parameters, input 
+            variables, integrated model outputs, and reference tables.
+
+        In SISEPUEDE, this table is used in conjunction with 
+            TotalTechnologyAnnualActivityLowerLimit to pass biogas and waste
+            incineration production from collection in Circular Economy and 
+            AFOLU.
+
+
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
+
+        Keyword Arguments
+        -----------------
+        - attribute_technology: AttributeTable for technology, used to identify 
+            whether or not a technology can charge a storage. If None, use 
+            ModelAttributes default.
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
+        - return_type: type of return. Acceptable values are "NemoMod" and 
+            "CapacityCheck". Invalid entries default to "NemoMod"
+            * NemoMod (default): return the 
+                TotalTechnologyAnnualActivityLowerLimit input table for the 
+                NemoMod database
+            * CapacityCheck: return a table of specified minimum capacities
+                 associated with the technology.
+        """
+
+        # check input of return_type
+        try:
+            sf.check_set_values([return_type], ["NemoMod", "CapacityCheck"])
+        except:
+            # LOG HERE
+            return_type = "NemoMod"
+
+        # some attribute initializations
+        attribute_technology = self.model_attributes.get_attribute_table(self.subsec_name_entc) if (attribute_technology is None) else attribute_technology
+        pycat_enfu = self.model_attributes.get_subsector_attribute(self.subsec_name_enfu, "pycategory_primary")
+        pycat_entc = self.model_attributes.get_subsector_attribute(self.subsec_name_entc, "pycategory_primary")
+
+        # get some categories and keys
+        cat_entc_pp_biogas = self.get_entc_cat_for_integration("bgas")
+        cat_entc_pp_waste = self.get_entc_cat_for_integration("wste")
+        ind_entc_pp_biogas = attribute_technology.get_key_value_index(cat_entc_pp_biogas)
+        ind_entc_pp_waste = attribute_technology.get_key_value_index(cat_entc_pp_waste)
+        # get some scalars to use if returning a capacity constraint dataframe
+        if return_type == "CapacityCheck":
+            units_energy_config = self.model_attributes.configuration.get("energy_units")
+            units_power_config = self.model_attributes.configuration.get("power_units")
+            units_energy_power_equivalent = self.model_attributes.get_energy_power_swap(units_power_config)
+            scalar_energy_to_power_cur = self.model_attributes.get_energy_equivalent(units_energy_config, units_energy_power_equivalent)
+
+
+        ##  GET SUPPLY TO USE (MIN) AND TECH EFFICIENCIES
+
+        # get efficiency factors--total production should match up to min supply utilization * efficiency
+        arr_entc_efficiencies = self.model_attributes.get_standard_variables(
+            df_elec_trajectories,
+            self.modvar_entc_efficiency_factor_technology,
+            override_vector_for_single_mv_q = True,
+            return_type = "array_base",
+            expand_to_all_cats = True,
+            var_bounds = (0, 1)
+        )
+        # get biogas supply available
+        vec_enfu_total_energy_supply_biogas, vec_enfu_min_energy_to_elec_biogas = self.get_biogas_components(
+            df_elec_trajectories
+        )
+        vec_enfu_min_energy_to_elec_biogas *= arr_entc_efficiencies[:, ind_entc_pp_biogas]
+        # get waste supply available
+        vec_enfu_total_energy_supply_waste, vec_enfu_min_energy_to_elec_waste, dict_efs = self.get_waste_energy_components(
+            df_elec_trajectories,
+            return_emission_factors = True
+        )
+        vec_enfu_min_energy_to_elec_waste *= arr_entc_efficiencies[:, ind_entc_pp_waste]
+
+
+        ##  BUILD OUTPUT DATAFRAME - ALLOW FOR
+
+        # biogas component
+        df_biogas = pd.DataFrame({
+            self.field_nemomod_technology: cat_entc_pp_biogas,
+            self.field_nemomod_value: vec_enfu_min_energy_to_elec_biogas,
+            self.field_nemomod_year: list(df_elec_trajectories[self.model_attributes.dim_time_period])
+        })
+        # waste component
+        df_waste = pd.DataFrame({
+            self.field_nemomod_technology: cat_entc_pp_waste,
+            self.field_nemomod_value: vec_enfu_min_energy_to_elec_waste,
+            self.field_nemomod_year: list(df_elec_trajectories[self.model_attributes.dim_time_period])
+        })
+        # concatenate into output data frame
+        df_out = pd.concat([df_biogas, df_waste], axis = 0)
+        df_out = self.model_attributes.exchange_year_time_period(
+            df_out,
+            self.field_nemomod_year,
+            df_out[self.field_nemomod_year],
+            direction = self.direction_exchange_year_time_period
+        )
+        # add key values
+        df_out = self.add_multifields_from_key_values(df_out,
+            [
+                self.field_nemomod_id,
+                self.field_nemomod_region,
+                self.field_nemomod_technology,
+                self.field_nemomod_year,
+                self.field_nemomod_value
+            ],
+            regions = regions
+        )
+
+        # scale to power units if doing capacity check
+        if return_type == "CapacityCheck":
+            df_out[self.field_nemomod_value] = np.array(df_out[self.field_nemomod_value])*scalar_energy_to_power_cur
+
+        # setup output dictionary and return
+        dict_return = {
+            self.model_attributes.table_nemomod_total_technology_annual_activity_upper_limit: df_out
+        }
+
+        return dict_return
+
+
+
 
 
 
@@ -7582,6 +7725,15 @@ class ElectricEnergy:
                     regions = regions
                 )
             )
+            # TotalTechnologyAnnualActivityUpperLimit
+            dict_out.update(
+                self.format_nemomod_table_total_technology_activity_upper_limit(
+                    df_elec_trajectories, 
+                    attribute_technology = attribute_technology,
+                    regions = regions
+                )
+            )
+            
 
         # CapacityFactor
         if df_reference_capacity_factor is not None:

@@ -2974,27 +2974,36 @@ class ModelAttributes:
 
 
 
-    ##  add a year from a time period field
     def exchange_year_time_period(self,
         df_in: pd.DataFrame,
         field_year_new: str,
         series_time_domain: pd.core.series.Series,
-        attribute_time_period: AttributeTable = None,
+        attribute_time_period: Union[AttributeTable, None] = None,
         field_year_in_attribute: str = "year",
         direction: str = "time_period_to_year"
     ):
         """
-            Add year field to a data frame if missing.
+        Add year field to a data frame if missing
 
-            - df_in: input dataframe to add column to
-            - field_year_new: field name to store year
-            - series_time_domain: pandas series of time periods
-            - attribute_time_period: AttributeTable mapping ModelAttributes.dim_time_period to year field
-            - field_year_in_attribute: field in attribute_time_period containing the year
-            - direction: which direction to map; acceptable values include:
-                * time_period_to_year: convert a time period in the series to year under field field_year_new (default)
-                * time_period_as_year: enter the time period in the year field field_year_new (used for NemoMod)
-                * year_to_time_period: convert a year back to time period if there is an injection
+        Function Arguments
+        ------------------
+        - df_in: input dataframe to add column to
+        - field_year_new: field name to store year
+        - series_time_domain: pandas series of time periods
+
+        Keyword Arguments
+        -----------------
+        - attribute_time_period: AttributeTable mapping 
+            ModelAttributes.dim_time_period to year field
+        - field_year_in_attribute: field in attribute_time_period containing the 
+            year
+        - direction: which direction to map; acceptable values include:
+            * time_period_to_year: convert a time period in the series to year 
+                under field field_year_new (default)
+            * time_period_as_year: enter the time period in the year field 
+                field_year_new (used for NemoMod)
+            * year_to_time_period: convert a year back to time period if there 
+                is an injection
         """
 
         sf.check_set_values([direction], ["time_period_as_year", "time_period_to_year", "year_to_time_period"], " in exchange_year_time_period.")
@@ -3018,7 +3027,6 @@ class ModelAttributes:
 
 
 
-    ##  function for converting an array to a variable out dataframe (used in sector models)
     def array_to_df(self,
         arr_in: np.ndarray,
         modvar: str,

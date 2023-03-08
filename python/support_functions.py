@@ -982,7 +982,8 @@ def match_df_to_target_df(
     df_source: pd.DataFrame,
     fields_index: list,
     fields_to_replace: str = None,
-    fillna_value: Union[int, float, str] = 0.0
+    fillna_value: Union[int, float, str] = 0.0,
+    overwrite_only: bool = True
 ) -> pd.DataFrame:
     """
     Merge df_source to df_target, overwriting data fields in df_target with 
@@ -1000,14 +1001,19 @@ def match_df_to_target_df(
     - fields_to_replace: fields to replace in merge. If None, defaults to all 
         available.
     - fillna_value: value to use to fill nas in data frame
+    - overwrite_only: only overwrite columns in df_target with those in 
+        df_source. If False, will merge in fields that are not in df_target.
     """
 
     # get some fields
     check_fields(df_target, fields_index)
     check_fields(df_source, fields_index)
+
     # get fields to replace
-    fields_dat_source = [x for x in df_source.columns if (x not in fields_index) and (x in df_target.columns)]
+    fields_dat_source = [x for x in df_source.columns if (x not in fields_index)]
+    fields_dat_source = [x for x in fields_dat_source if (x in df_target.columns)] if overwrite_only else fields_dat_source
     fields_dat_source = [x for x in fields_dat_source if x in fields_to_replace] if (fields_to_replace is not None) else fields_dat_source
+
     # target fields to drop
     fields_dat_target = [x for x in df_target.columns if (x not in fields_index)]
     fields_dat_target_drop = [x for x in fields_dat_target if (x in fields_dat_source)]
@@ -1020,7 +1026,11 @@ def match_df_to_target_df(
         on = fields_index
     )
     df_out.fillna(fillna_value, inplace = True)
-    df_out = df_out[df_target.columns].reset_index(drop = True)
+    df_out = (
+        df_out[df_target.columns].reset_index(drop = True)
+        if overwrite_only
+        else df_out.reset_index(drop = True)
+    )
 
     return df_out
 
@@ -1436,13 +1446,17 @@ def simple_df_agg(
 ) -> pd.DataFrame:
     """
     Take an input dataframe, set grouping fields, and assume all other fields 
-        are data. Then, apply the same 'agg_func' to data fields.
+        are data (see `fields_agg` keyword argument for specifying other 
+        fields). Then, apply the same 'agg_func' to data fields.
 
     Function Arguments
     ------------------
     - df_in: input data frame to aggregate over
     - fields_group: fields to group the data frame by
     - dict_agg: aggregation function to apply to data fields
+
+    Keyword Arguments
+    -----------------
     - group_fields_ordered_for_sort_q: bool. Default = False. If True, the 
         grouping fields are ordered and used to sort the output dataframe after 
         aggregation.
