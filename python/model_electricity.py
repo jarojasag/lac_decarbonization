@@ -7175,9 +7175,9 @@ class ElectricEnergy:
             expand_to_all_cats = True,
             return_type = "array_base"
         )
-        arr_enfu_demand_entc *= self.get_nemomod_energy_scalar(self.modvar_enfu_energy_demand_by_fuel_entc)
+        scalar_enfu_energy_demand_entc_to_nemo_units = self.get_nemomod_energy_scalar(self.modvar_enfu_energy_demand_by_fuel_entc)
         # demands WITHOUT losses to transmission
-        arr_enfu_demands = arr_enfu_demands_no_entc + arr_enfu_demand_entc 
+        arr_enfu_demands = arr_enfu_demands_no_entc + arr_enfu_demand_entc*scalar_enfu_energy_demand_entc_to_nemo_units
 
         scalar_div = self.get_nemomod_energy_scalar(
             self.modvar_enfu_energy_demand_by_fuel_total, 
@@ -7190,14 +7190,22 @@ class ElectricEnergy:
         )
         df_out += [df_enfu_demands]
 
-
-        # 6. get total value of fuel CONSUMED
+        
+        # 6. get total value of fuel CONSUMED in ENTC
+        scalar_enfu_demand_entc_to_config_energy = self.model_attributes.get_scalar(
+            self.modvar_enfu_energy_demand_by_fuel_entc, 
+            "energy"
+        )
+        # arr_entc_total_fuel_value is in 
+        #  - configuration monetary units (get_enfu_fuel_costs_per_energy default) and 
+        #  - units of modvar_enfu_energy_demand_by_fuel_entc
         arr_entc_total_fuel_value = self.model_energy.get_enfu_fuel_costs_per_energy(
             df_elec_trajectories,
-            modvar_for_units_energy = self.modvar_enfu_energy_demand_by_fuel_total
+            modvar_for_units_energy = self.modvar_enfu_energy_demand_by_fuel_entc
         )
+        # multply by   scalar_enfu_demand_entc_to_config_energy   to conver everything to configuration energy units
         df_enfu_costs = self.model_attributes.array_to_df(
-            arr_entc_total_fuel_value*arr_enfu_demands/scalar_div,
+            arr_entc_total_fuel_value*arr_enfu_demand_entc*scalar_enfu_demand_entc_to_config_energy,
             self.modvar_enfu_value_of_fuel_entc,
             reduce_from_all_cats_to_specified_cats = True
         )
