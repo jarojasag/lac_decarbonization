@@ -1777,6 +1777,7 @@ def transformation_inen_shift_modvars(
     field_region: str = "nation",
     magnitude_relative_to_baseline: bool = False,
     model_energy: Union[me.NonElectricEnergy, None] = None,
+    return_modvars_only: bool = False,
     strategy_id: Union[int, None] = None
 ) -> pd.DataFrame:
     """
@@ -1801,6 +1802,7 @@ def transformation_inen_shift_modvars(
         transformation_general
     - regions_apply: optional set of regions to use to define strategy. If None,
         applies to all regions.
+    - return_modvars_only: return the model variables that define fuel fractions
     - strategy_id: optional specification of strategy id to add to output
         dataframe (only added if integer)
     """
@@ -1830,6 +1832,9 @@ def transformation_inen_shift_modvars(
         model_energy.modvar_inen_frac_en_solar,
         model_energy.modvar_inen_frac_en_solid_biomass
     ]
+
+    if return_modvars_only:
+        return modvars
 
     dict_modvar_specs_def = {model_energy.modvar_inen_frac_en_electricity: 1}
     dict_modvar_specs = dict_modvar_specs_def if not isinstance(dict_modvar_specs, dict) else dict_modvar_specs
