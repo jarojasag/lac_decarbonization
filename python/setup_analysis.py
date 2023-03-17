@@ -62,6 +62,8 @@ dir_rbd_baseline_transition_probs = sf.check_path(os.path.join(dir_ref_batch_dat
 dir_rbd_kcc = sf.check_path(os.path.join(dir_ref_batch_data, "koppen_climate_classifications"), True)
 dir_rbd_soc = sf.check_path(os.path.join(dir_ref_batch_data, "soil_grids_soil_organic_carbon"), True)
 dir_rbd_nemomod_energy_inputs = sf.check_path(os.path.join(dir_ref_batch_data, "nemomod_energy_inputs"), True)
+# batch data field index
+fp_csv_batch_data_field_index = os.path.join(dir_ref_batch_data, "batch_data_field_index.csv")
 # data crosswalks
 fp_csv_cw_fao_crops = os.path.join(dir_ref_data_crosswalks, "fao_crop_categories.csv")
 fp_csv_cw_fao_product_demand_categories_for_ie = os.path.join(dir_ref_data_crosswalks, "fao_product_demand_categories_for_import_export.csv")
