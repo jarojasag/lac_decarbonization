@@ -523,6 +523,7 @@ class NonElectricEnergy:
         self.modvar_inen_frac_en_electricity = "Industrial Energy Fuel Fraction Electricity"
         self.modvar_inen_frac_en_furnace_gas = "Industrial Energy Fuel Fraction Furnace Gas"
         self.modvar_inen_frac_en_gasoline = "Industrial Energy Fuel Fraction Gasoline"
+        self.modvar_inen_frac_en_geothermal = "Industrial Energy Fuel Fraction Geothermal"
         self.modvar_inen_frac_en_hgl = "Industrial Energy Fuel Fraction Hydrocarbon Gas Liquids"
         self.modvar_inen_frac_en_hydrogen = "Industrial Energy Fuel Fraction Hydrogen"
         self.modvar_inen_frac_en_kerosene = "Industrial Energy Fuel Fraction Kerosene"
