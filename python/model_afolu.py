@@ -1,11 +1,12 @@
-import support_functions as sf
-from model_attributes import *
 from attribute_table import AttributeTable
+import logging
+from model_attributes import *
 from model_socioeconomic import Socioeconomic
 from model_energy import NonElectricEnergy
 from model_ippu import IPPU
-import pandas as pd
 import numpy as np
+import pandas as pd
+import support_functions as sf
 import time
 from typing import *
 
@@ -16,11 +17,357 @@ from typing import *
 ##########################
 
 class AFOLU:
+    """
+    Use AFOLU to calculate emissions from Agriculture, Forestry, and Land Use in
+        SISEPUEDE. Includes emissions from the following subsectors:
+
+        * Agriculture (AGRC)
+        * Forestry (FRST)
+        * Land Use (LNDU)
+        * Livestock (LVST)
+        * Livestock Manure Management (LSMM)
+        * Soil Management (SOIL)
+
+    For additional information, see the SISEPUEDE readthedocs at:
+
+        https://sisepuede.readthedocs.io/en/latest/afolu.html
+
+
+    Intialization Arguments
+    -----------------------
+    - model_attributes: ModelAttributes object used in SISEPUEDE
+
+    Optional Arguments
+    ------------------
+    - logger: optional logger object to use for event logging
+    """
 
     def __init__(self,
-        attributes: ModelAttributes
+        attributes: ModelAttributes,
+        logger: Union[logging.Logger, None] = None
     ):
 
+        self.logger = logger
+        self.model_attributes = attributes
+
+        self._initialize_subsector_names()
+        self._initialize_input_output_components()
+
+
+        ##  SET MODEL FIELDS
+
+        self._initialize_subsector_vars_agrc()
+        self._initialize_subsector_vars_frst()
+        self._initialize_subsector_vars_lndu()
+        self._initialize_subsector_vars_lsmm()
+        self._initialize_subsector_vars_lvst()
+        self._initialize_subsector_vars_soil()
+
+        self._initialize_models()
+        self._initialize_integrated_variables()
+        self._initialize_other_properties()
+
+
+
+
+
+    ##############################################
+    #    SUPPORT AND INITIALIZATION FUNCTIONS    #
+    ##############################################
+
+    def _log(self,
+        msg: str,
+        type_log: str = "log",
+        **kwargs
+    ) -> None:
+        """
+        Clean implementation of sf._optional_log in-line using default logger. See
+            ?sf._optional_log for more information.
+
+        Function Arguments
+        ------------------
+        - msg: message to log
+
+        Keyword Arguments
+        -----------------
+        - type_log: type of log to use
+        - **kwargs: passed as logging.Logger.METHOD(msg, **kwargs)
+        """
+        sf._optional_log(self.logger, msg, type_log = type_log, **kwargs)
+
+
+    # assign some land use categories
+    def _assign_cats_lndu(self
+    ) -> None:
+
+        attr_lndu = self.model_attributes.get_attribute_table(self.subsec_name_lndu)
+        pycat_frst = self.model_attributes.get_subsector_attribute(self.subsec_name_frst, "pycategory_primary")
+        
+        ##  set categories
+
+        # crop category
+        self.cat_lndu_crop = self.model_attributes.get_categories_from_attribute_characteristic(
+            self.subsec_name_lndu, 
+            {"crop_category": 1}
+        )[0]
+        
+        # mangrove forest category
+        self.cat_lndu_fstm = self.model_attributes.get_categories_from_attribute_characteristic(
+            self.subsec_name_lndu,
+            {pycat_frst: f"``{self.cat_frst_mang}``"}
+        )[0]
+        
+        # primary forest category
+        self.cat_lndu_fstp = self.model_attributes.get_categories_from_attribute_characteristic(
+            self.subsec_name_lndu,
+            {pycat_frst: f"``{self.cat_frst_prim}``"}
+        )[0]
+
+        # secondary forest category
+        self.cat_lndu_fsts = self.model_attributes.get_categories_from_attribute_characteristic(
+            self.subsec_name_lndu,
+            {pycat_frst: f"``{self.cat_frst_scnd}``"}
+        )[0]
+
+        # other land use
+        self.cat_lndu_othr = self.model_attributes.get_categories_from_attribute_characteristic(
+            self.subsec_name_lndu, 
+            {"other_category": 1}
+        )[0]
+
+        # grassland, used for pasture
+        self.cat_lndu_grass = self.model_attributes.get_categories_from_attribute_characteristic(
+            self.subsec_name_lndu, 
+            {"pasture_category": 1}
+        )[0]
+
+        # settlements
+        self.cat_lndu_stlm = self.model_attributes.get_categories_from_attribute_characteristic(
+            self.subsec_name_lndu, 
+            {"settlements_category": 1}
+        )[0]
+        self.cat_lndu_wetl = self.model_attributes.get_categories_from_attribute_characteristic(
+            self.subsec_name_lndu, 
+            {"wetlands_category": 1}
+        )[0]
+        
+        # list of categories to use to "max out" transition probabilities when scaling land use prevelance
+        self.cats_lndu_max_out_transition_probs = self.model_attributes.get_categories_from_attribute_characteristic(
+            self.model_attributes.subsec_name_lndu,
+            {
+                "reallocation_transition_probability_exhaustion_category": 1
+            }
+        )
+
+        # assign indices
+        self.ind_lndu_crop = attr_lndu.get_key_value_index(self.cat_lndu_crop)
+        self.ind_lndu_fstm = attr_lndu.get_key_value_index(self.cat_lndu_fstm)
+        self.ind_lndu_fstp = attr_lndu.get_key_value_index(self.cat_lndu_fstp)
+        self.ind_lndu_fsts = attr_lndu.get_key_value_index(self.cat_lndu_fsts)
+        self.ind_lndu_othr = attr_lndu.get_key_value_index(self.cat_lndu_othr)
+        self.ind_lndu_grass = attr_lndu.get_key_value_index(self.cat_lndu_grass)
+        self.ind_lndu_stlm = attr_lndu.get_key_value_index(self.cat_lndu_stlm)
+        self.ind_lndu_wetl = attr_lndu.get_key_value_index(self.cat_lndu_wetl)
+
+        return None
+
+
+
+    def check_df_fields(self, 
+        df_afolu_trajectories: pd.DataFrame, 
+        check_fields: Union[List[str], None] = None
+    ) -> None:
+        check_fields = self.required_variables if (check_fields is None) else check_fields
+        # check for required variables
+        if not set(check_fields).issubset(df_afolu_trajectories.columns):
+            set_missing = list(set(check_fields) - set(df_afolu_trajectories.columns))
+            set_missing = sf.format_print_list(set_missing)
+            raise KeyError(f"AFOLU projection cannot proceed: The fields {set_missing} are missing.")
+
+        return None
+
+
+
+    def _initialize_input_output_components(self,
+    ) -> None:
+        """
+        Set a range of input components, including required dimensions, 
+            subsectors, input and output fields, and integration variables.
+            Sets the following properties:
+
+            * self.output_variables
+            * self.required_dimensions
+            * self.required_subsectors
+            * self.required_base_subsectors
+            * self.required_variables
+            
+        """
+        # initialzie dynamic variables
+        
+        # required dimensions of analysis
+        required_doa = [self.model_attributes.dim_time_period]
+
+        # required subsectors
+        subsectors = self.model_attributes.get_sector_subsectors("AFOLU")
+        subsectors_base = subsectors.copy()
+        subsectors += [self.subsec_name_econ, self.subsec_name_gnrl]
+        
+        # input/output
+        required_vars, output_vars = self.model_attributes.get_input_output_fields(subsectors)
+        required_vars += required_doa
+
+        # set output properties
+        self.required_dimensions = required_doa
+        self.required_subsectors = subsectors
+        self.required_base_subsectors = subsectors_base
+        self.required_variables = required_vars
+        self.output_variables = output_vars
+
+        return None
+
+
+
+    def _initialize_integrated_variables(self
+    ) -> None:
+        """
+        Initialize variables required for integration. Sets the following 
+            properties:
+
+            * self.dict_integration_variables_by_subsector
+            * self.integration_variables
+        """
+        dict_vars_required_for_integration = {
+            # ippu variables required for estimating HWP
+            self.subsec_name_ippu: [
+                self.model_ippu.modvar_ippu_average_lifespan_housing,
+                self.model_ippu.modvar_ippu_change_net_imports,
+                self.model_ippu.modvar_ippu_demand_for_harvested_wood,
+                self.model_ippu.modvar_ippu_elast_ind_prod_to_gdp,
+                self.model_ippu.modvar_ippu_max_recycled_material_ratio,
+                self.model_ippu.model_socioeconomic.modvar_grnl_num_hh,
+                self.model_ippu.modvar_ippu_prod_qty_init,
+                self.model_ippu.modvar_ippu_qty_recycled_used_in_production,
+                self.model_ippu.modvar_ippu_qty_total_production,
+                self.model_ippu.modvar_ippu_ratio_of_production_to_harvested_wood,
+                self.model_ippu.modvar_waso_waste_total_recycled
+            ],
+            # SCOE variables required for projecting changes to wood energy demand
+            self.subsec_name_scoe: [
+                self.model_energy.modvar_scoe_consumpinit_energy_per_hh_elec,
+                self.model_energy.modvar_scoe_consumpinit_energy_per_hh_heat,
+                self.model_energy.modvar_scoe_consumpinit_energy_per_mmmgdp_elec,
+                self.model_energy.modvar_scoe_consumpinit_energy_per_mmmgdp_heat,
+                self.model_energy.modvar_scoe_efficiency_fact_heat_en_coal,
+                self.model_energy.modvar_scoe_efficiency_fact_heat_en_diesel,
+                self.model_energy.modvar_scoe_efficiency_fact_heat_en_electricity,
+                self.model_energy.modvar_scoe_efficiency_fact_heat_en_gasoline,
+                self.model_energy.modvar_scoe_efficiency_fact_heat_en_hgl,
+                self.model_energy.modvar_scoe_efficiency_fact_heat_en_hydrogen,
+                self.model_energy.modvar_scoe_efficiency_fact_heat_en_kerosene,
+                self.model_energy.modvar_scoe_efficiency_fact_heat_en_natural_gas,
+                self.model_energy.modvar_scoe_efficiency_fact_heat_en_solid_biomass,
+                self.model_energy.modvar_scoe_elasticity_hh_energy_demand_electric_to_gdppc,
+                self.model_energy.modvar_scoe_elasticity_hh_energy_demand_heat_to_gdppc,
+                self.model_energy.modvar_scoe_elasticity_mmmgdp_energy_demand_elec_to_gdppc,
+                self.model_energy.modvar_scoe_elasticity_mmmgdp_energy_demand_heat_to_gdppc,
+                self.model_energy.modvar_scoe_frac_heat_en_coal,
+                self.model_energy.modvar_scoe_frac_heat_en_diesel,
+                self.model_energy.modvar_scoe_frac_heat_en_electricity,
+                self.model_energy.modvar_scoe_frac_heat_en_gasoline,
+                self.model_energy.modvar_scoe_frac_heat_en_hgl,
+                self.model_energy.modvar_scoe_frac_heat_en_hydrogen,
+                self.model_energy.modvar_scoe_frac_heat_en_kerosene,
+                self.model_energy.modvar_scoe_frac_heat_en_natural_gas,
+                self.model_energy.modvar_scoe_frac_heat_en_solid_biomass
+            ]
+        }
+
+        # set complete output list of integration variables
+        list_vars_required_for_integration = []
+        for k in dict_vars_required_for_integration.keys():
+            list_vars_required_for_integration += dict_vars_required_for_integration[k]
+
+        self.dict_integration_variables_by_subsector = dict_vars_required_for_integration
+        self.integration_variables = list_vars_required_for_integration
+
+        return None
+
+
+
+    def _initialize_models(self,
+        model_attributes: Union[ModelAttributes, None] = None
+    ) -> None:
+        """
+        Initialize SISEPUEDE model classes for fetching variables and 
+            accessing methods. Initializes the following properties:
+
+            * self.model_energy
+            * self.model_ippu
+            * self.model_socioeconomic
+
+            as well as additional associated categories, such as 
+
+            * self.cat_enfu_biomass
+            * self.cat_ippu_paper
+            * self.cat_ippu_wood
+
+
+        Keyword Arguments
+        -----------------
+        - model_attributes: ModelAttributes object used to instantiate
+            models. If None, defaults to self.model_attributes.
+        """
+
+        model_attributes = self.model_attributes if (model_attributes is None) else model_attributes
+
+        # add other model classes--required for integration variables
+        self.model_energy = NonElectricEnergy(model_attributes)
+        self.model_ippu = IPPU(model_attributes)
+        self.model_socioeconomic = Socioeconomic(model_attributes)
+
+        # key categories
+        self.cat_enfu_biomass = model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_enfu, {"biomass_demand_category": 1})[0]
+        self.cat_ippu_paper = model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_ippu, {"virgin_paper_category": 1})[0]
+        self.cat_ippu_wood = model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_ippu, {"virgin_wood_category": 1})[0]
+        
+        return None
+
+
+
+    def _initialize_other_properties(self,
+    ) -> None:
+        """
+        Initialize other properties that don't fit elsewhere. Sets the 
+            following properties:
+
+            * self.factor_c_to_co2
+            * self.factor_n2on_to_n2o
+            * self.n_time_periods
+            * self.time_dependence_stock_change
+            * self.time_periods
+        """
+        
+        # from IPCC docs
+        self.factor_c_to_co2 = float(11/3)
+        self.factor_n2on_to_n2o = float(11/7)
+
+        # see IPCC 2006/2019R GNGHGI V4 CH2 FOR D = 20
+        self.time_dependence_stock_change = 20
+
+        # time variables
+        time_periods, n_time_periods = self.model_attributes.get_time_periods()
+        self.time_periods = time_periods
+        self.n_time_periods = n_time_periods
+
+        return None
+
+
+
+    def _initialize_subsector_names(self,
+    ) -> None:
+        """
+        Initialize all subsector names (self.subsec_name_****)
+        """
         # some subector reference variables
         self.subsec_name_agrc = "Agriculture"
         self.subsec_name_econ = "Economy"
@@ -34,15 +381,21 @@ class AFOLU:
         self.subsec_name_scoe = "Stationary Combustion and Other Energy"
         self.subsec_name_soil = "Soil Management"
 
-        # initialzie dynamic variables
-        self.model_attributes = attributes
-        self.required_dimensions = self.get_required_dimensions()
-        self.required_subsectors, self.required_base_subsectors = self.get_required_subsectors()
-        self.required_variables, self.output_variables = self.get_afolu_input_output_fields()
+        return None
 
 
-        ##  SET MODEL FIELDS
+    def _initialize_subsector_vars_agrc(self,
+    ) -> None:
+        """
+        Initialize model variables, categories, and indices associated with
+            AGRC (Agriculture). Sets the following properties:
 
+            * self.cat_agrc_****
+            * self.ind_agrc_****
+            * self.modvar_agrc_****
+            * self.modvar_dict_agrc_****
+            * self.modvar_list_agrc_****
+        """
         # agricultural model variables
         self.modvar_agrc_adjusted_equivalent_exports = "Adjusted Agriculture Equivalent Exports"
         self.modvar_agrc_adjusted_equivalent_imports = "Adjusted Agriculture Equivalent Imports"
@@ -101,6 +454,23 @@ class AFOLU:
         # some key categories
         self.cat_agrc_rice = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_agrc, {"rice_category": 1})[0]
 
+        return None
+
+
+
+    def _initialize_subsector_vars_frst(self,
+    ) -> None:
+        """
+        Initialize model variables, categories, and indices associated with
+            FRST (Forest). Sets the following properties:
+
+            * self.cat_frst_****
+            * self.ind_frst_****
+            * self.modvar_frst_****
+            * self.modvar_dict_frst_****
+            * self.modvar_list_frst_****
+        """
+
         # forest model variables
         self.modvar_frst_average_fraction_burned_annually = "Average Fraction of Forest Burned Annually"
         self.modvar_frst_biomass_consumed_fire_temperate = "Fire Biomass Consumption for Temperate Forests"
@@ -125,9 +495,29 @@ class AFOLU:
             self.modvar_frst_frac_temperate_nutrient_rich,
             self.modvar_frst_frac_tropical
         ]
-        # assign some key categories
-        self._assign_cats_frst()
 
+        # assign some key categories
+        self.cat_frst_mang = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_frst, {"mangroves_forest_category": 1})[0]
+        self.cat_frst_prim = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_frst, {"primary_forest_category": 1})[0]
+        self.cat_frst_scnd = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_frst, {"secondary_forest_category": 1})[0]
+
+
+        return None
+
+
+
+    def _initialize_subsector_vars_lndu(self,
+    ) -> None:
+        """
+        Initialize model variables, categories, and indices associated with
+            LNDU (Land Use). Sets the following properties:
+
+            * self.cat_lndu_****
+            * self.ind_lndu_****
+            * self.modvar_lndu_****
+            * self.modvar_dict_lndu_****
+            * self.modvar_list_lndu_****
+        """
         # land use model variables
         self.modvar_lndu_area_by_cat = "Land Use Area"
         self.modvar_lndu_area_converted_from_type = "Area of Land Use Area Conversion Away from Type"
@@ -163,6 +553,21 @@ class AFOLU:
         # some key categories
         self._assign_cats_lndu()
 
+
+
+    def _initialize_subsector_vars_lsmm(self,
+    ) -> None:
+        """
+        Initialize model variables, categories, and indices associated with
+            LSMM (Livestock Manure Management). Sets the following 
+            properties:
+
+            * self.cat_lsmm_****
+            * self.ind_lsmm_****
+            * self.modvar_lsmm_****
+            * self.modvar_dict_lsmm_****
+        """
+        
         # manure management variables
         self.modvar_lsmm_dung_incinerated = "Dung Incinerated"
         self.modvar_lsmm_ef_direct_n2o = ":math:\\text{N}_2\\text{O} Manure Management Emission Factor"
@@ -182,10 +587,26 @@ class AFOLU:
         self.modvar_lsmm_ratio_n2_to_n2o = "Ratio of :math:\\text{N}_2 to :math:\\text{N}_2\\text{O}"
         self.modvar_lsmm_recovered_biogas = "LSMM Biogas Recovered from Anaerobic Digesters"
         self.modvar_lsmm_rf_biogas = "Biogas Recovery Factor at LSMM Anaerobic Digesters"
+
         # some categories
         self.cat_lsmm_incineration = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lsmm, {"incineration_category": 1})[0]
         self.cat_lsmm_pasture = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lsmm, {"pasture_category": 1})[0]
 
+        return None
+
+
+
+    def _initialize_subsector_vars_lvst(self,
+    ) -> None:
+        """
+        Initialize model variables, categories, and indices associated with
+            LVST (Livestock). Sets the following properties:
+
+            * self.cat_lvst_****
+            * self.ind_lvst_****
+            * self.modvar_lvst_****
+            * self.modvar_dict_lvst_****
+        """
         # livestock model variables
         self.modvar_lvst_adjusted_equivalent_exports = "Adjusted Livestock Equivalent Exports"
         self.modvar_lvst_adjusted_equivalent_imports = "Adjusted Livestock Equivalent Imports"
@@ -218,6 +639,7 @@ class AFOLU:
         self.modvar_lvst_pop = "Livestock Head Count"
         self.modvar_lvst_pop_init = "Initial Livestock Head Count"
         self.modvar_lvst_total_animal_mass = "Total Domestic Animal Mass"
+
         self.modvar_list_lvst_mm_fractions = [
             self.modvar_lvst_frac_mm_anaerobic_digester,
             self.modvar_lvst_frac_mm_anaerobic_lagoon,
@@ -232,6 +654,21 @@ class AFOLU:
             self.modvar_lvst_frac_mm_solid_storage
         ]
 
+        return None
+
+
+
+    def _initialize_subsector_vars_soil(self,
+    ) -> None:
+        """
+        Initialize model variables, categories, and indices associated with
+            SOIL (Soil Management). Sets the following properties:
+
+            * self.cat_soil_****
+            * self.ind_soil_****
+            * self.modvar_soil_****
+            * self.modvar_dict_soil_****
+        """
         # soil management variables
         self.modvar_soil_demscalar_fertilizer = "Fertilizer N Demand Scalar"
         self.modvar_soil_demscalar_liming = "Liming Demand Scalar"
@@ -266,173 +703,10 @@ class AFOLU:
         self.modvar_soil_qtyinit_liming_dolomite = "Initial Liming Dolomite Applied to Soils"
         self.modvar_soil_qtyinit_liming_limestone = "Initial Liming Limestone Applied to Soils"
 
-
-        ##  INTEGRATION VARIABLES
-
-        # add other model classes--required for integration variables
-        self.model_socioeconomic = Socioeconomic(self.model_attributes)
-        self.model_energy = NonElectricEnergy(self.model_attributes)
-        self.model_ippu = IPPU(self.model_attributes)
-
-        # key categories
-        self.cat_enfu_biomass = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_enfu, {"biomass_demand_category": 1})[0]
-        self.cat_ippu_paper = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_ippu, {"virgin_paper_category": 1})[0]
-        self.cat_ippu_wood = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_ippu, {"virgin_wood_category": 1})[0]
-        # variable required for integration
-        self.dict_integration_variables_by_subsector, self.integration_variables = self.set_integrated_variables()
-
-
-        ##  MISCELLANEOUS VARIABLES
-
-        self.time_periods, self.n_time_periods = self.model_attributes.get_time_periods()
-        self.factor_c_to_co2 = float(11/3)
-        self.factor_n2on_to_n2o = float(11/7)
-        # see IPCC 2006/2019R GNGHGI V4 CH2 FOR D = 20
-        self.time_dependence_stock_change = 20
-
-
-
-
-    ##  FUNCTIONS FOR MODEL ATTRIBUTE DIMENSIONS
-
-    def _assign_cats_frst(self):
-        # some key categories'
-        self.cat_frst_mang = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_frst, {"mangroves_forest_category": 1})[0]
-        self.cat_frst_prim = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_frst, {"primary_forest_category": 1})[0]
-        self.cat_frst_scnd = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_frst, {"secondary_forest_category": 1})[0]
-
-
-
-    # assign some land use categories
-    def _assign_cats_lndu(self):
-
-        attr_lndu = self.model_attributes.get_attribute_table(self.subsec_name_lndu)
-
-        # set categories
-        self.cat_lndu_crop = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lndu, {"crop_category": 1})[0]
-        self.cat_lndu_fstm = self.model_attributes.get_categories_from_attribute_characteristic(
-            self.subsec_name_lndu,
-            {
-                self.model_attributes.get_subsector_attribute(self.subsec_name_frst, "pycategory_primary"): f"``{self.cat_frst_mang}``"
-            }
-        )[0]
-        self.cat_lndu_fstp = self.model_attributes.get_categories_from_attribute_characteristic(
-            self.subsec_name_lndu,
-            {
-                self.model_attributes.get_subsector_attribute(self.subsec_name_frst, "pycategory_primary"): f"``{self.cat_frst_prim}``"
-            }
-        )[0]
-        self.cat_lndu_fsts = self.model_attributes.get_categories_from_attribute_characteristic(
-            self.subsec_name_lndu,
-            {
-                self.model_attributes.get_subsector_attribute(self.subsec_name_frst, "pycategory_primary"): f"``{self.cat_frst_scnd}``"
-            }
-        )[0]
-        self.cat_lndu_othr = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lndu, {"other_category": 1})[0]
-        self.cat_lndu_grass = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lndu, {"pasture_category": 1})[0]
-        self.cat_lndu_stlm = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lndu, {"settlements_category": 1})[0]
-        self.cat_lndu_wetl = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_lndu, {"wetlands_category": 1})[0]
-        # list of categories to use to "max out" transition probabilities when scaling land use prevelance
-        self.cats_lndu_max_out_transition_probs = self.model_attributes.get_categories_from_attribute_characteristic(
-            self.model_attributes.subsec_name_lndu,
-            {
-                "reallocation_transition_probability_exhaustion_category": 1
-            }
-        )
-
-        # assign indices
-        self.ind_lndu_crop = attr_lndu.get_key_value_index(self.cat_lndu_crop)
-        self.ind_lndu_fstm = attr_lndu.get_key_value_index(self.cat_lndu_fstm)
-        self.ind_lndu_fstp = attr_lndu.get_key_value_index(self.cat_lndu_fstp)
-        self.ind_lndu_fsts = attr_lndu.get_key_value_index(self.cat_lndu_fsts)
-        self.ind_lndu_othr = attr_lndu.get_key_value_index(self.cat_lndu_othr)
-        self.ind_lndu_grass = attr_lndu.get_key_value_index(self.cat_lndu_grass)
-        self.ind_lndu_stlm = attr_lndu.get_key_value_index(self.cat_lndu_stlm)
-        self.ind_lndu_wetl = attr_lndu.get_key_value_index(self.cat_lndu_wetl)
-
         return None
 
 
-    def check_df_fields(self, df_afolu_trajectories, check_fields = None):
-        check_fields = self.required_variables if (check_fields is None) else check_fields
-        # check for required variables
-        if not set(check_fields).issubset(df_afolu_trajectories.columns):
-            set_missing = list(set(check_fields) - set(df_afolu_trajectories.columns))
-            set_missing = sf.format_print_list(set_missing)
-            raise KeyError(f"AFOLU projection cannot proceed: The fields {set_missing} are missing.")
 
-
-    def get_required_subsectors(self):
-        subsectors = self.model_attributes.get_sector_subsectors("AFOLU")
-        subsectors_base = subsectors.copy()
-        subsectors += [self.subsec_name_econ, "General"]
-        return subsectors, subsectors_base
-
-
-    def get_required_dimensions(self):
-        ## TEMPORARY - derive from attributes later
-        required_doa = [self.model_attributes.dim_time_period]
-        return required_doa
-
-
-    def get_afolu_input_output_fields(self):
-        required_doa = [self.model_attributes.dim_time_period]
-        required_vars, output_vars = self.model_attributes.get_input_output_fields(self.required_subsectors)
-        return required_vars + self.get_required_dimensions(), output_vars
-
-    def set_integrated_variables(self):
-        dict_vars_required_for_integration = {
-            # ippu variables required for estimating HWP
-            self.subsec_name_ippu: [
-                self.model_ippu.modvar_ippu_average_lifespan_housing,
-                self.model_ippu.modvar_ippu_change_net_imports,
-                self.model_ippu.modvar_ippu_demand_for_harvested_wood,
-                self.model_ippu.modvar_ippu_elast_ind_prod_to_gdp,
-                self.model_ippu.modvar_ippu_max_recycled_material_ratio,
-                self.model_ippu.model_socioeconomic.modvar_grnl_num_hh,
-                self.model_ippu.modvar_ippu_prod_qty_init,
-                self.model_ippu.modvar_ippu_qty_recycled_used_in_production,
-                self.model_ippu.modvar_ippu_qty_total_production,
-                self.model_ippu.modvar_ippu_ratio_of_production_to_harvested_wood,
-                self.model_ippu.modvar_waso_waste_total_recycled
-            ],
-            # SCOE variables required for projecting changes to wood energy demand
-            self.subsec_name_scoe: [
-                self.model_energy.modvar_scoe_consumpinit_energy_per_hh_elec,
-                self.model_energy.modvar_scoe_consumpinit_energy_per_hh_heat,
-                self.model_energy.modvar_scoe_consumpinit_energy_per_mmmgdp_elec,
-                self.model_energy.modvar_scoe_consumpinit_energy_per_mmmgdp_heat,
-                self.model_energy.modvar_scoe_efficiency_fact_heat_en_coal,
-                self.model_energy.modvar_scoe_efficiency_fact_heat_en_diesel,
-                self.model_energy.modvar_scoe_efficiency_fact_heat_en_electricity,
-                self.model_energy.modvar_scoe_efficiency_fact_heat_en_gasoline,
-                self.model_energy.modvar_scoe_efficiency_fact_heat_en_hgl,
-                self.model_energy.modvar_scoe_efficiency_fact_heat_en_hydrogen,
-                self.model_energy.modvar_scoe_efficiency_fact_heat_en_kerosene,
-                self.model_energy.modvar_scoe_efficiency_fact_heat_en_natural_gas,
-                self.model_energy.modvar_scoe_efficiency_fact_heat_en_solid_biomass,
-                self.model_energy.modvar_scoe_elasticity_hh_energy_demand_electric_to_gdppc,
-                self.model_energy.modvar_scoe_elasticity_hh_energy_demand_heat_to_gdppc,
-                self.model_energy.modvar_scoe_elasticity_mmmgdp_energy_demand_elec_to_gdppc,
-                self.model_energy.modvar_scoe_elasticity_mmmgdp_energy_demand_heat_to_gdppc,
-                self.model_energy.modvar_scoe_frac_heat_en_coal,
-                self.model_energy.modvar_scoe_frac_heat_en_diesel,
-                self.model_energy.modvar_scoe_frac_heat_en_electricity,
-                self.model_energy.modvar_scoe_frac_heat_en_gasoline,
-                self.model_energy.modvar_scoe_frac_heat_en_hgl,
-                self.model_energy.modvar_scoe_frac_heat_en_hydrogen,
-                self.model_energy.modvar_scoe_frac_heat_en_kerosene,
-                self.model_energy.modvar_scoe_frac_heat_en_natural_gas,
-                self.model_energy.modvar_scoe_frac_heat_en_solid_biomass
-            ]
-        }
-
-        # set complete output list of integration variables
-        list_vars_required_for_integration = []
-        for k in dict_vars_required_for_integration.keys():
-            list_vars_required_for_integration += dict_vars_required_for_integration[k]
-
-        return dict_vars_required_for_integration, list_vars_required_for_integration
 
 
     ######################################
@@ -467,47 +741,58 @@ class AFOLU:
 
     ###   LAND USE
 
-    ## apply a scalar to columns or points, then adjust transition probabilites out of a state accordingly. Applying large scales will lead to dominance, and eventually singular values
     def adjust_transition_matrix(self,
         mat: np.ndarray,
         dict_tuples_scale: dict,
         ignore_diag_on_col_scale: bool = False,
-        # set max/min for scaled values. Can be used to prevent increasing a single probability to 1
         mat_bounds: tuple = (0, 1),
         response_columns = None
     ) -> np.ndarray:
         """
-            Rescale elements of a row-stochastic transition matrix Q (n x n) to account for scalars applied to columns or entries defined in dict_tuples_scale. The columns that are adjusted in response to these exogenous scalars are said to be to subject to automated rescaling.
+        Rescale elements of a row-stochastic transition matrix Q (n x n) to 
+            account for scalars applied to columns or entries defined in 
+            dict_tuples_scale. The columns that are adjusted in response to 
+            these exogenous scalars are said to be to subject to automated 
+            rescaling.
 
-            dict_tuples_scale is the mechanism for passing scalars to apply to a transition matrix It accepts two types of tuples for keys
+        dict_tuples_scale is the mechanism for passing scalars to apply to a 
+            transition matrix It accepts two types of tuples for keys
+
             - to scale an entire column, enter a single tuple (j, )
             - to scale a point, use (j, k)
+            
+        For example,
 
-            For example,
+            dict_tuples_scale = {(i, ): scalar_1, (j, k): scalar_2}
 
-                dict_tuples_scale = {(i, ): scalar_1, (j, k): scalar_2}
+        will scale:
+            * all transition probabilities in column i using scalar_1
+            * the transition probabilty at (j, k) using scalar_2
+            * all other probabilities in a given row uniformly to ensure 
+                summation to 1
 
-            will scale:
-                * all transition probabilities in column i using scalar_1
-                * the transition probabilty at (j, k) using scalar_2
-                * all other probabilities in a given row uniformly to ensure summation to 1
+        Function Arguments
+        ------------------
+        - mat: row-stochastic transition matrix to apply scalars to
+        - dict_tuples_scale: dictionary of tuples defining columnar or 
+            point-based probabilities to scale
 
-            Function Arguments
-            ------------------
-            mat: row-stochastic transition matrix to apply scalars to
-            dict_tuples_scale: dictionary of tuples defining columnar or point-based probabilities to scale
-
-            Keyword Arguments
-            -----------------
-            ignore_diag_on_col_scale: if True, diagonals on the transition matrix are not scaled in response to other changing probabilties. Default is False.
-            mat_bounds: bounds for elements in the matrix (weak inequalities).
-            response_columns: the columns in the matrix that are subject to automated rescaling in response to to exogenous scalars. If None, then, for each row, columns that are not affected by exogenous scalars are subject to automated rescaling.
-
+        Keyword Arguments
+        -----------------
+        - ignore_diag_on_col_scale: if True, diagonals on the transition matrix 
+            are not scaled in response to other changing probabilties.
+        - mat_bounds: bounds for elements in the matrix (weak inequalities).
+        - response_columns: the columns in the matrix that are subject to 
+            automated rescaling in response to to exogenous scalars. If None, 
+            then, for each row, columns that are not affected by exogenous 
+            scalars are subject to automated rescaling.
 
 
-            Example and Notes
-            -----------------
-            * The final transition matrix may not reflect the scalars that are passed. For example, considr the matrix
+
+        Example and Notes
+        -----------------
+        * The final transition matrix may not reflect the scalars that are 
+            passed. For example, considr the matrix
 
             array([
                 [0.5, 0, 0.5],
@@ -515,7 +800,9 @@ class AFOLU:
                 [0.0, 0.1, 0.9]
             ])
 
-            if dict_tuples_scale = {(0, ): 2, (0, 2): 1.4}, then, before rescaling probabilities that are not specified in dict_tuples_scale, the matrix becomes
+        if dict_tuples_scale = {(0, ): 2, (0, 2): 1.4}, then, before rescaling 
+            probabilities that are not specified in dict_tuples_scale, the 
+            matrix becomes
 
             array([
                 [1.0, 0, 0.7],
@@ -523,13 +810,18 @@ class AFOLU:
                 [0.0, 0.1, 0.9]
             ])
 
-            Since all of the non-zero elements in the first row are subject to scaling, the normalization to sum to 1 reduces the effect of the specified scalar. The final matrix becomes (approximately)
+        Since all of the non-zero elements in the first row are subject to 
+            scaling, the normalization to sum to 1 reduces the effect of the 
+            specified scalar. The final matrix becomes (approximately)
 
             array([
                 [0.5883, 0, 0.4117],
                 [0.4, 0.525, 0.075],
                 [0.0, 0.1, 0.9]
             ])
+
+        * NOTE: Applying large scalars will lead to dominance, and eventually 
+            singular values.
 
         """
 
@@ -572,12 +864,16 @@ class AFOLU:
 
 
         """
-            Get the total that needs to be removed from masked elements (those that are not scaled)
+        Get the total that needs to be removed from masked elements (those that 
+            are not scaled)
 
-            NOTE: bound scalars at the low end by 0 (if mask_shift_total_i > sums_row_mask_i, then the scalar is negative.
-            This occurs if the row total of the adjusted values exceeds 1)
-            Set mask_scalar using a minimum value of 0 and implement row normalization—if there's no way to rebalance response columns, everything gets renormalized
-            We correct for this below by implementing row normalization to mat_out
+        NOTE: bound scalars at the low end by 0 (if 
+            mask_shift_total_i > sums_row_mask_i, then the scalar is negative.
+            This occurs if the row total of the adjusted values exceeds 1.Set 
+            `mask_scalar` using a minimum value of 0 and implement row 
+            normalization—if there's no way to rebalance response columns, 
+            everything gets renormalized. We correct for this below by 
+            implementing row normalization to mat_out.
         """
         # get new mat and restrict values to 0, 1
         mat_new_scaled = sf.vec_bounds(mat*mat_scale, mat_bounds)
@@ -595,13 +891,31 @@ class AFOLU:
         return sf.vec_bounds(mat_out, (0, 1))
 
 
-    ##  calcualte the annual change in soil carbon using Approach 1 (even though we have a transition matrix)
+
     def calculate_ipcc_soc_deltas(self,
         vec_soc: np.ndarray,
         approach: int = 1
     ):
+        """
+        Calculate the annual change in soil carbon using Approach 1 
+            (even though we have a transition matrix). 
+
+        Function Arguments
+        ------------------
+        - vec_soc: vector of soil carbon
+
+        Keyword Arguments
+        -----------------
+        - approach: either 1 or 2
+            * 1: use IPCC approach 1
+            * 2: use change in soil carbon year over year implied by vec_soc
+
+        """
         if approach not in [1, 2]:
-            warnings.warn(f"Warning in 'calculate_ipcc_soc_deltas': apprach '{approach}' not found--please enter 1 or 2. Default will be set to 1.")
+            self._log(
+                f"Warning in 'calculate_ipcc_soc_deltas': approach '{approach}' not found--please enter 1 or 2. Default will be set to 1.",
+                type_log = "warning"
+            )
             approach = 1
 
         if approach == 1:
@@ -610,11 +924,11 @@ class AFOLU:
         elif approach == 2:
             vec_soc_delta = vec_soc[1:] - vec_soc[0:-1]
             vec_soc_delta = np.insert(vec_soc_delta, 0, vec_soc_delta[0])
+
         return vec_soc_delta
 
 
 
-    ##  calcualte the SOC stock change with time dependence (includes some qualitative non-linearities)
     def calculate_soc_stock_change_with_time_dependence(self,
         arrs_lndu_land_conv: np.ndarray,
         arrs_lndu_soc_conversion_factors: np.ndarray,
@@ -622,20 +936,28 @@ class AFOLU:
         shape_param: Union[float, int] = None
     ):
         """
-            Function Arguments
-            ------------------
-            arrs_lndu_land_conv: arrays with land use conversion totals
-            arrs_lndu_soc_conversion_factors: arrays with SOC conversion factors between types
-            time_dependence_stock_change: time-dependent stock change factor to use
+        Calculate the SOC stock change with time dependence (includes some 
+            qualitative non-linearities)
 
-            Keyword Arguments
-            -----------------
-            shape_param: parameter that expands the sigmoid. If None, defaults to time_dependence_stock_change/10.
+        Function Arguments
+        ------------------
+        - arrs_lndu_land_conv: arrays with land use conversion totals
+        - arrs_lndu_soc_conversion_factors: arrays with SOC conversion factors 
+            between types
+        - time_dependence_stock_change: time-dependent stock change factor to 
+            use
 
-            Notes
-            -----
+        Keyword Arguments
+        -----------------
+        - shape_param: parameter that expands the sigmoid. If None, defaults to 
+            time_dependence_stock_change/10.
 
-            See Volume 4, Chapter 2 of the IPCC 2006 Guidance for National Greenhouse Gas Inventories, page 2.38 for the following description of changes to soil carbon:
+        Notes
+        -----
+
+        See Volume 4, Chapter 2 of the IPCC 2006 Guidance for National 
+            Greenhouse Gas Inventories, page 2.38 for the following description 
+            of changes to soil carbon:
 
             "Changes in C stocks normally occur in a non-linear fashion, and it
             is possible to further develop the time dependence of stock change
@@ -652,7 +974,8 @@ class AFOLU:
             to implement a Tier 2 method that incorporates the non-linearity
             of changes in soil C stock."
 
-            We use this guidance to assign different shapes to
+        We use this guidance to assign different shapes to SOC for releases and
+            sequestration. 
 
         """
 
@@ -699,8 +1022,14 @@ class AFOLU:
 
 
 
-    ##  check the shape of transition/emission factor matrices sent to project_land_use
-    def check_markov_shapes(self, arrs: np.ndarray, function_var_name:str):
+    def check_markov_shapes(self, 
+        arrs: np.ndarray, 
+        function_var_name:str
+    ) -> None:
+        """
+        Check the shape of transition/emission factor matrices sent to 
+            project_land_use
+        """
         # get land use info
         pycat_lndu = self.model_attributes.get_subsector_attribute(self.subsec_name_lndu, "pycategory_primary")
         attr_lndu = self.model_attributes.dict_attributes[pycat_lndu]
@@ -710,6 +1039,8 @@ class AFOLU:
         elif arrs.shape[1:3] != (attr_lndu.n_key_values, attr_lndu.n_key_values):
             raise ValueError(f"Invalid shape of matrices in {function_var_name}. They must have shape ({attr_lndu.n_key_values}, {attr_lndu.n_key_values}).")
 
+        return None
+
 
 
     ##  get land use scalar max out states
@@ -718,15 +1049,18 @@ class AFOLU:
         attribute_land_use: AttributeTable = None
     ):
         """
-            Retrieve the vector of scalars to apply to land use based on an input preliminary scalar and configuration parameters for "maxing out" transition probabilities
+        Retrieve the vector of scalars to apply to land use based on an input 
+            preliminary scalar and configuration parameters for "maxing out" 
+            transition probabilities.
 
-            Function Arguments
-            ------------------
-            - scalar_in: input scalar
+        Function Arguments
+        ------------------
+        - scalar_in: input scalar
 
-            Keyword Arguments
-            -----------------
-            attribute_land_use: AttributeTable for $CAT-LANDUSE$. If None, use self.model_attributes default.
+        Keyword Arguments
+        -----------------
+        - attribute_land_use: AttributeTable for $CAT-LANDUSE$. If None, use 
+            self.model_attributes default.
 
         """
 
@@ -749,27 +1083,35 @@ class AFOLU:
 
 
 
-    ##  get the transition and emission factors matrices from the data frame
     def get_markov_matrices(self,
         df_ordered_trajectories: pd.DataFrame,
         n_tp = None,
         thresh_correct: float = 0.0001
     ) -> tuple:
         """
-            Get the transition and emission factors matrices from the data frame df_ordered_trajectories. Assumes that the input data frame is ordered by time_period
+        Get the transition and emission factors matrices from the data frame 
+            df_ordered_trajectories. Assumes that the input data frame is 
+            ordered by time_period
 
-            Function Arguments
-            ------------------
-            - df_ordered_trajectories: input data frame containing columnar variables for conversion transition probabilities and emission factors.
+        Function Arguments
+        ------------------
+        - df_ordered_trajectories: input data frame containing columnar 
+            variables for conversion transition probabilities and emission 
+            factors.
 
-            Keyword Arguments
-            -----------------
-            - n_tp: the number of time periods. Default value is None, which implies all time periods
-            - thresh_correct is used to decide whether or not to correct the transition matrix (assumed to be row stochastic) to sum to 1; if the abs of the sum is outside this range, an error will be thrown
+        Keyword Arguments
+        -----------------
+        - n_tp: the number of time periods. Default value is None, which implies 
+            all time periods
+        - thresh_correct is used to decide whether or not to correct the 
+            transition matrix (assumed to be row stochastic) to sum to 1; if the 
+            absolute value of the sum is outside this range, an error will be 
+            thrown
 
-            Notes
-            -----
-            - fields_pij and fields_efc will be properly ordered by categories for this transformation
+        Notes
+        -----
+        - fields_pij and fields_efc will be properly ordered by categories for 
+            this transformation
         """
         n_tp = n_tp if (n_tp != None) else self.n_time_periods
         fields_pij = self.model_attributes.dict_model_variables_to_variables[self.modvar_lndu_prob_transition]
@@ -789,7 +1131,7 @@ class AFOLU:
         return arr_pr, arr_ef
 
 
-    # if any transition probabilities are 1 w/scalar > 1 (or 0 with scalar < 0), the scalar becomes inadequate; iterative function will search
+
     def get_matrix_column_scalar(self,
         mat_column: np.ndarray,
         target_scalar: np.ndarray,
@@ -797,39 +1139,59 @@ class AFOLU:
         eps: float = 0.000001,
         mask_max_out_states: np.ndarray = None,
         max_iter: int = 100,
-        printer: bool = False
     ) -> float:
 
         """
+        Return a vector of scalars that need to be applied to acheieve a 
+            specified scaled change in state, i.e. finds the true matrix column 
+            scalar required to achieve x(1)_i -> x(0)_i*target_scalar. If any 
+            transition probabilities are 1 w/scalar > 1 (or 0 with scalar < 0), 
+            the scalar becomes inadequate; iterative function will search for 
+            adequate column scalar.
 
-            This function returns a vector of scalars that need to be applied to acheieve a specified scaled change in state, i.e. finds the true matrix column scalar required to achieve x(1)_i -> x(0)_i*target_scalar
+        Function Arguments
+        ------------------
+        - mat_column: column in transition matrix (assuming row-stochastic) 
+            representing probabilities of entry into a state
+        - target_scalar: the target change in output area to achieve
+        - vec_x: current state of areas. Target area is sum(vec_x)*target_scalar
 
-            Function Arguments
-            ------------------
-            - mat_column: column in transition matrix (assuming row-stochastic) representing probabilities of entry into a state
-            - target_scalar: the target change in output area to achieve
-            - vec_x: current state of areas. Target area is sum(vec_x)*target_scalar
+        Keyword Arguments
+        -----------------
+        - eps: area convergence tolerance.
+        - mask_max_out_states: np.array of same length as mat_column that 
+            contains a mask for states that should be "maxed out" (sent to 0 
+            or 1) first. The default is for all states to be scalable.
+            * For example, to ensure that masses of area are first shifted 
+                to/from state 1 out of states 0, 1, 2, 3, 4, 5, the vector 
+                should be
 
-            Keyword Arguments
-            -----------------
-            - eps: area convergence tolerance.
-            - mask_max_out_states: np.array of same length as mat_column that contains a mask for states that should be "maxed out" (sent to 0 or 1) first. The default is for all states to be scalable.
-                * For example, to ensure that masses of area are first shifted to/from state 1 out of states 0, 1, 2, 3, 4, 5, the vector should be
-                    mask_max_out_states = np.array([0, 1, 0, 0, 0])
-                * Default is None. If None, all states are scalable states.
-            - max_iter: maximum number of iterations. Default is 100.
+                mask_max_out_states = np.array([0, 1, 0, 0, 0])
+
+            * Default is None. If None, all states are scalable states.
+
+        - max_iter: maximum number of iterations. Default is 100.
 
 
-            Notes and Expanded Description
-            ------------------------------
+        Notes and Expanded Description
+        ------------------------------
 
-            For x(0), x(1) \in \mathbb{R}^(1 x n) and a row-stochastic transition matrix Q in \mathbb{R}^{n x n}, the value
+        For x(0), x(1) \in \mathbb{R}^(1 x n) and a row-stochastic transition 
+            matrix Q in \mathbb{R}^{n x n}, the value
 
-                x(1) = x(0)Q
+            x(1) = x(0)Q
 
-            transforms the state vector x(0) -> x(1). In some cases, it is desirable to ensure that x(1)_i = \alpha*x(0)_i, i.e., that a transition matrix enforces an observed growth from period 0 -> 1. This can generally be acheived in AFOLU using the .adjust_transition_matrix().
+        transforms the state vector x(0) -> x(1). In some cases, it is desirable 
+            to ensure that x(1)_i = \alpha*x(0)_i, i.e., that a transition 
+            matrix enforces an observed growth from period 0 -> 1. This can 
+            generally be acheived in AFOLU using the 
+            AFOLU.adjust_transition_matrix() method.
 
-            However, some transition matrices may have 0s or 1s in column entries, meaning that specified input scalar may be unable to acheieve a desired scalar change in input area, so other columnar entries may have to be scaled more to acheive the desired outcome of x(1)_i = \alpha*x(0)_i.
+        However, some transition matrices may have 0s or 1s in column entries, 
+            meaning that specified input scalar may be unable to acheieve a 
+            desired scalar change in input area, so other columnar entries may 
+            have to be scaled more to acheive the desired outcome of 
+            x(1)_i = \alpha*x(0)_i.
 
         """
         # check input
@@ -893,7 +1255,6 @@ class AFOLU:
 
 
 
-    ##  get mineral soil organic change matrices
     def get_mineral_soc_change_matrices(self,
         arr_agrc_crop_area: np.ndarray,
         arr_lndu_area: np.ndarray,
@@ -909,24 +1270,35 @@ class AFOLU:
         dict_soil_fracs_to_use_lndu: dict
     ) -> tuple:
         """
-            Retrieve matrices of delta SOC (- means loss of SOC, + indicates sequestration) for conversion from class i to class j in each time period, as well as a land-area weighted average EF1 for each time period. Note that all areas should be in the same units.
+        Retrieve matrices of delta SOC (- means loss of SOC, + indicates 
+            sequestration) for conversion from class i to class j in each time 
+            period, as well as a land-area weighted average EF1 for each time 
+            period. Note that all areas should be in the same units.
 
-            Returns: tuple of form (arrs_delta_soc, vec_avg_ef1)
+        Returns: tuple of form (arrs_delta_soc, vec_avg_ef1)
 
-            Function Arguments
-            ------------------
-            - arr_agrc_crop_area: array giving crop areas
-            - arr_lndu_area: array of land use areas (ordered by attr_lndu.key_values)
-            - arr_lndu_factor_soil_carbon: array of F_LU SOC factors by land use type
-            - arr_lndu_factor_soil_management: array of F_MG SOC adjustment factors by land use type
-            - arr_lndu_frac_mineral_soils: array giving the fraction of soils that are mineral by each land use category
-            - arr_soil_ef1_organic: N2O Organic EF1 by soil type
-            - arr_soil_soc_stock: array giving soil carbon content of soil types (30cm) for each time period (n_tp x attr_soil.n_key_values)
-            - vec_lndu_frac_grassland_pasture: fraction of grassland that is pasture
-            - vec_soil_area_crop_pasture: area of crop and pasture by time period
-            - dict_soil_fracs_to_use_agrc: dictionary mapping soil fraction model variable string to array (wide by crop categories)
-            - dict_soil_fracs_to_use_frst: dictionary mapping soil fraction model variable string to fraction array (wide by forest categories)
-            - dict_soil_fracs_to_use_lndu: dictionary mapping soil fraction model variable string to fraction array (wide by land use categories)
+        Function Arguments
+        ------------------
+        - arr_agrc_crop_area: array giving crop areas
+        - arr_lndu_area: array of land use areas (ordered by 
+            attr_lndu.key_values)
+        - arr_lndu_factor_soil_carbon: array of F_LU SOC factors by land use 
+            type
+        - arr_lndu_factor_soil_management: array of F_MG SOC adjustment factors 
+            by land use type
+        - arr_lndu_frac_mineral_soils: array giving the fraction of soils that 
+            are mineral by each land use category
+        - arr_soil_ef1_organic: N2O Organic EF1 by soil type
+        - arr_soil_soc_stock: array giving soil carbon content of soil types 
+            (30cm) for each time period (n_tp x attr_soil.n_key_values)
+        - vec_lndu_frac_grassland_pasture: fraction of grassland that is pasture
+        - vec_soil_area_crop_pasture: area of crop and pasture by time period
+        - dict_soil_fracs_to_use_agrc: dictionary mapping soil fraction model 
+            variable string to array (wide by crop categories)
+        - dict_soil_fracs_to_use_frst: dictionary mapping soil fraction model 
+            variable string to fraction array (wide by forest categories)
+        - dict_soil_fracs_to_use_lndu: dictionary mapping soil fraction model 
+            variable string to fraction array (wide by land use categories)
         """
 
         # get attribute tables
@@ -1026,28 +1398,30 @@ class AFOLU:
                 arrs_delta_soc_target[i, :, k] = vec[i]
 
         arrs_delta = arrs_delta_soc_target - arrs_delta_soc_source
+
         return arrs_delta, vec_soil_ef1_soc_est
 
 
 
-    ##  format a transition matrix as a data frame
     def format_transition_matrix_as_input_dataframe(self,
         mat: np.ndarray,
         key_vals: list = None,
         field_key: str = "key"
     ) -> pd.DataFrame:
         """
-            Convert an input transition matrix mat to a wide dataframe using AFOLU.modvar_lndu_prob_transition as variable template
+        Convert an input transition matrix mat to a wide dataframe using 
+            AFOLU.modvar_lndu_prob_transition as variable template
 
-            Function Arguments
-            ------------------
-            - mat: row-stochastic transition matrix to format as wide data frame
+        Function Arguments
+        ------------------
+        - mat: row-stochastic transition matrix to format as wide data frame
 
-            Keyword Arguments
-            -----------------
-            - key_vals: ordered land use categories representing states in mat. If None, default to attr_lndu.key_values. Should be of length n for mat an nxn transition matrix.
-            - field_key: temporary field to use for merging
-
+        Keyword Arguments
+        -----------------
+        - key_vals: ordered land use categories representing states in mat. If
+            None, default to attr_lndu.key_values. Should be of length n for
+             mat an nxn transition matrix.
+        - field_key: temporary field to use for merging
         """
         attr_lndu = self.model_attributes.get_attribute_table(self.subsec_name_lndu)
         key_vals = attr_lndu.key_values if (key_vals is None) else [x for x in key_vals if x in attr_lndu.key_values]
@@ -1075,7 +1449,6 @@ class AFOLU:
 
 
 
-    ##  project agriculture and livestock demands
     def project_agrc_lvst_integrated_demands(self,
         df_afolu_trajectories: pd.DataFrame,
         area_agrc_cropland_init: float,
@@ -1083,31 +1456,33 @@ class AFOLU:
         vec_rates_gdp_per_capita: np.ndarray
     ) -> tuple:
         """
-            Calculate agricultural and livestock demands, imports, exports, and production. Agriculture and Livestock demands are related through feed demands, requiring integration.
+        Calculate agricultural and livestock demands, imports, exports, and 
+            production. Agriculture and Livestock demands are related through 
+            feed demands, requiring integration.
 
-            Function Arguments
-            ------------------
-            - df_afolu_trajectories: data frame containing input variables
-            - area_agrc_cropland_init: initial area of cropland
-            - vec_pop: vector of population
-            - vec_rates_gdp_per_capita: vector of gdp/capita growth rates
+        Function Arguments
+        ------------------
+        - df_afolu_trajectories: data frame containing input variables
+        - area_agrc_cropland_init: initial area of cropland
+        - vec_pop: vector of population
+        - vec_rates_gdp_per_capita: vector of gdp/capita growth rates
 
-            Notes
-            -----
+        Notes
+        -----
 
-            Let:
-                D = Domestic production to satisfy domestic demand
-                E = Exports
-                F = Fraction of domestic demand met by imports
-                I = Imports
-                M = Domestic demand
-                P = Domestic production
+        Let:
+            D = Domestic production to satisfy domestic demand
+            E = Exports
+            F = Fraction of domestic demand met by imports
+            I = Imports
+            M = Domestic demand
+            P = Domestic production
 
-            Then:
-                P = D + E, MF = I, M - I = D => M - MF = D =>
+        Then:
+            P = D + E, MF = I, M - I = D => M - MF = D =>
 
-                P = M - MF + E : Domestic Production
-                M = (P - E)/(1 - F) : Domestic Demand
+            P = M - MF + E : Domestic Production
+            M = (P - E)/(1 - F) : Domestic Demand
 
         """
 
@@ -1315,7 +1690,6 @@ class AFOLU:
 
 
 
-    ##  project demand for ag/livestock
     def project_per_capita_demand(self,
         dem_0: np.ndarray, # initial demand (e.g., total yield/livestock produced per acre) ()
         pop: np.ndarray, # population (vec_pop)
@@ -1326,16 +1700,20 @@ class AFOLU:
     ) -> np.ndarray:
 
         """
-            Project per capita demand for agriculture and/or livestock
+        Project per capita demand for agriculture and/or livestock
 
-            Function Arguments
-            ------------------
-            - dem_0: initial demand (e.g., total yield/livestock produced per acre) ()
-            - pop: population (vec_pop)
-            - gdp_per_capita_rates driver of demand growth: gdp/capita (vec_rates_gdp_per_capita)
-            - elast elasticity of demand per capita to growth in gdp/capita (e.g., arr_lvst_elas_demand)
-            - dem_pc_scalar_exog: exogenous demand per capita scalar representing other changes in the exogenous per-capita demand (can be used to represent population changes)
-            - return_type: return type of array
+        Function Arguments
+        ------------------
+        - dem_0: initial demand (e.g., total yield/livestock produced per acre)
+        - pop: population (vec_pop)
+        - gdp_per_capita_rates driver of demand growth: gdp/capita 
+            (vec_rates_gdp_per_capita)
+        - elast elasticity of demand per capita to growth in gdp/capita (e.g., 
+            arr_lvst_elas_demand)
+        - dem_pc_scalar_exog: exogenous demand per capita scalar representing 
+            other changes in the exogenous per-capita demand (can be used to 
+            represent population changes)
+        - return_type: return type of array
         """
 
         # get the demand scalar to apply to per-capita demands
@@ -1360,7 +1738,7 @@ class AFOLU:
 
 
 
-    ##  integrated land use model, which performs required land use transition adjustments
+    ##  
     def project_integrated_land_use(self,
         vec_initial_area: np.ndarray,
         arrs_transitions: np.ndarray,
@@ -1380,45 +1758,59 @@ class AFOLU:
         n_tp: int = None
     ) -> tuple:
         """
-            Project per capita demand for agriculture and/or livestock
+        Integrated land use model, which performs required land use transition 
+            adjustments
 
-            Function Arguments
-            ------------------
-            - vec_initial_area: initial state vector of area
-            - arrs_transitions: array of transition matrices, ordered by time period
-            - arrs_efs: array of emission factor matrices, ordered by time period
-            - arr_agrc_production_nonfeed_unadj: array of agricultural non-feed demand yield (human consumption)
-            - arr_agrc_yield_factors: array of agricultural yield factors
-            - arr_lndu_frac_increasing_net_exports_met: fraction--by land use type--of increases to net exports that are met. Adjusts production demands downward if less than 1.
-            - arr_lndu_frac_increasing_net_exports_met: fraction--by land use type--of increases to net imports that are met. Adjusts production demands upward if less than 1.
-            - arr_lndu_yield_by_lvst: array of lvst yield by land use category (used to project future livestock supply). Array gives the total yield of crop type i allocated to livestock type j at time 0 (attr_agriculture.n_key_values x attr_livestock.n_key_values)
-            - arr_lvst_dem: array of livestock demand
-            - vec_agrc_frac_cropland_area: vector of fractions of agricultural area fractions by classes
-            - vec_lndu_frac_grassland_pasture: vector giving the fraction of grassland that is pasture
-            - vec_lndu_yrf: vector of land use reallocation factor
-            - vec_lvst_pop_init: vector, by livestock class, of initial livestock populations
-            - vec_lvst_pstr_weights: vector of weighting of animal classes to determine which changes in animal population affect demand for land
-            - vec_lvst_scale_cc: vector of livestock carrying capacity scalar to apply
+        Function Arguments
+        ------------------
+        - vec_initial_area: initial state vector of area
+        - arrs_transitions: array of transition matrices, ordered by time period
+        - arrs_efs: array of emission factor matrices, ordered by time period
+        - arr_agrc_production_nonfeed_unadj: array of agricultural non-feed 
+            demand yield (human consumption)
+        - arr_agrc_yield_factors: array of agricultural yield factors
+        - arr_lndu_frac_increasing_net_exports_met: fraction--by land use type--
+            of increases to net exports that are met. Adjusts production demands 
+            downward if less than 1.
+        - arr_lndu_frac_increasing_net_exports_met: fraction--by land use type--
+            of increases to net imports that are met. Adjusts production demands 
+            upward if less than 1.
+        - arr_lndu_yield_by_lvst: array of lvst yield by land use category (used 
+            to project future livestock supply). Array gives the total yield of 
+            crop type i allocated to livestock type j at time 0 
+            (attr_agriculture.n_key_values x attr_livestock.n_key_values)
+        - arr_lvst_dem: array of livestock demand
+        - vec_agrc_frac_cropland_area: vector of fractions of agricultural area 
+            fractions by classes
+        - vec_lndu_frac_grassland_pasture: vector giving the fraction of 
+            grassland that is pasture
+        - vec_lndu_yrf: vector of land use reallocation factor
+        - vec_lvst_pop_init: vector, by livestock class, of initial livestock 
+            populations
+        - vec_lvst_pstr_weights: vector of weighting of animal classes to 
+            determine which changes in animal population affect demand for land
+        - vec_lvst_scale_cc: vector of livestock carrying capacity scalar to 
+            apply
 
-            Keyword Arguments
-            ------------------
-            n_tp: number of time periods to run. If None, runs AFOLU.n_time_periods
+        Keyword Arguments
+        ------------------
+        n_tp: number of time periods to run. If None, runs AFOLU.n_time_periods
 
-            Returns
-            -------
-            Tuple with 13 elements:
-            - arr_agrc_change_to_net_imports_lost,
-            - arr_agrc_frac_cropland,
-            - arr_agrc_net_import_increase,
-            - arr_agrc_yield,
-            - arr_emissions_conv,
-            - arr_land_use,
-            - arr_lvst_change_to_net_imports_lost,
-            - arr_lvst_net_import_increase,
-            - arr_lvst_pop_adj,
-            - arrs_land_conv,
-            - arrs_transitions_adj,
-            - arrs_yields_per_livestock
+        Returns
+        -------
+        Tuple with 13 elements:
+        - arr_agrc_change_to_net_imports_lost,
+        - arr_agrc_frac_cropland,
+        - arr_agrc_net_import_increase,
+        - arr_agrc_yield,
+        - arr_emissions_conv,
+        - arr_land_use,
+        - arr_lvst_change_to_net_imports_lost,
+        - arr_lvst_net_import_increase,
+        - arr_lvst_pop_adj,
+        - arrs_land_conv,
+        - arrs_transitions_adj,
+        - arrs_yields_per_livestock
 
         """
 
@@ -1633,7 +2025,7 @@ class AFOLU:
         )
 
 
-    ##  project land use
+
     def project_land_use(
         self,
         vec_initial_area: np.ndarray,

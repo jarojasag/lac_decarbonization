@@ -87,7 +87,15 @@ def transformation_test_elec(
                 )[0]
                 vec_old = np.array(df_in[field_cur])
                 val_final = vec_old[n_tp - 1]
-                val_new = (val_final/(1 - val_final_elec))*scale_non_elec if (field_cur != field_elec) else target_value
+                val_new = (
+                    np.nan_to_num(
+                        (val_final/(1 - val_final_elec))*scale_non_elec,
+                        0.0,
+                        posinf = 0.0
+                    )
+                    if (field_cur != field_elec) 
+                    else target_value
+                )
                 vec_new = vec_ramp*val_new + (1 - vec_ramp)*vec_old
 
                 df_in_new[field_cur] = vec_new
@@ -1873,11 +1881,12 @@ def transformation_inen_shift_modvars(
                 val_initial_target = vec_initial_vals.sum() if magnitude_relative_to_baseline else 0.0
                 vec_initial_distribution = vec_initial_vals/vec_initial_vals.sum()
 
+                # get the current total value of fractions
                 vec_final_vals = np.array(df_in[fields].iloc[n_tp - 1]).astype(float)
                 val_final_target = sum(vec_final_vals)
 
                 target_value = float(sf.vec_bounds(magnitude + val_initial_target, (0.0, 1.0)))#*dict_modvar_specs.get(modvar_target)
-                scale_non_elec = (1 - target_value)/(1 - val_final_target)
+                scale_non_elec = np.nan_to_num((1 - target_value)/(1 - val_final_target), 0.0, posinf = 0.0)
 
                 target_distribution = magnitude*np.array([dict_modvar_specs.get(x) for x in modvars_target]) + val_initial_target*vec_initial_distribution
                 target_distribution /= max(magnitude + val_initial_target, 1.0) 
@@ -2387,7 +2396,15 @@ def transformation_trns_electrify_category_to_target(
                     )[0]
                     vec_old = np.array(df_in[field_cur])
                     val_final = vec_old[n_tp - 1]
-                    val_new = (val_final/(1 - val_final_elec))*scale_non_elec if (field_cur != field_elec) else target_value
+                    val_new = (
+                        np.nan_to_num(
+                            (val_final/(1 - val_final_elec))*scale_non_elec,
+                            0.0, 
+                            posinf = 0.0
+                        ) 
+                        if (field_cur != field_elec) 
+                        else target_value
+                    )
                     vec_new = vec_ramp*val_new + (1 - vec_ramp)*vec_old
 
                     df_in_new[field_cur] = vec_new

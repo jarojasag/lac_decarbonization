@@ -1,11 +1,11 @@
-import support_functions as sf
-from model_attributes import *
 from attribute_table import AttributeTable
+import logging
+from model_attributes import *
 from model_socioeconomic import Socioeconomic
-import pandas as pd
 import numpy as np
+import pandas as pd
+import support_functions as sf
 import time
-import warnings
 
 
 #########################
@@ -15,40 +15,77 @@ import warnings
 #########################
 
 class IPPU:
+    """
+    Use IPPU to calculate emissions from Industrial Processes and Product Use in
+        SISEPUEDE. Includes emissions from the following subsectors:
 
-    def __init__(self, attributes: ModelAttributes):
+        * Industrial Processes and Product Use (IPPU)
 
-        # some subector reference variables
-        self.subsec_name_econ = "Economy"
-        self.subsec_name_gnrl = "General"
-        self.subsec_name_ippu = "IPPU"
-        self.subsec_name_waso = "Solid Waste"
+    Additionally, includes key function for estimating industrial production 
+        with recycling adjustments (used in CircularEconomy) and connections to
+        wood production/harvested wood products. See the 
+        `IPPU.get_production_with_recycling_adjustment()` method for more 
+        information on these key connections.
 
-        self._initialize_subsector_vars_ippu()
-        # initialzie dynamic variables
+    For additional information, see the SISEPUEDE readthedocs at:
+
+        https://sisepuede.readthedocs.io/en/latest/ippu.html
+
+
+    Intialization Arguments
+    -----------------------
+    - model_attributes: ModelAttributes object used in SISEPUEDE
+
+    Optional Arguments
+    ------------------
+    - logger: optional logger object to use for event logging
+    """
+
+    def __init__(self, 
+        attributes: ModelAttributes,
+        logger: Union[logging.Logger, None] = None
+    ):
+
+        self.logger = logger
         self.model_attributes = attributes
-        self.required_dimensions = self.get_required_dimensions()
-        self.required_subsectors, self.required_base_subsectors = self.get_required_subsectors()
-        self.required_variables, self.output_variables = self.get_ippu_input_output_fields()
+        
+        self._initialize_subsector_names()
+        self._initialize_subsector_vars_ippu()
 
-
-        # variables from other sectors
-        self.modvar_waso_waste_total_recycled = "Total Waste Recycled"
-
-        # add other model classes
-        self.model_socioeconomic = Socioeconomic(self.model_attributes)
-
-        # optional integration variables (uses calls to other model classes)
-        self.integration_variables = self.set_integrated_variables()
-
-        ##  MISCELLANEOUS VARIABLES
-        self.time_periods, self.n_time_periods = self.model_attributes.get_time_periods()
+        self._initialize_input_output_components()
+        self._initialize_models()
+        self._initialize_other_properties()
+        self._initialize_integrated_variables()
 
 
 
 
 
-    ##  FUNCTIONS FOR MODEL ATTRIBUTE DIMENSIONS
+    ##############################################
+    #    SUPPORT AND INITIALIZATION FUNCTIONS    #
+    ##############################################
+
+    def _log(self,
+        msg: str,
+        type_log: str = "log",
+        **kwargs
+    ) -> None:
+        """
+        Clean implementation of sf._optional_log in-line using default logger. See
+            ?sf._optional_log for more information.
+
+        Function Arguments
+        ------------------
+        - msg: message to log
+
+        Keyword Arguments
+        -----------------
+        - type_log: type of log to use
+        - **kwargs: passed as logging.Logger.METHOD(msg, **kwargs)
+        """
+        sf._optional_log(self.logger, msg, type_log = type_log, **kwargs)
+
+
 
     def check_df_fields(self, 
         df_ippu_trajectories
@@ -63,33 +100,136 @@ class IPPU:
         return None
 
 
+    
+    def _initialize_input_output_components(self,
+    ) -> None:
+        """
+        Set a range of input components, including required dimensions, 
+            subsectors, input and output fields, and integration variables.
+            Sets the following properties:
 
-    def get_required_subsectors(self
-    ) -> Tuple:
-        subsectors = self.model_attributes.get_sector_subsectors(self.subsec_name_ippu)
+            * self.output_variables
+            * self.required_dimensions
+            * self.required_subsectors
+            * self.required_base_subsectors
+            * self.required_variables
+            
+        """
+        # initialzie dynamic variables
+        
+        # required dimensions of analysis
+        required_doa = [self.model_attributes.dim_time_period]
+
+        # required subsectors
+        subsectors = self.model_attributes.get_sector_subsectors("IPPU")
         subsectors_base = subsectors.copy()
         subsectors += [self.subsec_name_econ, self.subsec_name_gnrl]
-        return subsectors, subsectors_base
+        
+        # input/output
+        required_vars, output_vars = self.model_attributes.get_input_output_fields(subsectors)
+        required_vars += required_doa
+
+        # set output properties
+        self.required_dimensions = required_doa
+        self.required_subsectors = subsectors
+        self.required_base_subsectors = subsectors_base
+        self.required_variables = required_vars
+        self.output_variables = output_vars
+
+        return None
+
+
+    
+    def _initialize_integrated_variables(self,
+    ) -> None:
+        """
+        Set the following properties:
+        
+            * self.integration_variables
+        """
+        list_vars_required_for_integration = [
+            self.modvar_waso_waste_total_recycled
+        ]
+
+        self.integration_variables = list_vars_required_for_integration
+
+        return None
 
 
 
-    def get_required_dimensions(self
-    ) -> List:
-        ## TEMPORARY - derive from attributes later
-        required_doa = [self.model_attributes.dim_time_period]
-        return required_doa
+    def _initialize_models(self,
+        model_attributes: Union[ModelAttributes, None] = None
+    ) -> None:
+        """
+        Initialize SISEPUEDE model classes for fetching variables and 
+            accessing methods. Initializes the following properties:
+
+            * self.model_socioeconomic
+
+            as well as associated model variables from other sectors, such as 
+
+            * self.modvar_waso_waste_total_recycled
+
+
+        Keyword Arguments
+        -----------------
+        - model_attributes: ModelAttributes object used to instantiate
+            models. If None, defaults to self.model_attributes.
+        """
+
+        model_attributes = self.model_attributes if (model_attributes is None) else model_attributes
+
+        # add other model classes--required for integration variables
+        self.model_socioeconomic = Socioeconomic(model_attributes)
+
+        self.modvar_waso_waste_total_recycled = "Total Waste Recycled"
+
+        return None
 
 
 
-    def get_ippu_input_output_fields(self
-    ) -> Tuple:
-        required_doa = [self.model_attributes.dim_time_period]
-        required_vars, output_vars = self.model_attributes.get_input_output_fields(self.required_subsectors)
-        return required_vars + self.get_required_dimensions(), output_vars
+    def _initialize_other_properties(self,
+    ) -> None:
+        """
+        Initialize other properties that don't fit elsewhere. Sets the 
+            following properties:
+
+            * self.n_time_periods
+            * self.time_periods
+        """
+
+        ##  TIME VARIABLES
+        time_periods, n_time_periods = self.model_attributes.get_time_periods()
+        self.time_periods = time_periods
+        self.n_time_periods = n_time_periods
+
+        return None
 
 
 
-    ##  SET MODEL VARIABLES
+    def _initialize_subsector_names(self,
+    ) -> None:
+        """
+        Initialize all subsector names (self.subsec_name_****)
+        """
+        # some subector reference variables
+        self.subsec_name_agrc = "Agriculture"
+        self.subsec_name_econ = "Economy"
+        self.subsec_name_enfu = "Energy Fuels"
+        self.subsec_name_frst = "Forest"
+        self.subsec_name_gnrl = "General"
+        self.subsec_name_ippu = "IPPU"
+        self.subsec_name_lndu = "Land Use"
+        self.subsec_name_lsmm = "Livestock Manure Management"
+        self.subsec_name_lvst = "Livestock"
+        self.subsec_name_scoe = "Stationary Combustion and Other Energy"
+        self.subsec_name_soil = "Soil Management"
+        self.subsec_name_waso = "Solid Waste"
+
+        return None
+
+
+
     def _initialize_subsector_vars_ippu(self,
     ) -> None:
         """
@@ -163,15 +303,9 @@ class IPPU:
         self.modvar_ippu_wwf_cod = "COD Wastewater Factor"
         self.modvar_ippu_wwf_vol = "Wastewater Production Factor"
 
+        return None
 
 
-    def set_integrated_variables(self
-    ) -> List[str]:
-        list_vars_required_for_integration = [
-            self.modvar_waso_waste_total_recycled
-        ]
-
-        return list_vars_required_for_integration
 
 
 
@@ -289,7 +423,10 @@ class IPPU:
         """
 
         if len(vec_average_lifetime_hh) != len(vec_hh):
-            warning(f"Error in project_hh_construction: average lifetime of housholds and number of households should have the same length vectors. Setting lifetime to repeat of final value.")
+            self._log(
+                f"Warning in `IPPU.project_hh_construction()`: average lifetime of housholds and number of households should have the same length vectors. Setting lifetime to repeat of final value.",
+                type_log = "warning"
+            )
             vec_average_lifetime_hh = np.conactenate([vec_average_lifetime_hh, np.array([vec_average_lifetime_hh[-1] for x in range(len(vec_hh) - len(vec_average_lifetime_hh))])])
 
         n_projection_time_periods = len(vec_hh)
@@ -376,20 +513,57 @@ class IPPU:
         modvar_scalar_prod = self.modvar_ippu_scalar_production if (modvar_scalar_prod is None) else modvar_scalar_prod
 
         # get initial production and apply elasticities to gdp to calculate growth in production
-        array_ippu_prod_init_by_cat = self.model_attributes.get_standard_variables(df_ippu_trajectories, modvar_prod_qty_init, False, return_type = "array_base", var_bounds = (0, np.inf), expand_to_all_cats = True)
-        array_ippu_elasticity_prod_to_gdp = self.model_attributes.get_standard_variables(df_ippu_trajectories, modvar_elast_ind_prod_to_gdp, False, return_type = "array_base", expand_to_all_cats = True)
-        array_ippu_ind_growth = sf.project_growth_scalar_from_elasticity(vec_rates_gdp, array_ippu_elasticity_prod_to_gdp, False, "standard")
+        array_ippu_prod_init_by_cat = self.model_attributes.get_standard_variables(
+            df_ippu_trajectories, 
+            modvar_prod_qty_init, 
+            expand_to_all_cats = True, 
+            return_type = "array_base", 
+            var_bounds = (0, np.inf)
+        )
+        array_ippu_elasticity_prod_to_gdp = self.model_attributes.get_standard_variables(
+            df_ippu_trajectories, 
+            modvar_elast_ind_prod_to_gdp,
+            expand_to_all_cats = True, 
+            return_type = "array_base"
+        )
+        array_ippu_ind_growth = sf.project_growth_scalar_from_elasticity(
+            vec_rates_gdp, 
+            array_ippu_elasticity_prod_to_gdp
+        )
         array_ippu_ind_prod = array_ippu_prod_init_by_cat[0]*array_ippu_ind_growth
+
         # set exogenous scaling of production
-        array_prod_scalar = self.model_attributes.get_standard_variables(df_ippu_trajectories, modvar_scalar_prod, False, return_type = "array_base", var_bounds = (0, np.inf), expand_to_all_cats = True)
+        array_prod_scalar = self.model_attributes.get_standard_variables(
+            df_ippu_trajectories, 
+            modvar_scalar_prod, 
+            expand_to_all_cats = True, 
+            return_type = "array_base", 
+            var_bounds = (0, np.inf)
+        )
         array_ippu_ind_prod *= array_prod_scalar
 
         # adjust housing construction
-        vec_hh = self.model_attributes.get_standard_variables(df_ippu_trajectories, self.model_socioeconomic.modvar_grnl_num_hh, False, return_type = "array_base")
-        vec_ippu_average_lifetime_hh = self.model_attributes.get_standard_variables(df_ippu_trajectories, self.modvar_ippu_average_lifespan_housing, False, return_type = "array_base")
+        vec_hh = self.model_attributes.get_standard_variables(
+            df_ippu_trajectories, 
+            self.model_socioeconomic.modvar_grnl_num_hh, 
+            return_type = "array_base"
+        )
+        vec_ippu_average_lifetime_hh = self.model_attributes.get_standard_variables(
+            df_ippu_trajectories, 
+            self.modvar_ippu_average_lifespan_housing, 
+            return_type = "array_base"
+        )
         vec_ippu_housing_construction = self.project_hh_construction(vec_hh, vec_ippu_average_lifetime_hh)
+        
         # get average materials required, then project forward a "bau" approach (calculated using material reqs at t = 0)
-        arr_ippu_materials_required = self.model_attributes.get_standard_variables(df_ippu_trajectories, self.modvar_ippu_average_construction_materials_required_per_household, True, return_type = "array_base", expand_to_all_cats = True, var_bounds = (0, np.inf))
+        arr_ippu_materials_required = self.model_attributes.get_standard_variables(
+            df_ippu_trajectories, 
+            self.modvar_ippu_average_construction_materials_required_per_household, 
+            expand_to_all_cats = True, 
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_base", 
+            var_bounds = (0, np.inf)
+        )
         arr_ippu_materials_required *= self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_ippu_average_construction_materials_required_per_household,
             self.modvar_ippu_prod_qty_init,
@@ -398,6 +572,7 @@ class IPPU:
         arr_ippu_materials_required_baseline = np.outer(vec_ippu_housing_construction, arr_ippu_materials_required[0])
         arr_ippu_materials_required = (arr_ippu_materials_required.transpose()*vec_ippu_housing_construction).transpose()
         arr_ippu_materials_required_change = arr_ippu_materials_required - arr_ippu_materials_required_baseline
+
         # adjust production and net imports
         array_ippu_ind_balance = array_ippu_ind_prod + arr_ippu_materials_required_change
         array_ippu_ind_prod = sf.vec_bounds(array_ippu_ind_balance, (0, np.inf))
@@ -406,7 +581,7 @@ class IPPU:
         return array_ippu_ind_prod, array_ippu_change_to_net_imports_cur
 
 
-    ##  project production and adjust recycling
+
     def get_production_with_recycling_adjustment(self,
         df_ippu_trajectories: pd.DataFrame,
         vec_rates_gdp: np.ndarray,
@@ -427,34 +602,47 @@ class IPPU:
         modvar_waste_total_recycled: str = None
     ) -> tuple:
         """
-            get_production_with_recycling_adjustment() can be called to retrieve production and perform the adjustment to virgin production due to recycling changes from the CircularEconomy model.
+        Retrieve production and perform the adjustment to virgin production due 
+            to recycling changes from the CircularEconomy model.
 
-            Function Arguments
-            ------------------
-            df_ippu_trajectories: pd.DataFrame of input variable trajectories.
-            vec_rates_gdp: vector of rates of change of gdp. Entry at index t is the change from time t-1 to t (length = len(df_ippu_trajectories) - 1)
-            dict_dims: dict of dimensions (returned from check_projection_input_df). Default is None.
-            n_projection_time_periods: int giving number of time periods (returned from check_projection_input_df). Default is None.
-            projection_time_periods: list of time periods (returned from check_projection_input_df). Default is None.
+        Function Arguments
+        ------------------
+        - df_ippu_trajectories: pd.DataFrame of input variable trajectories.
+        - vec_rates_gdp: vector of rates of change of gdp. Entry at index t is 
+            the change from time t-1 to t 
+            (length = len(df_ippu_trajectories) - 1)
+        - dict_dims: dict of dimensions (returned from 
+            check_projection_input_df). Default is None.
+        - n_projection_time_periods: int giving number of time periods (returned 
+            from check_projection_input_df). Default is None.
+        - projection_time_periods: list of time periods (returned from 
+            check_projection_input_df). Default is None.
 
+        Keyword Arguments
+        -----------------
+        - modvar_average_lifespan_housing: average lifetime of housing
+        - modvar_change_net_imports: change to net imports
+        - modvar_demand_for_harvested_wood: final demand for harvested wood
+        - modvar_prod_qty_init: initial production quantity
+        - modvar_elast_ind_prod_to_gdp: elasticity of production to gdp
+        - modvar_max_recycled_material_ratio: maximum fraction of virgin 
+            production that can be replaced by recylables (e.g., cullet in glass 
+            production)
+        - modvar_num_hh: number of households
+        - modvar_qty_total_production: total industrial production
+        - modvar_scalar_prod: scalar applied to future production--used to 
+            change economic mix
+        - modvar_ratio_of_production_to_harvested_wood: ratio of production 
+            output to input wood
+        - modvar_waste_total_recycled: total waste recycled (from 
+            CircularEconomy)
 
-            Model Variable Keyword arguments
-            -----------------------------
-            modvar_average_lifespan_housing: average lifetime of housing
-            modvar_change_net_imports: change to net imports
-            modvar_demand_for_harvested_wood: final demand for harvested wood
-            modvar_prod_qty_init: initial production quantity
-            modvar_elast_ind_prod_to_gdp: elasticity of production to gdp
-            modvar_max_recycled_material_ratio: maximum fraction of virgin production that can be replaced by recylables (e.g., cullet in glass production)
-            modvar_num_hh: number of households
-            modvar_qty_total_production: total industrial production
-            modvar_scalar_prod: scalar applied to future production--used to change economic mix
-            modvar_ratio_of_production_to_harvested_wood: ratio of production output to input wood
-            modvar_waste_total_recycled: total waste recycled (from CircularEconomy)
-
-            Notes
-            -----
-            - If any of dict_dims, n_projection_time_periods, or projection_time_periods are unspecified (expected if ran outside of IPPU.project()), self.model_attributes.check_projection_input_df wil be run
+        Notes
+        -----
+        - If any of dict_dims, n_projection_time_periods, or 
+            projection_time_periods are unspecified (expected if ran outside of 
+            IPPU.project()), self.model_attributes.check_projection_input_df 
+            will be run
         """
 
         # set defaults
@@ -576,9 +764,14 @@ class IPPU:
             "mass"
         )
 
-
         ##  finally, get wood harvested equivalent for AFOLU
-        arr_ippu_ratio_of_production_to_wood_harvesting = self.model_attributes.get_standard_variables(df_ippu_trajectories, modvar_ratio_of_production_to_harvested_wood, False, return_type = "array_base", expand_to_all_cats = True, var_bounds = (0, np.inf))
+        arr_ippu_ratio_of_production_to_wood_harvesting = self.model_attributes.get_standard_variables(
+            df_ippu_trajectories, 
+            modvar_ratio_of_production_to_harvested_wood, 
+            expand_to_all_cats = True,
+            return_type = "array_base",
+            var_bounds = (0, np.inf)
+        )
         arr_ippu_harvested_wood = np.nan_to_num(array_ippu_production/arr_ippu_ratio_of_production_to_wood_harvesting, 0.0, posinf = 0.0)
         arr_ippu_harvested_wood *= self.model_attributes.get_variable_unit_conversion_factor(
             modvar_prod_qty_init,
@@ -586,34 +779,64 @@ class IPPU:
             "mass"
         )
 
+
+        ##  ADD TO OUTPUT DATA FRAME
+
         df_out = [
-            self.model_attributes.array_to_df(array_ippu_change_net_imports, modvar_change_net_imports, reduce_from_all_cats_to_specified_cats = True),
-            self.model_attributes.array_to_df(arr_ippu_harvested_wood, modvar_demand_for_harvested_wood, reduce_from_all_cats_to_specified_cats = True),
-            self.model_attributes.array_to_df(array_ippu_production, modvar_qty_total_production, reduce_from_all_cats_to_specified_cats = True),
-            self.model_attributes.array_to_df(array_ippu_production, modvar_qty_recycled_used_in_production, reduce_from_all_cats_to_specified_cats = True)
+            # CHANGE TO NET IMPORTS
+            self.model_attributes.array_to_df(
+                array_ippu_change_net_imports, 
+                modvar_change_net_imports, 
+                reduce_from_all_cats_to_specified_cats = True
+            ),
+            # TOTAL MASS OF HARVESTED WOOD PRODUCTS
+            self.model_attributes.array_to_df(
+                arr_ippu_harvested_wood, 
+                modvar_demand_for_harvested_wood, 
+                reduce_from_all_cats_to_specified_cats = True
+            ),
+            # TOTAL PRODUCTION
+            self.model_attributes.array_to_df(
+                array_ippu_production, 
+                modvar_qty_total_production, 
+                reduce_from_all_cats_to_specified_cats = True
+            ),
+            # RECYCLED MATERIALS USED IN PRODUCTION
+            self.model_attributes.array_to_df(
+                array_ippu_production, 
+                modvar_qty_recycled_used_in_production, 
+                reduce_from_all_cats_to_specified_cats = True
+            )
         ]
 
         return array_ippu_production, df_out
 
 
 
-
-    # project method for IPPU
-    def project(self, df_ippu_trajectories: pd.DataFrame) -> pd.DataFrame:
-
+    def project(self, 
+        df_ippu_trajectories: pd.DataFrame
+    ) -> pd.DataFrame:
         """
-            project() takes a data frame of input variables (ordered by time series) and returns a data frame of output variables (model projections for industrial processes and product use--excludes industrial energy (see Energy class)) the same order.
+        project() takes a data frame of input variables (ordered by time series) 
+            and returns a data frame of output variables (model projections for 
+            industrial processes and product use--excludes industrial energy 
+            (see Energy class)) the same order.
 
-            Function Arguments
-            ------------------
-            df_ippu_trajectories: pd.DataFrame with all required input variable trajectories.
+        Function Arguments
+        ------------------
+        - df_ippu_trajectories: pd.DataFrame with all required input variable 
+            trajectories.
 
-
-            Notes
-            -----
-            - The .project() method is designed to be parallelized or called from command line via __main__ in run_sector_models.py.
-            - df_ippu_trajectories should have all input fields required (see IPPU.required_variables for a list of variables to be defined).  The model will not run if any required variables are missing, but errors will detail which fields are missing.
-            - the df_ippu_trajectories.project method will run on valid time periods from 1 .. k, where k <= n (n is the number of time periods). By default, it drops invalid time periods. If there are missing time_periods between the first and maximum, data are interpolated.
+        Notes
+        -----
+        - df_ippu_trajectories should have all input fields required (see 
+            IPPU.required_variables for a list of variables to be defined). The 
+            model will not run if any required variables are missing, but errors 
+            will detail which fields are missing.
+        - the df_ippu_trajectories.project method will run on valid time periods 
+            from 1 .. k, where k <= n (n is the number of time periods). By 
+            default, it drops invalid time periods. If there are missing 
+            time_periods between the first and maximum, data are interpolated.
         """
 
         # make sure socioeconomic variables are added and
@@ -668,10 +891,19 @@ class IPPU:
             self.modvar_ippu_qty_total_production,
             "mass"
         )
-        array_ippu_emissions_clinker = self.model_attributes.get_standard_variables(df_ippu_trajectories, self.modvar_ippu_ef_co2_per_prod_process_clinker, False, return_type = "array_units_corrected", expand_to_all_cats = True)/scalar_ippu_mass_clinker
+        array_ippu_emissions_clinker = self.model_attributes.get_standard_variables(
+            df_ippu_trajectories, 
+            self.modvar_ippu_ef_co2_per_prod_process_clinker, 
+            expand_to_all_cats = True,
+            return_type = "array_units_corrected"
+        )/scalar_ippu_mass_clinker
         # get net imports and convert to units of production
-        array_ippu_net_imports_clinker = self.model_attributes.get_standard_variables(df_ippu_trajectories, self.modvar_ippu_net_imports_clinker
-        , False, return_type = "array_base", expand_to_all_cats = True)
+        array_ippu_net_imports_clinker = self.model_attributes.get_standard_variables(
+            df_ippu_trajectories, 
+            self.modvar_ippu_net_imports_clinker,
+            expand_to_all_cats = True,
+            return_type = "array_base"
+        )
         array_ippu_net_imports_clinker *= self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_ippu_net_imports_clinker,
             self.modvar_ippu_qty_total_production,
@@ -838,9 +1070,7 @@ class IPPU:
                 []
             )
         }
-        """
 
-        """
 
         # use dictionary to calculate emissions
         df_out += self.calculate_emissions_by_gdp_and_production(
@@ -861,6 +1091,7 @@ class IPPU:
             self.modvar_ippu_emissions_produse_pfc,
             self.modvar_ippu_emissions_process_other_fcs
         ]
+
         # concatenate and add subsector emission totals
         df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")
         self.model_attributes.add_subsector_emissions_aggregates(df_out, self.required_base_subsectors, False)

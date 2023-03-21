@@ -660,7 +660,6 @@ class ElectricEnergy:
         - solver_time_limit: time limit to specify in seconds. If non-integer,
             sets based on configuration default 
             (nemomod_solver_time_limit_seconds)
-
         """
 
         # Energy (Electricity) Mode Fields

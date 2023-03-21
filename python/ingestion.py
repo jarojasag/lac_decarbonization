@@ -269,13 +269,22 @@ class InputTemplate:
 			strat, df = df
 
 			# keep all rows if baseline--otherwise, only keep those that are defined
-			df = pd.merge(df_base, df, how = "left") if (
-				strat == self.baseline_strategy
-			) else pd.merge(df_base, df, how = "inner")
+			merge_type = "left" if (strat == self.baseline_strategy) else "inner"
+			df = pd.merge(df_base, df, how = merge_type)
 
 			# clean some integer fields
-			for field in [field_key_strategy, field_time_period]:
-				df[field] = df[field].astype(int)
+			try:
+				for field in [field_key_strategy, field_time_period]:
+					df[field] = df[field].astype(int)
+			except Exception as e:
+				vars_missing = sorted(list(set(df[df["value"].isna()][field_req_variable])))
+				vars_missing = sf.format_print_list(vars_missing)
+				msg = f"Error in `InputTemplate.template_from_inputs()`: variables {vars_missing} not found."
+				self._log(
+					msg,
+					type_log = "error"
+				)
+				raise RuntimeError(msg)
 
 			if len(df) > 0:
 				df.drop([field_key_strategy], axis = 1, inplace = True)
@@ -781,7 +790,10 @@ class InputTemplate:
 						dict_outputs.update({strat_cur: df_template_sheet})
 
 		if not any_baseline:
-			self._log(f"Note: no sheets associated with the baseline strategy {strat_base} were found in the input template. Check the template before proceeding to build the input database.", type_log = "warning")
+			self._log(
+				f"Note: no sheets associated with the baseline strategy {strat_base} were found in the input template. Check the template before proceeding to build the input database.", 
+				type_log = "warning"
+			)
 
 		return dict_outputs, dict_strategy_to_sheet, field_max, field_min, fields_tp
 
@@ -947,7 +959,10 @@ class InputTemplate:
 
 		if len(fields_invalid) > 0:
 			flds_drop = sf.format_print_list([x for x in fields_invalid])
-			self._log(f"Dropping fields {flds_drop} from input template: the time periods are not defined in the {self.model_attributes.dim_time_period} attribute table at '{attr_tp.fp_table}'", type_log = "warning")
+			self._log(
+				f"Dropping fields {flds_drop} from input template: the time periods are not defined in the {self.model_attributes.dim_time_period} attribute table at '{attr_tp.fp_table}'", 
+				type_log = "warning"
+			)
 			df_in.drop(fields_invalid, axis = 1, inplace = True)
 
 		return (dict_field_tp_to_tp, df_in, field_min, field_max, fields_valid)
@@ -1005,7 +1020,11 @@ class InputTemplate:
 
 		except Exception as e:
 			sheet_str = f" '{sheet_name}'" if (sheet_name is not None) else ""
-			self._log(f"Trying to verify sheet{sheet_str} produced the following error in verify_input_template_sheet:\n\t{e}\nReturning None", type_log = "warning")
+			self._log(
+				f"Trying to verify sheet{sheet_str} produced the following error in verify_input_template_sheet:\n\t{e}\nReturning None", 
+				type_log = "warning"
+			)
+
 			return None
 
 		return (dict_field_tp_to_tp, df_template_sheet, field_min, field_max, fields_tp)
@@ -1230,7 +1249,10 @@ class BaseInputDatabase:
 					df_template_db = template_cur.build_inputs_by_strategy()
 
 				except Exception as e:
-					self._log(f"Warning in generate_database--template read for sector '{sector}' in region '{region}' failed. The following error was returned: {e}", type_log = "warning")
+					self._log(
+						f"Warning in generate_database--template read for sector '{sector}' in region '{region}' failed. The following error was returned: {e}", 
+						type_log = "warning"
+					)
 					df_template_db = None
 
 				if df_template_db is not None:
@@ -1238,8 +1260,12 @@ class BaseInputDatabase:
 					set_template_cols = set(df_template_db.columns)
 					if all_fields is not None:
 						if not set(df_template_db.columns).issubset(all_fields):
-							self._log(f"Error in sector '{sector}', region '{region}': encountered inconsistent definition of template fields. Dropping...", type_log = "warning")
+							self._log(
+								f"Error in sector '{sector}', region '{region}': encountered inconsistent definition of template fields. Dropping...", 
+								type_log = "warning"
+							)
 							df_template_db = None
+
 						else:
 							fields_drop = list(set_template_cols - all_fields)
 							df_template_db.drop(fields_drop, axis = 1, inplace = True) if (len(fields_drop) > 0) else None

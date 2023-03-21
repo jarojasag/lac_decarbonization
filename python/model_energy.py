@@ -18,8 +18,31 @@ from typing import *
 
 class NonElectricEnergy:
     """
-    NonElectricEnergy DOCSTRING to go here
+    Use NonElectricEnergy to calculate emissions from energy production in
+        SISEPUEDE. Includes emissions from the following subsectors:
 
+        * Carbon Capture and Sequestration (CCSQ)
+        * Industrial Energy (INEN)
+        * Stationary Combustion and Other Energy (SCOE)
+        * Transportation (TRNS)
+
+    Additionally, includes the following non-emissions models:
+
+        * Transportation Demand (TRDE)
+
+    For additional information, see the SISEPUEDE readthedocs at:
+
+        https://sisepuede.readthedocs.io/en/latest/energy_non_electric.html
+
+    
+
+    Intialization Arguments
+    -----------------------
+    - model_attributes: ModelAttributes object used in SISEPUEDE
+
+    Optional Arguments
+    ------------------
+    - logger: optional logger object to use for event logging
     """
     def __init__(self,
         attributes: ModelAttributes,
@@ -41,28 +64,12 @@ class NonElectricEnergy:
         self._initialize_subsector_vars_trde()
         self._initialize_subsector_vars_trns()
 
-        # valid subsectors in .project()
-        self.valid_projection_subsecs = [
-            self.subsec_name_ccsq,
-            self.subsec_name_fgtv,
-            self.subsec_name_inen,
-            self.subsec_name_scoe,
-            self.subsec_name_trns
-        ]
-
-        # variables from other sectors (NOTE: AFOLU INTEGRATION VARIABLES MUST BE SET HERE, CANNOT INITIALIZE AFOLU CLASS DUE TO DAG)
-        self.modvar_agrc_yield = "Crop Yield"
-        self.modvar_lvst_total_animal_mass = "Total Domestic Animal Mass"
         # 
         self._initialize_models()
+        self._initialize_other_properties()
+        self._initialize_integrated_variables()
 
-        # optional integration variables (uses calls to other model classes)
-        self._set_integrated_variables()
-
-        ##  MISCELLANEOUS VARIABLES
-        self.time_periods, self.n_time_periods = self.model_attributes.get_time_periods()
-
-
+        
 
 
 
@@ -89,50 +96,6 @@ class NonElectricEnergy:
         - **kwargs: passed as logging.Logger.METHOD(msg, **kwargs)
         """
         sf._optional_log(self.logger, msg, type_log = type_log, **kwargs)
-
-
-
-    def _set_integrated_variables(self,
-    ) -> None:
-        """
-        Sets integrated variables, including the following properties:
-
-            * self.integration_variables_non_fgtv
-            * self.integration_variables_fgtv
-        """
-        # set the integration variables
-        list_vars_required_for_integration = [
-            self.modvar_agrc_yield,
-            self.model_ippu.modvar_ippu_qty_total_production,
-            self.modvar_lvst_total_animal_mass
-        ]
-
-        # in Energy, update required variables
-        for modvar in list_vars_required_for_integration:
-            subsec = self.model_attributes.get_variable_subsector(modvar)
-            new_vars = self.model_attributes.build_varlist(subsec, modvar)
-            self.required_variables += new_vars
-
-        # sot required variables and ensure no double counting
-        self.required_variables = list(set(self.required_variables))
-        self.required_variables.sort()
-
-        # return variables required for secondary integrtion (i.e., for fugitive emissions only)
-        list_vars_required_for_integration_fgtv = [
-            self.modvar_enfu_energy_demand_by_fuel_ccsq,
-            self.modvar_enfu_energy_demand_by_fuel_entc,
-            self.modvar_enfu_energy_demand_by_fuel_inen,
-            self.modvar_enfu_energy_demand_by_fuel_scoe,
-            self.modvar_enfu_energy_demand_by_fuel_trns,
-            self.modvar_enfu_energy_demand_by_fuel_total,
-            self.modvar_enfu_exports_fuel_adjusted,
-            self.modvar_enfu_imports_fuel,
-            self.modvar_enfu_production_fuel
-        ]
-
-
-        self.integration_variables_non_fgtv = list_vars_required_for_integration
-        self.integration_variables_fgtv = list_vars_required_for_integration_fgtv
 
 
 
@@ -290,6 +253,52 @@ class NonElectricEnergy:
         return None
 
 
+
+    def _initialize_integrated_variables(self,
+    ) -> None:
+        """
+        Sets integrated variables, including the following properties:
+
+            * self.integration_variables_non_fgtv
+            * self.integration_variables_fgtv
+        """
+        # set the integration variables
+        list_vars_required_for_integration = [
+            self.modvar_agrc_yield,
+            self.model_ippu.modvar_ippu_qty_total_production,
+            self.modvar_lvst_total_animal_mass
+        ]
+
+        # in Energy, update required variables
+        for modvar in list_vars_required_for_integration:
+            subsec = self.model_attributes.get_variable_subsector(modvar)
+            new_vars = self.model_attributes.build_varlist(subsec, modvar)
+            self.required_variables += new_vars
+
+        # sot required variables and ensure no double counting
+        self.required_variables = list(set(self.required_variables))
+        self.required_variables.sort()
+
+        # return variables required for secondary integrtion (i.e., for fugitive emissions only)
+        list_vars_required_for_integration_fgtv = [
+            self.modvar_enfu_energy_demand_by_fuel_ccsq,
+            self.modvar_enfu_energy_demand_by_fuel_entc,
+            self.modvar_enfu_energy_demand_by_fuel_inen,
+            self.modvar_enfu_energy_demand_by_fuel_scoe,
+            self.modvar_enfu_energy_demand_by_fuel_trns,
+            self.modvar_enfu_energy_demand_by_fuel_total,
+            self.modvar_enfu_exports_fuel_adjusted,
+            self.modvar_enfu_imports_fuel,
+            self.modvar_enfu_production_fuel
+        ]
+
+
+        self.integration_variables_non_fgtv = list_vars_required_for_integration
+        self.integration_variables_fgtv = list_vars_required_for_integration_fgtv
+
+        return None
+
+
     
     def _initialize_models(self,
         model_attributes: Union[ModelAttributes, None] = None
@@ -314,6 +323,43 @@ class NonElectricEnergy:
         
         self.model_ippu = IPPU(model_attributes)
         self.model_socioeconomic = Socioeconomic(model_attributes)
+
+        return None
+
+
+    
+    def _initialize_other_properties(self,
+    ) -> None:
+        """
+        Initialize other properties that don't fit elsewhere. Sets the 
+            following properties:
+
+            * self.modvar_agrc_yield
+            * self.modvar_lvst_total_animal_mass
+            * self.n_time_periods
+            * self.time_periods
+            * self.valid_projection_subsecs
+        """
+        # valid subsectors in .project()
+        self.valid_projection_subsecs = [
+            self.subsec_name_ccsq,
+            self.subsec_name_fgtv,
+            self.subsec_name_inen,
+            self.subsec_name_scoe,
+            self.subsec_name_trns
+        ]
+
+        # variables from other sectors (NOTE: AFOLU INTEGRATION VARIABLES MUST BE SET HERE, CANNOT INITIALIZE AFOLU CLASS DUE TO DAG)
+        self.modvar_agrc_yield = "Crop Yield"
+        self.modvar_lvst_total_animal_mass = "Total Domestic Animal Mass"
+
+
+        ##  TIME VARIABLES
+
+        time_periods, n_time_periods = self.model_attributes.get_time_periods()
+
+        self.time_periods = time_periods
+        self.n_time_periods = n_time_periods
 
         return None
 
