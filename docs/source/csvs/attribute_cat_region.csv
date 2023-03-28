@@ -1,4 +1,4 @@
-﻿Category Name,``$REGION$``,Region Abbreviation,Description,Hourly Capacity Factor Region,Powerplant Data,IO Data,FAO Area Code
+﻿Category Name,``$REGION$``,ISO Alpha 3,Description,Hourly Capacity Factor Region,Powerplant Data,IO Data,FAO Area Code
 Argentina,``argentina``,arg,,Southern,Yes,Yes,9
 Bahamas,``bahamas``,bhs,,Northern,No,No,12
 Barbados,``barbados``,brb,,Equatorial,No,No,14

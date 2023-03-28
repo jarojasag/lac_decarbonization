@@ -688,11 +688,10 @@ class NonElectricEnergy:
             * self.modvar_dict_trns_****
             * self.modvar_dicts_trns_****
         """
-
+        
         # Transportation variablesz
         self.modvar_trns_average_vehicle_load_freight = "Average Freight Vehicle Load"
         self.modvar_trns_average_passenger_occupancy = "Average Passenger Vehicle Occupancy Rate"
-        self.modvar_trns_electrical_efficiency = "Electrical Vehicle Efficiency"
         self.modvar_trns_ef_combustion_mobile_biofuels_ch4 = ":math:\\text{CH}_4 Biofuels Mobile Combustion Emission Factor"
         self.modvar_trns_ef_combustion_mobile_diesel_ch4 = ":math:\\text{CH}_4 Diesel Mobile Combustion Emission Factor"
         self.modvar_trns_ef_combustion_mobile_gasoline_ch4 = ":math:\\text{CH}_4 Gasoline Mobile Combustion Emission Factor"
@@ -705,20 +704,14 @@ class NonElectricEnergy:
         self.modvar_trns_ef_combustion_mobile_hgl_n2o = ":math:\\text{N}_2\\text{O} Hydrocarbon Gas Liquids Mobile Combustion Emission Factor"
         self.modvar_trns_ef_combustion_mobile_kerosene_n2o = ":math:\\text{N}_2\\text{O} Kerosene Mobile Combustion Emission Factor"
         self.modvar_trns_ef_combustion_mobile_natural_gas_n2o = ":math:\\text{N}_2\\text{O} Natural Gas Mobile Combustion Emission Factor"
+        self.modvar_trns_electrical_efficiency = "Electrical Vehicle Efficiency"
+        self.modvar_trns_emissions_ch4 = ":math:\\text{CH}_4 Emissions from Transportation"
+        self.modvar_trns_emissions_co2 = ":math:\\text{CO}_2 Emissions from Transportation"
+        self.modvar_trns_emissions_n2o = ":math:\\text{N}_2\\text{O} Emissions from Transportation"
         self.modvar_trns_energy_consumption_electricity = "Electrical Energy Consumption from Transportation"
         self.modvar_trns_energy_consumption_electricity_agg = "Total Electrical Energy Consumption from Transportation"
         self.modvar_trns_energy_consumption_total = "Energy Consumption from Transportation"
         self.modvar_trns_energy_consumption_total_agg = "Total Energy Consumption from Transportation"
-        self.modvar_trns_fuel_efficiency_biofuels = "Fuel Efficiency Biofuels"
-        self.modvar_trns_fuel_efficiency_diesel = "Fuel Efficiency Diesel"
-        self.modvar_trns_fuel_efficiency_gasoline = "Fuel Efficiency Gasoline"
-        self.modvar_trns_fuel_efficiency_hgl = "Fuel Efficiency Hydrocarbon Gas Liquids"
-        self.modvar_trns_fuel_efficiency_hydrogen = "Fuel Efficiency Hydrogen"
-        self.modvar_trns_fuel_efficiency_kerosene = "Fuel Efficiency Kerosene"
-        self.modvar_trns_fuel_efficiency_natural_gas = "Fuel Efficiency Natural Gas"
-        self.modvar_trns_modeshare_freight = "Freight Transportation Mode Share"
-        self.modvar_trns_modeshare_public_private = "Private and Public Transportation Mode Share"
-        self.modvar_trns_modeshare_regional = "Regional Transportation Mode Share"
         self.modvar_trns_fuel_fraction_biofuels = "Transportation Mode Fuel Fraction Biofuels"
         self.modvar_trns_fuel_fraction_diesel = "Transportation Mode Fuel Fraction Diesel"
         self.modvar_trns_fuel_fraction_electricity = "Transportation Mode Fuel Fraction Electricity"
@@ -727,9 +720,17 @@ class NonElectricEnergy:
         self.modvar_trns_fuel_fraction_hydrogen = "Transportation Mode Fuel Fraction Hydrogen"
         self.modvar_trns_fuel_fraction_kerosene = "Transportation Mode Fuel Fraction Kerosene"
         self.modvar_trns_fuel_fraction_natural_gas = "Transportation Mode Fuel Fraction Natural Gas"
-        self.modvar_trns_emissions_ch4 = ":math:\\text{CH}_4 Emissions from Transportation"
-        self.modvar_trns_emissions_co2 = ":math:\\text{CO}_2 Emissions from Transportation"
-        self.modvar_trns_emissions_n2o = ":math:\\text{N}_2\\text{O} Emissions from Transportation"
+        self.modvar_trns_fuel_efficiency_biofuels = "Fuel Efficiency Biofuels"
+        self.modvar_trns_fuel_efficiency_diesel = "Fuel Efficiency Diesel"
+        self.modvar_trns_fuel_efficiency_gasoline = "Fuel Efficiency Gasoline"
+        self.modvar_trns_fuel_efficiency_hgl = "Fuel Efficiency Hydrocarbon Gas Liquids"
+        self.modvar_trns_fuel_efficiency_hydrogen = "Fuel Efficiency Hydrogen"
+        self.modvar_trns_fuel_efficiency_kerosene = "Fuel Efficiency Kerosene"
+        self.modvar_trns_fuel_efficiency_natural_gas = "Fuel Efficiency Natural Gas"
+        self.modvar_trns_mass_distance_traveled = "Total Megatonne-Kilometer Demand by Vehicle"
+        self.modvar_trns_modeshare_freight = "Freight Transportation Mode Share"
+        self.modvar_trns_modeshare_public_private = "Private and Public Transportation Mode Share"
+        self.modvar_trns_modeshare_regional = "Regional Transportation Mode Share"
         self.modvar_trns_passenger_distance_traveled = "Total Passenger Distance by Vehicle"
         self.modvar_trns_vehicle_distance_traveled = "Total Vehicle Distance Traveled"
         # fuel variables dictionary for transportation
@@ -1396,10 +1397,11 @@ class NonElectricEnergy:
             for each key, the dict includes variables associated with the fuel 
             cat_fuel:
 
-            - "fuel_efficiency"
-            - "fuel_fraction"
             - "ef_ch4"
             - "ef_n2o"
+            - "fuel_efficiency"
+            - "fuel_fraction"
+            - "modal_energy_consumption"
         """
 
         dict_out = self.model_attributes.assign_keys_from_attribute_fields(
@@ -1408,6 +1410,7 @@ class NonElectricEnergy:
             {
                 "Fuel Efficiency": "fuel_efficiency",
                 "Fuel Fraction": "fuel_fraction",
+                "Transportation Modal Energy Consumption": "modal_energy_consumption",
                 ":math:\\text{CH}_4": "ef_ch4",
                 ":math:\\text{N}_2\\text{O}": "ef_n2o"
             },
@@ -2363,7 +2366,7 @@ class NonElectricEnergy:
             dict_inen_fuel_frac_to_eff_cat.update({k: val})
         dict_inen_fuel_frac_to_eff_cat = sf.reverse_dict(dict_inen_fuel_frac_to_eff_cat)
 
-        # energy consumption at time 0 due to production in terms of units modvar_ippu_qty_total_production HEREHERE
+        # energy consumption at time 0 due to production in terms of units modvar_ippu_qty_total_production
         arr_inen_energy_consumption_intensity_prod = arr_inen_prod_energy_intensity*self.model_attributes.get_variable_unit_conversion_factor(
             self.model_ippu.modvar_ippu_qty_total_production,
             self.modvar_inen_en_prod_intensity_factor,
@@ -2459,7 +2462,7 @@ class NonElectricEnergy:
             self.modvar_enfu_energy_demand_by_fuel_inen,
             "energy"
         )
-        ##HEREHERE
+
         # loop over fuels to
         for var_ener_frac in self.modvars_inen_list_fuel_fraction:
             # retrive the fuel category and index
@@ -3072,26 +3075,31 @@ class NonElectricEnergy:
 
         # loop over the demand categories to get transportation demand
         for category in dict_trns_vars_to_trde_cats.keys():
-            # get key index, model variable, and the current demand
+            # get key index, model variable, 
             index_key = self.model_attributes.get_attribute_table(self.subsec_name_trde).get_key_value_index(category)
             modvar = self.model_attributes.get_variable_from_category(self.subsec_name_trde, category, "partial")
+            scalar_length = self.model_attributes.get_scalar(modvar, "length")
+
+            # retrieve demand
             vec_trde_dem_cur = self.model_attributes.get_standard_variables(
                 df_neenergy_trajectories, 
                 modvar, 
-                return_type = "array_base", 
-                expand_to_all_cats = True
+                expand_to_all_cats = True,
+                return_type = "array_base"
             )[:, index_key]
+
             # retrieve the demand mix, convert to total activity-demand by category, then divide by freight/occ_rate
             array_trde_dem_cur_by_cat = self.model_attributes.get_standard_variables(
                 df_neenergy_trajectories,
                 dict_trns_vars_to_trde_cats[category],
-                return_type = "array_base",
                 expand_to_all_cats = True,
-                var_bounds = (0, 1),
-                force_boundary_restriction = True
+                force_boundary_restriction = True,
+                return_type = "array_base",
+                var_bounds = (0, 1)
             )
 
-            array_trde_dem_cur_by_cat = (array_trde_dem_cur_by_cat.transpose()*vec_trde_dem_cur).transpose()
+            # get current demand in terms of configuration units of length (across each model variable)
+            array_trde_dem_cur_by_cat = (array_trde_dem_cur_by_cat.transpose()*vec_trde_dem_cur).transpose() * scalar_length
             """
             freight and passenger should be mutually exclusive categories
             - e.g., if the iterating variable category == "freight", then 
@@ -3110,19 +3118,36 @@ class NonElectricEnergy:
             array_trns_total_vehicle_demand += array_trde_vehicle_dem_cur_by_cat
 
         # add the vehicle and passenger distance to output using the units modvar_trde_demand_pkm
-        scalar_trns_total_vehicle_demand = self.model_attributes.get_scalar(self.modvar_trde_demand_pkm, "length")
+        scalar_trns_total_mass_distance_demand = 1/self.model_attributes.get_scalar(self.modvar_trns_mass_distance_traveled, "length")
+        scalar_trns_total_mass_distance_demand *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_trde_demand_mtkm,
+            self.modvar_trns_mass_distance_traveled,
+            "mass"
+        )
+
         df_out += [
+            # MASS-DISTANCE TRAVELED HEREHERE
             self.model_attributes.array_to_df(
-                array_trns_total_passenger_demand*scalar_trns_total_vehicle_demand,
+                array_trns_total_passenger_demand*scalar_trns_total_mass_distance_demand,
+                self.modvar_trns_mass_distance_traveled,
+                reduce_from_all_cats_to_specified_cats = True
+            ),
+            # PASSENGER DISTANCE TRAVELED
+            self.model_attributes.array_to_df(
+                array_trns_total_passenger_demand,
                 self.modvar_trns_passenger_distance_traveled,
                 reduce_from_all_cats_to_specified_cats = True
             ),
+            # VEHICLE DISTANCE TRAVELED
             self.model_attributes.array_to_df(
-                array_trns_total_vehicle_demand*scalar_trns_total_vehicle_demand,
+                array_trns_total_vehicle_demand,
                 self.modvar_trns_vehicle_distance_traveled,
                 reduce_from_all_cats_to_specified_cats = True
             )
         ]
+
+        # convert length in to terms of self.modvar_trde_demand_pkm
+        array_trns_total_vehicle_demand /= self.model_attributes.get_scalar(self.modvar_trde_demand_pkm, "length")
 
 
         ##  LOOP OVER FUELS
@@ -3157,7 +3182,10 @@ class NonElectricEnergy:
             self.modvar_enfu_energy_demand_by_fuel_trns,
             "energy"
         )
-        scalar_trns_ved_to_output_scalar = self.model_attributes.get_scalar(self.modvar_enfu_energy_density_volumetric,"energy")
+        scalar_trns_ved_to_output_scalar = self.model_attributes.get_scalar(
+            self.modvar_enfu_energy_density_volumetric, 
+            "energy"
+        )
 
         # loop over fuels to calculate emissions and demand associated with each fuel
         fuels_loop = sorted(list(self.dict_trns_fuel_categories_to_fuel_variables.keys()))
@@ -3172,6 +3200,7 @@ class NonElectricEnergy:
             modvar_trns_ef_n2o_cur = dict_tfc_to_fv_cur.get("ef_n2o")
             modvar_trns_fuel_efficiency_cur = dict_tfc_to_fv_cur.get("fuel_efficiency")
             modvar_trns_fuel_fraction_cur = dict_tfc_to_fv_cur.get("fuel_fraction")
+            modvar_trns_modal_energy_demand_by_fuel = dict_tfc_to_fv_cur.get("modal_energy_consumption")
 
             # set some scalars for use in the calculations
             scalar_trns_fuel_efficiency_to_demand = self.model_attributes.get_variable_unit_conversion_factor(
@@ -3184,11 +3213,27 @@ class NonElectricEnergy:
             ind_enfu_cur = attr_enfu.get_key_value_index(cat_fuel)
             vec_trns_ef_by_fuel_co2_cur = arr_trns_ef_by_fuel_co2[:, ind_enfu_cur]
             vec_trns_volumetric_enerdensity_by_fuel = arr_trns_energy_density_fuel[:, ind_enfu_cur]
+            
             # get arrays
             arr_trns_fuel_fraction_cur = dict_arrs_trns_frac_fuel.get(modvar_trns_fuel_fraction_cur)
-            arr_trns_ef_ch4_cur = self.model_attributes.get_standard_variables(df_neenergy_trajectories, modvar_trns_ef_ch4_cur, return_type = "array_units_corrected", expand_to_all_cats = True) if (modvar_trns_ef_ch4_cur is not None) else 0
-            arr_trns_ef_n2o_cur = self.model_attributes.get_standard_variables(df_neenergy_trajectories, modvar_trns_ef_n2o_cur, return_type = "array_units_corrected", expand_to_all_cats = True) if (modvar_trns_ef_n2o_cur is not None) else 0
-            arr_trns_fuel_efficiency_cur = self.model_attributes.get_standard_variables(df_neenergy_trajectories, modvar_trns_fuel_efficiency_cur, return_type = "array_base", expand_to_all_cats = True)
+            arr_trns_ef_ch4_cur = self.model_attributes.get_standard_variables(
+                df_neenergy_trajectories, 
+                modvar_trns_ef_ch4_cur, 
+                expand_to_all_cats = True,
+                return_type = "array_units_corrected"
+            ) if (modvar_trns_ef_ch4_cur is not None) else 0
+            arr_trns_ef_n2o_cur = self.model_attributes.get_standard_variables(
+                df_neenergy_trajectories, 
+                modvar_trns_ef_n2o_cur,
+                expand_to_all_cats = True,
+                return_type = "array_units_corrected"
+            ) if (modvar_trns_ef_n2o_cur is not None) else 0
+            arr_trns_fuel_efficiency_cur = self.model_attributes.get_standard_variables(
+                df_neenergy_trajectories, 
+                modvar_trns_fuel_efficiency_cur,
+                expand_to_all_cats = True,
+                return_type = "array_base"
+            )
 
             # current demand associate with the fuel (in terms of modvar_trde_demand_pkm)
             arr_trns_vehdem_cur_fuel = array_trns_total_vehicle_demand*arr_trns_fuel_fraction_cur
@@ -3246,8 +3291,18 @@ class NonElectricEnergy:
 
                 ##  ENERGY DEMANDS
 
-                arr_trns_demand_by_category += arr_trns_energydem_cur_fuel*scalar_trns_ved_to_output_scalar
+                arr_trns_modal_energy_demand_by_fuel = arr_trns_energydem_cur_fuel*scalar_trns_ved_to_output_scalar
+                arr_trns_demand_by_category += arr_trns_modal_energy_demand_by_fuel
                 arr_trns_demand_by_fuel[:, index_cat_fuel] = np.sum(arr_trns_energydem_cur_fuel, axis = 1)*scalar_trns_ved_to_enfu_var_units
+
+                # add modal demand to output
+                df_out += [
+                    self.model_attributes.array_to_df(
+                        arr_trns_modal_energy_demand_by_fuel,
+                        modvar_trns_modal_energy_demand_by_fuel,
+                        reduce_from_all_cats_to_specified_cats = True
+                    )
+                ]
 
 
             elif cat_fuel == self.cat_enfu_electricity:
@@ -3266,16 +3321,32 @@ class NonElectricEnergy:
                     expand_to_all_cats = True
                 )
                 arr_trns_elect_efficiency_cur *= scalar_electric_eff_to_distance_equiv
-                arr_trns_energydem_elec = arr_trns_vehdem_cur_fuel/arr_trns_elect_efficiency_cur
 
-                # write in terms of output units
-                arr_trns_energydem_elec *= self.model_attributes.get_scalar(self.modvar_trns_electrical_efficiency, "energy")
-                arr_trns_energydem_elec = np.nan_to_num(arr_trns_energydem_elec, posinf = 0, neginf = 0)
+                # calculate energy demand and write in terms of output units
+                arr_trns_energydem_elec = np.nan_to_num(
+                    arr_trns_vehdem_cur_fuel/arr_trns_elect_efficiency_cur, 
+                    0.0,
+                    posinf = 0.0, 
+                    neginf = 0.0
+                )
+                arr_trns_energydem_elec *= self.model_attributes.get_scalar(
+                    self.modvar_trns_electrical_efficiency, 
+                    "energy"
+                )
                 vec_trns_energydem_elec_total = np.sum(arr_trns_energydem_elec, axis = 1)
 
                 # update energy demand by category and fuel
                 arr_trns_demand_by_category += arr_trns_energydem_elec
                 arr_trns_demand_by_fuel[:, index_cat_fuel] = vec_trns_energydem_elec_total/self.model_attributes.get_scalar(self.modvar_enfu_energy_demand_by_fuel_trns, "energy")
+
+                # add modal demand to output
+                df_out += [
+                    self.model_attributes.array_to_df(
+                        arr_trns_energydem_elec,
+                        modvar_trns_modal_energy_demand_by_fuel,
+                        reduce_from_all_cats_to_specified_cats = True
+                    )
+                ]
 
         vec_trns_demand_by_category_total = np.sum(arr_trns_demand_by_category, axis = 1)
 
@@ -3361,7 +3432,6 @@ class NonElectricEnergy:
         n_projection_time_periods: int = None,
         projection_time_periods: list = None
     ) -> pd.DataFrame:
-
         """
         Calculate transportation demands and associated metrics (TRDE)
 
@@ -3471,6 +3541,7 @@ class NonElectricEnergy:
             rates_are_factors = False, 
             elasticity_type = "standard"
         )
+
         # project the growth in per capita, multiply by population, then add it to the output
         array_trde_passenger_dem_by_cat = array_trde_dem_init_passenger[0]*array_trde_growth_passenger_dem_by_cat
         array_trde_passenger_dem_by_cat = (array_trde_passenger_dem_by_cat.transpose()*vec_pop).transpose()

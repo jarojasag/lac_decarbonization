@@ -293,6 +293,7 @@ class InputTemplate:
 		global dict_is
 		dict_is = dict_inputs_by_strat
 
+
 		##  CHECK THE VARIABLE INFORMATION DATA FRAME AND ADD COLUMNS
 
 		df_var_info = df_base[[field_req_variable, field_time_period]].drop_duplicates()

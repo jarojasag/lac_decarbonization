@@ -29,8 +29,16 @@ from julia.api import Julia
 
 class ElectricEnergy:
     """
-    Use ElectricEnergy to calculate emissions from electricity generation using 
-        NemoMod. Integrates with the SISEPUEDE integrated modeling framework.
+    Use ElectricEnergy to calculate emissions from electricity generation and 
+        fuel production--including coal mining, hydrogen production, natural gas
+        processing, and petroleum refinement--using NemoMod. Integrates with the 
+        SISEPUEDE integrated modeling framework.
+
+    For more information on the ElectricEnergy class, see the SISEPUEDE 
+        readthedocs at
+
+        https://sisepuede.readthedocs.io/en/latest/energy_electric.html
+
 
     Intialization Arguments
     -----------------------
@@ -59,9 +67,14 @@ class ElectricEnergy:
     - Python PyJulia package
     - NemoMod (see https://sei-international.github.io/NemoMod.jl/stable/ for 
         the latest stable release)
-    - Cbc, Clp, GPLK, CPLEX, GAMS (to access GAMS solvers), Gurobi, HiGHS (at 
-        least one)
-
+    - At least one of the following solver packages (^ denotes open source):
+        * Cbc^
+        * Clp^
+        * CPLEX
+        * GAMS (to access GAMS solvers)
+        * GPLK^
+        * Gurobi
+        * HiGHS^ (at least one)
     """
 
     def __init__(self,
@@ -132,8 +145,8 @@ class ElectricEnergy:
         df_elec_trajectories: pd.DataFrame,
         subsector: str = "All",
         var_type: str = "input",
-        msg_prepend: str = None
-    ):
+        msg_prepend: Union[str, None] = None
+    ) -> None:
         if subsector == "All":
             check_fields = self.required_variables
             msg_prepend = "Electricity"
@@ -148,6 +161,8 @@ class ElectricEnergy:
             msg_prepend = msg_prepend if (msg_prepend is not None) else subsector
         sf.check_fields(df_elec_trajectories, check_fields, f"{msg_prepend} projection cannot proceed: fields ")
 
+        return None
+        
 
 
     def _initialize_dict_tables_required_to_required_fields(self,

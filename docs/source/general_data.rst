@@ -80,8 +80,8 @@ Each of the four key emissions sectors and the socioeconomic sector are divided 
 Regions (Countries)
 -------------------
 
-The **MODELNAMEHERE** encompasses 26 countries, or, more generally, regions. These regions are associated with different NDCs, power grids, governmental structures and political regimes. Each region can be run independently for all python models, though the NemoMod model, which is designed to incorporate regional power sharing, has to be run at once.
+SISEPUEDE currently encompasses 26 regions in Latin America, though work is being performed to expand SISEPUEDE to be global in reach. These regions are associated with different NDCs, power grids, governmental structures and political regimes. Each region can be run independently for all python models, though the NemoMod model, which is designed to incorporate regional power sharing, has to be run at once.
 
-.. csv-table:: The following REGION dimensions are specified for the **MODELNAMEHERE** NemoMod model.
+.. csv-table:: The following REGION dimensions are specified for the SISEPUEDE NemoMod model.
    :file: ./csvs/attribute_cat_region.csv
    :header-rows: 1

@@ -45,7 +45,6 @@ class IPPU:
         attributes: ModelAttributes,
         logger: Union[logging.Logger, None] = None
     ):
-
         self.logger = logger
         self.model_attributes = attributes
         
@@ -719,7 +718,8 @@ class IPPU:
             # get indexes of of valid categories specified for recycling adjustments
             w = [i for i in range(len(vec_ippu_cats_to_adjust_from_recycling)) if (vec_ippu_cats_to_adjust_from_recycling[i] != "none") and (vec_ippu_cats_to_adjust_from_recycling[i] in attr_ippu.key_values)]
             if len(w) > 0:
-                # maximum proportion of virgin production (e.g., fraction of glass that is cullet) that can be replaced by recycled materials--if not specifed, default to 1
+                # maximum proportion of virgin production (e.g., fraction of glass that is cullet) 
+                # that can be replaced by recycled materials--if not specifed, default to 1
                 array_ippu_maxiumum_recycling_ratio = self.model_attributes.get_standard_variables(
                     df_ippu_trajectories,
                     self.modvar_ippu_max_recycled_material_ratio,
