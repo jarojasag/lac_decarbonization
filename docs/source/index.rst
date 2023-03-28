@@ -11,7 +11,7 @@ SISEPUEDE (**SI**mulating **SE**ctoral **P**athways and **U**ncertainty **E**xpl
 - Customizable variable setup through sector-level categorization
 
 
-Check out the :doc:`General Data <../general_data.html>` section to get started.
+Check out the `General Data <../general_data.htm>`_ section to get started.
 
 
 About the Model
