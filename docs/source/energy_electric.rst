@@ -79,17 +79,17 @@ The SISEPUEDE model (v1.0) uses NemoMod *only* to model the electricity sector. 
 
 
 Variables by Category
------------------------
+---------------------
 
 The following variables are required for each category ``$CAT-TECHNOLOGY$``. Note that these technologies represent consumers of fuel (including electricity); in SISEPUEDE, this is restricted to generation technology and storage.
 
-.. csv-table:: For different Energy Technology categories, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
+.. csv-table:: For each Energy Technology category, trajectories of the following variables are needed. The category for which variables are required is denoted in the *categories* column.
    :file: ./csvs/table_varreqs_by_category_en_entc.csv
    :header-rows: 1
 
 
 Variables by Partial Category
----------------------
+-----------------------------
 
 The following variables are required for some categories ``$CAT-TECHNOLOGY$``.
 
