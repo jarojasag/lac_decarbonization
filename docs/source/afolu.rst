@@ -28,14 +28,16 @@ Agriculture requires the following variables.
  |
  | These variables are used in Equations 11.6 and 11.7 (Volume 4) of the IPCC NGHGI to estimate :math:`\text{N}_2\text{O}`
 
- Variables by Partial Category
- -----------------------------
+
+Variables by Partial Category
+-----------------------------
 
  Agriculture includes some variables that apply only to a subset of categories. These variables are described below. The categories that variables apply to are described in the ``category`` column.
 
  .. csv-table:: Trajectories of the following variables are needed for **some** categories `$CAT-AGRICULTURE`. If they are independent of categories, the category will show up as **none**.
     :file: ./csvs/table_varreqs_by_partial_category_af_agrc.csv
     :header-rows: 1
+
 
 Categories
 ----------
@@ -88,7 +90,7 @@ Forestry is divided into the following categories. These categories reflect an a
 Land Use
 ========
 
-Land use projections are driven by a Markov Chain, represented by a transition matrix :math:`Q(t)` (the matrix is specified for each time period in the ``model_input_variables.csv`` file). The model requires initial states (entered as a fraction of total land area) for all land use categories ``$CAT-LANDUSE$``. See the `AFOLU Mathematical Documentation <./mathdoc_afolu.htm>`_ for more information on the integrated land use model.
+Land use projections are driven by a Markov Chain, represented by a transition matrix :math:`Q(t)` (the matrix is specified for each time period in the input template). The model requires initial states (entered as a fraction of total land area) for all land use categories ``$CAT-LANDUSE$``. See the `AFOLU Mathematical Documentation <./mathdoc_afolu.htm>`_ for more information on the integrated land use model.
 
 .. note::
    The entries :math:`Q_{ij}(t)` give the transition probability of land use category :math:`i` to land use category :math:`j`. :math:`Q` is row stochastic, so that :math:`\sum_{j}Q_{ij}(t) = 1` for each land use category :math:`i` and time period :math:`t`. To preserve row stochasticity, it is highly recommended that strategies and uncertainty be represented using the trajectory mixing approach, where bounding trajectories on transitions probabilities are specified and uncertainty exploration gives a mix between them.
@@ -123,6 +125,7 @@ The value of :math:`\eta` represents the fraction of unmet demand, in pasture an
 Fraction of Increasing Net Exports/Imports Met
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Text here
 
 
 Variables by Category
@@ -169,6 +172,7 @@ Variables by Category
    :file: ./csvs/table_varreqs_by_category_af_lvst.csv
    :header-rows: 1
 
+
 Variables by Partial Category
 -----------------------------
 
@@ -177,6 +181,7 @@ Livestock includes some variables that apply only to a subset of categories. The
 .. csv-table:: Trajectories of the following variables are needed for **some** livestock categories.
    :file: ./csvs/table_varreqs_by_partial_category_af_lvst.csv
    :header-rows: 1
+
 
 Categories
 ----------

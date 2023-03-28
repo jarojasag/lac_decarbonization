@@ -2,16 +2,17 @@
 SISEPUEDE Documentation
 =======================
 
-SISEPUEDE (**SI**\tmulating **SE**\tctoral **P**\tathways and **U**\tncertainty **E**\txploration for **DE**\tcarbonization) is an integrated Python/Julia modeling system used to facilitate exploratory analyses of decarbonization transformations too sectors at the country level. It includes several key components:
+SISEPUEDE (**SI**mulating **SE**ctoral **P**athways and **U**ncertainty **E**xploration for **DE**carbonization) is an integrated Python/Julia modeling framework that facilitates exploratory analyses of decarbonization transformations within emissions sectors at the region level. It includes several key components:
 
-- A data pipeline management system
-
+- Integrated yet separable sectoral models of emissions based on IPCC guidelines for greenhouse gas inventories
 - Uncertainty specification and trajectory sampling mechanism
+- A data pipeline management system
+- Scalable architecture
+- Customizable variable setup through sector-level categorization
 
-- Sectoral models of emissions
 
+Check out the :doc:`General Data <../general_data.html>` section to get started.
 
-Check out the :doc:`General Data <../general_data.htm>` section to get started.
 
 About the Model
 ===============
@@ -45,7 +46,7 @@ For example, model input variables used to denote agricultural activity emission
 ``ef_agactivity_$CAT-AGRICULTURE$_$UNIT-MASS$_$EMISSION-GAS$_$UNIT-AREA$``, where
 
 - ``$CAT-AGRICULTURE$`` is the categorical crop type (e.g., cereals, oil crops, pulses, etc.);
-- ``$EMISSION-GAS$`` is the greenhouse gas that is being emitted (e.g. ``co2``, ``ch4``, or ``n2o``)
+- ``$EMISSION-GAS$`` is the greenhouse gas that is being emitted (e.g. ``co2``, ``ch4``, ``n2o``, ``sf6``, etc.)
 - ``$UNIT-MASS$`` is the unit of mass for gas emission (e.g., ``kg`` for kilograms; some sector variables may use ``gg`` for gigagrams);
 - ``$UNIT-AREA$`` is the area unit (e.g., ``ha`` is hectares).
 

@@ -47,7 +47,7 @@ Categories
 Energy Fuels is divided into the following categories.
 
 .. csv-table:: Fuel categories (``$CAT-FUEL$`` attribute table)
-   :file: ./csvs/attribute_cat_enfu.csv
+   :file: ./csvs/attribute_cat_fuel.csv
    :header-rows: 1
 
 
