@@ -2164,7 +2164,7 @@ class ModelAttributes:
     #########################################################
 
     ##  add additional fields to the emission total
-    def add_specified_total_fields_to_emission_total(self,
+    def _add_specified_total_fields_to_emission_total(self,
         df_in: pd.DataFrame,
         varlist: list
     ):
@@ -2191,7 +2191,7 @@ class ModelAttributes:
                         dict_fields.update({subsec: field_total})
                 dict_totals[subsec] += array_cur
             else:
-                warning(f"In add_specified_total_fields_to_emission_total, subsector '{subsec}' not found. Skipping...")
+                warning(f"In _add_specified_total_fields_to_emission_total, subsector '{subsec}' not found. Skipping...")
 
         # next, update dataframe
         for subsec in dict_totals.keys():

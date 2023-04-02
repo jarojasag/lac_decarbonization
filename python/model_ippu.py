@@ -281,6 +281,15 @@ class IPPU:
         self.modvar_ippu_elast_ind_prod_to_gdp = "Elasticity of Industrial Production to GDP"
         self.modvar_ippu_elast_produserate_to_gdppc = "Elasticity of Product Use Rate to GDP per Capita"
         self.modvar_ippu_emissions_other_nonenergy_co2 = "Initial Other Non-Energy :math:\\text{CO}_2 Emissions"
+        self.modvar_ippu_emissions_ppu_hfc23 = "HFC-23 Emissions from Industrial Production Processes and Product Use"
+        self.modvar_ippu_emissions_ppu_hfc32 = "HFC-32 Emissions from Industrial Production Processes and Product Use"
+        self.modvar_ippu_emissions_ppu_hfc125 = "HFC-125 Emissions from Industrial Production Processes and Product Use"
+        self.modvar_ippu_emissions_ppu_hfc134a = "HFC-134a Emissions from Industrial Production Processes and Product Use"
+        self.modvar_ippu_emissions_ppu_hfc143a = "HFC-143a Emissions from Industrial Production Processes and Product Use"
+        self.modvar_ippu_emissions_ppu_hfc152a = "HFC-152a Emissions from Industrial Production Processes and Product Use"
+        self.modvar_ippu_emissions_ppu_pfc116 = "PFC-116 Emissions from Industrial Production Processes and Product Use"
+        self.modvar_ippu_emissions_ppu_pfc218 = "PFC-218 Emissions from Industrial Production Processes and Product Use"
+        self.modvar_ippu_emissions_ppu_pfc3110 = "PFC-31-10 Emissions from Industrial Production Processes and Product Use"
         self.modvar_ippu_emissions_process_ch4 = ":math:\\text{CH}_4 Emissions from Industrial Production Processes"
         self.modvar_ippu_emissions_process_co2 = ":math:\\text{CO}_2 Emissions from Industrial Production Processes"
         self.modvar_ippu_emissions_produse_co2 = ":math:\\text{CO}_2 Emissions from Industrial Product Use"
@@ -317,7 +326,7 @@ class IPPU:
         df_ippu_trajectories: pd.DataFrame,
         array_production: np.ndarray,
         vec_gdp: np.ndarray,
-        dict_base_emissions: dict,
+        dict_base_emissions: Union[dict, None],
         dict_simple_efs: dict,
         modvar_prod_mass: str = None
     ) -> list:
@@ -334,7 +343,8 @@ class IPPU:
             trajectories.
         - array_production: an array of production by industrial category
         - vec_gdp: vector of gdp
-        - dict_base_emissions: 
+        - dict_base_emissions: dictionary of mapping an emission variable to an
+            array to add 
         - dict_simple_efs: dict of the form 
             
                 {
@@ -368,7 +378,12 @@ class IPPU:
             # check if there are gdp driven factors
             if isinstance(vec_gdp, np.ndarray):
                 for modvar_ef_gdp in all_modvar_ef_gdp:
-                    array_emission_cur = self.model_attributes.get_standard_variables(df_ippu_trajectories, modvar_ef_gdp, False, return_type = "array_units_corrected", expand_to_all_cats = True)
+                    array_emission_cur = self.model_attributes.get_standard_variables(
+                        df_ippu_trajectories, 
+                        modvar_ef_gdp, 
+                        expand_to_all_cats = True,
+                        return_type = "array_units_corrected"
+                    )
                     if vec_gdp.shape == array_emission_cur.shape:
                         array_emission += array_emission_cur*vec_gdp
                     else:
@@ -386,11 +401,11 @@ class IPPU:
                     array_emission += array_emission_cur*array_production/scalar_ippu_mass
 
             # add any baseline emissions from elsewhere
-            array_emission += dict_base_emissions.get(modvar, 0)
+            array_emission += dict_base_emissions.get(modvar, 0.0) if (dict_base_emissions is not None) else 0.0
             subsec = self.model_attributes.get_variable_subsector(modvar, throw_error_q = False)
 
+            # add to output dataframe if it's a valid model variable
             if subsec is not None:
-                # add to output dataframe if it's a valid model variable
                 df_out += [
                     self.model_attributes.array_to_df(
                         array_emission, 
@@ -897,6 +912,7 @@ class IPPU:
             expand_to_all_cats = True,
             return_type = "array_units_corrected"
         )/scalar_ippu_mass_clinker
+        
         # get net imports and convert to units of production
         array_ippu_net_imports_clinker = self.model_attributes.get_standard_variables(
             df_ippu_trajectories, 
@@ -921,6 +937,7 @@ class IPPU:
         dict_ippu_proc_emissions_to_add = {
             self.modvar_ippu_emissions_process_co2: array_ippu_emissions_clinker
         }
+
         # dictionary variables mapping emission variable to component tuples (gdp, production). No factor is []
         dict_ippu_proc_simple_efs = {
             self.modvar_ippu_emissions_process_ch4: (
@@ -999,12 +1016,14 @@ class IPPU:
         array_ippu_pwl_growth = sf.project_growth_scalar_from_elasticity(vec_rates_gdp, np.ones(len(array_ippu_useinit_nonenergy_fuel)), False, "standard")
         array_ippu_emissions_produse_nonenergy_fuel = np.outer(array_ippu_pwl_growth, array_ippu_useinit_nonenergy_fuel[0])
         array_ippu_production_scalar = self.model_attributes.get_standard_variables(df_ippu_trajectories, self.modvar_ippu_scalar_production, False, return_type = "array_base", var_bounds = (0, np.inf), expand_to_all_cats = True)
+        
         # get the emission factor and project emissions (unitless emissions)
         array_ippu_ef_co2_produse = self.model_attributes.get_standard_variables(df_ippu_trajectories, self.modvar_ippu_ef_co2_per_prod_produse, False, return_type = "array_base", expand_to_all_cats = True)
         array_ippu_emissions_produse_nonenergy_fuel *= array_ippu_ef_co2_produse*self.model_attributes.get_scalar(self.modvar_ippu_useinit_nonenergy_fuel, "mass")
         array_ippu_emissions_produse_nonenergy_fuel *= array_ippu_production_scalar
         array_ippu_elasticity_produse = self.model_attributes.get_standard_variables(df_ippu_trajectories, self.modvar_ippu_elast_produserate_to_gdppc, False, return_type = "array_base", expand_to_all_cats = True)
         array_ippu_gdp_scalar_produse = sf.project_growth_scalar_from_elasticity(vec_rates_gdp_per_capita, array_ippu_elasticity_produse, False, "standard")
+        
         # this scalar array accounts for elasticity changes in per/gdp product use rates due to increases in gdp/capita, increases in gdp, and exogenously-defined reductions to production
         array_ippu_gdp_scalar_produse = (array_ippu_gdp_scalar_produse.transpose()*np.concatenate([np.ones(1), np.cumprod(1 + vec_rates_gdp)])).transpose()
         array_ippu_gdp_scalar_produse = array_ippu_gdp_scalar_produse * vec_gdp[0]
@@ -1036,7 +1055,9 @@ class IPPU:
         ##  OTHER PRODUCT USE
 
         dict_ippu_produse_emissions_to_add = {
-            self.modvar_ippu_emissions_produse_co2: array_ippu_emissions_produse_nonenergy_fuel + array_ippu_emissions_other_nonenergy_co2
+            self.modvar_ippu_emissions_produse_co2: (
+                array_ippu_emissions_produse_nonenergy_fuel + array_ippu_emissions_other_nonenergy_co2
+            )
         }
 
         dict_ippu_produse_simple_efs = {
@@ -1083,6 +1104,62 @@ class IPPU:
         )
 
 
+        ############################################################
+        #    ADD IN CALIBRATION TARGET INDIVIDUAL HFCs AND PFCs    #
+        ############################################################
+
+        # F-gasses that can be calibrated to from processes
+        dict_ippu_proc_simple_efs_indiv_fgas = {
+            self.modvar_ippu_emissions_ppu_hfc23: ([], [self.modvar_ippu_ef_hfc23_per_prod_process]),
+            self.modvar_ippu_emissions_ppu_hfc32: ([], [self.modvar_ippu_ef_hfc32_per_prod_process]),
+            self.modvar_ippu_emissions_ppu_pfc116: ([], [self.modvar_ippu_ef_pfc116_per_prod_process]),
+            self.modvar_ippu_emissions_ppu_pfc218: ([], [self.modvar_ippu_ef_pfc218_per_prod_process]),
+        }
+        # get emissions in dataframe
+        df_ippu_process_indiv_fgas = self.calculate_emissions_by_gdp_and_production(
+            df_ippu_trajectories,
+            array_ippu_production,
+            vec_gdp,
+            None,
+            dict_ippu_proc_simple_efs_indiv_fgas,
+            self.modvar_ippu_qty_total_production
+        )
+
+        # F-gasses that can be calibrated to from product use
+        dict_ippu_produse_simple_efs_indiv_fgas = {
+            self.modvar_ippu_emissions_ppu_hfc23: ([self.modvar_ippu_ef_hfc23_per_gdp_produse], []),
+            self.modvar_ippu_emissions_ppu_hfc32: ([self.modvar_ippu_ef_hfc32_per_gdp_produse], []),
+            self.modvar_ippu_emissions_ppu_hfc125: ([self.modvar_ippu_ef_hfc125_per_gdp_produse], []),
+            self.modvar_ippu_emissions_ppu_hfc134a: ([self.modvar_ippu_ef_hfc134a_per_gdp_produse], []),
+            self.modvar_ippu_emissions_ppu_hfc143a: ([self.modvar_ippu_ef_hfc143a_per_gdp_produse], []),
+            self.modvar_ippu_emissions_ppu_hfc152a: ([self.modvar_ippu_ef_hfc152a_per_gdp_produse], []),
+            self.modvar_ippu_emissions_ppu_pfc116: ([self.modvar_ippu_ef_pfc116_per_gdp_produse], []),
+            self.modvar_ippu_emissions_ppu_pfc3110: ([self.modvar_ippu_ef_pfc3110_per_gdp_produse], []),
+        }
+        # get emissions in data frame
+        df_ippu_produse_indiv_fgas = self.calculate_emissions_by_gdp_and_production(
+            df_ippu_trajectories,
+            0,
+            array_ippu_gdp_scalar_produse,
+            None,
+            dict_ippu_produse_simple_efs_indiv_fgas,
+            self.modvar_ippu_qty_total_production
+        )
+        df_ippu_produse_indiv_fgas = pd.concat(df_ippu_produse_indiv_fgas, axis = 1)
+
+        # combine output dataframes for individual F-gasses
+        df_ippu_indiv_fgas = pd.concat(df_ippu_process_indiv_fgas, axis = 1)
+        for k in df_ippu_produse_indiv_fgas.columns:
+            vec = np.array(df_ippu_produse_indiv_fgas[k])
+            df_ippu_indiv_fgas[k] = (
+                np.array(df_ippu_indiv_fgas[k]) + vec 
+                if (k in df_ippu_indiv_fgas.columns) 
+                else vec
+            )
+
+        df_out += [df_ippu_indiv_fgas]
+
+
         # non-standard emission fields to include in emission total for IPPU
         vars_additional_sum = [
             self.modvar_ippu_emissions_process_hfc,
@@ -1091,10 +1168,10 @@ class IPPU:
             self.modvar_ippu_emissions_produse_pfc,
             self.modvar_ippu_emissions_process_other_fcs
         ]
-
+        
         # concatenate and add subsector emission totals
         df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")
         self.model_attributes.add_subsector_emissions_aggregates(df_out, self.required_base_subsectors, False)
-        self.model_attributes.add_specified_total_fields_to_emission_total(df_out, vars_additional_sum)
+        self.model_attributes._add_specified_total_fields_to_emission_total(df_out, vars_additional_sum)
 
         return df_out

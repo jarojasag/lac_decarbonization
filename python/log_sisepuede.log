@@ -8109,3 +8109,35 @@ CREATE TABLE "ATTRIBUTE_LHC_SAMPLES_EXOGENOUS_UNCERTAINTIES" (
 ***	 REGION mexico COMPLETE	***
 
 2023-03-28 09:52:00,735 - INFO - Table ATTRIBUTE_PRIMARY successfully appended to database.
+2023-03-28 12:42:22,896 - DEBUG - exception occured? 8193241760
+2023-03-28 12:42:22,946 - DEBUG - exception occured? None
+2023-03-28 12:42:22,950 - DEBUG - exception occured? 8193244144
+2023-03-28 12:42:22,951 - DEBUG - exception occured? None
+2023-03-28 12:42:22,955 - DEBUG - exception occured? 8193475920
+2023-03-28 12:42:22,956 - DEBUG - exception occured? None
+2023-03-28 12:42:22,962 - DEBUG - exception occured? 8193478304
+2023-03-28 12:42:22,964 - DEBUG - exception occured? None
+2023-03-28 12:42:22,966 - DEBUG - exception occured? 8193480688
+2023-03-28 12:42:22,967 - DEBUG - exception occured? None
+2023-03-28 12:42:22,971 - DEBUG - exception occured? 8193483104
+2023-03-28 12:42:22,971 - DEBUG - exception occured? None
+2023-03-28 12:42:22,974 - DEBUG - exception occured? 8193485552
+2023-03-28 12:42:22,975 - DEBUG - exception occured? None
+2023-03-28 12:42:22,976 - DEBUG - exception occured? 8193487968
+2023-03-28 12:42:22,976 - DEBUG - exception occured? None
+2023-03-28 12:42:22,990 - DEBUG - exception occured? 8193490352
+2023-03-28 12:42:22,992 - DEBUG - exception occured? None
+2023-03-28 12:42:22,993 - DEBUG - exception occured? 8193541904
+2023-03-28 12:42:22,994 - DEBUG - exception occured? None
+2023-03-28 12:42:22,995 - DEBUG - exception occured? 8193544288
+2023-03-28 12:42:22,995 - DEBUG - exception occured? None
+2023-03-28 12:42:22,995 - DEBUG - exception occured? 8193546672
+2023-03-28 12:42:22,996 - DEBUG - exception occured? None
+2023-03-28 12:42:22,997 - DEBUG - exception occured? 8193549056
+2023-03-28 12:42:22,997 - DEBUG - exception occured? None
+2023-03-28 12:42:22,998 - DEBUG - exception occured? 8193551472
+2023-03-28 12:42:22,998 - DEBUG - exception occured? None
+2023-03-28 12:42:22,999 - DEBUG - exception occured? 8193553920
+2023-03-28 12:42:23,033 - DEBUG - exception occured? None
+2023-03-28 12:42:23,034 - DEBUG - exception occured? 8193556336
+2023-03-28 12:42:23,036 - DEBUG - exception occured? None

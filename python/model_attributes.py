@@ -2892,18 +2892,18 @@ class ModelAttributes:
     #    VARIABLE REQUIREMENT AND MANIPULATION FUNCTIONS    #
     #########################################################
 
-    ##  add additional fields to the emission total
-    def add_specified_total_fields_to_emission_total(self,
+    def _add_specified_total_fields_to_emission_total(self,
         df_in: pd.DataFrame,
         varlist: list
-    ):
+    ) -> None:
         """
-            Add a total of emission fields that are specified. Inline function (does not return).
+        Add a total of emission fields that are specified. Inline function 
+            (does not return).
 
-            Function Arguments
-            ------------------
-            - df_in: Data frame with emission outputs to be aggregated
-            - varlist: variables to include in the sum
+        Function Arguments
+        ------------------
+        - df_in: Data frame with emission outputs to be aggregated
+        - varlist: variables to include in the sum
         """
         #initialize dictionary
         dict_totals = {}
@@ -2912,7 +2912,13 @@ class ModelAttributes:
         for var in varlist:
             subsec = self.get_variable_subsector(var, throw_error_q = False)
             if subsec is not None:
-                array_cur = self.get_standard_variables(df_in, var, False, return_type = "array_base", expand_to_all_cats = True)
+                array_cur = self.get_standard_variables(
+                    df_in, 
+                    var, 
+                    expand_to_all_cats = True, 
+                    return_type = "array_base"
+                )
+
                 if subsec not in dict_totals.keys():
                     field_total = self.get_subsector_emission_total_field(subsec)
                     if (field_total in df_in.columns):
@@ -2920,7 +2926,7 @@ class ModelAttributes:
                         dict_fields.update({subsec: field_total})
                 dict_totals[subsec] += array_cur
             else:
-                warning(f"In add_specified_total_fields_to_emission_total, subsector '{subsec}' not found. Skipping...")
+                warning(f"In _add_specified_total_fields_to_emission_total, subsector '{subsec}' not found. Skipping...")
 
         # next, update dataframe
         for subsec in dict_totals.keys():
@@ -2931,31 +2937,44 @@ class ModelAttributes:
 
 
 
-    ##  add subsector emissions aggregates to an output dataframe
     def add_subsector_emissions_aggregates(self,
         df_in: pd.DataFrame,
         list_subsectors: list,
         stop_on_missing_fields_q: bool = False
     ):
         """
-            Add a total of all emission fields (across those output variables specified with $EMISSION-GAS$). Inline function (does not return).
+        Add a total of all emission fields (across those output variables 
+            specified with $EMISSION-GAS$). Inline function (does not return).
 
-            - df_in: Data frame with emission outputs to be aggregated
-            - list_subsectors: subsectors to apply totals to
-            - stop_on_missing_fields_q: default = False. If True, will stop if any component emission variables are missing.
+        Function Arguments
+        ------------------
+        - df_in: Data frame with emission outputs to be aggregated
+        - list_subsectors: subsectors to apply totals to
+
+        Keyword Arguments
+        -----------------
+        - stop_on_missing_fields_q: default = False. If True, will stop if any 
+            component emission variables are missing.
         """
         # loop over base subsectors
-        for subsector in list_subsectors:#self.required_base_subsectors:
-            vars_subsec = self.dict_model_variables_by_subsector[subsector]
+        for subsector in list_subsectors:
+            vars_subsec = self.dict_model_variables_by_subsector.get(subsector)
+
             # add subsector abbreviation
             fld_nam = self.get_subsector_emission_total_field(subsector)
             flds_add = []
             for var in vars_subsec:
                 var_type = self.get_variable_attribute(var, "variable_type").lower()
                 gas = self.get_variable_characteristic(var, self.varchar_str_emission_gas)
+
                 if (var_type == "output") and gas:
-                    if var in self.dict_gas_to_total_emission_modvars.get(gas):
-                        flds_add += self.dict_model_variables_to_variables[var]
+                    total_emission_modvars_by_gas = self.dict_gas_to_total_emission_modvars.get(gas)
+                    if total_emission_modvars_by_gas is not None:
+                        flds_add += (
+                            self.dict_model_variables_to_variables.get(var) 
+                            if var in self.dict_gas_to_total_emission_modvars.get(gas)
+                            else []
+                        )
 
             # check for missing fields; notify
             missing_fields = [x for x in flds_add if x not in df_in.columns]
