@@ -1082,10 +1082,6 @@ class NonElectricEnergy:
 
 
 
-    
-
-
-
     def get_fgtv_array_for_fugitive_emissions(self,
         df_neenergy_trajectories: pd.DataFrame,
         modvar_cur: str,
@@ -3557,7 +3553,6 @@ class NonElectricEnergy:
 
 
 
-    ##  primary method
     def project(self,
         df_neenergy_trajectories: pd.DataFrame,
         subsectors_project: Union[list, str, None] = None

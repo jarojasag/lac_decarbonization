@@ -239,12 +239,13 @@ class IPPU:
             * self.ind_ippu_****
             * self.modvar_ippu_****
         """
-        # ippu model variables
         self.modvar_ippu_average_construction_materials_required_per_household = "Average per Household Demand for Construction Materials"
         self.modvar_ippu_average_lifespan_housing = "Average Lifespan of Housing Construction"
         self.modvar_ippu_change_net_imports = "Change to Net Imports of Products"
         self.modvar_ippu_clinker_fraction_cement = "Clinker Fraction of Cement"
         self.modvar_ippu_demand_for_harvested_wood = "Demand for Harvested Wood"
+
+        ##  EMISSION FACTOR VARIABLES
         self.modvar_ippu_ef_ch4_per_prod_process = ":math:\\text{CH}_4 Production Process Emission Factor"
         self.modvar_ippu_ef_co2_per_prod_process = ":math:\\text{CO}_2 Production Process Emission Factor"
         self.modvar_ippu_ef_co2_per_prod_produse = ":math:\\text{CO}_2 Product Use Emission Factor"
@@ -278,28 +279,53 @@ class IPPU:
         self.modvar_ippu_ef_pfc1114_per_prod_process = "PFC-1114 Production Process Emission Factor"
         self.modvar_ippu_ef_pfcc318_per_prod_process = "PFC-C-318 Production Process Emission Factor"
         self.modvar_ippu_ef_pfcc1418_per_prod_process = "PFC-C-1418 Production Process Emission Factor"
+        
         self.modvar_ippu_elast_ind_prod_to_gdp = "Elasticity of Industrial Production to GDP"
         self.modvar_ippu_elast_produserate_to_gdppc = "Elasticity of Product Use Rate to GDP per Capita"
+        
+        
+        ##  EMISSION VARIABLES
+
         self.modvar_ippu_emissions_other_nonenergy_co2 = "Initial Other Non-Energy :math:\\text{CO}_2 Emissions"
-        self.modvar_ippu_emissions_ppu_hfc23 = "HFC-23 Emissions from Industrial Production Processes and Product Use"
-        self.modvar_ippu_emissions_ppu_hfc32 = "HFC-32 Emissions from Industrial Production Processes and Product Use"
-        self.modvar_ippu_emissions_ppu_hfc125 = "HFC-125 Emissions from Industrial Production Processes and Product Use"
-        self.modvar_ippu_emissions_ppu_hfc134a = "HFC-134a Emissions from Industrial Production Processes and Product Use"
-        self.modvar_ippu_emissions_ppu_hfc143a = "HFC-143a Emissions from Industrial Production Processes and Product Use"
-        self.modvar_ippu_emissions_ppu_hfc152a = "HFC-152a Emissions from Industrial Production Processes and Product Use"
-        self.modvar_ippu_emissions_ppu_pfc116 = "PFC-116 Emissions from Industrial Production Processes and Product Use"
-        self.modvar_ippu_emissions_ppu_pfc218 = "PFC-218 Emissions from Industrial Production Processes and Product Use"
-        self.modvar_ippu_emissions_ppu_pfc3110 = "PFC-31-10 Emissions from Industrial Production Processes and Product Use"
         self.modvar_ippu_emissions_process_ch4 = ":math:\\text{CH}_4 Emissions from Industrial Production Processes"
         self.modvar_ippu_emissions_process_co2 = ":math:\\text{CO}_2 Emissions from Industrial Production Processes"
         self.modvar_ippu_emissions_produse_co2 = ":math:\\text{CO}_2 Emissions from Industrial Product Use"
         self.modvar_ippu_emissions_process_hfc = "HFC Emissions from Industrial Production Processes"
         self.modvar_ippu_emissions_produse_hfc = "HFC Emissions from Industrial Product Use"
+        # INDIVIDUAL HFCs
+        self.modvar_ippu_emissions_process_hfc23 = "HFC-23 Emissions from Industrial Production Processes"
+        self.modvar_ippu_emissions_produse_hfc23 = "HFC-23 Emissions from Industrial Product Use"
+        self.modvar_ippu_emissions_process_hfc32 = "HFC-32 Emissions from Industrial Production Processes"
+        self.modvar_ippu_emissions_produse_hfc32 = "HFC-32 Emissions from Industrial Product Use"
+        self.modvar_ippu_emissions_produse_hfc125 = "HFC-125 Emissions from Industrial Product Use"
+        self.modvar_ippu_emissions_produse_hfc134a = "HFC-134a Emissions from Industrial Product Use"
+        self.modvar_ippu_emissions_produse_hfc143a = "HFC-143a Emissions from Industrial Product Use"
+        self.modvar_ippu_emissions_produse_hfc152a = "HFC-152a Emissions from Industrial Product Use"
+        self.modvar_ippu_emissions_produse_hfc227ea = "HFC-227ea Emissions from Industrial Product Use"
+        self.modvar_ippu_emissions_produse_hfc236fa = "HFC-236fa Emissions from Industrial Product Use"
+        self.modvar_ippu_emissions_produse_hfc245fa = "HFC-245fa Emissions from Industrial Product Use"
+        self.modvar_ippu_emissions_produse_hfc365mfc = "HFC-365mfc Emissions from Industrial Product Use"
+        self.modvar_ippu_emissions_produse_hfc4310mee = "HFC-43-10mee Emissions from Industrial Product Use"
+        #
         self.modvar_ippu_emissions_process_n2o = ":math:\\text{N}_2\\text{O} Emissions from Industrial Production Processes"
         self.modvar_ippu_emissions_process_other_fcs = "Other Fluorinated Compound Emissions from Industrial Production Processes"
         self.modvar_ippu_emissions_process_pfc = "PFC Emissions from Industrial Production Processes"
         self.modvar_ippu_emissions_produse_pfc = "PFC Emissions from Industrial Product Use"
+        # INDIVIDUAL PFCs
+        self.modvar_ippu_emissions_process_pfc14 = "PFC-14 Emissions from Industrial Production Processes"
+        self.modvar_ippu_emissions_produse_pfc14 = "PFC-14 Emissions from Industrial Product Use"
+        self.modvar_ippu_emissions_process_pfc116 = "PFC-116 Emissions from Industrial Production Processes"
+        self.modvar_ippu_emissions_produse_pfc116 = "PFC-116 Emissions from Industrial Product Use"
+        self.modvar_ippu_emissions_process_pfc218 = "PFC-218 Emissions from Industrial Production Processes"
+        self.modvar_ippu_emissions_process_pfcc318 = "PFC-318 Emissions from Industrial Production Processes"
+        self.modvar_ippu_emissions_process_pfc1114 = "PFC-1114 Emissions from Industrial Production Processes"
+        self.modvar_ippu_emissions_process_pfcc1418 = "PFC-1418 Emissions from Industrial Production Processes"
+        self.modvar_ippu_emissions_produse_pfc3110 = "PFC-31-10 Emissions from Industrial Product Use"
+        self.modvar_ippu_emissions_produse_pfc5114 = "PFC-51-14 Emissions from Industrial Product Use"
+        #
         self.modvar_ippu_emissions_process_sf6 = ":math:\\text{SF}_6 Emissions from Industrial Production Processes"
+
+
         self.modvar_ippu_max_recycled_material_ratio = "Maximum Recycled Material Ratio in Virgin Process"
         self.modvar_ippu_net_imports_clinker = "Net Imports of Cement Clinker"
         self.modvar_ippu_prod_qty_init = "Initial Industrial Production"
@@ -1083,10 +1109,10 @@ class IPPU:
             ),
             self.modvar_ippu_emissions_produse_pfc: (
                 [
-                    self.modvar_ippu_ef_pfc3110_per_gdp_produse,
-                    self.modvar_ippu_ef_pfc5114_per_gdp_produse,
                     self.modvar_ippu_ef_pfc14_per_gdp_produse,
-                    self.modvar_ippu_ef_pfc116_per_gdp_produse
+                    self.modvar_ippu_ef_pfc116_per_gdp_produse,
+                    self.modvar_ippu_ef_pfc3110_per_gdp_produse,
+                    self.modvar_ippu_ef_pfc5114_per_gdp_produse
                 ],
                 []
             )
@@ -1110,13 +1136,17 @@ class IPPU:
 
         # F-gasses that can be calibrated to from processes
         dict_ippu_proc_simple_efs_indiv_fgas = {
-            self.modvar_ippu_emissions_ppu_hfc23: ([], [self.modvar_ippu_ef_hfc23_per_prod_process]),
-            self.modvar_ippu_emissions_ppu_hfc32: ([], [self.modvar_ippu_ef_hfc32_per_prod_process]),
-            self.modvar_ippu_emissions_ppu_pfc116: ([], [self.modvar_ippu_ef_pfc116_per_prod_process]),
-            self.modvar_ippu_emissions_ppu_pfc218: ([], [self.modvar_ippu_ef_pfc218_per_prod_process]),
+            self.modvar_ippu_emissions_process_hfc23: ([], [self.modvar_ippu_ef_hfc23_per_prod_process]),
+            self.modvar_ippu_emissions_process_hfc32: ([], [self.modvar_ippu_ef_hfc32_per_prod_process]),
+            self.modvar_ippu_emissions_process_pfc14: ([], [self.modvar_ippu_ef_pfc14_per_prod_process]),
+            self.modvar_ippu_emissions_process_pfc116: ([], [self.modvar_ippu_ef_pfc116_per_prod_process]),
+            self.modvar_ippu_emissions_process_pfc218: ([], [self.modvar_ippu_ef_pfc218_per_prod_process]),
+            self.modvar_ippu_emissions_process_pfcc318: ([], [self.modvar_ippu_ef_pfcc318_per_prod_process]),
+            self.modvar_ippu_emissions_process_pfc1114: ([], [self.modvar_ippu_ef_pfc1114_per_prod_process]),
+            self.modvar_ippu_emissions_process_pfcc1418: ([], [self.modvar_ippu_ef_pfcc1418_per_prod_process]),
         }
-        # get emissions in dataframe
-        df_ippu_process_indiv_fgas = self.calculate_emissions_by_gdp_and_production(
+        # get HFC and PFC emissions from production processes
+        df_out += self.calculate_emissions_by_gdp_and_production(
             df_ippu_trajectories,
             array_ippu_production,
             vec_gdp,
@@ -1127,17 +1157,24 @@ class IPPU:
 
         # F-gasses that can be calibrated to from product use
         dict_ippu_produse_simple_efs_indiv_fgas = {
-            self.modvar_ippu_emissions_ppu_hfc23: ([self.modvar_ippu_ef_hfc23_per_gdp_produse], []),
-            self.modvar_ippu_emissions_ppu_hfc32: ([self.modvar_ippu_ef_hfc32_per_gdp_produse], []),
-            self.modvar_ippu_emissions_ppu_hfc125: ([self.modvar_ippu_ef_hfc125_per_gdp_produse], []),
-            self.modvar_ippu_emissions_ppu_hfc134a: ([self.modvar_ippu_ef_hfc134a_per_gdp_produse], []),
-            self.modvar_ippu_emissions_ppu_hfc143a: ([self.modvar_ippu_ef_hfc143a_per_gdp_produse], []),
-            self.modvar_ippu_emissions_ppu_hfc152a: ([self.modvar_ippu_ef_hfc152a_per_gdp_produse], []),
-            self.modvar_ippu_emissions_ppu_pfc116: ([self.modvar_ippu_ef_pfc116_per_gdp_produse], []),
-            self.modvar_ippu_emissions_ppu_pfc3110: ([self.modvar_ippu_ef_pfc3110_per_gdp_produse], []),
+            self.modvar_ippu_emissions_produse_hfc23: ([self.modvar_ippu_ef_hfc23_per_gdp_produse], []),
+            self.modvar_ippu_emissions_produse_hfc32: ([self.modvar_ippu_ef_hfc32_per_gdp_produse], []),
+            self.modvar_ippu_emissions_produse_hfc125: ([self.modvar_ippu_ef_hfc125_per_gdp_produse], []),
+            self.modvar_ippu_emissions_produse_hfc134a: ([self.modvar_ippu_ef_hfc134a_per_gdp_produse], []),
+            self.modvar_ippu_emissions_produse_hfc143a: ([self.modvar_ippu_ef_hfc143a_per_gdp_produse], []),
+            self.modvar_ippu_emissions_produse_hfc152a: ([self.modvar_ippu_ef_hfc152a_per_gdp_produse], []),
+            self.modvar_ippu_emissions_produse_hfc227ea: ([self.modvar_ippu_ef_hfc227ea_per_gdp_produse], []),
+            self.modvar_ippu_emissions_produse_hfc236fa: ([self.modvar_ippu_ef_hfc236fa_per_gdp_produse], []),
+            self.modvar_ippu_emissions_produse_hfc245fa: ([self.modvar_ippu_ef_hfc245fa_per_gdp_produse], []),
+            self.modvar_ippu_emissions_produse_hfc365mfc: ([self.modvar_ippu_ef_hfc365mfc_per_gdp_produse], []),
+            self.modvar_ippu_emissions_produse_hfc4310mee: ([self.modvar_ippu_ef_hfc4310mee_per_gdp_produse], []),
+            self.modvar_ippu_emissions_produse_pfc14: ([self.modvar_ippu_ef_pfc14_per_gdp_produse], []),
+            self.modvar_ippu_emissions_produse_pfc116: ([self.modvar_ippu_ef_pfc116_per_gdp_produse], []),
+            self.modvar_ippu_emissions_produse_pfc3110: ([self.modvar_ippu_ef_pfc3110_per_gdp_produse], []),
+            self.modvar_ippu_emissions_produse_pfc5114: ([self.modvar_ippu_ef_pfc5114_per_gdp_produse], [])
         }
         # get emissions in data frame
-        df_ippu_produse_indiv_fgas = self.calculate_emissions_by_gdp_and_production(
+        df_out += self.calculate_emissions_by_gdp_and_production(
             df_ippu_trajectories,
             0,
             array_ippu_gdp_scalar_produse,
@@ -1145,6 +1182,8 @@ class IPPU:
             dict_ippu_produse_simple_efs_indiv_fgas,
             self.modvar_ippu_qty_total_production
         )
+
+        """
         df_ippu_produse_indiv_fgas = pd.concat(df_ippu_produse_indiv_fgas, axis = 1)
 
         # combine output dataframes for individual F-gasses
@@ -1158,7 +1197,7 @@ class IPPU:
             )
 
         df_out += [df_ippu_indiv_fgas]
-
+        """;
 
         # non-standard emission fields to include in emission total for IPPU
         vars_additional_sum = [

@@ -4531,9 +4531,19 @@ class ElectricEnergy:
 
         ##  NEXT, GET EXOGENOUSLY SPECIFIED MinShareProduction VALUES (ADJUSTED FOR IMPORTS) 
 
+        vec_entc_elec_demand_frac_from_tech_lower_limit = self.estimate_production_share_from_activity_limits(
+            df_elec_trajectories,
+            tuple_enfu_production_and_demands = tuple_enfu_production_and_demands
+        )
+        
+        # copy and add fractions of demand represented by TechnologyTotalAnnualLowerLimit
+        # --only used to adjust MSPs downward
+        arr_enfu_import_fractions_adj_for_msp_adj = arr_enfu_import_fractions_adj.copy()
+        arr_enfu_import_fractions_adj_for_msp_adj[:, self.ind_enfu_elec] += vec_entc_elec_demand_frac_from_tech_lower_limit
+
         df_entc_msp = self.get_entc_import_adjust_msp(
             df_elec_trajectories,
-            arr_enfu_import_fractions_adj,
+            arr_enfu_import_fractions_adj_for_msp_adj,
             attribute_fuel = attribute_fuel,
             attribute_technology = attribute_technology,
             dict_tech_info = dict_tech_info,
@@ -5321,6 +5331,109 @@ class ElectricEnergy:
 
 
 
+    def estimate_production_share_from_activity_limits(self,
+        df_elec_trajectories: pd.DataFrame,
+        tuple_enfu_production_and_demands: Union[Tuple[pd.DataFrame], None] = None
+    ) -> np.ndarray:
+        """
+        Estimate production share of techs specified with a 
+            TotalTechnologyAnnualActivityLowerLimit. Use this function to avoid 
+            conflicting constraints between 
+            MinShareProduction/ReMinProductionTarget and 
+            TotalTechnologyAnnualActivityLowerLimit/
+            TotalTechnologyAnnualActivityUpperLimit by scaling 
+            MinShareProduction. 
+
+        Returns np.ndarray (vector) of TotalTechnologyAnnualActivityLowerLimit
+            as a fraction of non-fuel production energy demands. Note that this 
+            fraction is >= than the true fraction, since demands for electricity 
+            increase with fuel production; therefore, MinShareProductions may
+            be decreased slighly more than is required and will decrease more
+            as fuel production demands for electricity increase.
+
+
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
+
+        Keyword Arguments
+        -----------------
+        - tuple_enfu_production_and_demands: optional tuple of energy fuel 
+            demands produced by 
+            self.model_energy.project_enfu_production_and_demands():
+
+            (
+                arr_enfu_demands, 
+                arr_enfu_demands_distribution, 
+                arr_enfu_export, 
+                arr_enfu_imports, 
+                arr_enfu_production
+            )
+        
+        Model Notes
+        -----------
+        To model transmission losses in the absence of a network, the 
+            SpecifiedAnnualDemand for fuel_electricity is inflated by 
+            *= 1/(1 - loss). Upon extraction, demands are reduced by 
+            *= (1 - loss) in the 
+            retrieve_nemomod_tables_fuel_production_demand_and_trade()
+            method.
+        """
+
+        ##  GET PRODUCTION DEMAND FROM INTEGRATED MODEL
+
+        # calculate total grid demand for electricity
+        tuple_enfu_production_and_demands = (
+            self.model_energy.project_enfu_production_and_demands(df_elec_trajectories, target_energy_units = self.model_attributes.configuration.get("energy_units_nemomod")) 
+            if (tuple_enfu_production_and_demands is None) 
+            else tuple_enfu_production_and_demands
+        )
+        arr_enfu_demands, arr_enfu_demands_distribution, arr_enfu_export, arr_enfu_imports, arr_enfu_production = tuple_enfu_production_and_demands
+        
+        # updated 20230211 - NemoMod now solves for imports due to endogeneity of certain fuels. Demand is passed as production + imports, and import fractions are specified in MinShareProduction
+        arr_enfu_production += arr_enfu_imports 
+
+        # get transmission loss and calculate final demand
+        #   NOTE: transmission loss in ENTC is modeled as an increase in input activity ratio *= (1/(1 - loss))
+        arr_transmission_loss = self.model_attributes.get_standard_variables(
+            df_elec_trajectories, 
+            self.modvar_enfu_transmission_loss_frac_electricity, 
+            expand_to_all_cats = True,
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base",
+            var_bounds = (0, 1)
+        )
+        arr_enfu_production[:, self.ind_enfu_elec] = np.nan_to_num(
+            arr_enfu_production[:, self.ind_enfu_elec]/(1 - arr_transmission_loss[:, self.ind_enfu_elec]), 
+            0.0, 
+            posinf = 0.0
+        )
+
+
+        ##  RETRIEVE TotalTechnologyAnnualActivityLimitLower AND RETURN FRACTION OUT OF PRODUCTION
+
+        #    NOTE: This fraction is >= than the true fraction, since demands for electricity increase with fuel production
+        table_name = self.model_attributes.table_nemomod_total_technology_annual_activity_lower_limit
+        df_tech_lower_limit = self.format_nemomod_table_total_technology_activity_lower_limit(df_elec_trajectories).get(table_name)
+        vector_reference_time_period = list(df_elec_trajectories[self.model_attributes.dim_time_period])
+
+        vec_entc_prod_lower_limit = np.array(
+            self.retrieve_and_pivot_nemomod_table(
+                df_tech_lower_limit,
+                self.modvar_entc_ef_scalar_co2, # arbitrary variable works
+                table_name,
+                vector_reference_time_period
+            ).sum(axis = 1)
+        )
+
+        # get technology lower limit total as a fraction of estimated demand for electricity
+        vec_fraction_tech = np.nan_to_num(vec_entc_prod_lower_limit/arr_enfu_production[:, self.ind_enfu_elec], 0.0, posinf = 0.0)
+        
+        return vec_fraction_tech
+   
+
+
+
     def format_nemomod_table_specified_annual_demand(self,
         df_elec_trajectories: pd.DataFrame,
         attribute_fuel: Union[AttributeTable, None] = None,
@@ -5898,10 +6011,11 @@ class ElectricEnergy:
     ) -> pd.DataFrame:
         """
         Format the 
-            TotalAnnualMaxCapacity, 
-            TotalAnnualMaxCapacityInvestment, 
-            TotalAnnualMinCapacity, and 
-            TotalAnnualMinCapacityInvestment 
+
+            * TotalAnnualMaxCapacity
+            * TotalAnnualMaxCapacityInvestment
+            * TotalAnnualMinCapacity  
+            * TotalAnnualMinCapacityInvestment 
             
             input tables for NemoMod based on SISEPUEDE configuration 
             parameters, input variables, integrated model outputs, and reference 
@@ -6350,7 +6464,7 @@ class ElectricEnergy:
             variables, integrated model outputs, and reference tables.
 
         In SISEPUEDE, this table is used in conjunction with 
-            TotalTechnologyAnnualActivityLowerLimit to pass biogas and waste
+            TotalTechnologyAnnualActivityUpperLimit to pass biogas and waste
             incineration production from collection in Circular Economy and 
             AFOLU.
 
@@ -6369,7 +6483,7 @@ class ElectricEnergy:
         - return_type: type of return. Acceptable values are "NemoMod" and 
             "CapacityCheck". Invalid entries default to "NemoMod"
             * NemoMod (default): return the 
-                TotalTechnologyAnnualActivityLowerLimit input table for the 
+                TotalTechnologyAnnualActivityUpperLimit input table for the 
                 NemoMod database
             * CapacityCheck: return a table of specified minimum capacities
                  associated with the technology.
