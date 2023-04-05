@@ -586,6 +586,8 @@ class NonElectricEnergy:
         # key categories
         self.cat_inen_agricultural = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_inen, {"agricultural_category": 1})[0]
 
+        return None
+
 
 
     def _initialize_subsector_vars_scoe(self,
@@ -671,6 +673,12 @@ class NonElectricEnergy:
         self.modvar_trde_demand_initial_pkm_per_capita = "Initial per Capita Passenger-Kilometer Demand"
         self.modvar_trde_demand_mtkm = "Megatonne-Kilometer Demand"
         self.modvar_trde_demand_pkm = "Passenger-Kilometer Demand"
+
+        self.cat_trde_frgt = self.model_attributes.get_categories_from_attribute_characteristic(
+            self.subsec_name_trde, 
+            {"freight_category": 1}
+        )[0]
+
 
         return None
 
@@ -3032,17 +3040,18 @@ class NonElectricEnergy:
         ##  START WITH DEMANDS
 
         # start with demands and map categories in attribute to associated variable
-        dict_trns_vars_to_trde_cats = self.model_attributes.get_ordered_category_attribute(
+        dict_trde_cats_to_trns_vars = self.model_attributes.get_ordered_category_attribute(
             self.subsec_name_trns, 
-            "cat_transportation_demand", 
+            pycat_trde, 
             attr_type = "key_varreqs_partial", 
             skip_none_q = True, 
             return_type = dict, 
             clean_attribute_schema_q = True
         )
-        dict_trns_vars_to_trde_cats = sf.reverse_dict(dict_trns_vars_to_trde_cats)
+        dict_trde_cats_to_trns_vars = sf.reverse_dict(dict_trde_cats_to_trns_vars)
         array_trns_total_passenger_demand = 0.0
         array_trns_total_vehicle_demand = 0.0
+
         # get occupancy and freight occupancies
         array_trns_avg_load_freight = self.model_attributes.get_standard_variables(
             df_neenergy_trajectories,
@@ -3070,7 +3079,7 @@ class NonElectricEnergy:
         )
 
         # loop over the demand categories to get transportation demand
-        for category in dict_trns_vars_to_trde_cats.keys():
+        for category in dict_trde_cats_to_trns_vars.keys():
             # get key index, model variable, 
             index_key = self.model_attributes.get_attribute_table(self.subsec_name_trde).get_key_value_index(category)
             modvar = self.model_attributes.get_variable_from_category(self.subsec_name_trde, category, "partial")
@@ -3087,28 +3096,25 @@ class NonElectricEnergy:
             # retrieve the demand mix, convert to total activity-demand by category, then divide by freight/occ_rate
             array_trde_dem_cur_by_cat = self.model_attributes.get_standard_variables(
                 df_neenergy_trajectories,
-                dict_trns_vars_to_trde_cats[category],
+                dict_trde_cats_to_trns_vars.get(category),
                 expand_to_all_cats = True,
                 force_boundary_restriction = True,
                 return_type = "array_base",
                 var_bounds = (0, 1)
             )
-
+            #HEREHERE
             # get current demand in terms of configuration units of length (across each model variable)
-            array_trde_dem_cur_by_cat = (array_trde_dem_cur_by_cat.transpose()*vec_trde_dem_cur).transpose() * scalar_length
-            """
-            freight and passenger should be mutually exclusive categories
-            - e.g., if the iterating variable category == "freight", then 
-                array_trde_dem_cur_by_cat*array_trns_occ_rate_passenger should 
-                be 0
-            - if category != "freight", then 
-                array_trde_dem_cur_by_cat*array_trns_avg_load_freight should 
-                be 0
-            - demand length units should be in terms of 
-                'modvar_trns_average_passenger_occupancy' (see scalar multiplication)
-            """
-            array_trde_vehicle_dem_cur_by_cat = np.nan_to_num(array_trde_dem_cur_by_cat/array_trns_avg_load_freight, 0.0, neginf = 0.0, posinf = 0.0)*scalar_tnrs_length_demfrieght_to_dempass
-            array_trde_vehicle_dem_cur_by_cat += np.nan_to_num(array_trde_dem_cur_by_cat/array_trns_occ_rate_passenger, 0.0, neginf = 0.0, posinf = 0.0)
+            array_trde_dem_cur_by_cat = sf.do_array_mult(
+                array_trde_dem_cur_by_cat,
+                vec_trde_dem_cur
+            )*scalar_length
+            #(array_trde_dem_cur_by_cat.transpose()*vec_trde_dem_cur).transpose() * scalar_length
+            
+            if category == self.cat_trde_frgt:
+                array_trde_vehicle_dem_cur_by_cat = np.nan_to_num(array_trde_dem_cur_by_cat/array_trns_avg_load_freight, 0.0, neginf = 0.0, posinf = 0.0)*scalar_tnrs_length_demfrieght_to_dempass
+            else:
+                array_trde_vehicle_dem_cur_by_cat = np.nan_to_num(array_trde_dem_cur_by_cat/array_trns_occ_rate_passenger, 0.0, neginf = 0.0, posinf = 0.0)
+            
             # update total passenger distance and vehicle-km demand; note that passenger distance will be reduced to exclude freight categories on output
             array_trns_total_passenger_demand += array_trde_dem_cur_by_cat
             array_trns_total_vehicle_demand += array_trde_vehicle_dem_cur_by_cat
@@ -3122,7 +3128,7 @@ class NonElectricEnergy:
         )
 
         df_out += [
-            # MASS-DISTANCE TRAVELED HEREHERE
+            # MASS-DISTANCE TRAVELED
             self.model_attributes.array_to_df(
                 array_trns_total_passenger_demand*scalar_trns_total_mass_distance_demand,
                 self.modvar_trns_mass_distance_traveled,

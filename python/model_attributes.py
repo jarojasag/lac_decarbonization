@@ -454,11 +454,10 @@ class ModelAttributes:
         self._check_attribute_tables_inen()
         self._check_attribute_tables_lndu()
         self._check_attribute_tables_lsmm()
-        self._check_crosswalk_trde_category_variables()
-        self._check_crosswalk_trns_trde()
-        self._check_crosswalk_wali_gnrl()
-        self._check_crosswalk_wali_trww()
-        self._check_attribute_table_waso()
+        self._check_attribute_tables_trde()
+        self._check_attribute_tables_trns()
+        self._check_attribute_tables_wali()
+        self._check_attribute_tables_waso()
 
         return None
 
@@ -1143,11 +1142,11 @@ class ModelAttributes:
         attr: AttributeTable,
         subsec: str,
         fields: str,
-        force_sum_to_1: bool = False
+        force_sum_to_one: bool = False
     ) -> None:
         # loop over fields to do checks
         for fld in fields:
-            valid_sum = (sum(attr.table[fld]) == 1) if force_sum_to_1 else True
+            valid_sum = (sum(attr.table[fld]) == 1) if force_sum_to_one else True
             if fld not in attr.table.columns:
                 raise ValueError(f"Error in subsector {subsec}: required field '{fld}' not found in the table at '{attr.fp_table}'.")
             elif not set(attr.table[fld].astype(int)).issubset(set([1 , 0])):
@@ -1193,7 +1192,6 @@ class ModelAttributes:
 
 
 
-    ##  function to check attribute crosswalks (e.g., one attribute table specifies another category as an element; this function verifies that they are valid)
     def _check_subsector_attribute_table_crosswalk(self,
         dict_subsector_primary: dict,
         subsector_target: str,
@@ -1321,7 +1319,7 @@ class ModelAttributes:
         attr = self.get_attribute_table(self.subsec_name_agrc)
         fields_req = ["apply_vegetarian_exchange_scalar", "rice_category"]
         self._check_binary_fields(attr, self.subsec_name_agrc, ["apply_vegetarian_exchange_scalar"])
-        self._check_binary_fields(attr, self.subsec_name_agrc, ["rice_category"], force_sum_to_1 = True)
+        self._check_binary_fields(attr, self.subsec_name_agrc, ["rice_category"], force_sum_to_one = True)
 
         # next, check the crosswalk for correct specification of soil management categories
         self._check_subsector_attribute_table_crosswalk(
@@ -1354,7 +1352,7 @@ class ModelAttributes:
             self.field_enfu_waste_fuel_category
         ]
         self._check_binary_fields(
-            attr, self.subsec_name_enfu, fields_req_bin, force_sum_to_1 = True)
+            attr, self.subsec_name_enfu, fields_req_bin, force_sum_to_one = True)
 
         # check specification of upstream fuel
         self._check_subsector_attribute_table_crosswalk(
@@ -1486,10 +1484,12 @@ class ModelAttributes:
 
 
 
-    ##  function to check the industrial energy/fuels cw in industrial energy
     def _check_attribute_tables_inen(self,
     ) -> None:
-
+        """
+        Check specification of the Industrial Energy attribute table, including 
+            the industrial energy/fuels cw in industrial energy.
+        """
         # some shared values
         subsec = self.subsec_name_inen
         attr = self.get_attribute_table(subsec, "key_varreqs_partial")
@@ -1510,9 +1510,11 @@ class ModelAttributes:
 
 
 
-    ##  function to check that the land use attribute tables are specified
     def _check_attribute_tables_lndu(self,
     ) -> None:
+        """
+        Check that the land use attribute tables are specified correctly.
+        """
         # specify some generic variables
         catstr_forest = self.get_subsector_attribute(self.subsec_name_frst, "pycategory_primary")
         catstr_landuse = self.get_subsector_attribute(self.subsec_name_lndu, "pycategory_primary")
@@ -1544,10 +1546,10 @@ class ModelAttributes:
 
         # check specification of crop category & pasture category
         fields_req_bin = ["crop_category", "other_category", "pasture_category", "settlements_category", "wetlands_category"]
-        self._check_binary_fields(attribute_landuse, self.subsec_name_lndu, fields_req_bin, force_sum_to_1 = 1)
+        self._check_binary_fields(attribute_landuse, self.subsec_name_lndu, fields_req_bin, force_sum_to_one = 1)
         # check
         fields_req_bin = ["reallocation_transition_probability_exhaustion_category"]
-        self._check_binary_fields(attribute_landuse, self.subsec_name_lndu, fields_req_bin, force_sum_to_1 = 0)
+        self._check_binary_fields(attribute_landuse, self.subsec_name_lndu, fields_req_bin, force_sum_to_one = 0)
 
 
         # check to ensure that source categories for mineralization in soil management are specified properly
@@ -1582,7 +1584,7 @@ class ModelAttributes:
         )
         # check required fields - binary
         fields_req_bin = ["mangroves_forest_category", "primary_forest_category", "secondary_forest_category"]
-        self._check_binary_fields(attribute_forest, self.subsec_name_frst, fields_req_bin, force_sum_to_1 = 1)
+        self._check_binary_fields(attribute_forest, self.subsec_name_frst, fields_req_bin, force_sum_to_one = 1)
 
         return None
 
@@ -1612,14 +1614,55 @@ class ModelAttributes:
 
 
 
-    ##  function to check the variables specified in the Transportation Demand attribute table
-    def _check_crosswalk_trde_category_variables(self,
+    def _check_attribute_tables_trde(self,
     ) -> None:
+        """
+        Check specification of Transportation Demand attribute tables.
+        """
+        # some shared values
+        subsec = self.subsec_name_trde
+        attr = self.get_attribute_table(subsec)
+
+        # check required fields - binary
+        fields_req_bin = ["freight_category"]
+        self._check_binary_fields(
+            attr, 
+            subsec, 
+            fields_req_bin,
+            force_sum_to_one = True
+        )
+
+        # function to check the TRDE crosswalk of a variable name to 
         self._check_subsector_attribute_table_crosswalk(
-            "Transportation Demand",
-            "Transportation Demand",
+            {subsec: "partial_category_en_trde"},
+            subsec,
+            injection_q = False,
             type_primary = "categories",
-            type_target = "varreqs_partial",
+            type_target = "varreqs_partial"
+        )
+
+        return None
+
+
+
+    def _check_attribute_tables_trns(self,
+    ) -> None:
+        """
+        Check specification of Transportation attribute tables, including the
+            transportation/transportation demand crosswalk in both the attribute 
+            table and the varreqs table.
+        """
+
+        #attr = self.get_attribute_table(self.subsec_name_trns)
+        self._check_subsector_attribute_table_crosswalk(
+            self.subsec_name_trns, 
+            self.subsec_name_trde, 
+            type_primary = "varreqs_partial", 
+            injection_q = True
+        )
+        self._check_subsector_attribute_table_crosswalk(
+            self.subsec_name_trns, 
+            self.subsec_name_trde, 
             injection_q = False
         )
 
@@ -1627,38 +1670,45 @@ class ModelAttributes:
 
 
 
-    ##  function to check the transportation/transportation demand crosswalk in both the attribute table and the varreqs table
-    def _check_crosswalk_trns_trde(self,
+    def _check_attribute_tables_wali(self,
     ) -> None:
-        self._check_subsector_attribute_table_crosswalk("Transportation", "Transportation Demand", type_primary = "varreqs_partial", injection_q = True)
-        self._check_subsector_attribute_table_crosswalk("Transportation", "Transportation Demand", injection_q = False)
+        """
+        Check specification of Liquid Waste attribute tables, including the
+            check the liquid waste/population crosswalk in liquid waste and the
+            liquid waste/wastewater crosswalk.
+        """
+
+        # check the liquid waste/population crosswalk in liquid waste
+        self._check_subsector_attribute_table_crosswalk(
+            self.subsec_name_wali, 
+            self.subsec_name_gnrl, 
+            injection_q = True
+        )
+
+        # liquid waste/wastewater crosswalk
+        self._check_subsector_attribute_table_crosswalk(
+            self.subsec_name_wali, 
+            self.subsec_name_trww, 
+            type_primary = "varreqs_all"
+        )
 
         return None
 
 
 
-    ##  function to check the liquid waste/population crosswalk in liquid waste
-    def _check_crosswalk_wali_gnrl(self,
+    def _check_attribute_tables_waso(self,
     ) -> None:
-        self._check_subsector_attribute_table_crosswalk("Liquid Waste", "General", injection_q = True)
-        return None
-
-
-
-    ##  liquid waste/wastewater crosswalk
-    def _check_crosswalk_wali_trww(self,
-    ) -> None:
-        self._check_subsector_attribute_table_crosswalk("Liquid Waste", "Wastewater Treatment", type_primary = "varreqs_all")
-        return None
-
-
-
-    ##  function to check if the solid waste attribute table is properly defined
-    def _check_attribute_table_waso(self,
-    ) -> None:
+        """
+        Check if the solid waste attribute table is properly defined.
+        """
         # check that only one category is assocaited with sludge
-        attr_waso = self.get_attribute_table("Solid Waste")
-        cats_sludge = self.get_categories_from_attribute_characteristic("Solid Waste", {"sewage_sludge_category": 1})
+        attr_waso = self.get_attribute_table(self.subsec_name_waso)
+
+        cats_sludge = self.get_categories_from_attribute_characteristic(
+            self.subsec_name_waso, 
+            {"sewage_sludge_category": 1}
+        )
+
         if len(cats_sludge) > 1:
             raise ValueError(f"Error in Solid Waste attribute table at {attr_waso.fp_table}: multiple sludge categories defined in the 'sewage_sludge_category' field. There should be no more than 1 sewage sludge category.")
 
@@ -4025,9 +4075,14 @@ class ModelAttributes:
 
 
     ##  function for retrieving the variable schema associated with a variable
-    def get_variable_attribute(self, variable: str, attribute: str) -> str:
+    def get_variable_attribute(self, 
+        variable: str, 
+        attribute: st
+    ) -> str:
         """
-            use get_variable_attribute to retrieve a variable attribute--any cleaned field available in the variable requirements table--associated with a variable.
+        use get_variable_attribute to retrieve a variable attribute--any cleaned 
+            field available in the variable requirements table--associated with 
+            a variable.
         """
         # check variable first
         if variable not in self.all_model_variables:
@@ -4107,17 +4162,16 @@ class ModelAttributes:
             raise ValueError(f"Invalid var_type '{var_type}' in get_variable_from_category: valid types are 'all', 'partial'")
 
         # get the value from the dictionary
-        pycat_trde = self.get_subsector_attribute("Transportation Demand", "pycategory_primary")
-        key_vrp_trde = self.get_subsector_attribute("Transportation Demand", f"key_varreqs_{var_type}")
+        pycat = self.get_subsector_attribute(subsector, "pycategory_primary")
+        key_vrp = self.get_subsector_attribute(subsector, f"key_varreqs_{var_type}")
 
         # get from the dictionary
-        key_dict = f"{pycat_trde}_to_{key_vrp_trde}"
-        dict_map = self.dict_attributes[pycat_trde].field_maps.get(key_dict)
+        key_dict = f"{pycat}_to_{key_vrp}"
+        dict_map = self.dict_attributes[pycat].field_maps.get(key_dict)
 
-        if dict_map is not None:
-            return dict_map.get(category)
-        else:
-            return None
+        return_val = dict_map.get(category) if (dict_map is not None) else None
+        
+        return return_val
 
 
 
@@ -4204,7 +4258,10 @@ class ModelAttributes:
 
 
     # return a list of variables by sector
-    def get_variables_by_sector(self, sector: str, return_var_type: str = "input") -> list:
+    def get_variables_by_sector(self, 
+        sector: str, 
+        return_var_type: str = "input"
+    ) -> list:
         df_attr_sec = self.dict_attributes[self.table_name_attr_subsector].table
         #list_out = list(np.concatenate([self.build_varlist(x) for x in list(df_attr_sec[df_attr_sec["sector"] == sector]["subsector"])]))
         sectors = list(df_attr_sec[df_attr_sec["sector"] == sector]["subsector"])
@@ -4446,19 +4503,19 @@ class ModelAttributes:
         variable_driver: str
     ) -> list:
         """
-            NOTE: this only works w/in subsector. Returns a list of dataframes.
+        NOTE: this only works w/in subsector. Returns a list of dataframes.
 
-            df_ef: data frame that contains the emission factor variables
+        df_ef: data frame that contains the emission factor variables
 
-            df_driver: data frame containing the variables driving emissions
+        df_driver: data frame containing the variables driving emissions
 
-            dict_vars: map the emission factor variable to a tuple: (emission model variable, driver_unit_type, scale_factor)
+        dict_vars: map the emission factor variable to a tuple: (emission model variable, driver_unit_type, scale_factor)
 
-                - driver_unit_type: a unit dimension--e.g., length, area, volume, mass, or energy--that relates a driver to a factor. Used for unit correction and overriden by scale_factor.
+            - driver_unit_type: a unit dimension--e.g., length, area, volume, mass, or energy--that relates a driver to a factor. Used for unit correction and overriden by scale_factor.
 
-                - scale_factor: a factor applied to the products to ensure proper unit conversion. Overrides connection from driver_unit_type.
+            - scale_factor: a factor applied to the products to ensure proper unit conversion. Overrides connection from driver_unit_type.
 
-            variable_driver:
+        variable_driver:
         """
         # check if
         df_out = []
