@@ -839,6 +839,21 @@ class ElectricEnergy:
         self.modvar_entc_nemomod_emissions_ch4_mne = "NemoMod :math:\\text{CH}_4 Emissions from Fuel Mining and Extraction"
         self.modvar_entc_nemomod_emissions_co2_mne = "NemoMod :math:\\text{CO}_2 Emissions from Fuel Mining and Extraction"
         self.modvar_entc_nemomod_emissions_n2o_mne = "NemoMod :math:\\text{N}_2\\text{O} Emissions from Fuel Mining and Extraction"
+        self.modvar_entc_nemomod_emissions_subsector_ccsq_co2 = "NemoMod :math:`\\text{CO}_2` Emissions from Electricity Generation for CCSQ"
+        self.modvar_entc_nemomod_emissions_subsector_entc_co2 = "NemoMod :math:`\\text{CO}_2` Emissions from Electricity Generation for Energy Technology"
+        self.modvar_entc_nemomod_emissions_subsector_inen_co2 = "NemoMod :math:`\\text{CO}_2` Emissions from Electricity Generation for Industrial Energy"
+        self.modvar_entc_nemomod_emissions_subsector_scoe_co2 = "NemoMod :math:`\\text{CO}_2` Emissions from Electricity Generation for SCOE"
+        self.modvar_entc_nemomod_emissions_subsector_trns_co2 = "NemoMod :math:`\\text{CO}_2` Emissions from Electricity Generation for Transportation"
+        self.modvar_entc_nemomod_emissions_subsector_ccsq_ch4 = "NemoMod :math:`\\text{CH}_4` Emissions from Electricity Generation for CCSQ"
+        self.modvar_entc_nemomod_emissions_subsector_entc_ch4 = "NemoMod :math:`\\text{CH}_4` Emissions from Electricity Generation for Energy Technology"
+        self.modvar_entc_nemomod_emissions_subsector_inen_ch4 = "NemoMod :math:`\\text{CH}_4` Emissions from Electricity Generation for Industrial Energy"
+        self.modvar_entc_nemomod_emissions_subsector_scoe_ch4 = "NemoMod :math:`\\text{CH}_4` Emissions from Electricity Generation for SCOE"
+        self.modvar_entc_nemomod_emissions_subsector_trns_ch4 = "NemoMod :math:`\\text{CH}_4` Emissions from Electricity Generation for Transportation"
+        self.modvar_entc_nemomod_emissions_subsector_ccsq_n2o = "NemoMod :math:`\\text{N}_2\\text{O}` Emissions from Electricity Generation for CCSQ"
+        self.modvar_entc_nemomod_emissions_subsector_entc_n2o = "NemoMod :math:`\\text{N}_2\\text{O}` Emissions from Electricity Generation for Energy Technology"
+        self.modvar_entc_nemomod_emissions_subsector_inen_n2o = "NemoMod :math:`\\text{N}_2\\text{O}` Emissions from Electricity Generation for Industrial Energy"
+        self.modvar_entc_nemomod_emissions_subsector_scoe_n2o = "NemoMod :math:`\\text{N}_2\\text{O}` Emissions from Electricity Generation for SCOE"
+        self.modvar_entc_nemomod_emissions_subsector_trns_n2o = "NemoMod :math:`\\text{N}_2\\text{O}` Emissions from Electricity Generation for Transportation"
         self.modvar_entc_nemomod_fixed_cost = "NemoMod FixedCost"
         self.modvar_entc_nemomod_generation_capacity = "NemoMod Generation Capacity"
         self.modvar_entc_nemomod_min_share_production = "NemoMod MinShareProduction"
@@ -7983,7 +7998,6 @@ class ElectricEnergy:
     ###                         ###
     ###############################
 
-    ##  primary projection method
     def project(self,
         df_elec_trajectories: pd.DataFrame,
         engine: sqlalchemy.engine.Engine = None,
