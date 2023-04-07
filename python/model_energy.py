@@ -3218,6 +3218,7 @@ class NonElectricEnergy:
             
             # get arrays
             arr_trns_fuel_fraction_cur = dict_arrs_trns_frac_fuel.get(modvar_trns_fuel_fraction_cur)
+            
             arr_trns_ef_ch4_cur = self.model_attributes.get_standard_variables(
                 df_neenergy_trajectories, 
                 modvar_trns_ef_ch4_cur, 
@@ -3315,6 +3316,7 @@ class NonElectricEnergy:
                     self.modvar_trde_demand_pkm,
                     "length"
                 )
+                
                 # get demand for fuel in terms of modvar_trns_fuel_efficiency_cur, then get scalars to conert to emission factor fuel volume units
                 arr_trns_elect_efficiency_cur = self.model_attributes.get_standard_variables(
                     df_neenergy_trajectories,
@@ -3323,7 +3325,7 @@ class NonElectricEnergy:
                     expand_to_all_cats = True
                 )
                 arr_trns_elect_efficiency_cur *= scalar_electric_eff_to_distance_equiv
-
+                
                 # calculate energy demand and write in terms of output units
                 arr_trns_energydem_elec = np.nan_to_num(
                     arr_trns_vehdem_cur_fuel/arr_trns_elect_efficiency_cur, 

@@ -3756,7 +3756,7 @@ class ModelAttributes:
             if modvar not in self.dict_model_variables_to_variables.keys():
                 raise ValueError(f"Invalid variable specified in get_standard_variables: variable '{modvar}' not found.")
             else:
-                # some basic info
+
                 subsector_cur = self.get_variable_subsector(modvar)
                 cats = self.get_variable_categories(modvar)
 
@@ -3765,13 +3765,14 @@ class ModelAttributes:
                     init_q = False
                 elif subsector_cur != subsector:
                     raise ValueError(f"Error in get_multivariables_with_bounded_sum_by_category: variables must be from the same subsector.")
+                
                 # get current variable, merge to all categories, update dictionary, and check totals
                 arr_cur = self.get_standard_variables(df_in, modvar, True, "array_base")
-                if cats:
-                    arr_cur = self.merge_array_var_partial_cat_to_array_all_cats(arr_cur, modvar)
-
+                arr_cur = self.merge_array_var_partial_cat_to_array_all_cats(arr_cur, modvar) if (cats is not None) else arr_cur
                 dict_arrs.update({modvar: arr_cur})
+
                 arr += arr_cur
+
 
         if force_sum_equality:
             for modvar in modvars:
@@ -3784,15 +3785,17 @@ class ModelAttributes:
             if len(w) > 0:
                 raise ValueError(f"Invalid summations found: some categories exceed the sum threshold.{msg_append}")
 
-            w = np.where((arr <= sum_restriction + correction_threshold) & (arr > sum_restriction))[0]
-            if len(w) > 0:
-                if np.max(arr - sum_restriction) <= correction_threshold:
-                    w = np.where((arr <= sum_restriction + correction_threshold) & (arr > sum_restriction))
-                    inds = w[0]*len(arr[0]) + w[1]
-                    for modvar in modvars:
-                        arr_cur = dict_arrs[modvar]
-                        np.put(arr_cur, inds, arr_cur[w[0], w[1]].flatten()/arr_cur[w[0], w[1]].flatten())
-                        dict_arrs.update({modvar: arr_cur})
+            # find locations where the array is in the "in-between" and correct
+            w = np.where((arr <= sum_restriction + correction_threshold) & (arr > sum_restriction))
+
+            if len(w[0]) > 0:
+                inds = w[0]*len(arr[0]) + w[1]
+                for modvar in modvars:
+                    arr_cur = dict_arrs.get(modvar)
+                    new_vals = sum_restriction*arr_cur[w[0], w[1]].flatten()/arr[w[0], w[1]].flatten()
+                    np.put(arr_cur, inds, new_vals)
+
+                    dict_arrs.update({modvar: arr_cur})
 
         return dict_arrs
 
@@ -4077,7 +4080,7 @@ class ModelAttributes:
     ##  function for retrieving the variable schema associated with a variable
     def get_variable_attribute(self, 
         variable: str, 
-        attribute: st
+        attribute: str
     ) -> str:
         """
         use get_variable_attribute to retrieve a variable attribute--any cleaned 
@@ -4170,7 +4173,7 @@ class ModelAttributes:
         dict_map = self.dict_attributes[pycat].field_maps.get(key_dict)
 
         return_val = dict_map.get(category) if (dict_map is not None) else None
-        
+
         return return_val
 
 
