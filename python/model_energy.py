@@ -424,7 +424,7 @@ class NonElectricEnergy:
             ["energy_efficiency_variable_by_fuel", "fuel_fraction_variable_by_fuel"]
         )
         # reassign as variables
-        self.modvar_dict_ccsq_fuel_fractions_to_efficiency_factors = self.modvar_dicts_ccsq_fuel_vars["fuel_fraction_variable_by_fuel_to_energy_efficiency_variable_by_fuel"]
+        self.modvar_dict_ccsq_fuel_fractions_to_efficiency_factors = self.modvar_dicts_ccsq_fuel_vars.get("fuel_fraction_variable_by_fuel_to_energy_efficiency_variable_by_fuel")
 
         return None
 
@@ -741,8 +741,12 @@ class NonElectricEnergy:
         self.modvar_trns_modeshare_regional = "Regional Transportation Mode Share"
         self.modvar_trns_passenger_distance_traveled = "Total Passenger Distance by Vehicle"
         self.modvar_trns_vehicle_distance_traveled = "Total Vehicle Distance Traveled"
+
         # fuel variables dictionary for transportation
-        self.dict_trns_fuel_categories_to_fuel_variables, self.dict_trns_fuel_categories_to_unassigned_fuel_variables = self.get_trns_dict_fuel_categories_to_fuel_variables()
+        tuple_dicts = self.get_trns_dict_fuel_categories_to_fuel_variables()
+        self.dict_trns_fuel_categories_to_fuel_variables = tuple_dicts[0]
+        self.dict_trns_fuel_categories_to_unassigned_fuel_variables = tuple_dicts[1]
+
         # some derivate lists of variables
         self.modvars_trns_list_fuel_fraction = self.model_attributes.get_vars_by_assigned_class_from_akaf(
             self.dict_trns_fuel_categories_to_fuel_variables,
@@ -3049,6 +3053,7 @@ class NonElectricEnergy:
             clean_attribute_schema_q = True
         )
         dict_trde_cats_to_trns_vars = sf.reverse_dict(dict_trde_cats_to_trns_vars)
+        array_trns_total_mass_distance_demand = 0.0
         array_trns_total_passenger_demand = 0.0
         array_trns_total_vehicle_demand = 0.0
 
@@ -3102,7 +3107,7 @@ class NonElectricEnergy:
                 return_type = "array_base",
                 var_bounds = (0, 1)
             )
-            #HEREHERE
+           
             # get current demand in terms of configuration units of length (across each model variable)
             array_trde_dem_cur_by_cat = sf.do_array_mult(
                 array_trde_dem_cur_by_cat,
@@ -3111,12 +3116,15 @@ class NonElectricEnergy:
             #(array_trde_dem_cur_by_cat.transpose()*vec_trde_dem_cur).transpose() * scalar_length
             
             if category == self.cat_trde_frgt:
+                # update vehicle demand by category and total mass distance
                 array_trde_vehicle_dem_cur_by_cat = np.nan_to_num(array_trde_dem_cur_by_cat/array_trns_avg_load_freight, 0.0, neginf = 0.0, posinf = 0.0)*scalar_tnrs_length_demfrieght_to_dempass
+                array_trns_total_mass_distance_demand += array_trde_dem_cur_by_cat
             else:
+                # update vehicle demand by category and total passenger distance
                 array_trde_vehicle_dem_cur_by_cat = np.nan_to_num(array_trde_dem_cur_by_cat/array_trns_occ_rate_passenger, 0.0, neginf = 0.0, posinf = 0.0)
+                array_trns_total_passenger_demand += array_trde_dem_cur_by_cat
             
-            # update total passenger distance and vehicle-km demand; note that passenger distance will be reduced to exclude freight categories on output
-            array_trns_total_passenger_demand += array_trde_dem_cur_by_cat
+            # add in total vehicle-km demand
             array_trns_total_vehicle_demand += array_trde_vehicle_dem_cur_by_cat
 
         # add the vehicle and passenger distance to output using the units modvar_trde_demand_pkm
@@ -3130,7 +3138,7 @@ class NonElectricEnergy:
         df_out += [
             # MASS-DISTANCE TRAVELED
             self.model_attributes.array_to_df(
-                array_trns_total_passenger_demand*scalar_trns_total_mass_distance_demand,
+                array_trns_total_mass_distance_demand*scalar_trns_total_mass_distance_demand,
                 self.modvar_trns_mass_distance_traveled,
                 reduce_from_all_cats_to_specified_cats = True
             ),

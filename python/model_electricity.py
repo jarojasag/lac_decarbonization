@@ -162,6 +162,76 @@ class ElectricEnergy:
         sf.check_fields(df_elec_trajectories, check_fields, f"{msg_prepend} projection cannot proceed: fields ")
 
         return None
+
+
+    
+    def get_enfu_dict_subsectors_to_energy_variables(self,
+    ) -> Dict:
+        """
+        Return a dictionary with emission-producing energy subsectorz as keys 
+            based on the Energy Fuels attribute table:
+
+            {
+                subsec: {
+                    "energy_demand": VARNAME_ENERGY, 
+                    ...
+                }
+            }
+
+            for each key, the dict includes variables associated with subsector
+            ``subsec``
+
+            - "energy_demand"
+        """
+
+        dict_out = self.model_attributes.assign_keys_from_attribute_fields(
+            self.model_attributes.subsec_name_enfu,
+            "abbreviation_subsector",
+            {
+                "Energy Demand by Fuel": "energy_demand"
+            },
+            type_table = "varreqs_partial",
+            clean_field_vals = True
+        )
+
+        return dict_out
+
+
+    
+    def get_entc_dict_subsectors_to_emission_variables(self,
+    ) -> Dict:
+        """
+        Return a dictionary with emission-producing energy subsectorz as keys 
+            based on the Energy Technology attribute table:
+
+            {
+                subsec: {
+                    "emissions_ch4": VARNAME_EMISSIONS, 
+                    ...
+                }
+            }
+
+            for each key, the dict includes variables associated with subsector
+            ``subsec``
+
+            - "emissions_ch4"
+            - "emissions_co2"
+            - "emissions_n2o"
+        """
+
+        dict_out = self.model_attributes.assign_keys_from_attribute_fields(
+            self.model_attributes.subsec_name_entc,
+            "abbreviation_subsector",
+            {
+                "NemoMod :math:\\text{CH}_4 Emissions from Electricity Generation": "emissions_ch4",
+                "NemoMod :math:\\text{CO}_2 Emissions from Electricity Generation": "emissions_co2",
+                "NemoMod :math:\\text{N}_2\\text{O} Emissions from Electricity Generation": "emissions_n2o"
+            },
+            type_table = "varreqs_partial",
+            clean_field_vals = True
+        )
+
+        return dict_out
         
 
 
@@ -776,13 +846,34 @@ class ElectricEnergy:
         self.modvar_enfu_value_of_fuel_trns = "Value of Fuel Consumed in Transportation"
         
         # key categories
-        self.cat_enfu_bgas = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_enfu, {self.model_attributes.field_enfu_biogas_fuel_category: 1})[0]
-        self.cat_enfu_elec = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_enfu, {self.model_attributes.field_enfu_electricity_demand_category: 1})[0]
-        self.cat_enfu_wste = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_enfu, {self.model_attributes.field_enfu_waste_fuel_category: 1})[0]
+        self.cat_enfu_bgas = self.model_attributes.get_categories_from_attribute_characteristic(
+            self.subsec_name_enfu, 
+            {
+                self.model_attributes.field_enfu_biogas_fuel_category: 1
+            }
+        )[0]
+        self.cat_enfu_elec = self.model_attributes.get_categories_from_attribute_characteristic(
+            self.subsec_name_enfu, 
+            {
+                self.model_attributes.field_enfu_electricity_demand_category: 1
+            }
+        )[0]
+        self.cat_enfu_wste = self.model_attributes.get_categories_from_attribute_characteristic(
+            self.subsec_name_enfu, 
+            {
+                self.model_attributes.field_enfu_waste_fuel_category: 1
+            }
+        )[0]
+
         # associated indices
         self.ind_enfu_bgas = self.model_attributes.get_attribute_table(self.subsec_name_enfu).get_key_value_index(self.cat_enfu_bgas)
         self.ind_enfu_elec = self.model_attributes.get_attribute_table(self.subsec_name_enfu).get_key_value_index(self.cat_enfu_elec)
         self.ind_enfu_wste = self.model_attributes.get_attribute_table(self.subsec_name_enfu).get_key_value_index(self.cat_enfu_wste)
+
+        # get pivot dictionary
+        tuple_dicts = self.get_enfu_dict_subsectors_to_energy_variables()
+        self.dict_enfu_subsectors_to_energy_variables = tuple_dicts[0]
+        self.dict_enfu_subsectors_to_unassigned_enfu_variables = tuple_dicts[1]
 
         return None
 
@@ -839,21 +930,24 @@ class ElectricEnergy:
         self.modvar_entc_nemomod_emissions_ch4_mne = "NemoMod :math:\\text{CH}_4 Emissions from Fuel Mining and Extraction"
         self.modvar_entc_nemomod_emissions_co2_mne = "NemoMod :math:\\text{CO}_2 Emissions from Fuel Mining and Extraction"
         self.modvar_entc_nemomod_emissions_n2o_mne = "NemoMod :math:\\text{N}_2\\text{O} Emissions from Fuel Mining and Extraction"
-        self.modvar_entc_nemomod_emissions_subsector_ccsq_co2 = "NemoMod :math:`\\text{CO}_2` Emissions from Electricity Generation for CCSQ"
-        self.modvar_entc_nemomod_emissions_subsector_entc_co2 = "NemoMod :math:`\\text{CO}_2` Emissions from Electricity Generation for Energy Technology"
-        self.modvar_entc_nemomod_emissions_subsector_inen_co2 = "NemoMod :math:`\\text{CO}_2` Emissions from Electricity Generation for Industrial Energy"
-        self.modvar_entc_nemomod_emissions_subsector_scoe_co2 = "NemoMod :math:`\\text{CO}_2` Emissions from Electricity Generation for SCOE"
-        self.modvar_entc_nemomod_emissions_subsector_trns_co2 = "NemoMod :math:`\\text{CO}_2` Emissions from Electricity Generation for Transportation"
-        self.modvar_entc_nemomod_emissions_subsector_ccsq_ch4 = "NemoMod :math:`\\text{CH}_4` Emissions from Electricity Generation for CCSQ"
-        self.modvar_entc_nemomod_emissions_subsector_entc_ch4 = "NemoMod :math:`\\text{CH}_4` Emissions from Electricity Generation for Energy Technology"
-        self.modvar_entc_nemomod_emissions_subsector_inen_ch4 = "NemoMod :math:`\\text{CH}_4` Emissions from Electricity Generation for Industrial Energy"
-        self.modvar_entc_nemomod_emissions_subsector_scoe_ch4 = "NemoMod :math:`\\text{CH}_4` Emissions from Electricity Generation for SCOE"
-        self.modvar_entc_nemomod_emissions_subsector_trns_ch4 = "NemoMod :math:`\\text{CH}_4` Emissions from Electricity Generation for Transportation"
-        self.modvar_entc_nemomod_emissions_subsector_ccsq_n2o = "NemoMod :math:`\\text{N}_2\\text{O}` Emissions from Electricity Generation for CCSQ"
-        self.modvar_entc_nemomod_emissions_subsector_entc_n2o = "NemoMod :math:`\\text{N}_2\\text{O}` Emissions from Electricity Generation for Energy Technology"
-        self.modvar_entc_nemomod_emissions_subsector_inen_n2o = "NemoMod :math:`\\text{N}_2\\text{O}` Emissions from Electricity Generation for Industrial Energy"
-        self.modvar_entc_nemomod_emissions_subsector_scoe_n2o = "NemoMod :math:`\\text{N}_2\\text{O}` Emissions from Electricity Generation for SCOE"
-        self.modvar_entc_nemomod_emissions_subsector_trns_n2o = "NemoMod :math:`\\text{N}_2\\text{O}` Emissions from Electricity Generation for Transportation"
+        self.modvar_entc_nemomod_emissions_export_ch4 = "NemoMod :math:\\text{CH}_4 Emissions from Electricity Generation for Export"
+        self.modvar_entc_nemomod_emissions_export_co2 = "NemoMod :math:\\text{CO}_2 Emissions from Electricity Generation for Export"
+        self.modvar_entc_nemomod_emissions_export_n2o = "NemoMod :math:\\text{N}_2\\text{O} Emissions from Electricity Generation for Export"
+        self.modvar_entc_nemomod_emissions_subsector_ccsq_co2 = "NemoMod :math:\\text{CO}_2 Emissions from Electricity Generation for CCSQ"
+        self.modvar_entc_nemomod_emissions_subsector_entc_co2 = "NemoMod :math:\\text{CO}_2 Emissions from Electricity Generation for Energy Technology"
+        self.modvar_entc_nemomod_emissions_subsector_inen_co2 = "NemoMod :math:\\text{CO}_2 Emissions from Electricity Generation for Industrial Energy"
+        self.modvar_entc_nemomod_emissions_subsector_scoe_co2 = "NemoMod :math:\\text{CO}_2 Emissions from Electricity Generation for SCOE"
+        self.modvar_entc_nemomod_emissions_subsector_trns_co2 = "NemoMod :math:\\text{CO}_2 Emissions from Electricity Generation for Transportation"
+        self.modvar_entc_nemomod_emissions_subsector_ccsq_ch4 = "NemoMod :math:\\text{CH}_4 Emissions from Electricity Generation for CCSQ"
+        self.modvar_entc_nemomod_emissions_subsector_entc_ch4 = "NemoMod :math:\\text{CH}_4 Emissions from Electricity Generation for Energy Technology"
+        self.modvar_entc_nemomod_emissions_subsector_inen_ch4 = "NemoMod :math:\\text{CH}_4 Emissions from Electricity Generation for Industrial Energy"
+        self.modvar_entc_nemomod_emissions_subsector_scoe_ch4 = "NemoMod :math:\\text{CH}_4 Emissions from Electricity Generation for SCOE"
+        self.modvar_entc_nemomod_emissions_subsector_trns_ch4 = "NemoMod :math:\\text{CH}_4 Emissions from Electricity Generation for Transportation"
+        self.modvar_entc_nemomod_emissions_subsector_ccsq_n2o = "NemoMod :math:\\text{N}_2\\text{O} Emissions from Electricity Generation for CCSQ"
+        self.modvar_entc_nemomod_emissions_subsector_entc_n2o = "NemoMod :math:\\text{N}_2\\text{O} Emissions from Electricity Generation for Energy Technology"
+        self.modvar_entc_nemomod_emissions_subsector_inen_n2o = "NemoMod :math:\\text{N}_2\\text{O} Emissions from Electricity Generation for Industrial Energy"
+        self.modvar_entc_nemomod_emissions_subsector_scoe_n2o = "NemoMod :math:\\text{N}_2\\text{O} Emissions from Electricity Generation for SCOE"
+        self.modvar_entc_nemomod_emissions_subsector_trns_n2o = "NemoMod :math:\\text{N}_2\\text{O} Emissions from Electricity Generation for Transportation"
         self.modvar_entc_nemomod_fixed_cost = "NemoMod FixedCost"
         self.modvar_entc_nemomod_generation_capacity = "NemoMod Generation Capacity"
         self.modvar_entc_nemomod_min_share_production = "NemoMod MinShareProduction"
@@ -871,6 +965,11 @@ class ElectricEnergy:
         # set dictionaries 
         self._set_dict_enfu_fuel_categories_to_iar_oar_variables()
 
+        # pivot dictionaries
+        tuple_dicts = self.get_entc_dict_subsectors_to_emission_variables()
+        self.dict_entc_subsectors_to_emission_variables = tuple_dicts[0]
+        self.dict_entc_subsectors_to_unassigned_entc_variables = tuple_dicts[1]
+        
         return None
 
 
@@ -1270,6 +1369,227 @@ class ElectricEnergy:
         df_input = df_input[[x for x in self.fields_nemomod_sort_hierarchy if x in df_input.columns]]
 
         return df_input
+
+
+
+    def allocate_entc_emissions_by_energy_demand(self,
+        df_elec_trajectories: pd.DataFrame,
+        df_retrieval_trajectories: pd.DataFrame,
+        cat_enfu_energy_source: Union[str, None] = None,
+        dict_enfu_subsectors_to_energy_variables: Union[Dict, None] = None,
+        dict_entc_subsectors_to_emission_variables: Union[Dict, None] = None,
+        modvar_entc_nemomod_emissions_export_ch4: Union[str, None] = None,
+        modvar_entc_nemomod_emissions_export_co2: Union[str, None] = None,
+        modvar_entc_nemomod_emissions_export_n2o: Union[str, None] = None
+    ) -> pd.DataFrame:
+        """
+        Allocate emissions from 
+
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of inputs to the electricity model
+        - df_retrieval_trajectories: data frame of output trajectories from
+            NemoMod containing energy and emissions data
+
+        Keyword Arguments
+        -----------------
+        - cat_enfu_energy_source: optional category to use as source of fuel 
+            demands. If None, defaults to self.cat_enfu_elec
+        - dict_enfu_subsectors_to_energy_variables: dictionary mapping 
+            subsectors to associated energy demand variables in ENFU (under key
+            energy demand). See 
+            ElectricEnergy.dict_enfu_subsectors_to_energy_variables (default if
+            None) for structural example.
+        - dict_entc_subsectors_to_emission_variables: dictionary mapping 
+            subsectors to associated emission variables in ENTC (under key
+            energy demand). See 
+            ElectricEnergy.dict_entc_subsectors_to_emission_variables (default
+            if None) for structural example.
+        - modvar_entc_nemomod_emissions_export_ch4: model variable denoting 
+            CH4 emissions attributable to exports.
+        - modvar_entc_nemomod_emissions_export_co2: model variable denoting 
+            CO2 emissions attributable to exports.
+        - modvar_entc_nemomod_emissions_export_n2o: model variable denoting 
+            N2O emissions attributable to exports.
+        """
+
+        ##  INITIALIZE SOME KEY VARS
+
+        cat_enfu_energy_source = (
+            self.cat_enfu_elec 
+            if (cat_enfu_energy_source is None) 
+            else cat_enfu_energy_source
+        )
+        dict_enfu_subsectors_to_energy_variables = (
+            self.dict_enfu_subsectors_to_energy_variables
+            if dict_enfu_subsectors_to_energy_variables is None
+            else dict_enfu_subsectors_to_energy_variables
+        )
+        dict_entc_subsectors_to_emission_variables = (
+            self.dict_entc_subsectors_to_emission_variables
+            if dict_entc_subsectors_to_emission_variables is None
+            else dict_entc_subsectors_to_emission_variables
+        )
+
+        # model variables
+        modvar_entc_nemomod_emissions_export_ch4 = (
+            self.modvar_entc_nemomod_emissions_export_ch4
+            if modvar_entc_nemomod_emissions_export_ch4 is None
+            else modvar_entc_nemomod_emissions_export_ch4
+        )
+        modvar_entc_nemomod_emissions_export_co2 = (
+            self.modvar_entc_nemomod_emissions_export_co2
+            if modvar_entc_nemomod_emissions_export_co2 is None
+            else modvar_entc_nemomod_emissions_export_co2
+        )
+        modvar_entc_nemomod_emissions_export_n2o = (
+            self.modvar_entc_nemomod_emissions_export_n2o
+            if modvar_entc_nemomod_emissions_export_n2o is None
+            else modvar_entc_nemomod_emissions_export_n2o
+        )
+
+        # get the fuel source index to use to allocate emissions
+        attr_enfu = self.model_attributes.get_attribute_table(self.model_attributes.subsec_name_enfu)
+        ind_enfu_energy_source = attr_enfu.get_key_value_index(cat_enfu_energy_source)
+
+
+        ##  BUILD PROPORTIONAL VECTOR OF ENERGY DEMANDS
+
+        # get the exports of the fuel
+        vec_enfu_exports = self.model_attributes.get_standard_variables(
+            df_retrieval_trajectories,
+            self.modvar_enfu_exports_fuel_adjusted,
+            expand_to_all_cats = True,
+            return_type = "array_base"
+        )[:, ind_enfu_energy_source]
+
+        # get fuel imports of the selected source fuel
+        vec_enfu_imports = self.model_attributes.get_standard_variables(
+            df_retrieval_trajectories,
+            self.modvar_enfu_imports_fuel,
+            expand_to_all_cats = True,
+            return_type = "array_base"
+        )[:, ind_enfu_energy_source]
+
+        # initialize and calculate vector of electricity production
+        vec_enfu_total_demand = -vec_enfu_imports
+
+        # initialize dictionary of subsectors to vectors of proportional emission allocations
+        dummy_cat_exports = "exports"
+        dict_subsector_to_energy_demand_proportions = {}
+
+        # subsectors to iterate over
+        subsecs_iter = sorted(list(
+            set(dict_enfu_subsectors_to_energy_variables.keys()) & 
+            set(dict_entc_subsectors_to_emission_variables.keys())
+        ))
+
+        
+        for subsec in subsecs_iter:
+
+            # initialize the vector of fuel demand for the current subsector and check if energy variables are specified
+            vec_demand_subsec_cur = None
+            dict_energy_vars_cur = dict_enfu_subsectors_to_energy_variables.get(subsec)
+     
+            if dict_energy_vars_cur is not None:
+                # try retrieving subsector demand from electric trajectories; if not there, look to retrieval (ENTC)
+                # if neither works, save error and move on
+                try: 
+                    vec_demand_subsec_cur = self.model_attributes.get_standard_variables(
+                        df_elec_trajectories,
+                        dict_energy_vars_cur.get("energy_demand"),
+                        expand_to_all_cats = True,
+                        return_type = "array_base"
+                    )[:, ind_enfu_energy_source]
+                        
+                except:
+                    try:
+                        vec_demand_subsec_cur = self.model_attributes.get_standard_variables(
+                            df_retrieval_trajectories,
+                            dict_energy_vars_cur.get("energy_demand"),
+                            expand_to_all_cats = True,
+                            return_type = "array_base"
+                        )[:, ind_enfu_energy_source]
+
+                    except:
+                        self._log(
+                            f"Error in `allocate_entc_emissions_by_energy_demand` retrieving energy demands for {cat_enfu_energy_source} subsector {subsec}. Emissions will not be allocated for this subsector. Skipping...", 
+                            type_log = "error"
+                        )
+
+                if vec_demand_subsec_cur is not None:
+                    vec_enfu_total_demand += vec_demand_subsec_cur
+                    dict_subsector_to_energy_demand_proportions.update({subsec: vec_demand_subsec_cur})
+
+        # convert to proportions - get total production
+        vec_enfu_total_production = sf.vec_bounds(vec_enfu_total_demand, (0, np.inf))
+        vec_enfu_total_production += vec_enfu_exports
+
+        # emissions are allocated according to domestic production; exports - domestic demand (assume that imports are used homogenously and distributed proportional to subsector demands)
+        vec_enfu_frac_from_exports = np.nan_to_num(vec_enfu_exports / vec_enfu_total_production, 0.0, posinf = 0.0)
+        vec_enfu_frac_from_others = 1 - vec_enfu_frac_from_exports
+
+        for subsec in dict_subsector_to_energy_demand_proportions.keys():
+            vec = dict_subsector_to_energy_demand_proportions.get(subsec)
+            vec *= vec_enfu_frac_from_others/(vec_enfu_total_demand + vec_enfu_imports)
+            dict_subsector_to_energy_demand_proportions.update({subsec: vec})
+
+
+        ##  BUILD OUTPUT
+
+        df_out = []
+
+        # loop over output emissions in electricity by gas - map emissions to export variable
+        dict_modvars_emission_to_allocate = {
+            self.modvar_entc_nemomod_emissions_ch4_elec: modvar_entc_nemomod_emissions_export_ch4,
+            self.modvar_entc_nemomod_emissions_co2_elec: modvar_entc_nemomod_emissions_export_co2,
+            self.modvar_entc_nemomod_emissions_n2o_elec: modvar_entc_nemomod_emissions_export_n2o
+        }
+
+        for modvar in dict_modvars_emission_to_allocate.keys():
+            # get gas, pivot key, and export variable
+            gas = self.model_attributes.get_variable_characteristic(
+                modvar, 
+                self.model_attributes.varchar_str_emission_gas
+            )
+            key_dict_emissions = f"emissions_{gas}"
+            modvar_emissions_export = dict_modvars_emission_to_allocate.get(modvar)
+
+            # get the total emissions in configuration units 
+            vec_entc_emissions_total = self.model_attributes.get_standard_variables(
+                df_retrieval_trajectories,
+                modvar,
+                expand_to_all_cats = True,
+                return_type = "array_base"
+            ).sum(axis = 1)
+
+            # allocate exports
+            df_out.append(
+                self.model_attributes.array_to_df(
+                    vec_enfu_frac_from_exports*vec_entc_emissions_total, 
+                    modvar_emissions_export
+                )
+            )
+
+            # allocate ENTC emissions based on demands within each energy subsector
+            for subsec in dict_entc_subsectors_to_emission_variables.keys():
+                # get model variable and emissions 
+                modvar_emission_cur_subsec = dict_entc_subsectors_to_emission_variables.get(subsec)
+                modvar_emission_cur_subsec = modvar_emission_cur_subsec.get(key_dict_emissions) if (modvar_emission_cur_subsec is not None) else None
+                vec_emissions = dict_subsector_to_energy_demand_proportions.get(subsec) if (modvar_emission_cur_subsec is not None) else None
+        
+                if vec_emissions is not None:
+                    df_out.append(
+                        self.model_attributes.array_to_df(
+                            vec_emissions*vec_entc_emissions_total, 
+                            modvar_emission_cur_subsec
+                        )
+                    )
+
+
+        df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
+
+        return df_out
 
 
 
@@ -7970,25 +8290,53 @@ class ElectricEnergy:
                 engine, 
                 vec_time_period
             ),
-            self.retrieve_nemomod_table_emissions_by_technology(
-                engine, 
-                vec_time_period
-            ),
             self.retrieve_nemomod_table_total_capacity(
                 engine, 
                 vec_time_period
-            ),
-            self.retrieve_nemomod_tables_fuel_production_demand_and_trade(
-                engine, 
-                vec_time_period, 
-                df_elec_trajectories,
-                tuple_enfu_production_and_demands = tuple_enfu_production_and_demands
             )
         ]
 
+        ##  RETRIEVE EMISSIONS AND FUEL PRODUCTION DEMANDS SEPARATELY
+        ##  - USE TO BUILD ALLOCATIONS OF ELEC GENERATION EMISSIONS TO OTHER SUBSECTORS 
+
+        df_entc_emissions = self.retrieve_nemomod_table_emissions_by_technology(
+            engine, 
+            vec_time_period
+        )
+        df_entc_fuelprod = self.retrieve_nemomod_tables_fuel_production_demand_and_trade(
+            engine, 
+            vec_time_period, 
+            df_elec_trajectories,
+            tuple_enfu_production_and_demands = tuple_enfu_production_and_demands
+        )
+
+        # concatenate for use in allocation of emissions within ENTC
+        df_entc_emissions_and_fuel_prod = pd.concat(
+            [
+                df_entc_emissions,
+                df_entc_fuelprod
+            ],
+            axis = 1
+        )
+
+        df_out += [
+            # add emissions and fuel production
+            df_entc_emissions_and_fuel_prod,
+            # add allocation of emissions by energy demand
+            self.allocate_entc_emissions_by_energy_demand(
+                df_elec_trajectories,
+                df_entc_emissions_and_fuel_prod,
+                cat_enfu_energy_source = self.cat_enfu_elec
+            )
+        ]
+
+    
         df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
 
         return df_out
+
+
+
 
 
 

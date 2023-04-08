@@ -144,9 +144,9 @@ def transformation_general(
     df_input: pd.DataFrame,
     model_attributes: ma.ModelAttributes,
     dict_modvar_specs: Dict[str, Dict[str, str]],
-    regions_apply: Union[List[str], None] = None,
     field_region = "nation",
     model_energy: Union[me.NonElectricEnergy, None] = None,
+    regions_apply: Union[List[str], None] = None,
     strategy_id: Union[int, None] = None
 ) -> pd.DataFrame:
     """
@@ -172,6 +172,10 @@ def transformation_general(
                 take (achieved in accordance with vec_ramp)
             * "transfer_value": transfer value from categories to other
                 categories. Must specify "categories_source" &
+                "categories_target" in dict_modvar_specs. See description below
+                in OPTIONAL for information on specifying this.
+            * "transfer_scalar_value": transfer value from categories to other
+                categories based on a scalar. Must specify "categories_source" &
                 "categories_target" in dict_modvar_specs. See description below
                 in OPTIONAL for information on specifying this.
             * "transfer_value_to_acheieve_magnitude": transfer value from
@@ -252,6 +256,7 @@ def transformation_general(
         "baseline_scalar_diff_reduction",
         "final_value",
         "transfer_value",
+        "transfer_value_scalar",
         "transfer_value_to_acheieve_magnitude"
     ]
 
@@ -367,7 +372,18 @@ def transformation_general(
                 tp_baseline = dict_cur.get("tp_baseline")
                 vec_ramp = dict_cur.get("vec_ramp")
                 vector_targets_ordered = dict_cur.get("vector_targets_ordered")
-                ind_tp_baseline = vec_tp.index(tp_baseline) if (magnitude_type in ["baseline_scalar", "baseline_additive", "baseline_scalar_diff_reduction"]) else None
+                ind_tp_baseline = (
+                    vec_tp.index(tp_baseline) 
+                    if (
+                        magnitude_type in [
+                            "baseline_scalar", 
+                            "baseline_additive",
+                            "baseline_scalar_diff_reduction",
+                            "transfer_value_scalar"
+                        ]
+                    ) 
+                    else None
+                )
 
                 # set fields
                 fields_adjust = model_attributes.build_varlist(
@@ -397,7 +413,7 @@ def transformation_general(
 
                 ##  DO MIXING
 
-                if magnitude_type in ["transfer_value", "transfer_value_to_acheieve_magnitude"]:
+                if magnitude_type in ["transfer_value", "transfer_value_scalar", "transfer_value_to_acheieve_magnitude"]:
 
                     # TRANSFER OF MAGNITUDE BETWEEN CATEGORIES
 
@@ -405,7 +421,14 @@ def transformation_general(
                     arr_base_source = np.array(df_in_new[fields_adjust_source])
                     arr_base_target = np.array(df_in_new[fields_adjust_target])
                     sum_preservation = np.sum(np.array(df_in_new[fields_adjust_source + fields_adjust_target]), axis = 1)
-
+                    
+                    # modify magnitude if set as scalar
+                    magnitude = (
+                        sum(magnitude * arr_base_source[ind_tp_baseline, :])
+                        if (magnitude_type == "transfer_value_scalar")
+                        else magnitude
+                    )
+                    
                     # get value of target in baseline and magnitude to transfer
                     vec_target_initial = arr_base_target[tp_baseline, :]
                     total_target_initial = sum(vec_target_initial) if (magnitude_type == "transfer_value_to_acheieve_magnitude") else 0
@@ -1775,7 +1798,7 @@ def transformation_inen_maximize_production_efficiency(
 
 
 
-def transformation_inen_shift_modvars(#HEREHERE
+def transformation_inen_shift_modvars(
     df_input: pd.DataFrame,
     magnitude: float,
     vec_ramp: np.ndarray,
@@ -2307,12 +2330,13 @@ def transformation_trns_fuel_shift_to_target(
     magnitude: float,
     vec_ramp: np.ndarray,
     model_attributes: ma.ModelAttributes,
-    dict_modvar_specs: Union[Dict[str, float], None] = None,
+    baseline_period: str = "final",
     categories: Union[List[str], None] = None,
-    regions_apply: Union[List[str], None] = None,
+    dict_modvar_specs: Union[Dict[str, float], None] = None,
     field_region: str = "nation",
-    magnitude_relative_to_baseline: bool = False,
+    magnitude_type: str = "baseline_additive",
     model_energy: Union[me.NonElectricEnergy, None] = None,
+    regions_apply: Union[List[str], None] = None,
     return_modvars_only: bool = False,
     strategy_id: Union[int, None] = None
 ) -> pd.DataFrame:
@@ -2322,18 +2346,27 @@ def transformation_trns_fuel_shift_to_target(
     Function Arguments
     ------------------
     - df_input: input data frame containing baseline trajectories
-    - magnitude: target magnitude of fuel mixture
+    - magnitude: target magnitude of fuel mixture. See keyword argument
+        `magnitude_type` below for more information on how the magnitude is 
+        specified
     - model_attributes: ModelAttributes object used to call strategies/variables
     - vec_ramp: ramp vec used for implementation
 
     Keyword Arguments
     -----------------
+    - baseline_period: string specifying "final" or "initial". If "final", 
+        the baseline period used to determine the shift is the final time 
+        period. If initial, uses the first time period.
     - categories: TRNS categories to apply transformation to
     - dict_modvar_specs: dictionary of targets modvars to shift into (assumes
         that will take from others). Maps from modvar to fraction of magnitude.
         Sum of values must == 1.
     - field_region: field in df_input that specifies the region
-    - magnitude_relative_to_baseline: apply the magnitude relative to baseline?
+    - magnitude_type: type of magnitude to use. Valid types include
+            * "baseline_additive": add the magnitude to the baseline
+            * "baseline_scalar": multiply baseline value by magnitude
+            * "final_value": magnitude is the final value for the variable to
+                take (achieved in accordance with vec_ramp)
     - model_energy: optional NonElectricEnergy object to pass to
         transformation_general
     - regions_apply: optional set of regions to use to define strategy. If None,
@@ -2377,7 +2410,9 @@ def transformation_trns_fuel_shift_to_target(
     cats_all = set.intersection(*cats_all)
     cats_all = [x for x in cats_all if x in categories]
    
+    # set some parameters
     subsec = model_attributes.subsec_name_trns
+    magnitude_relative_to_baseline = (magnitude_type in ["baseline_scalar", "baseline_additive"])
 
 
     ##  ITERATE OVER REGIONS AND MODVARS TO BUILD TRANSFORMATION
@@ -2399,17 +2434,21 @@ def transformation_trns_fuel_shift_to_target(
                         restrict_to_category_values = [cat]
                     )[0] for x in modvars_target
                 ]
-                
-                vec_initial_vals = np.array(df_in[fields].iloc[0]).astype(float)
+
+                # get some baseline values
+                tp_baseline = (n_tp - 1) if (baseline_period == "final") else 0
+                vec_initial_vals = np.array(df_in[fields].iloc[tp_baseline]).astype(float)
                 val_initial_target = vec_initial_vals.sum() if magnitude_relative_to_baseline else 0.0
                 vec_initial_distribution = np.nan_to_num(vec_initial_vals/vec_initial_vals.sum(), 1.0, posinf = 1.0)
+
+                # set magnitude
+                magnitude = vec_initial_vals.sum()*magnitude if (magnitude_type in ["baseline_scalar"]) else magnitude
 
                 # get the current total value of fractions
                 vec_final_vals = np.array(df_in[fields].iloc[n_tp - 1]).astype(float)
                 val_final_target = sum(vec_final_vals)
-
-                target_value = float(sf.vec_bounds(magnitude + val_initial_target, (0.0, 1.0)))#*dict_modvar_specs.get(modvar_target)
-                scale_non_elec = np.nan_to_num((1 - target_value)/(1 - val_final_target), 0.0, posinf = 0.0)
+                target_shift = float(sf.vec_bounds(magnitude + val_initial_target, (0.0, 1.0)))#*dict_modvar_specs.get(modvar_target)
+                scale_non_elec = np.nan_to_num((1 - target_shift)/(1 - val_final_target), 0.0, posinf = 0.0)
 
                 target_distribution = magnitude*np.array([dict_modvar_specs.get(x) for x in modvars_target]) + val_initial_target*vec_initial_distribution
                 target_distribution /= max(magnitude + val_initial_target, 1.0) 
@@ -2458,7 +2497,7 @@ def transformation_trns_fuel_shift_to_target(
 
 
 
-def transformation_trns_electrify_category_to_target_old(#HEREHERE
+def transformation_trns_electrify_category_to_target_old(
     df_input: pd.DataFrame,
     magnitude: float,
     vec_ramp: np.ndarray,

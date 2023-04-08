@@ -24,17 +24,17 @@
 3018,TRNS: Electrify light duty road transport,0
 3019,TRNS: Electrify medium duty road transport,0
 3020,TRNS: Electrify rail,0
-3021,TRNS: Fuel switch bundle,
+3021,TRNS: Fuel switch bundle,0
 3022,TRNS: Increase transportation electricity energy efficiency,0
 3023,TRNS: Increase transportation non-electricity energy efficiency,0
-3024,TRNS: Efficiency bundle,
+3024,TRNS: Efficiency bundle,0
 3025,TRNS: Reduce demand for transport,0
 3026,TRNS: Increase occupancy for private vehicles,0
-3027,TRNS: Demand management bundle,
+3027,TRNS: Demand management bundle,0
 3028,TRNS: Mode shift passenger vehicles to others,0
 3029,TRNS: Mode shift regional passenger travel,0
 3030,TRNS: Mode shift freight,0
-3031,TRNS: Mode shift bundle,
+3031,TRNS: Mode shift bundle,0
 3032,TRNS: All Transportation Transformations,0
 3033,TRNS: All Transportation Transformations with Renewable Grid and Green Hydrogen,0
 3034,ENTC: Reduce transmission losses,0
