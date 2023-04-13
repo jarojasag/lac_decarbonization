@@ -1255,50 +1255,56 @@ def project_growth_scalar_from_elasticity(
     elasticity_type = "standard"
 ):
     """
-        Project a vector of growth scalars from a vector of growth rates and
-            elasticities
+    Project a vector of growth scalars from a vector of growth rates and
+        elasticities
 
-        Function Arguments
-        ------------------
-        - vec_rates: a vector of growth rates, where the ith entry is the growth
-            rate of the driver from i to i + 1. If rates_are_factors = False
-            (default), rates are proportions (e.g., 0.02). If
-            rates_are_factors = True, then rates are scalars (e.g., 1.02)
-        - vec_elasticity: a vector of elasticities.
+    Function Arguments
+    ------------------
+    - vec_rates: a vector of growth rates, where the ith entry is the growth
+        rate of the driver from i to i + 1. If rates_are_factors = False
+        (default), rates are proportions (e.g., 0.02). If
+        rates_are_factors = True, then rates are scalars (e.g., 1.02)
+    - vec_elasticity: a vector of elasticities.
 
-        Keyword Arguments
-        -----------------
-        - rates_are_factors: Default = False. If True, rates are treated as
-            growth factors (e.g., a 2% growth rate is entered as 1.02). If
-            False, rates are growth rates (e.g., 2% growth rate is 0.02).
-        - elasticity_type: Default = "standard"; acceptable options are
-            "standard" or "log"
-            * If standard, the growth in the demand is 1 + r*e, where r = is
-                the growth rate of the driver and e is the elasiticity.
-            * If log, the growth in the demand is (1 + r)^e
+    Keyword Arguments
+    -----------------
+    - rates_are_factors: Default = False. If True, rates are treated as
+        growth factors (e.g., a 2% growth rate is entered as 1.02). If
+        False, rates are growth rates (e.g., 2% growth rate is 0.02).
+    - elasticity_type: Default = "standard"; acceptable options are
+        "standard" or "log"
+        * If standard, the growth in the demand is 1 + r*e, where r = is
+            the growth rate of the driver and e is the elasiticity.
+        * If log, the growth in the demand is (1 + r)^e
     """
     # CHEKCS
     if vec_rates.shape[0] + 1 != vec_elasticity.shape[0]:
         raise ValueError(f"Invalid vector lengths of vec_rates ('{len(vec_rates)}') and vec_elasticity ('{len(vec_elasticity)}'). Length of vec_elasticity should be equal to the length vec_rates + 1.")
+    
     valid_types = ["standard", "log"]
     if elasticity_type not in valid_types:
         v_types = format_print_list(valid_types)
         raise ValueError(f"Invalid elasticity_type {elasticity_type}: valid options are {v_types}.")
+    
     # check factors
     if rates_are_factors:
         vec_rates = vec_rates - 1 if (elasticity_type == "standard") else vec_rates
     else:
         vec_rates = vec_rates if (elasticity_type == "standard") else vec_rates + 1
+
     # check if transpose needs to be used
-    transpose_q = True if len(vec_rates.shape) != len(vec_elasticity.shape) else False
+    transpose_q = (len(vec_rates.shape) != len(vec_elasticity.shape))
 
     # get scalar
     if elasticity_type == "standard":
+
         rates_adj = (vec_rates.transpose()*vec_elasticity[0:-1].transpose()).transpose() if transpose_q else vec_rates*vec_elasticity[0:-1]
         vec_growth_scalar = np.cumprod(1 + rates_adj, axis = 0)
         ones = np.ones(1) if (len(vec_growth_scalar.shape) == 1) else np.ones((1, vec_growth_scalar.shape[1]))
         vec_growth_scalar = np.concatenate([ones, vec_growth_scalar])
+
     elif elasticity_type == "log":
+
         ones = np.ones(1) if (len(vec_rates.shape) == 1) else np.ones((1, vec_rates.shape[1]))
         vec_growth_scalar = np.cumprod(np.concatenate([ones, vec_rates], axis = 0)**vec_elasticity)
 
@@ -1307,7 +1313,10 @@ def project_growth_scalar_from_elasticity(
 
 
 ##  repeat the first row and prepend
-def prepend_first_element(array: np.ndarray, n_rows: int) -> np.ndarray:
+def prepend_first_element(
+    array: np.ndarray, 
+    n_rows: int
+) -> np.ndarray:
     out = np.concatenate([
         np.repeat(array[0:1], n_rows, axis = 0), array
     ])
@@ -1315,17 +1324,23 @@ def prepend_first_element(array: np.ndarray, n_rows: int) -> np.ndarray:
 
 
 
-##  replace values in a two-dimensional array
-def repl_array_val_twodim(array, val_repl, val_new):
-    # only for two dimensional arrays
+def repl_array_val_twodim(
+    array: np.ndarray, 
+    val_repl: Any, 
+    val_new: Any
+) -> None:
+    """
+    Replace values in a two-dimensional array
+    """
+
     w = np.where(array == val_repl)
     inds = w[0]*len(array[0]) + w[1]
     np.put(array, inds, val_new)
+
     return None
 
 
 
-##  perform a merge to overwrite some values for a new sub-df
 def replace_numerical_column_from_merge(
     df_target: pd.DataFrame,
     df_source: pd.DataFrame,
@@ -1360,6 +1375,7 @@ def replace_numerical_column_from_merge(
     df_source_new = df_source.copy().rename(columns = {field_to_replace: field_temporary})
     df_out = df_target.copy()
     df_out = pd.merge(df_out, df_source_new, on = fields_merge, how = "left")
+
     # find rows where there are new values
     w = np.where(~np.isnan(np.array(df_out[field_temporary])))[0]
     df_out[field_temporary].fillna(0.0, inplace = True)
@@ -1374,7 +1390,6 @@ def replace_numerical_column_from_merge(
 
 
 
-##  quick function to reverse dictionaries
 def reverse_dict(
     dict_in: dict,
     allow_multi_keys: bool = False

@@ -741,6 +741,14 @@ class NonElectricEnergy:
         self.modvar_trns_modeshare_regional = "Regional Transportation Mode Share"
         self.modvar_trns_passenger_distance_traveled = "Total Passenger Distance by Vehicle"
         self.modvar_trns_vehicle_distance_traveled = "Total Vehicle Distance Traveled"
+        self.modvar_trns_vehicle_distance_traveled_biofuels = "Vehicle Distance Traveled from Biofuels"
+        self.modvar_trns_vehicle_distance_traveled_diesel = "Vehicle Distance Traveled from Diesel"
+        self.modvar_trns_vehicle_distance_traveled_electricity = "Vehicle Distance Traveled from Electricity"
+        self.modvar_trns_vehicle_distance_traveled_gasoline = "Vehicle Distance Traveled from Gasoline"
+        self.modvar_trns_vehicle_distance_traveled_hgl = "Vehicle Distance Traveled from Hydrocarbon Gas Liquids"
+        self.modvar_trns_vehicle_distance_traveled_hydrogen = "Vehicle Distance Traveled from Hydrogen"
+        self.modvar_trns_vehicle_distance_traveled_kerosene = "Vehicle Distance Traveled from Kerosene"
+        self.modvar_trns_vehicle_distance_traveled_natural_gas = "Vehicle Distance Traveled from Natural Gas"
 
         # fuel variables dictionary for transportation
         tuple_dicts = self.get_trns_dict_fuel_categories_to_fuel_variables()
@@ -1420,7 +1428,8 @@ class NonElectricEnergy:
                 "Fuel Fraction": "fuel_fraction",
                 "Transportation Modal Energy Consumption": "modal_energy_consumption",
                 ":math:\\text{CH}_4": "ef_ch4",
-                ":math:\\text{N}_2\\text{O}": "ef_n2o"
+                ":math:\\text{N}_2\\text{O}": "ef_n2o",
+                "Vehicle Distance Traveled from": "vehicle_distance_traveled"
             },
             "varreqs_partial",
             True
@@ -3113,14 +3122,12 @@ class NonElectricEnergy:
                 array_trde_dem_cur_by_cat,
                 vec_trde_dem_cur
             )*scalar_length
-            #(array_trde_dem_cur_by_cat.transpose()*vec_trde_dem_cur).transpose() * scalar_length
-            
+
+            # update vehicle demand by category and total mass distance
             if category == self.cat_trde_frgt:
-                # update vehicle demand by category and total mass distance
                 array_trde_vehicle_dem_cur_by_cat = np.nan_to_num(array_trde_dem_cur_by_cat/array_trns_avg_load_freight, 0.0, neginf = 0.0, posinf = 0.0)*scalar_tnrs_length_demfrieght_to_dempass
                 array_trns_total_mass_distance_demand += array_trde_dem_cur_by_cat
             else:
-                # update vehicle demand by category and total passenger distance
                 array_trde_vehicle_dem_cur_by_cat = np.nan_to_num(array_trde_dem_cur_by_cat/array_trns_occ_rate_passenger, 0.0, neginf = 0.0, posinf = 0.0)
                 array_trns_total_passenger_demand += array_trde_dem_cur_by_cat
             
@@ -3186,6 +3193,7 @@ class NonElectricEnergy:
         arr_trns_emissions_ch4 = 0.0
         arr_trns_emissions_co2 = 0.0
         arr_trns_emissions_n2o = 0.0
+
         # get conversion scalars
         scalar_trns_ved_to_enfu_var_units = self.model_attributes.get_variable_unit_conversion_factor(
             self.modvar_enfu_energy_density_volumetric,
@@ -3246,8 +3254,26 @@ class NonElectricEnergy:
                 return_type = "array_base"
             )
 
-            # current demand associate with the fuel (in terms of modvar_trde_demand_pkm)
+            # current demand associate with the fuel (in distance terms of configuration units)
             arr_trns_vehdem_cur_fuel = array_trns_total_vehicle_demand*arr_trns_fuel_fraction_cur
+            
+            # add vmt by fuel to output and get scalar to convert self.modvar_trde_demand_pkm to configuration units
+            modvar_trns_vmt_by_fuel_cut = self.dict_trns_fuel_categories_to_fuel_variables.get(cat_fuel)
+            modvar_trns_vmt_by_fuel_cut = modvar_trns_vmt_by_fuel_cut.get("vehicle_distance_traveled") if (modvar_trns_vmt_by_fuel_cut is not None) else None
+            scalar_trns_vkm_to_config = self.model_attributes.get_scalar(self.modvar_trde_demand_pkm, "length")
+
+            df_out += [
+                (
+                    self.model_attributes.array_to_df(
+                        arr_trns_vehdem_cur_fuel*scalar_trns_vkm_to_config,
+                        modvar_trns_vmt_by_fuel_cut,
+                        reduce_from_all_cats_to_specified_cats = True
+                    )
+                    if modvar_trns_vmt_by_fuel_cut is not None
+                    else None
+                )
+            ]
+            
 
             if (arr_trns_fuel_efficiency_cur is not None):
 

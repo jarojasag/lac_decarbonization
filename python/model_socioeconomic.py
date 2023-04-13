@@ -39,43 +39,64 @@ class Socioeconomic:
 
     ##  FUNCTIONS FOR MODEL ATTRIBUTE DIMENSIONS
 
-    def check_df_fields(self, df_se_trajectories):
+    def check_df_fields(self, 
+        df_se_trajectories: pd.DataFrame
+    ) -> None:
         check_fields = self.required_variables
         # check for required variables
         if not set(check_fields).issubset(df_se_trajectories.columns):
             set_missing = list(set(check_fields) - set(df_se_trajectories.columns))
             set_missing = sf.format_print_list(set_missing)
             raise KeyError(f"Socioconomic projection cannot proceed: The fields {set_missing} are missing.")
+        
+        return None
 
-    def get_required_subsectors(self):
+
+
+    def get_required_subsectors(self
+    ) -> Tuple:
         subsectors = list(sf.subset_df(self.model_attributes.dict_attributes["abbreviation_subsector"].table, {"sector": ["Socioeconomic"]})["subsector"])
         subsectors_base = subsectors.copy()
 
         return subsectors, subsectors_base
+
+
 
     def get_required_dimensions(self):
         ## TEMPORARY - derive from attributes later
         required_doa = [self.model_attributes.dim_time_period]
         return required_doa
 
+
+
     def get_se_input_output_fields(self):
         required_doa = [self.model_attributes.dim_time_period]
         required_vars, output_vars = self.model_attributes.get_input_output_fields(self.required_subsectors)
         return required_vars + self.get_required_dimensions(), output_vars
 
-    # projection for socioeconomic is slightly different;
-    def project(self, df_se_trajectories: pd.DataFrame) -> tuple:
+
+
+
+    def project(self, 
+        df_se_trajectories: pd.DataFrame
+    ) -> tuple:
 
         """
-            the project() method returns a tuple:
+        Returns a tuple:
 
-            (1) the first element of the return tuple is a modified version of df_se_trajectories data frame that includes socioeconomic projections. This should be passed to other models.
+            (1) the first element of the return tuple is a modified version of 
+                df_se_trajectories data frame that includes socioeconomic 
+                projections. This should be passed to other models.
 
-            (2) the second element of the return tuple is a data frame with n_time_periods - 1 rows that represents growth rates in the socioeconomic sector. Row i represents the growth rate from time i to time i + 1.
+            (2) the second element of the return tuple is a data frame with 
+                n_time_periods - 1 rows that represents growth rates in the 
+                socioeconomic sector. Row i represents the growth rate from time 
+                i to time i + 1.
 
-            Function Arguments
-            ------------------
-            df_se_trajectories: pd.DataFrame with input variable trajectories for the Socioeconomic model.
+        Function Arguments
+        ------------------
+        - df_se_trajectories: pd.DataFrame with input variable trajectories for 
+            the Socioeconomic model.
 
         """
         # add population and interpolate if necessary
@@ -98,6 +119,7 @@ class Socioeconomic:
         vec_gnrl_growth_occrate = sf.project_growth_scalar_from_elasticity(vec_rates_gdp, vec_gnrl_elast_occrate_to_gdppc, False, "standard")
         vec_gnrl_occrate = vec_gnrl_init_occrate[0]*vec_gnrl_growth_occrate
         vec_gnrl_num_hh = np.round(vec_pop/vec_gnrl_occrate).astype(int)
+        
         # add to output
         df_out = [
             df_se_trajectories.reset_index(drop = True),

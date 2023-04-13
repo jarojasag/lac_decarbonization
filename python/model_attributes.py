@@ -2320,22 +2320,36 @@ class ModelAttributes:
 
 
 
-    ##  function to merge an array for a variable with partial categories to all categories
     def merge_array_var_partial_cat_to_array_all_cats(self,
         array_vals: np.ndarray,
         modvar: str,
         missing_vals: float = 0.0,
-        output_cats: list = None,
-        output_subsec: str = None
+        output_cats: Union[list, None] = None,
+        output_subsec: Union[str, None] = None
     ) -> np.ndarray:
         """
-            Reformat a partial category array (with partical categories along columns) to place columns appropriately for a full category array. Useful for simplifying matrix operations between variables.
+        Reformat a partial category array (with partical categories along 
+            columns) to place columns appropriately for a full category array. 
+            Useful for simplifying matrix operations between variables.
 
-            - array_vals: input array of data with column categories
-            - modvar: the variable associated with the *input* array. This is used to identify which categories are represented in the array's columns. If None, then output_cats and output_subsec must be specified.
-            - missing_vals: values to set for categories not in array_vals. Default is 0.0.
-            - output_cats: vector of categories associated with the output variable. Only used if modvar == None. The combination of output_cats + output_subsec provide a manual override to the modvar option.
-            - output_subsec: output subsector. Default is None. Only used if modvar == None. The combination of output_cats + output_subsec provide a manual override to the modvar option.
+        Function Arguments
+        ------------------
+        - array_vals: input array of data with column categories
+        - modvar: the variable associated with the *input* array. This is used 
+            to identify which categories are represented in the array's columns. 
+            If None, then output_cats and output_subsec must be specified.
+        
+        Keyword Arguments
+        -----------------
+        - missing_vals: values to set for categories not in array_vals. Default 
+            is 0.0.
+        - output_cats: vector of categories associated with the output variable. 
+            Only used if modvar == None. The combination of 
+            output_cats + output_subsec provide a manual override to the modvar 
+            option.
+        - output_subsec: output subsector. Default is None. Only used if 
+            modvar is None. The combination of output_cats + output_subsec 
+            provide a manual override to the modvar option.
         """
 
         # check inputs
@@ -2378,14 +2392,21 @@ class ModelAttributes:
             return array_default
 
 
-    ##  function to merge an array for a variable with partial categories to all categories
-    def reduce_all_cats_array_to_partial_cat_array(self, array_vals: np.ndarray, modvar: str) -> np.ndarray:
+
+    def reduce_all_cats_array_to_partial_cat_array(self, 
+        array_vals: np.ndarray, 
+        modvar: str
+    ) -> np.ndarray:
         """
-            Reduce an all category array (with all categories along columns) to columns associated with the variable modvar. Inverse of merge_array_var_partial_cat_to_array_all_cats.
+        Reduce an all category array (with all categories along columns) to 
+            columns associated with the variable modvar. Inverse of 
+            merge_array_var_partial_cat_to_array_all_cats.
 
-            - array_vals: input array of data with column categories
-
-            - modvar: the variable associated with the desired *output* array. This is used to identify which categories should be selected.
+        Function Arguments
+        ------------------
+        - array_vals: input array of data with column categories
+        - modvar: the variable associated with the desired *output* array. This 
+            is used to identify which categories should be selected.
         """
 
         # check variable first
@@ -2604,13 +2625,23 @@ class ModelAttributes:
         return output_unit
 
 
-    ##  function to get gwp multiplier associated with a gas
-    def get_gwp(self, gas: str, gwp: int = None) -> float:
-        """
-            for a given gas, get the scalar to convert to CO2e using the specified global warming potential *gwp*
-            - gas: a gas defined in the emission_gas attribute table
 
-            - gwp: Default is None. Global warming potential of "gas" over "gwp" time period (gwp is a number of years, e.g., 20, 100, 500).
+    def get_gwp(self, 
+        gas: str, 
+        gwp: Union[int, None] = None
+    ) -> float:
+        """
+        For a given gas, get the scalar to convert to CO2e using the specified 
+            global warming potential *gwp*
+
+        Function Arguments
+        ------------------
+        - gas: a gas defined in the emission_gas attribute table
+        
+        Keyword Arguments
+        -----------------
+        - gwp: Default is None. Global warming potential of "gas" over "gwp" 
+            time period (gwp is a number of years, e.g., 20, 100, 500).
         """
         # none checks
         if gas is None:
@@ -2632,16 +2663,25 @@ class ModelAttributes:
             raise KeyError(f"Invalid gas '{gas}': defined gasses are {valid_gasses}.")
 
 
-    ##  function to get the length equivalent scalar
-    def get_length_equivalent(self, length: str, length_to_match: str = None) -> float:
+
+    def get_length_equivalent(self, 
+        length: str, 
+        length_to_match: Union[str, None] = None
+    ) -> float:
         """
-            for a given length unit *length*, get the scalar to convert to units *length_to_match*
+        for a given length unit *length*, get the scalar to convert to units 
+            *length_to_match*
 
-            Function Arguments
-            ------------------
-            length: a unit of length defined in the unit_length attribute table
-
-            length_to_match: Default is None. A unit of length to match. The scalar a that is returned is multiplied by length, i.e., length*a = length_to_match. If None (default), return the configuration default.
+        Function Arguments
+        ------------------
+        - length: a unit of length defined in the unit_length attribute table
+        
+        Keyword Arguments
+        -----------------
+        - length_to_match: Default is None. A unit of length to match. The 
+            scalar a that is returned is multiplied by length, i.e., 
+            length*a = length_to_match. If None (default), return the 
+            configuration default.
         """
         out = self.get_unit_equivalent(
             length,
@@ -2655,16 +2695,25 @@ class ModelAttributes:
         return out
 
 
-    ##  function to get the mass equivalent scalar
-    def get_mass_equivalent(self, mass: str, mass_to_match: str = None) -> float:
+
+    def get_mass_equivalent(self, 
+        mass: str, 
+        mass_to_match: Union[str, None] = None
+    ) -> float:
         """
-            for a given mass unit *mass*, get the scalar to convert to units *mass_to_match*
+        For a given mass unit *mass*, get the scalar to convert to units 
+            *mass_to_match*
 
-            Function Arguments
-            ------------------
-            mass: a unit of mass defined in the unit_mass attribute table
+        Function Arguments
+        ------------------
+        - mass: a unit of mass defined in the unit_mass attribute table
 
-            mass_to_match: Default is None. A unit of mass to match. The scalar a that is returned is multiplied by mass, i.e., mass*a = mass_to_match. If None (default), return the configuration default.
+        Keyword Arguments
+        -----------------
+        - mass_to_match: Default is None. A unit of mass to match. The scalar a 
+            that is returned is multiplied by mass, i.e., 
+            mass*a = mass_to_match. If None (default), return the configuration 
+            default.
         """
         out = self.get_unit_equivalent(
             mass,
@@ -2678,16 +2727,26 @@ class ModelAttributes:
         return out
 
 
-    ##  get the monetary equivalent scalar
-    def get_monetary_equivalent(self, monetary: str, monetary_to_match: str = None) -> float:
+
+    def get_monetary_equivalent(self, 
+        monetary: str, 
+        monetary_to_match: str = None
+    ) -> float:
         """
-            for a given monetary unit *monetary*, get the scalar to convert to units *monetary_to_match*
+        For a given monetary unit *monetary*, get the scalar to convert to units 
+            *monetary_to_match*
 
-            Function Arguments
-            ------------------
-            monetary: a unit of monetary defined in the unit_monetary attribute table
+        Function Arguments
+        ------------------
+        - monetary: a unit of monetary defined in the unit_monetary attribute 
+            table
 
-            monetary_to_match: Default is None. A unit of monetary to match. The scalar a that is returned is multiplied by monetary, i.e., monetary*a = monetary_to_match. If None (default), return the configuration default.
+        Keyword Arguments
+        -----------------
+        - monetary_to_match: Default is None. A unit of monetary to match. The 
+            scalar a that is returned is multiplied by monetary, i.e., 
+            monetary*a = monetary_to_match. If None (default), return the 
+            configuration default.
         """
         out = self.get_unit_equivalent(
             monetary,
@@ -2701,16 +2760,25 @@ class ModelAttributes:
         return out
 
 
-    ##  get the power equivalent scalar
-    def get_power_equivalent(self, power: str, power_to_match: str = None) -> float:
+
+    def get_power_equivalent(self, 
+        power: str, 
+        power_to_match: str = None
+    ) -> float:
         """
-            for a given power unit *power*, get the scalar to convert to units *power_to_match*
+        For a given power unit *power*, get the scalar to convert to units 
+            *power_to_match*
 
-            Function Arguments
-            ------------------
-            power: a unit of power defined in the unit_power attribute table
+        Function Arguments
+        ------------------
+        - power: a unit of power defined in the unit_power attribute table
 
-            power_to_match: Default is None. A unit of power to match. The scalar a that is returned is multiplied by power, i.e., power*a = power_to_match. If None (default), return the configuration default.
+        Keyword Arguments
+        -----------------
+        - power_to_match: Default is None. A unit of power to match. The scalar 
+            a that is returned is multiplied by power, i.e., 
+            power*a = power_to_match. If None (default), return the 
+            configuration default.
         """
         out = self.get_unit_equivalent(
             power,
@@ -2724,13 +2792,25 @@ class ModelAttributes:
         return out
 
 
-    ##  function to get a volume equivalent scalar
-    def get_volume_equivalent(self, volume: str, volume_to_match: str = None) -> float:
-        """
-            for a given volume unit *volume*, get the scalar to convert to units *volume_to_match*
-            - volume: a unit of volume defined in the unit_volume attribute table
 
-            - volume_to_match: Default is None. A unit of volume to match. The scalar a that is returned is multiplied by volume, i.e., volume*a = volume_to_match. If None (default), return the configuration default.
+    def get_volume_equivalent(self, 
+        volume: str, 
+        volume_to_match: str = None
+    ) -> float:
+        """
+        For a given volume unit *volume*, get the scalar to convert to units 
+            *volume_to_match*
+
+        Function Arguments
+        ------------------
+        - volume: a unit of volume defined in the unit_volume attribute table
+
+        Keyword Arguments
+        -----------------
+        - volume_to_match: Default is None. A unit of volume to match. The 
+            scalar a that is returned is multiplied by volume, i.e., 
+            volume*a = volume_to_match. If None (default), return the 
+            configuration default.
         """
         out = self.get_unit_equivalent(
             volume,
@@ -2744,7 +2824,7 @@ class ModelAttributes:
         return out
 
 
-    # get scalar
+
     def get_scalar(self,
         modvar: str,
         return_type: str = "total"
@@ -2886,27 +2966,35 @@ class ModelAttributes:
         df_target: pd.DataFrame,
         df_source: pd.DataFrame,
         variables_transfer: list,
-        fields_index: list = None,
+        fields_index: Union[list, None] = None,
         join_type: str = "concatenate",
         overwrite_targets: bool = False,
         stop_on_error: bool = True
     ) -> pd.DataFrame:
         """
-            Transfar SISEPUEDE model variables from source data frame to target data frame.
+        Transfar SISEPUEDE model variables from source data frame to target data 
+            frame.
 
-            Function Arguments
-            ------------------
-            - df_target: data frame to receive variables
-            - df_source: data frame to send variables from
-            - variables_transfer: list of SISEPUEDE model variables to transfer from source to target
-            - fields_index: index fields shared by each data frame
-            - join_type: valid values are "concatenate" and "merge". If index field(s) ordering is the same, concatenation is recommended.
-            - overwrite_targets: overwrite existing model variable fields in df_target if they exist? Default is false.
-            - stop_on_error: stop the transfer on an error. If False, variables that are not available in df_source will be ignored.
+        Function Arguments
+        ------------------
+        - df_target: data frame to receive variables
+        - df_source: data frame to send variables from
+        - variables_transfer: list of SISEPUEDE model variables to transfer from 
+            source to target
 
-            Notes
-            -----
-            * Assumes that variable schema are unique for each model variable
+        Keyword Arguments
+        -----------------
+        - fields_index: index fields shared by each data frame
+        - join_type: valid values are "concatenate" and "merge". If index 
+            field(s) ordering is the same, concatenation is recommended.
+        - overwrite_targets: overwrite existing model variable fields in 
+            df_target if they exist? Default is false.
+        - stop_on_error: stop the transfer on an error. If False, variables that 
+            are not available in df_source will be ignored.
+
+        Notes
+        -----
+        * Assumes that variable schema are unique for each model variable
         """
         dfs_extract = [df_target]
         fields_index = [] if (fields_index is None) else fields_index
@@ -4442,30 +4530,38 @@ class ModelAttributes:
 
 
 
-    # returns ordered variable (by attribute key) with categories replaced
-    def switch_variable_category(self, source_subsector: str, target_variable: str, attribute_field: str, cats_to_switch = None, dict_force_override = None) -> list:
+    def switch_variable_category(self, 
+        source_subsector: str, 
+        target_variable: str, 
+        attribute_field: str, 
+        cats_to_switch = None, 
+        dict_force_override = None
+    ) -> list:
         """
-            attribute_field is the field in the primary category attriubte table to use for the switch;
-            if dict_force_override is specified, then this dictionary will be used to switch categories
+        attribute_field is the field in the primary category attriubte table to 
+            use for the switch; if dict_force_override is specified, then this 
+            dictionary will be used to switch categories
 
-            cats_to_switch to can be specified to only operate on a subset of source categorical values
+        cats_to_switch can be specified to only operate on a subset of source 
+            categorical values
         """
 
         sf.check_keys(self.dict_model_variable_to_subsector, [target_variable])
-        target_subsector = self.dict_model_variable_to_subsector[target_variable]
+        target_subsector = self.dict_model_variable_to_subsector.get(target_variable)
         pycat_primary_source = self.get_subsector_attribute(source_subsector, "pycategory_primary")
 
-        if dict_force_override == None:
+        if dict_force_override is None:
             key_dict = f"{pycat_primary_source}_to_{attribute_field}"
             sf.check_keys(self.dict_attributes[pycat_primary_source].field_maps, [key_dict])
             dict_repl = self.dict_attributes[pycat_primary_source].field_maps[key_dict]
         else:
             dict_repl = dict_force_override
-
-        if cats_to_switch == None:
-            cats_all = self.dict_attributes[pycat_primary_source].key_values
-        else:
-            cats_all = self.check_category_restrictions(cats_to_switch, self.dict_attributes[pycat_primary_source])
+        
+        cats_all = (
+            self.dict_attributes[pycat_primary_source].key_values
+            if cats_to_switch is None
+            else self.check_category_restrictions(cats_to_switch, self.dict_attributes.get(pycat_primary_source))
+        )
         cats_target = [dict_repl[x].replace("`", "") for x in cats_all]
 
         # use the 'dict_force_override_vrp_vvs_cats' override dictionary in build_varlist here
@@ -4478,15 +4574,27 @@ class ModelAttributes:
     #    INTERNALLY-CALCULATED VARIABLES    #
     #########################################
 
-    ##  retrives mutually-exclusive fields used to sum to generate internal variables
-    def get_mutex_cats_for_internal_variable(self, subsector: str, variable: str, attribute_sum_specification_field: str, return_type: str = "fields"):
+ 
+    def get_mutex_cats_for_internal_variable(self, 
+        subsector: str, 
+        variable: str, 
+        attribute_sum_specification_field: str, 
+        return_type: str = "fields"
+    ) -> Union[List[str], None]:
+        """
+        retrives mutually-exclusive fields used to sum to generate internal 
+            variables
+        """
         # attribute_sum_specification_field gives the field in the category attribute table that defines what to sum over (e.g., gdp component in the value added)
+       
         # get categories to sum over
         pycat_primary = self.get_subsector_attribute(subsector, "pycategory_primary")
         df_tmp = self.dict_attributes[pycat_primary].table
         sum_cvs = list(df_tmp[df_tmp[attribute_sum_specification_field].isin([1])][pycat_primary])
+        
         # get the variable list, check, and add to output
         fields_sum = self.build_varlist(subsector, variable_subsec = variable, restrict_to_category_values = sum_cvs)
+        
         # check return types
         if return_type == "fields":
             return fields_sum
@@ -4497,27 +4605,28 @@ class ModelAttributes:
 
 
 
-    ##  useful function for calculating simple driver*emission factor emissions
-    def get_simple_input_to_output_emission_arrays(
-        self,
+    ##  
+    def get_simple_input_to_output_emission_arrays(self,
         df_ef: pd.DataFrame,
         df_driver: pd.DataFrame,
         dict_vars: dict,
         variable_driver: str
     ) -> list:
         """
-        NOTE: this only works w/in subsector. Returns a list of dataframes.
+        Calculate simple driver*emission factor emissions. NOTE: this only works 
+            w/in subsector. Returns a list of dataframes.
 
+        Function Arguments
+        ------------------
         df_ef: data frame that contains the emission factor variables
-
         df_driver: data frame containing the variables driving emissions
-
-        dict_vars: map the emission factor variable to a tuple: (emission model variable, driver_unit_type, scale_factor)
-
-            - driver_unit_type: a unit dimension--e.g., length, area, volume, mass, or energy--that relates a driver to a factor. Used for unit correction and overriden by scale_factor.
-
-            - scale_factor: a factor applied to the products to ensure proper unit conversion. Overrides connection from driver_unit_type.
-
+        dict_vars: map the emission factor variable to a tuple: (emission model 
+            variable, driver_unit_type, scale_factor)
+            - driver_unit_type: a unit dimension--e.g., length, area, volume, 
+                mass, or energy--that relates a driver to a factor. Used for 
+                unit correction and overriden by scale_factor.
+            - scale_factor: a factor applied to the products to ensure proper 
+                unit conversion. Overrides connection from driver_unit_type.
         variable_driver:
         """
         # check if

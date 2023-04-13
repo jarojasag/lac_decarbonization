@@ -3929,9 +3929,9 @@ class ElectricEnergy:
 
 
 
-    ##  format CapitalCost, FixedCost, and VariableCost for NemoMod
     def format_nemomod_table_costs_technology(self,
         df_elec_trajectories: pd.DataFrame,
+        attribute_fuel: Union[AttributeTable, None] = None,
         flag_dummy_price: Union[int, float] = -999,
         minimum_dummy_price: Union[int, float] = 100,
         regions: Union[List[str], None] = None,
@@ -3948,6 +3948,8 @@ class ElectricEnergy:
 
         Keyword Arguments
         -----------------
+        - attribute_fuel: attribute table used for fuels. If None, defaults to 
+            self.model_attributes default
         - flag_dummy_price: initial price to use, which is later replaced. 
             Should be a large magnitude negative number.
         - minimum_dummy_price: minimum price for dummy technologies
@@ -3960,6 +3962,17 @@ class ElectricEnergy:
             * "FixedCost"
             * "VariableCost"
         """
+
+        # initialize some attribute components
+        attr_enfu = (
+            self.model_attributes.get_attribute_table(self.model_attributes.subsec_name_enfu) 
+            if not isinstance(attribute_fuel, AttributeTable) 
+            else attribute_fuel
+        )
+        pycat_enfu = self.model_attributes.get_subsector_attribute(
+            self.model_attributes.subsec_name_enfu,
+            "pycategory_primary"
+        )
 
         dict_return = {}
         flag_dummy_price = min(flag_dummy_price, -1)
@@ -4022,12 +4035,57 @@ class ElectricEnergy:
             )
         )
 
+        
+        ##  VariableCost -- Pull Variable O&M and Add Fuel Costs
+
+        # get fuel costs -- specify energy & monetary units in terms of self.modvar_entc_nemomod_variable_cost
+        units_enfu_costs_monetary = self.model_attributes.get_variable_characteristic(
+            self.modvar_entc_nemomod_variable_cost,
+            self.model_attributes.varchar_str_unit_monetary
+        )
+        arr_enfu_costs = self.model_energy.get_enfu_fuel_costs_per_energy(
+            df_elec_trajectories,
+            modvar_for_units_energy = self.modvar_entc_nemomod_variable_cost,
+            units_monetary = units_enfu_costs_monetary
+        )
+
+        # get variable costs, add fuel costs, and create data frame to pass
+        df_entc_variable_costs = self.model_attributes.get_standard_variables(
+            df_elec_trajectories,
+            self.modvar_entc_nemomod_variable_cost,
+            return_type = "data_frame"
+        )
+
+        # add time period and get categories associated with each field (ordered the same as fields)
+        df_entc_variable_costs[self.model_attributes.dim_time_period] = df_elec_trajectories[self.model_attributes.dim_time_period]
+        cats_df_variable_costs = self.model_attributes.get_variable_categories(self.modvar_entc_nemomod_variable_cost)
+
+        # loop over techs and find any associated fuels; if so, pull from arr_enfu_costs
+        dict_cat_pp_to_cat_enfu = self.model_attributes.get_ordered_category_attribute(
+            self.model_attributes.subsec_name_entc,
+            f"electricity_generation_{pycat_enfu}",
+            clean_attribute_schema_q = True,
+            return_type = dict,
+            skip_none_q = True
+        )
+
+        for cat_entc in enumerate(cats_df_variable_costs):
+            
+            j, cat_entc = cat_entc
+            cat_enfu = dict_cat_pp_to_cat_enfu.get(cat_entc)
+
+            if cat_enfu is not None:
+                
+                ind_enfu = attr_enfu.get_key_value_index(cat_enfu)
+                field_varcost = list(df_entc_variable_costs.columns)[j]
+               
+                df_entc_variable_costs[field_varcost] = np.array(df_entc_variable_costs[field_varcost]) + arr_enfu_costs[:, ind_enfu]
+
         #
         # dummy techs are high-cost technologies that help ensure there is no unmet demand in the system if other constraints create an issue
         # https://sei-international.github.io/NemoMod.jl/stable/model_concept/
         #
-
-        # VariableCost
+        
         df_append = self.build_dummy_tech_cost(
             flag_dummy_price, 
             cost_type = "variable", 
@@ -4036,7 +4094,7 @@ class ElectricEnergy:
 
         dict_return.update(
             self.format_model_variable_as_nemomod_table(
-                df_elec_trajectories,
+                df_entc_variable_costs,
                 self.modvar_entc_nemomod_variable_cost,
                 self.model_attributes.table_nemomod_variable_cost,
                 [
@@ -8068,6 +8126,7 @@ class ElectricEnergy:
             dict_out.update(
                 self.format_nemomod_table_costs_technology(
                     df_elec_trajectories,
+                    attribute_fuel = attribute_fuel,
                     regions = regions
                 )
             )

@@ -2336,6 +2336,7 @@ def transformation_trns_fuel_shift_to_target(
     field_region: str = "nation",
     magnitude_type: str = "baseline_additive",
     model_energy: Union[me.NonElectricEnergy, None] = None,
+    modvars_source: Union[List[str], None] = None,
     regions_apply: Union[List[str], None] = None,
     return_modvars_only: bool = False,
     strategy_id: Union[int, None] = None
@@ -2367,8 +2368,13 @@ def transformation_trns_fuel_shift_to_target(
             * "baseline_scalar": multiply baseline value by magnitude
             * "final_value": magnitude is the final value for the variable to
                 take (achieved in accordance with vec_ramp)
+            * "transfer_scalar": apply scalar to outbound categories to
+                calculate final transfer magnitude. 
     - model_energy: optional NonElectricEnergy object to pass to
         transformation_general
+    - modvars_source: optional list of fuel fraction model variables to use as a
+        source for transfering to target fuel. NOTE: must be specified within 
+        this function as a model variable.
     - regions_apply: optional set of regions to use to define strategy. If None,
         applies to all regions.
     - return_modvars_only: return the model variables that define fuel fractions
@@ -2404,7 +2410,8 @@ def transformation_trns_fuel_shift_to_target(
     dict_modvar_specs = dict((k, v) for k, v in dict_modvar_specs.items() if (k in modvars) and (isinstance(v, int) or isinstance(v, float)))
     dict_modvar_specs = dict_modvar_specs_def if (sum(list(dict_modvar_specs.values())) != 1.0) else dict_modvar_specs
 
-    modvars_source = [x for x in modvars if x not in dict_modvar_specs.keys()]
+    modvars_source = modvars if (modvars_source is None) else [x for x in modvars_source if x in modvars]
+    modvars_source = [x for x in modvars_source if (x not in dict_modvar_specs.keys())] 
     modvars_target = [x for x in modvars if x in dict_modvar_specs.keys()]
     cats_all = [set(model_attributes.get_variable_categories(x)) for x in modvars_target]
     cats_all = set.intersection(*cats_all)
@@ -2412,69 +2419,156 @@ def transformation_trns_fuel_shift_to_target(
    
     # set some parameters
     subsec = model_attributes.subsec_name_trns
-    magnitude_relative_to_baseline = (magnitude_type in ["baseline_scalar", "baseline_additive"])
+    magnitude_relative_to_baseline = (
+        magnitude_type in [
+            "baseline_scalar", 
+            "baseline_additive",
+            "transfer_scalar"
+        ]
+    )
 
 
     ##  ITERATE OVER REGIONS AND MODVARS TO BUILD TRANSFORMATION
 
     for region in all_regions:
 
-        df_in = df_input[df_input[field_region] == region].sort_values(by = [model_attributes.dim_time_period]).reset_index(drop = True)
+        df_in = (
+            df_input[
+                df_input[field_region] == region
+            ]
+            .sort_values(by = [model_attributes.dim_time_period])
+            .reset_index(drop = True)
+        )
         df_in_new = df_in.copy()
         vec_tp = list(df_in[model_attributes.dim_time_period])
         n_tp = len(df_in)
 
         if region in regions_apply:
             for cat in cats_all:
+                
+                # initialize model variables that are adjusted
+                modvars_adjust = []
+                fields_source = []
+                fields_target = []
 
-                fields = [
-                    model_attributes.build_varlist(
-                        subsec,
-                        x,
-                        restrict_to_category_values = [cat]
-                    )[0] for x in modvars_target
-                ]
+                for modvar in modvars_source + modvars_target:
+                    if cat in model_attributes.get_variable_categories(modvar):
+
+                        modvars_adjust.append(modvar) 
+
+                        fields_target.append(
+                            model_attributes.build_varlist(
+                                subsec,
+                                modvar,
+                                restrict_to_category_values = [cat]
+                            )[0]
+                        ) if (modvar in modvars_target) else None
+
+                        fields_source.append(
+                            model_attributes.build_varlist(
+                                subsec,
+                                modvar,
+                                restrict_to_category_values = [cat]
+                            )[0]
+                        ) if (modvar in modvars_source) else None
+
+                #fields_target = [
+                #    model_attributes.build_varlist(
+                #        subsec,
+                #        x,
+                #        restrict_to_category_values = [cat]
+                #    )[0] for x in modvars_target
+                #]
 
                 # get some baseline values
+                """
                 tp_baseline = (n_tp - 1) if (baseline_period == "final") else 0
-                vec_initial_vals = np.array(df_in[fields].iloc[tp_baseline]).astype(float)
+                vec_initial_vals = np.array(df_in[fields_target].iloc[tp_baseline]).astype(float)
                 val_initial_target = vec_initial_vals.sum() if magnitude_relative_to_baseline else 0.0
+                vec_initial_distribution = np.nan_to_num(vec_initial_vals/vec_initial_vals.sum(), 1.0, posinf = 1.0)
+                """
+                # get some baseline values
+                tp_baseline = (n_tp - 1) if (baseline_period == "final") else 0
+                vec_target_baseline_total = np.array(df_in[fields_target]).astype(float).sum(axis = 1)
+                vec_initial_vals = np.array(df_in[fields_target].iloc[tp_baseline]).astype(float)
                 vec_initial_distribution = np.nan_to_num(vec_initial_vals/vec_initial_vals.sum(), 1.0, posinf = 1.0)
 
                 # set magnitude
-                magnitude = vec_initial_vals.sum()*magnitude if (magnitude_type in ["baseline_scalar"]) else magnitude
+                magnitude_shift = vec_initial_vals.sum()*magnitude if (magnitude_type in ["baseline_scalar"]) else magnitude
+                if magnitude_type == "transfer_scalar":
+
+                    magnitude_new = 0.0
+
+                    for modvar in modvars_source:
+                        if cat in model_attributes.get_variable_categories(modvar):
+                            field_cur = model_attributes.build_varlist(
+                                subsec,
+                                modvar,
+                                restrict_to_category_values = [cat]
+                            )[0]
+                            
+                            magnitude_new += float(df_in[field_cur].iloc[tp_baseline])*magnitude
+
+                    magnitude_shift = magnitude_new
+
 
                 # get the current total value of fractions
-                vec_final_vals = np.array(df_in[fields].iloc[n_tp - 1]).astype(float)
+                """
+                vec_final_vals = np.array(df_in[fields_target].iloc[n_tp - 1]).astype(float)
                 val_final_target = sum(vec_final_vals)
-                target_shift = float(sf.vec_bounds(magnitude + val_initial_target, (0.0, 1.0)))#*dict_modvar_specs.get(modvar_target)
+                target_shift = float(sf.vec_bounds(magnitude_shift + val_initial_target, (0.0, 1.0)))
                 scale_non_elec = np.nan_to_num((1 - target_shift)/(1 - val_final_target), 0.0, posinf = 0.0)
+                
+                vec_target_baseline = np.array(df_in[fields_target]).astype(float).sum(axis = 1)
+                vec_bounds = np.array(df_in[fields_target + fields_source]).astype(float).sum(axis = 1)
+                vec_target_shift = float(sf.vec_bounds(magnitude_shift + val_initial_target, (0.0, 1.0)))*vec_ramp
+                scale_non_elec = np.nan_to_num((vec_bounds - vec_target_shift)/(vec_bounds - vec_target_baseline), 0.0, posinf = 0.0)
 
-                target_distribution = magnitude*np.array([dict_modvar_specs.get(x) for x in modvars_target]) + val_initial_target*vec_initial_distribution
-                target_distribution /= max(magnitude + val_initial_target, 1.0) 
+                target_distribution = magnitude_shift*np.array([dict_modvar_specs.get(x) for x in modvars_target]) + val_initial_target*vec_initial_distribution
+                target_distribution /= max(magnitude_shift + val_initial_target, 1.0) 
+                target_distribution = np.nan_to_num(target_distribution, 0.0, posinf = 0.0)
+
+                dict_target_distribution = dict((x, target_distribution[i]) for i, x in enumerate(modvars_target))
+                """
+                vec_bounds = np.array(df_in[fields_target + fields_source]).astype(float).sum(axis = 1)
+
+                vec_magnitude_base = vec_target_baseline_total if magnitude_relative_to_baseline else np.zeros(len(vec_target_baseline_total))
+                val_initial_target = vec_magnitude_base[tp_baseline]
+                vec_target_with_ramp = sf.vec_bounds(magnitude_shift*vec_ramp + vec_magnitude_base, (0.0, 1.0))
+                scale_non_elec = np.nan_to_num((vec_bounds - vec_target_with_ramp)/(vec_bounds - vec_target_baseline_total), 0.0, posinf = 0.0)
+
+                target_distribution = magnitude_shift*np.array([dict_modvar_specs.get(x) for x in modvars_target]) + val_initial_target*vec_initial_distribution
+                target_distribution /= max(magnitude_shift + val_initial_target, 1.0) 
                 target_distribution = np.nan_to_num(target_distribution, 0.0, posinf = 0.0)
 
                 dict_target_distribution = dict((x, target_distribution[i]) for i, x in enumerate(modvars_target))
 
-                modvars_adjust = []
-                for modvar in modvars:
-                    modvars_adjust.append(modvar) if cat in model_attributes.get_variable_categories(modvar) else None
-
                 # loop over adjustment variables to build new trajectories
                 for modvar in modvars_adjust:
+                    
                     field_cur = model_attributes.build_varlist(
                         subsec,
                         modvar,
                         restrict_to_category_values = [cat]
                     )[0]
+
+                    """
                     vec_old = np.array(df_in[field_cur])
                     val_final = vec_old[n_tp - 1]
                     val_new = (
                         np.nan_to_num(val_final, 0.0, posinf = 0.0)*scale_non_elec 
                         if (modvar not in modvars_target) 
-                        else dict_target_distribution.get(modvar)#magnitude*dict_modvar_specs.get(modvar)
+                        else dict_target_distribution.get(modvar)#magnitude_shift*dict_modvar_specs.get(modvar)
                     )
                     vec_new = vec_ramp*val_new + (1 - vec_ramp)*vec_old
+                    """
+                    # NOTE: scale_non_elec (defined above) includes the mix that is (1 - vec_ramp) if all modvars are specified
+                    vec_old = np.array(df_in[field_cur])
+                    vec_new = (
+                        np.nan_to_num(vec_old*scale_non_elec, 0.0, posinf = 0.0) 
+                        if (modvar not in modvars_target) 
+                        else dict_target_distribution.get(modvar)*vec_ramp + (1 - vec_ramp)*vec_old
+                    )
 
                     df_in_new[field_cur] = vec_new
 
