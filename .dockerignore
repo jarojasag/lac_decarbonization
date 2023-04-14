@@ -1,0 +1,6 @@
+# ignore output and git
+./out
+./.git
+
+# ignore markdown files
+*.md
