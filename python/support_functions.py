@@ -8,7 +8,7 @@ from typing import *
 import warnings
 
 
-##  using a dictionary, add fields to a data frame in place
+
 def add_data_frame_fields_from_dict(
     df: pd.DataFrame,
     dict_field_vals: dict,
@@ -67,7 +67,7 @@ def add_data_frame_fields_from_dict(
     return df[fields_out]
 
 
-##  function to "projct" backwards waste that was deposited (used only in the absence of historical data)
+
 def back_project_array(
     array_in: np.ndarray,
     n_periods: int = 10,
@@ -76,18 +76,22 @@ def back_project_array(
     n_periods_for_gr: int = 10
 ) -> np.ndarray:
     """
-        "Project" backwards data based on near-future trends (used only in the absence of historical data)
+    "Project" backwards data based on near-future trends (used only in the 
+        absence of historical data)
 
-        Function Arguments
-        ------------------
-        - array_in: array to use for back projection
+    Function Arguments
+    ------------------
+    - array_in: array to use for back projection
 
-        Keyword Arguments
-        -----------------
-        - n_periods: number of periods to back project
-        - bp_gr: float specifying the average growth rate for row entries during the back projection periods
-        - use_mean_forward: default is False. If True, use the average empirical growth rate in array_in for the first 'n_periods_for_gr' periods
-        - n_periods_for_gr: if use_mean_forward == True, number of periods to look forward (rows 1:n_periods_for_gr)
+    Keyword Arguments
+    -----------------
+    - n_periods: number of periods to back project
+    - bp_gr: float specifying the average growth rate for row entries during the 
+        back projection periods
+    - use_mean_forward: default is False. If True, use the average empirical 
+        growth rate in array_in for the first 'n_periods_for_gr' periods
+    - n_periods_for_gr: if use_mean_forward == True, number of periods to look 
+        forward (rows 1:n_periods_for_gr)
     """
 
     if use_mean_forward:
@@ -104,7 +108,6 @@ def back_project_array(
 
 
 
-##  build a dictionary from a dataframe
 def build_dict(
     df_in: pd.DataFrame,
     dims = None,
@@ -225,7 +228,9 @@ def check_binary_fields(
     df_in: pd.DataFrame,
     field: str
 ) -> pd.DataFrame:
-
+    """
+    Replace nas in a field with 0s
+    """
     w1 = list(np.where(df_in[field].isna())[0])
     if len(w1) > 0:
         df_in[field].iloc[w1] = 0
@@ -234,27 +239,33 @@ def check_binary_fields(
 
 
 
-# check that the data frame contains required information
 def check_fields(
     df: pd.DataFrame,
     fields: list,
     msg_prepend: str = "Required fields: ",
     throw_error_q = True
-):
+) -> bool:
+    """
+    Check that the data frame `df` contains required fields `fields`.
+
+    Keyword Arguments
+    -----------------
+    - msg_prepend: optional message to prepend to errors for tracking
+    - throw_error_q: throw an error if fields not found? If False, returns Bool
+    """
     s_fields_df = set(df.columns)
     s_fields_check = set(fields)
     if s_fields_check.issubset(s_fields_df):
         return True
-    else:
-        fields_missing = format_print_list(s_fields_check - s_fields_df)
-        if throw_error_q:
-            raise KeyError(f"{msg_prepend}{fields_missing} not found in the data frame.")
 
-        return False
+    fields_missing = format_print_list(s_fields_check - s_fields_df)
+    if throw_error_q:
+        raise KeyError(f"{msg_prepend}{fields_missing} not found in the data frame.")
+
+    return False
 
 
 
-# check that a dictionary contains the required keys
 def check_keys(
     dict_in: dict,
     keys: list,
@@ -281,19 +292,18 @@ def check_keys(
     s_keys_check = set(keys)
     if s_keys_check.issubset(s_keys_dict):
         return True
-    else:
-        fields_missing = format_print_list(s_keys_check - s_keys_dict)
-        msg = f"Required keys {fields_missing} not found in the dictionary."
 
-        if throw_error_q:
-            raise KeyError(msg)
-        else:
-            warnings.warn(msg)
-            return False
+    fields_missing = format_print_list(s_keys_check - s_keys_dict)
+    msg = f"Required keys {fields_missing} not found in the dictionary."
+    if throw_error_q:
+        raise KeyError(msg)
+
+    warnings.warn(msg)
+
+    return False
 
 
 
-##  check path and create a directory if needed
 def check_path(
     fp: str,
     create_q: bool = False,
@@ -330,41 +340,71 @@ def check_path(
 
 
 
-##  check row sums to ensure they add to 1
 def check_row_sums(
     array: np.ndarray,
     sum_restriction: float = 1,
     thresh_correction: float = 0.001,
     msg_pass: str = ""
 ) -> np.ndarray:
+    """
+    Check row sums to ensure they add to 1
+    """
     sums = array.sum(axis = 1)
     max_diff = np.max(np.abs(sums - sum_restriction))
+
     if max_diff > thresh_correction:
         raise ValueError(f"Invalid row sums in array{msg_pass}. The maximum deviance is {max_diff}, which is greater than the threshold for correction.")
-    else:
-        return (array.transpose()/sums).transpose()
+
+    arr_out = (array.transpose()/sums).transpose()
+
+    return arr_out
 
 
-
-##  print a set difference; sorts to ensure easy reading for user
 def check_set_values(
     subset: set,
     superset: set,
     str_append: str = ""
-) -> str:
+) -> None:
+    """
+    Throw an error if `subset` is not contained within `superset`. Use 
+        `str_append` for error tracking. 
+    """
     if not set(subset).issubset(set(superset)):
         invalid_vals = list(set(subset) - set(superset))
         invalid_vals.sort()
         invalid_vals = format_print_list(invalid_vals)
         raise ValueError(f"Invalid values {invalid_vals} found{str_append}.")
 
+    return None
 
 
-##  clean names of an input table to eliminate spaces/unwanted characters
+
 def clean_field_names(
     nms: list,
-    dict_repl: dict = {"  ": " ", " ": "_", "$": "", "\\": "", "\$": "", "`": "", "-": "_", ".": "_", "\ufeff": "", ":math:text": "", "{": "", "}": ""}
+    dict_repl: Union[dict, None] = None
 ) -> list:
+    """
+    Clean names of an input table to eliminate spaces/unwanted characters
+    """
+
+    dict_repl = (
+        {
+            "  ": " ", 
+            " ": "_", 
+            "$": "", 
+            "\\": "", 
+            "\$": "", 
+            "`": "", 
+            "-": "_", 
+            ".": "_", 
+            "\ufeff": "", 
+            ":math:text": "", 
+            "{": "", 
+            "}": ""
+        }
+        if not isinstance(dict_repl, dict)
+        else dict_repl
+    )
     # check return type
     return_df_q =  False
     if type(nms) in [pd.core.frame.DataFrame]:
@@ -392,6 +432,57 @@ def clean_field_names(
 
 
 
+def date_shift(
+    ym_tup: Tuple[int, int], 
+    n_months: int
+) -> Tuple[int, int]:
+    """
+    Shift a year/month pair ym_tup by n_months (can be positive or negative)
+    """
+    y = ym_tup[0]
+    m = ym_tup[1]
+    
+    y_0 = y + (m - 1)/12
+    y_frac = n_months/12
+    y_1 = math.floor(y_0 + y_frac)
+    
+    m_1 = round((y_frac + y_0 - y_1)*12) + 1
+
+    return (y_1, m_1)
+
+
+
+def days_per_month(
+    ym_tup: Tuple[int, int]
+) -> int:
+    """
+    Enter a tuple `ym_tup = (year, month)` to return the number of days in that 
+        month. 
+    """
+    year = ym_tup[0]
+    month = ym_tup[1]
+    
+    dict_base = {
+        1: 31,
+        2: 28,
+        3: 31,
+        4: 30,
+        5: 31, 
+        6: 30, 
+        7: 31, 
+        8: 31,
+        9: 30,
+        10: 31, 
+        11: 30, 
+        12: 31
+    }
+    
+    dict_base.update({2: 29}) if (year%4 == 0) else None
+    
+    return dict_base.get(month)
+
+
+
 def df_to_tuples(
     df_in: pd.DataFrame,
     nan_to_none: bool = False
@@ -415,29 +506,49 @@ def df_to_tuples(
 
 
 
-##  function to help fill in fields that are in another dataframe the same number of rows
 def df_get_missing_fields_from_source_df(
     df_target: pd.DataFrame,
     df_source: pd.DataFrame,
     side: str = "right",
     column_vector: Union[List, None] = None
 ) -> pd.DataFrame:
+    """
+    Fill in fields that are in another dataframe the same number of rows. 
+
+    Function Arguments
+    ------------------
+    - df_target: data frame to fill with values from df_source
+    - df_course: data frame used to fill values in df_target
+
+    Keyword Arguments
+    -----------------
+    - side: position to add columns from df_source to df_target. "right" and 
+        "left" are acceptable values
+    - column_vector: optional specification of first columns to order (e.g., 
+        the output dataframe will have column ordering
+
+        [cv_0, cv_1, ..., cv_{n - 1}, other_field_0, ...])
+
+        where cv_i in column_vector and other_field_j are output fields not 
+        contained in column_vector
+    """
 
     if df_target.shape[0] != df_source.shape[0]:
         raise RuntimeError(f"Incompatible shape found in data frames; the target number of rows ({df_target.shape[0]}) should be the same as the source ({df_source.shape[0]}).")
+    
     # concatenate
     flds_add = [x for x in df_source.columns if x not in df_target]
 
-    if side.lower() == "right":
-        lcat = [df_target.reset_index(drop = True), df_source[flds_add].reset_index(drop = True)]
-    elif side.lower() == "left":
-        lcat = [df_source[flds_add].reset_index(drop = True), df_target.reset_index(drop = True)]
-    else:
-        raise ValueError(f"Invalid side specification {side}. Specify a value of 'right' or 'left'.")
-
+    # default 
+    side = "right" if (side.lower() not in ["right", "left"]) else side.lower()
+    lcat = (
+        [df_target.reset_index(drop = True), df_source[flds_add].reset_index(drop = True)]
+        if (side == "right")
+        else [df_source[flds_add].reset_index(drop = True), df_target.reset_index(drop = True)]
+    )
     df_out = pd.concat(lcat,  axis = 1)
 
-    if type(column_vector) == list:
+    if isinstance(column_vector, list):
         flds_1 = [x for x in column_vector if (x in df_out.columns)]
         flds_2 = [x for x in df_out.columns if (x not in flds_1)]
         df_out = df_out[flds_1 + flds_2]
@@ -457,7 +568,12 @@ def dict_to_excel(
     """
     with pd.ExcelWriter(fp_out) as excel_writer:
         for k in dict_out.keys():
-            dict_out[k].to_excel(excel_writer, sheet_name = str(k), index = False, encoding = "UTF-8")
+            dict_out[k].to_excel(
+                excel_writer, 
+                sheet_name = str(k), 
+                index = False, 
+                encoding = "UTF-8"
+            )
 
 
 
@@ -682,12 +798,16 @@ def filter_tuple(
 
 
 
-##  simple but often used function
 def format_print_list(
     list_in: list,
     delim = ","
 ) -> str:
-    return ((f"{delim} ").join(["'%s'" for x in range(len(list_in))]))%tuple(list_in)
+    """
+    Print (as string) values of list_in to string separated by `delim`
+    """
+    str_return =  ((f"{delim} ").join(["'%s'" for x in range(len(list_in))]))%tuple(list_in)
+
+    return str_return
 
 
 
@@ -833,7 +953,8 @@ def get_time_elapsed(
     n_digits: int = 2
 ) -> str:
     """
-    Get the time elapsed from reference point t_0. Use `n_digits` to specify rounding.
+    Get the time elapsed from reference point t_0. Use `n_digits` to specify 
+        rounding.
     """
     t_elapsed = np.round(time.time() - t_0, n_digits)
 
@@ -841,14 +962,16 @@ def get_time_elapsed(
 
 
 
-##  get growth rates associated with a numpy array
-def get_vector_growth_rates_from_first_element(arr: np.ndarray) -> np.ndarray:
+def get_vector_growth_rates_from_first_element(
+    arr: np.ndarray
+) -> np.ndarray:
     """
-        Using a 1- or 2-dimentionsal Numpy array, get growth scalars (columnar) relative to the first element
+    Using a 1- or 2-dimentionsal Numpy array, get growth scalars (columnar) 
+        relative to the first element
 
-        Function Arguments
-        ------------------
-        - arr: input array to use to derive growth rates
+    Function Arguments
+    ------------------
+    - arr: input array to use to derive growth rates
     """
     arr = np.nan_to_num(arr[1:]/arr[0:-1], 0.0, posinf = 0.0)
     elem_concat = np.ones((1, )) if (len(arr.shape) == 1) else np.ones((1, arr.shape[1]))
@@ -1036,13 +1159,15 @@ def match_df_to_target_df(
 
 
 
-##  use to merge data frames together into a single output when they share ordered dimensions of analysis (from ModelAttribute class)
 def merge_output_df_list(
     dfs_output_data: list,
     model_attributes,
     merge_type: str = "concatenate"
 ) -> pd.DataFrame:
-
+    """
+    Merge data frames together into a single output when they share ordered 
+        dimensions of analysis (from ModelAttribute class)
+    """
     # check type
     valid_merge_types = ["concatenate", "merge"]
     if merge_type not in valid_merge_types:
@@ -1150,7 +1275,6 @@ def _optional_log(
 
 
 
-##  order a data frame by values in vector_reference
 def orient_df_by_reference_vector(
     df_in: pd.DataFrame,
     vector_reference: Union[list, np.ndarray],
@@ -1159,26 +1283,26 @@ def orient_df_by_reference_vector(
     drop_field_compare: bool = False
 ) -> pd.DataFrame:
     """
-        Ensure that a data frame's field is ordered properly (in the same
-            ordering as df_in[field_compare]). Returns adata frame with the
-            correct ordering.
+    Ensure that data frame field `field_compare` is ordered properly (in the 
+        same ordering as `vector_reference`). Returns a data frame with the 
+        correct row ordering.
 
-        Function Arguments
-        ------------------
-        - df_in: data frame to check
-        - vector_reference: reference vector used to order df_in[field_compare].
-        - field_compare: field to order df_in by
+    Function Arguments
+    ------------------
+    - df_in: data frame to check
+    - vector_reference: reference vector used to order df_in[field_compare].
+    - field_compare: field to order df_in by
 
-        Keyword Arguments
-        -----------------
-        - field_merge_tmp: temporary field to use for sorting. Should not be in
-            df_in.columns
-        - drop_field_compare: drop the comparison field after orienting
+    Keyword Arguments
+    -----------------
+    - field_merge_tmp: temporary field to use for sorting. Should not be in
+        df_in.columns
+    - drop_field_compare: drop the comparison field after orienting
 
-        Note
-        ----
-        * Should only be used if field_compare is the only field in df_in to be
-            sorted on. Additional sorting is not supported.
+    Note
+    ----
+    * Should only be used if field_compare is the only field in df_in to be
+        sorted on. Additional sorting is not supported.
     """
 
     # check reference
@@ -1247,7 +1371,6 @@ def print_setdiff(
 
 
 
-##  project a vector of growth scalars from a vector of growth rates and elasticities
 def project_growth_scalar_from_elasticity(
     vec_rates: np.ndarray,
     vec_elasticity: np.ndarray,
@@ -1312,15 +1435,43 @@ def project_growth_scalar_from_elasticity(
 
 
 
-##  repeat the first row and prepend
 def prepend_first_element(
     array: np.ndarray, 
     n_rows: int
 ) -> np.ndarray:
+    """
+    Repeat the first row of array `n_rows` times and prepend
+    """
     out = np.concatenate([
         np.repeat(array[0:1], n_rows, axis = 0), array
     ])
+
     return out
+
+
+
+def read_ascii(
+    fp: str
+) -> Union[np.ndarray, None]:
+    """
+    Read a geo ascii table for storage from file fp
+    """
+    n_header = 6
+    
+    if not os.path.exists(fp):
+        return None
+    
+    # get information dictionary
+    with open(fp, "r") as file_ascii:
+        lines = []
+        for i in range(n_header):
+            lines.append(file_ascii.readline())
+    dict_info = get_dict_from_lines(lines)
+    
+    # get the data array
+    arr = np.loadtxt(fp, skiprows = n_header)
+    
+    return dict_info, arr
 
 
 
@@ -1400,7 +1551,7 @@ def reverse_dict(
 
     Function Arguments
     ------------------
-    dict_in: dictionary to reverse
+    - dict_in: dictionary to reverse
 
     Keyword Arguments
     -----------------
@@ -1442,14 +1593,17 @@ def reverse_dict(
 
 
 
-##  set a vector to element-wise stay within bounds
 def scalar_bounds(
     scalar: Union[float, int],
     bounds: tuple
 ) -> Union[float, int]:
+    """
+    set a scalar to stay within bounds
+    """
     bounds = np.array(bounds).astype(float)
+    val_out = min([max([scalar, min(bounds)]), max(bounds)])
 
-    return min([max([scalar, min(bounds)]), max(bounds)])
+    return val_out
 
 
 
@@ -1517,11 +1671,15 @@ def sort_integer_strings(
 
 
 
-##  multiple string replacements using a dictionary
+##  
 def str_replace(
     str_in: str,
     dict_replace: dict
 ) -> str:
+    """
+    Multiple string replacements using a dictionary. Operates in order
+        NOTE: Should be modified to use OrderedDict
+    """
 
     for k in dict_replace.keys():
         str_in = str_in.replace(k, dict_replace[k])
@@ -1529,7 +1687,6 @@ def str_replace(
 
 
 
-##  subset a data frame using a dictionary
 def subset_df(
     df: pd.DataFrame,
     dict_in: Union[Dict[str, List], None]
@@ -1572,27 +1729,67 @@ def subset_df(
 
 
 
-##  set a vector to element-wise stay within bounds
+def tryparse_str_to_num(
+    val: Union[str, float, int, None],
+    return_integer_if_round: bool = True
+) -> Union[str, float, int, None]:
+    """
+    Try to convert val to float or integer
+    
+    NOTE: isnumeric() is insufficient, as it is unable to accurately
+        identify scientific numbers. Additionally, it does not allow
+        for conversion to integers automatically. 
+        
+    Function Arguments
+    ------------------
+    - val: value to attempt to convert
+    
+    Keyword Arguments
+    ------------------
+    - return_integer_if_round: if value is numeric, convert to integer
+        if is integer equivalent?
+    """
+    
+    if val is None:
+        return None
+    
+    val = str(val)
+    
+    try: 
+        val = float(val)
+    except:
+        val = str(val)
+    
+    val = (
+        (int(val) if ((val == round(val)) & return_integer_if_round) else val)
+        if isinstance(val, float)
+        else val
+    )
+    
+    return val
+
+
+
 def vec_bounds(
     vec,
     bounds: tuple,
     cycle_vector_bounds_q: bool = False
 ):
     """
-        Bound a vector vec within a range set within 'bounds'.
+    Bound a vector vec within a range set within 'bounds'.
 
-        Function Arguments
-        ------------------
-        - vec: list or np.ndarray of values to bound
-        - bounds: tuple (single bound) or list vec specifying element-wise
-            bounds. NOTE: only works if
+    Function Arguments
+    ------------------
+    - vec: list or np.ndarray of values to bound
+    - bounds: tuple (single bound) or list vec specifying element-wise bounds. 
+        NOTE: only works if
 
-            vec.shape = (len(vec), ) == (len(bounds), )
+        vec.shape = (len(vec), ) == (len(bounds), )
 
-        Keyword Arguments
-        -----------------
-        - cycle_vector_bounds_q: cycle bounds if there is a mismatch and the
-            bounds are entered as a vector
+    Keyword Arguments
+    -----------------
+    - cycle_vector_bounds_q: cycle bounds if there is a mismatch and the bounds 
+        are entered as a vector
     """
     # initialize bools -- using paried vector + is there a vector of bounds?
     paired_vector_check = False # later depends on use_bounding_vec
@@ -1645,15 +1842,19 @@ def vec_bounds(
 
 
 
-# use the concept of a limiter and renormalize elements beyond a threshold
-def vector_limiter(vecs:list, var_bounds: tuple) -> list:
+# use the concept of a limiter and 
+def vector_limiter(
+    vecs:list, 
+    var_bounds: tuple
+) -> list:
     """
-        Bound a collection vectors by sum. Must specify at least a lower bound.
+    Bound a collection vectors by sum. Must specify at least a lower bound. 
+        Renormalizes vector components that exceed a threshold.
 
-        Function Arguments
-        ------------------
-        - vecs: list of numpy arrays with the same shape
-        - var_bounds: tuple of
+    Function Arguments
+    ------------------
+    - vecs: list of numpy arrays with the same shape
+    - var_bounds: tuple of
     """
 
     types_valid = [tuple, list, np.ndarray]

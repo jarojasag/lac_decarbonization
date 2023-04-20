@@ -59,7 +59,10 @@ fp_sqlite_nemomod_db_tmp = os.path.join(dir_tmp, "nemomod_intermediate_database.
 
 dir_rbd_afolu_exports_imports = sf.check_path(os.path.join(dir_ref_batch_data, "afolu_imports_exports"), True)
 dir_rbd_baseline_transition_probs = sf.check_path(os.path.join(dir_ref_batch_data, "baseline_transition_probability_estimates"), True)
+dir_rbd_generic = sf.check_path(os.path.join(dir_ref_batch_data, "generic"), True)
 dir_rbd_ind_prod_elast = sf.check_path(os.path.join(dir_ref_batch_data, "elasticity_of_industrial_production_to_gdp"), True)
+dir_rbd_ind_efs_fcs_ippu = sf.check_path(os.path.join(dir_ref_batch_data, "ippu_emission_factors_fcs"), True)
+dir_rbd_ind_cement_clinker_fraction = sf.check_path(os.path.join(dir_ref_batch_data, "ippu_cement_clinker_fraction"), True)
 dir_rbd_kcc = sf.check_path(os.path.join(dir_ref_batch_data, "koppen_climate_classifications"), True)
 dir_rbd_soc = sf.check_path(os.path.join(dir_ref_batch_data, "soil_grids_soil_organic_carbon"), True)
 dir_rbd_nemomod_energy_inputs = sf.check_path(os.path.join(dir_ref_batch_data, "nemomod_energy_inputs"), True)
@@ -82,8 +85,10 @@ fp_csv_transition_probability_estimation_mean = os.path.join(dir_rbd_baseline_tr
 fp_csv_transition_probability_estimation_mean_recent = os.path.join(dir_rbd_baseline_transition_probs, "transition_probs_by_region_mean_recent_only.csv")
 fpt_csv_transition_probability_estimation_mean_with_growth = os.path.join(dir_rbd_baseline_transition_probs, "transition_probs_by_region_mean_with_target_growth-%s.csv")
 fpt_pkl_transition_probability_estimation_mean_with_growth_assumptions = os.path.join(dir_rbd_baseline_transition_probs, "transition_probs_by_region_mean_with_target_growth-%s_assumptions.pkl")
-# files for elasticity of industrial production to gdp
+# files for industry
 fp_csv_elasticity_of_industrial_production = os.path.join(dir_rbd_ind_prod_elast, "elasticity_of_industrial_production_to_gdp.csv")
+fp_csv_ippu_fc_efs = os.path.join(dir_rbd_ind_efs_fcs_ippu, "emission_factors_ippu_fcs.csv")
+fp_csv_ippu_frac_cement_clinker = os.path.join(dir_rbd_ind_cement_clinker_fraction, "clinker_fraction_cement_ippu.csv")
 # files for Koppen Climate Classification
 fp_csv_kcc_cells_merged_to_country = os.path.join(dir_rbd_kcc, "kcc_cells_merged_to_country.csv")
 fp_csv_kcc_cell_counts_by_country_kcc = os.path.join(dir_rbd_kcc, "kcc_cell_counts_by_country.csv")
@@ -92,7 +97,8 @@ fp_csv_climate_fields_by_country_simple = os.path.join(dir_rbd_kcc, "climate_fie
 fp_csv_soc_cells_merged_to_country = os.path.join(dir_rbd_soc, "scc_cells_merged_to_country.csv")
 fp_csv_soc_average_soc_by_country = os.path.join(dir_rbd_soc, "soc_average_soc_by_country.csv")
 fp_csv_soc_fields_by_country_simple = os.path.join(dir_rbd_soc, "soc_fields_by_country.csv")
-
+# other generic data (used across sectors or for regions/attributes)
+fp_csv_population_centroids_by_iso = os.path.join(dir_rbd_generic, "population_centroids_by_iso.csv")
 
 ##  FILE-PATH DEPENDENT FUNCTIONS
 

@@ -3567,7 +3567,7 @@ class ModelAttributes:
 
 
     def build_varlist(self,
-        subsector: str,
+        subsector: Union[str, None],
         variable_subsec: str = None,
         restrict_to_category_values: list = None,
         dict_force_override_vrp_vvs_cats: dict = None,
@@ -3602,8 +3602,15 @@ class ModelAttributes:
             to specified categories. 
         -- variable_type: input or output. If None, defaults to input.
         """
+        # get subsector if None
+        if subsector is None:
+            if variable_subsec is None:
+                return None
+
+            subsector = self.get_variable_subsector(variable_subsec)
+
         # get some subsector info
-        category = self.dict_attributes[self.table_name_attr_subsector].field_maps["abbreviation_subsector_to_primary_category"][self.get_subsector_attribute(subsector, "abv_subsector")].replace("`", "")
+        category = self.dict_attributes.get(self.table_name_attr_subsector).field_maps["abbreviation_subsector_to_primary_category"][self.get_subsector_attribute(subsector, "abv_subsector")].replace("`", "")
         category_ij_tuple = self.format_category_for_direct(category, "-I", "-J")
         attribute_table = self.dict_attributes[self.get_subsector_attribute(subsector, "pycategory_primary")]
         valid_cats = self.check_category_restrictions(restrict_to_category_values, attribute_table)
@@ -4274,13 +4281,12 @@ class ModelAttributes:
         Easy function for getting a variable subsector
         """
         dict_check = self.dict_model_variable_to_subsector
-        if modvar not in dict_check.keys():
-            if throw_error_q:
-                raise KeyError(f"Invalid model variable '{modvar}': model variable not found.")
-            else:
-                return None
-        else:
-            return dict_check[modvar]
+        val_out = dict_check.get(modvar)
+
+        if (val_out is None) and throw_error_q:
+            raise KeyError(f"Invalid model variable '{modvar}': model variable not found.")
+
+        return val_out
 
 
 
