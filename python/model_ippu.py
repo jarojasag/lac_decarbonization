@@ -1198,7 +1198,7 @@ class IPPU:
             self.modvar_ippu_emissions_process_hfc152a: ([], [self.modvar_ippu_ef_hfc152a_per_prod_process]),
             self.modvar_ippu_emissions_process_hfc227ea: ([], [self.modvar_ippu_ef_hfc227ea_per_prod_process]),
             self.modvar_ippu_emissions_process_hfc365mfc: ([], [self.modvar_ippu_ef_hfc365mfc_per_prod_process]),
-            self.modvar_ippu_emissions_process_nf3: ([], [self.modvar_ippu_emissions_process_nf3]),
+            self.modvar_ippu_emissions_process_nf3: ([], [self.modvar_ippu_ef_nf3_per_prod_process]),
             self.modvar_ippu_emissions_process_pfc14: ([], [self.modvar_ippu_ef_pfc14_per_prod_process]),
             self.modvar_ippu_emissions_process_pfc116: ([], [self.modvar_ippu_ef_pfc116_per_prod_process]),
             self.modvar_ippu_emissions_process_pfc218: ([], [self.modvar_ippu_ef_pfc218_per_prod_process]),

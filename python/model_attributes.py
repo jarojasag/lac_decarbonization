@@ -3568,13 +3568,12 @@ class ModelAttributes:
 
     def build_varlist(self,
         subsector: Union[str, None],
-        variable_subsec: str = None,
-        restrict_to_category_values: list = None,
-        dict_force_override_vrp_vvs_cats: dict = None,
-        variable_type: str = None
-    ) -> list:
+        variable_subsec: Union[str, None] = None,
+        restrict_to_category_values: Union[List[str], None] = None,
+        dict_force_override_vrp_vvs_cats: Union[Dict, None] = None,
+        variable_type: Union[str, None] = None
+    ) -> List[str]:
         """
-
         Build a list of fields (complete variable schema from a data frame) 
             based on the subsector and variable name.
 

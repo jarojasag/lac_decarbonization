@@ -1,0 +1,660 @@
+2023-04-20 19:39:26,330 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-04-20 19:39:26,337 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-04-20 19:39:26,421 - INFO - Calling Julia API...
+2023-04-20 19:39:26,422 - DEBUG - 
+2023-04-20 19:39:34,808 - DEBUG - pyprogramname = /Users/jsyme/anaconda3/bin/python
+2023-04-20 19:39:34,808 - DEBUG - sys.executable = /Users/jsyme/anaconda3/envs/amber_is_your_energy/bin/python3.11
+2023-04-20 19:39:34,809 - DEBUG - bindir = /Applications/Julia-1.8.app/Contents/Resources/julia/bin
+2023-04-20 19:39:34,809 - DEBUG - libjulia_path = /Applications/Julia-1.8.app/Contents/Resources/julia/lib/libjulia.1.8.dylib
+2023-04-20 19:39:34,935 - DEBUG - py_libpython = None
+2023-04-20 19:39:34,937 - DEBUG - jl_libpython = /Users/jsyme/anaconda3/lib/libpython3.8.dylib
+2023-04-20 19:39:34,937 - DEBUG - is_compatible_python = False
+2023-04-20 19:39:34,937 - DEBUG - use_custom_sysimage = False
+2023-04-20 19:39:34,937 - DEBUG - compiled_modules = 'no'
+2023-04-20 19:39:34,941 - DEBUG - argv_list = [b'/Users/jsyme/anaconda3/envs/amber_is_your_energy/bin/python3.11', b'--compiled-modules=no']
+2023-04-20 19:39:34,941 - DEBUG - argc = c_int(2)
+2023-04-20 19:39:34,941 - DEBUG - jl_parse_opts called
+2023-04-20 19:39:34,941 - DEBUG - argc = c_int(0)
+2023-04-20 19:39:34,941 - DEBUG - calling jl_init_with_image(/Applications/Julia-1.8.app/Contents/Resources/julia/bin, /Applications/Julia-1.8.app/Contents/Resources/julia/lib/julia/sys.dylib)
+2023-04-20 19:39:35,283 - DEBUG - seems to work...
+2023-04-20 19:39:53,363 - DEBUG - exception occured? None
+2023-04-20 19:39:53,363 - DEBUG - exception occured? None
+2023-04-20 19:39:53,363 - DEBUG - exception occured? None
+2023-04-20 19:39:53,363 - DEBUG - exception occured? None
+2023-04-20 19:39:53,363 - DEBUG - exception occured? None
+2023-04-20 19:39:53,363 - DEBUG - exception occured? None
+2023-04-20 19:39:53,364 - DEBUG - exception occured? None
+2023-04-20 19:39:53,367 - DEBUG - exception occured? None
+2023-04-20 19:39:53,367 - DEBUG - exception occured? None
+2023-04-20 19:39:53,368 - DEBUG - exception occured? None
+2023-04-20 19:39:53,438 - DEBUG - 	Successfully activated Julia with compiled_modules = False
+2023-04-20 19:39:53,441 - DEBUG - 
+2023-04-20 19:39:53,442 - DEBUG - exception occured? None
+2023-04-20 19:39:53,442 - DEBUG - exception occured? None
+2023-04-20 19:39:53,442 - DEBUG - exception occured? None
+2023-04-20 19:39:53,442 - DEBUG - exception occured? None
+2023-04-20 19:39:53,443 - DEBUG - exception occured? None
+2023-04-20 19:39:53,443 - DEBUG - exception occured? None
+2023-04-20 19:39:53,443 - DEBUG - exception occured? None
+2023-04-20 19:39:53,444 - DEBUG - exception occured? None
+2023-04-20 19:39:53,444 - DEBUG - exception occured? None
+2023-04-20 19:39:53,444 - DEBUG - exception occured? None
+2023-04-20 19:39:53,444 - DEBUG - exception occured? None
+2023-04-20 19:39:53,444 - DEBUG - exception occured? None
+2023-04-20 19:39:53,446 - DEBUG - 	Successfully imported julia.Base
+2023-04-20 19:39:53,448 - DEBUG - 	Successfully imported julia.Main
+2023-04-20 19:39:53,450 - DEBUG - exception occured? 6535090672
+2023-04-20 19:39:53,545 - DEBUG - exception occured? None
+2023-04-20 19:39:53,545 - DEBUG - exception occured? None
+2023-04-20 19:39:53,545 - DEBUG - 	Successfully imported julia.Pkg
+2023-04-20 19:39:53,547 - DEBUG - exception occured? None
+2023-04-20 19:39:53,547 - DEBUG - exception occured? None
+2023-04-20 19:39:53,547 - DEBUG - exception occured? None
+2023-04-20 19:39:53,548 - DEBUG - exception occured? None
+2023-04-20 19:39:53,548 - DEBUG - exception occured? None
+2023-04-20 19:39:53,548 - DEBUG - exception occured? None
+2023-04-20 19:39:53,549 - DEBUG - exception occured? None
+2023-04-20 19:39:53,549 - DEBUG - exception occured? None
+2023-04-20 19:39:53,549 - DEBUG - exception occured? None
+2023-04-20 19:39:54,117 - DEBUG - 	Available Packages:
+		'CSV'
+		 'CUDA'
+		 'Statistics'
+		 'GLPK'
+		 'HiGHS'
+		 'MLJ'
+		 'Revise'
+		 'Random'
+		 'Clp'
+		 'SQLite'
+		 'StructArrays'
+		 'JuMP'
+		 'Graphs'
+		 'Shapefile'
+		 'ExcelReaders'
+		 'Juniper'
+		 'LatinHypercubeSampling'
+		 'Ipopt'
+		 'ScikitLearn'
+		 'PyCall'
+		 'LaTeXStrings'
+		 'IJulia'
+		 'DecisionTree'
+		 'Flux'
+		 'LazySets'
+		 'GeoInterface'
+		 'Plots'
+		 'SCIP'
+		 'NEOSServer'
+		 'XLSX'
+		 'AbstractTrees'
+		 'Cbc'
+		 'DataFrames'
+		 'DistributedArrays'
+		 'Gurobi'
+		 'MathOptInterface'
+		 'PlotlyJS'
+		 'AlphaVantage'
+2023-04-20 19:39:54,119 - DEBUG - exception occured? None
+2023-04-20 19:39:54,119 - DEBUG - exception occured? None
+2023-04-20 19:39:54,120 - DEBUG - exception occured? None
+2023-04-20 19:39:54,787 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
+2023-04-20 19:39:54,790 - DEBUG - exception occured? 6517571872
+2023-04-20 19:40:59,752 - DEBUG - exception occured? None
+2023-04-20 19:40:59,753 - DEBUG - exception occured? None
+2023-04-20 19:40:59,754 - DEBUG - exception occured? 6608773504
+2023-04-20 19:40:59,769 - DEBUG - exception occured? None
+2023-04-20 19:40:59,770 - DEBUG - exception occured? None
+2023-04-20 19:40:59,770 - DEBUG - exception occured? None
+2023-04-20 19:40:59,771 - DEBUG - exception occured? None
+2023-04-20 19:40:59,771 - DEBUG - exception occured? None
+2023-04-20 19:40:59,788 - DEBUG - exception occured? None
+2023-04-20 19:40:59,789 - DEBUG - exception occured? None
+2023-04-20 19:40:59,791 - DEBUG - exception occured? None
+2023-04-20 19:40:59,791 - DEBUG - exception occured? None
+2023-04-20 19:40:59,792 - DEBUG - exception occured? None
+2023-04-20 19:40:59,792 - DEBUG - exception occured? None
+2023-04-20 19:40:59,792 - DEBUG - exception occured? None
+2023-04-20 19:40:59,793 - DEBUG - exception occured? None
+2023-04-20 19:40:59,793 - DEBUG - exception occured? None
+2023-04-20 19:40:59,793 - DEBUG - exception occured? None
+2023-04-20 19:40:59,793 - DEBUG - exception occured? None
+2023-04-20 19:40:59,800 - DEBUG - exception occured? None
+2023-04-20 19:40:59,800 - DEBUG - exception occured? None
+2023-04-20 19:40:59,800 - DEBUG - exception occured? None
+2023-04-20 19:40:59,801 - DEBUG - exception occured? None
+2023-04-20 19:40:59,801 - DEBUG - exception occured? None
+2023-04-20 19:40:59,801 - DEBUG - exception occured? None
+2023-04-20 19:40:59,801 - DEBUG - exception occured? None
+2023-04-20 19:40:59,806 - DEBUG - exception occured? None
+2023-04-20 19:40:59,807 - DEBUG - exception occured? None
+2023-04-20 19:40:59,807 - DEBUG - exception occured? None
+2023-04-20 19:40:59,808 - DEBUG - exception occured? None
+2023-04-20 19:40:59,808 - DEBUG - exception occured? None
+2023-04-20 19:40:59,808 - DEBUG - exception occured? None
+2023-04-20 19:40:59,844 - DEBUG - exception occured? 6611127664
+2023-04-20 19:41:00,918 - DEBUG - exception occured? None
+2023-04-20 19:41:00,918 - DEBUG - exception occured? None
+2023-04-20 19:41:00,918 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
+2023-04-20 19:49:27,612 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-04-20 19:49:27,617 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-04-20 19:49:27,691 - INFO - Calling Julia API...
+2023-04-20 19:49:27,692 - DEBUG - 
+2023-04-20 19:49:27,693 - DEBUG - exception occured? None
+2023-04-20 19:49:27,693 - DEBUG - exception occured? None
+2023-04-20 19:49:27,693 - DEBUG - exception occured? None
+2023-04-20 19:49:27,693 - DEBUG - exception occured? None
+2023-04-20 19:49:27,693 - DEBUG - exception occured? None
+2023-04-20 19:49:27,694 - DEBUG - exception occured? None
+2023-04-20 19:49:27,694 - DEBUG - exception occured? None
+2023-04-20 19:49:27,694 - DEBUG - exception occured? None
+2023-04-20 19:49:27,694 - DEBUG - exception occured? None
+2023-04-20 19:49:27,695 - DEBUG - 	Successfully activated Julia with compiled_modules = False
+2023-04-20 19:49:27,695 - DEBUG - 	Successfully imported julia.Base
+2023-04-20 19:49:27,697 - DEBUG - 	Successfully imported julia.Main
+2023-04-20 19:49:27,698 - DEBUG - 	Successfully imported julia.Pkg
+2023-04-20 19:49:27,700 - DEBUG - exception occured? None
+2023-04-20 19:49:27,701 - DEBUG - exception occured? None
+2023-04-20 19:49:27,701 - DEBUG - exception occured? None
+2023-04-20 19:49:27,701 - DEBUG - exception occured? None
+2023-04-20 19:49:27,702 - DEBUG - exception occured? None
+2023-04-20 19:49:27,702 - DEBUG - exception occured? None
+2023-04-20 19:49:27,703 - DEBUG - exception occured? None
+2023-04-20 19:49:27,704 - DEBUG - exception occured? None
+2023-04-20 19:49:27,704 - DEBUG - exception occured? None
+2023-04-20 19:49:27,750 - DEBUG - 	Available Packages:
+		'CSV'
+		 'HiGHS'
+		 'SQLite'
+		 'Clp'
+		 'JuMP'
+		 'NemoMod'
+		 'GAMS'
+		 'Cbc'
+		 'DataFrames'
+		 'Gurobi'
+		 'MathOptInterface'
+2023-04-20 19:49:27,752 - DEBUG - exception occured? None
+2023-04-20 19:49:27,752 - DEBUG - exception occured? None
+2023-04-20 19:49:27,752 - DEBUG - exception occured? None
+2023-04-20 19:49:28,125 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
+2023-04-20 19:49:28,129 - DEBUG - exception occured? None
+2023-04-20 19:49:28,129 - DEBUG - exception occured? None
+2023-04-20 19:49:28,130 - DEBUG - exception occured? None
+2023-04-20 19:49:28,139 - DEBUG - exception occured? None
+2023-04-20 19:49:28,139 - DEBUG - exception occured? None
+2023-04-20 19:49:28,139 - DEBUG - exception occured? None
+2023-04-20 19:49:28,140 - DEBUG - exception occured? None
+2023-04-20 19:49:28,140 - DEBUG - exception occured? None
+2023-04-20 19:49:28,140 - DEBUG - exception occured? None
+2023-04-20 19:49:28,141 - DEBUG - exception occured? None
+2023-04-20 19:49:28,141 - DEBUG - exception occured? None
+2023-04-20 19:49:28,141 - DEBUG - exception occured? None
+2023-04-20 19:49:28,142 - DEBUG - exception occured? None
+2023-04-20 19:49:28,142 - DEBUG - exception occured? None
+2023-04-20 19:49:28,142 - DEBUG - exception occured? None
+2023-04-20 19:49:28,142 - DEBUG - exception occured? None
+2023-04-20 19:49:28,143 - DEBUG - exception occured? None
+2023-04-20 19:49:28,143 - DEBUG - exception occured? None
+2023-04-20 19:49:28,144 - DEBUG - exception occured? None
+2023-04-20 19:49:28,144 - DEBUG - exception occured? None
+2023-04-20 19:49:28,145 - DEBUG - exception occured? None
+2023-04-20 19:49:28,146 - DEBUG - exception occured? None
+2023-04-20 19:49:28,146 - DEBUG - exception occured? None
+2023-04-20 19:49:28,146 - DEBUG - exception occured? None
+2023-04-20 19:49:28,182 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
+2023-04-20 19:49:29,934 - INFO - 	Path to temporary NemoMod database '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/tmp/nemomod_intermediate_database.sqlite' not found. Creating...
+2023-04-20 19:49:29,935 - DEBUG - exception occured? None
+2023-04-20 19:49:29,936 - DEBUG - exception occured? None
+2023-04-20 19:49:29,936 - DEBUG - exception occured? None
+2023-04-20 19:49:33,388 - DEBUG - exception occured? None
+2023-04-20 19:49:33,388 - DEBUG - exception occured? None
+2023-04-20 19:49:33,388 - DEBUG - exception occured? None
+2023-04-20 19:49:33,388 - DEBUG - exception occured? None
+2023-04-20 19:49:33,389 - DEBUG - exception occured? None
+2023-04-20 19:49:33,389 - DEBUG - exception occured? None
+2023-04-20 19:49:35,726 - DEBUG - exception occured? None
+2023-04-20 19:49:35,726 - DEBUG - exception occured? None
+2023-04-20 19:49:35,726 - DEBUG - exception occured? None
+2023-04-20 19:49:35,827 - DEBUG - exception occured? None
+2023-04-20 19:49:35,828 - DEBUG - exception occured? None
+2023-04-20 19:49:35,828 - DEBUG - exception occured? None
+2023-04-20 19:49:35,864 - DEBUG - exception occured? None
+2023-04-20 19:49:35,865 - DEBUG - exception occured? None
+2023-04-20 19:49:35,865 - DEBUG - exception occured? None
+2023-04-20 19:52:47,454 - INFO - NemoMod ran successfully with the following status: <PyCall.jlwrap OPTIMAL>
+2023-04-20 19:58:09,554 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-04-20 19:58:09,560 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-04-20 19:58:09,635 - INFO - Calling Julia API...
+2023-04-20 19:58:09,636 - DEBUG - 
+2023-04-20 19:58:09,674 - DEBUG - exception occured? None
+2023-04-20 19:58:09,674 - DEBUG - exception occured? None
+2023-04-20 19:58:09,677 - DEBUG - exception occured? None
+2023-04-20 19:58:09,678 - DEBUG - exception occured? None
+2023-04-20 19:58:09,678 - DEBUG - exception occured? None
+2023-04-20 19:58:09,684 - DEBUG - exception occured? None
+2023-04-20 19:58:09,691 - DEBUG - exception occured? None
+2023-04-20 19:58:09,708 - DEBUG - exception occured? None
+2023-04-20 19:58:09,712 - DEBUG - exception occured? None
+2023-04-20 19:58:09,712 - DEBUG - 	Successfully activated Julia with compiled_modules = False
+2023-04-20 19:58:09,713 - DEBUG - 	Successfully imported julia.Base
+2023-04-20 19:58:09,715 - DEBUG - 	Successfully imported julia.Main
+2023-04-20 19:58:09,717 - DEBUG - 	Successfully imported julia.Pkg
+2023-04-20 19:58:09,720 - DEBUG - exception occured? None
+2023-04-20 19:58:09,720 - DEBUG - exception occured? None
+2023-04-20 19:58:09,720 - DEBUG - exception occured? None
+2023-04-20 19:58:09,723 - DEBUG - exception occured? None
+2023-04-20 19:58:09,724 - DEBUG - exception occured? None
+2023-04-20 19:58:09,726 - DEBUG - exception occured? None
+2023-04-20 19:58:09,727 - DEBUG - exception occured? None
+2023-04-20 19:58:09,728 - DEBUG - exception occured? None
+2023-04-20 19:58:09,728 - DEBUG - exception occured? None
+2023-04-20 19:58:09,831 - DEBUG - 	Available Packages:
+		'CSV'
+		 'HiGHS'
+		 'SQLite'
+		 'Clp'
+		 'JuMP'
+		 'NemoMod'
+		 'GAMS'
+		 'Cbc'
+		 'DataFrames'
+		 'Gurobi'
+		 'MathOptInterface'
+2023-04-20 19:58:09,833 - DEBUG - exception occured? None
+2023-04-20 19:58:09,833 - DEBUG - exception occured? None
+2023-04-20 19:58:09,833 - DEBUG - exception occured? None
+2023-04-20 19:58:09,855 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
+2023-04-20 19:58:09,857 - DEBUG - exception occured? None
+2023-04-20 19:58:09,858 - DEBUG - exception occured? None
+2023-04-20 19:58:09,858 - DEBUG - exception occured? None
+2023-04-20 19:58:09,913 - DEBUG - exception occured? None
+2023-04-20 19:58:09,913 - DEBUG - exception occured? None
+2023-04-20 19:58:09,916 - DEBUG - exception occured? None
+2023-04-20 19:58:09,916 - DEBUG - exception occured? None
+2023-04-20 19:58:09,916 - DEBUG - exception occured? None
+2023-04-20 19:58:09,920 - DEBUG - exception occured? None
+2023-04-20 19:58:09,920 - DEBUG - exception occured? None
+2023-04-20 19:58:09,920 - DEBUG - exception occured? None
+2023-04-20 19:58:09,923 - DEBUG - exception occured? None
+2023-04-20 19:58:09,924 - DEBUG - exception occured? None
+2023-04-20 19:58:09,924 - DEBUG - exception occured? None
+2023-04-20 19:58:09,925 - DEBUG - exception occured? None
+2023-04-20 19:58:09,925 - DEBUG - exception occured? None
+2023-04-20 19:58:09,925 - DEBUG - exception occured? None
+2023-04-20 19:58:09,926 - DEBUG - exception occured? None
+2023-04-20 19:58:09,927 - DEBUG - exception occured? None
+2023-04-20 19:58:09,927 - DEBUG - exception occured? None
+2023-04-20 19:58:09,928 - DEBUG - exception occured? None
+2023-04-20 19:58:09,929 - DEBUG - exception occured? None
+2023-04-20 19:58:09,931 - DEBUG - exception occured? None
+2023-04-20 19:58:09,931 - DEBUG - exception occured? None
+2023-04-20 19:58:10,086 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
+2023-04-20 19:58:12,086 - INFO - 	Path to temporary NemoMod database '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/tmp/nemomod_intermediate_database.sqlite' not found. Creating...
+2023-04-20 19:58:12,089 - DEBUG - exception occured? None
+2023-04-20 19:58:12,090 - DEBUG - exception occured? None
+2023-04-20 19:58:12,090 - DEBUG - exception occured? None
+2023-04-20 19:58:14,745 - DEBUG - exception occured? None
+2023-04-20 19:58:14,745 - DEBUG - exception occured? None
+2023-04-20 19:58:14,745 - DEBUG - exception occured? None
+2023-04-20 19:58:14,747 - DEBUG - exception occured? None
+2023-04-20 19:58:14,747 - DEBUG - exception occured? None
+2023-04-20 19:58:14,748 - DEBUG - exception occured? None
+2023-04-20 19:58:14,818 - DEBUG - exception occured? None
+2023-04-20 19:58:14,818 - DEBUG - exception occured? None
+2023-04-20 19:58:14,818 - DEBUG - exception occured? None
+2023-04-20 19:58:14,820 - DEBUG - exception occured? None
+2023-04-20 19:58:14,820 - DEBUG - exception occured? None
+2023-04-20 19:58:14,821 - DEBUG - exception occured? None
+2023-04-20 19:58:14,822 - DEBUG - exception occured? None
+2023-04-20 19:58:14,822 - DEBUG - exception occured? None
+2023-04-20 19:58:14,822 - DEBUG - exception occured? None
+2023-04-20 20:05:03,685 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-04-20 20:05:03,691 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-04-20 20:05:03,787 - INFO - Calling Julia API...
+2023-04-20 20:05:03,792 - DEBUG - 
+2023-04-20 20:05:03,804 - DEBUG - exception occured? None
+2023-04-20 20:05:03,805 - DEBUG - exception occured? None
+2023-04-20 20:05:03,805 - DEBUG - exception occured? None
+2023-04-20 20:05:03,806 - DEBUG - exception occured? None
+2023-04-20 20:05:03,806 - DEBUG - exception occured? None
+2023-04-20 20:05:03,807 - DEBUG - exception occured? None
+2023-04-20 20:05:03,809 - DEBUG - exception occured? None
+2023-04-20 20:05:03,811 - DEBUG - exception occured? None
+2023-04-20 20:05:03,812 - DEBUG - exception occured? None
+2023-04-20 20:05:03,812 - DEBUG - 	Successfully activated Julia with compiled_modules = False
+2023-04-20 20:05:03,814 - DEBUG - 	Successfully imported julia.Base
+2023-04-20 20:05:03,817 - DEBUG - 	Successfully imported julia.Main
+2023-04-20 20:05:03,818 - DEBUG - 	Successfully imported julia.Pkg
+2023-04-20 20:05:03,821 - DEBUG - exception occured? None
+2023-04-20 20:05:03,821 - DEBUG - exception occured? None
+2023-04-20 20:05:03,822 - DEBUG - exception occured? None
+2023-04-20 20:05:03,822 - DEBUG - exception occured? None
+2023-04-20 20:05:03,823 - DEBUG - exception occured? None
+2023-04-20 20:05:03,823 - DEBUG - exception occured? None
+2023-04-20 20:05:03,824 - DEBUG - exception occured? None
+2023-04-20 20:05:03,825 - DEBUG - exception occured? None
+2023-04-20 20:05:03,825 - DEBUG - exception occured? None
+2023-04-20 20:05:03,900 - DEBUG - 	Available Packages:
+		'CSV'
+		 'HiGHS'
+		 'SQLite'
+		 'Clp'
+		 'JuMP'
+		 'NemoMod'
+		 'GAMS'
+		 'Cbc'
+		 'DataFrames'
+		 'Gurobi'
+		 'MathOptInterface'
+2023-04-20 20:05:03,902 - DEBUG - exception occured? None
+2023-04-20 20:05:03,902 - DEBUG - exception occured? None
+2023-04-20 20:05:03,902 - DEBUG - exception occured? None
+2023-04-20 20:05:03,934 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
+2023-04-20 20:05:03,936 - DEBUG - exception occured? None
+2023-04-20 20:05:03,937 - DEBUG - exception occured? None
+2023-04-20 20:05:03,937 - DEBUG - exception occured? None
+2023-04-20 20:05:03,970 - DEBUG - exception occured? None
+2023-04-20 20:05:03,970 - DEBUG - exception occured? None
+2023-04-20 20:05:03,971 - DEBUG - exception occured? None
+2023-04-20 20:05:03,972 - DEBUG - exception occured? None
+2023-04-20 20:05:03,972 - DEBUG - exception occured? None
+2023-04-20 20:05:03,973 - DEBUG - exception occured? None
+2023-04-20 20:05:03,974 - DEBUG - exception occured? None
+2023-04-20 20:05:03,974 - DEBUG - exception occured? None
+2023-04-20 20:05:03,975 - DEBUG - exception occured? None
+2023-04-20 20:05:03,975 - DEBUG - exception occured? None
+2023-04-20 20:05:03,975 - DEBUG - exception occured? None
+2023-04-20 20:05:03,976 - DEBUG - exception occured? None
+2023-04-20 20:05:03,977 - DEBUG - exception occured? None
+2023-04-20 20:05:03,977 - DEBUG - exception occured? None
+2023-04-20 20:05:03,977 - DEBUG - exception occured? None
+2023-04-20 20:05:03,980 - DEBUG - exception occured? None
+2023-04-20 20:05:03,980 - DEBUG - exception occured? None
+2023-04-20 20:05:03,981 - DEBUG - exception occured? None
+2023-04-20 20:05:03,983 - DEBUG - exception occured? None
+2023-04-20 20:05:03,985 - DEBUG - exception occured? None
+2023-04-20 20:05:03,985 - DEBUG - exception occured? None
+2023-04-20 20:05:04,180 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
+2023-04-20 20:05:06,000 - INFO - 	Path to temporary NemoMod database '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/tmp/nemomod_intermediate_database.sqlite' not found. Creating...
+2023-04-20 20:05:06,001 - DEBUG - exception occured? None
+2023-04-20 20:05:06,002 - DEBUG - exception occured? None
+2023-04-20 20:05:06,002 - DEBUG - exception occured? None
+2023-04-20 20:05:07,998 - DEBUG - exception occured? None
+2023-04-20 20:05:07,998 - DEBUG - exception occured? None
+2023-04-20 20:05:07,998 - DEBUG - exception occured? None
+2023-04-20 20:05:08,000 - DEBUG - exception occured? None
+2023-04-20 20:05:08,000 - DEBUG - exception occured? None
+2023-04-20 20:05:08,000 - DEBUG - exception occured? None
+2023-04-20 20:05:08,020 - DEBUG - exception occured? None
+2023-04-20 20:05:08,021 - DEBUG - exception occured? None
+2023-04-20 20:05:08,021 - DEBUG - exception occured? None
+2023-04-20 20:05:08,021 - DEBUG - exception occured? None
+2023-04-20 20:05:08,022 - DEBUG - exception occured? None
+2023-04-20 20:05:08,022 - DEBUG - exception occured? None
+2023-04-20 20:05:08,023 - DEBUG - exception occured? None
+2023-04-20 20:05:08,023 - DEBUG - exception occured? None
+2023-04-20 20:05:08,024 - DEBUG - exception occured? None
+2023-04-20 20:07:16,574 - INFO - NemoMod ran successfully with the following status: <PyCall.jlwrap OPTIMAL>
+2023-04-20 20:09:36,203 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-04-20 20:09:36,210 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-04-20 20:09:36,296 - INFO - Calling Julia API...
+2023-04-20 20:09:36,302 - DEBUG - 
+2023-04-20 20:09:36,320 - DEBUG - exception occured? None
+2023-04-20 20:09:36,320 - DEBUG - exception occured? None
+2023-04-20 20:09:36,321 - DEBUG - exception occured? None
+2023-04-20 20:09:36,321 - DEBUG - exception occured? None
+2023-04-20 20:09:36,321 - DEBUG - exception occured? None
+2023-04-20 20:09:36,322 - DEBUG - exception occured? None
+2023-04-20 20:09:36,324 - DEBUG - exception occured? None
+2023-04-20 20:09:36,329 - DEBUG - exception occured? None
+2023-04-20 20:09:36,330 - DEBUG - exception occured? None
+2023-04-20 20:09:36,330 - DEBUG - 	Successfully activated Julia with compiled_modules = False
+2023-04-20 20:09:36,331 - DEBUG - 	Successfully imported julia.Base
+2023-04-20 20:09:36,334 - DEBUG - 	Successfully imported julia.Main
+2023-04-20 20:09:36,335 - DEBUG - 	Successfully imported julia.Pkg
+2023-04-20 20:09:36,338 - DEBUG - exception occured? None
+2023-04-20 20:09:36,338 - DEBUG - exception occured? None
+2023-04-20 20:09:36,339 - DEBUG - exception occured? None
+2023-04-20 20:09:36,340 - DEBUG - exception occured? None
+2023-04-20 20:09:36,341 - DEBUG - exception occured? None
+2023-04-20 20:09:36,342 - DEBUG - exception occured? None
+2023-04-20 20:09:36,344 - DEBUG - exception occured? None
+2023-04-20 20:09:36,345 - DEBUG - exception occured? None
+2023-04-20 20:09:36,346 - DEBUG - exception occured? None
+2023-04-20 20:09:36,422 - DEBUG - 	Available Packages:
+		'CSV'
+		 'HiGHS'
+		 'SQLite'
+		 'Clp'
+		 'JuMP'
+		 'NemoMod'
+		 'GAMS'
+		 'Cbc'
+		 'DataFrames'
+		 'Gurobi'
+		 'MathOptInterface'
+2023-04-20 20:09:36,425 - DEBUG - exception occured? None
+2023-04-20 20:09:36,427 - DEBUG - exception occured? None
+2023-04-20 20:09:36,427 - DEBUG - exception occured? None
+2023-04-20 20:09:36,459 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
+2023-04-20 20:09:36,461 - DEBUG - exception occured? None
+2023-04-20 20:09:36,462 - DEBUG - exception occured? None
+2023-04-20 20:09:36,463 - DEBUG - exception occured? None
+2023-04-20 20:09:36,493 - DEBUG - exception occured? None
+2023-04-20 20:09:36,493 - DEBUG - exception occured? None
+2023-04-20 20:09:36,494 - DEBUG - exception occured? None
+2023-04-20 20:09:36,494 - DEBUG - exception occured? None
+2023-04-20 20:09:36,495 - DEBUG - exception occured? None
+2023-04-20 20:09:36,495 - DEBUG - exception occured? None
+2023-04-20 20:09:36,496 - DEBUG - exception occured? None
+2023-04-20 20:09:36,496 - DEBUG - exception occured? None
+2023-04-20 20:09:36,497 - DEBUG - exception occured? None
+2023-04-20 20:09:36,498 - DEBUG - exception occured? None
+2023-04-20 20:09:36,498 - DEBUG - exception occured? None
+2023-04-20 20:09:36,499 - DEBUG - exception occured? None
+2023-04-20 20:09:36,500 - DEBUG - exception occured? None
+2023-04-20 20:09:36,500 - DEBUG - exception occured? None
+2023-04-20 20:09:36,500 - DEBUG - exception occured? None
+2023-04-20 20:09:36,501 - DEBUG - exception occured? None
+2023-04-20 20:09:36,502 - DEBUG - exception occured? None
+2023-04-20 20:09:36,502 - DEBUG - exception occured? None
+2023-04-20 20:09:36,503 - DEBUG - exception occured? None
+2023-04-20 20:09:36,504 - DEBUG - exception occured? None
+2023-04-20 20:09:36,504 - DEBUG - exception occured? None
+2023-04-20 20:09:36,696 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
+2023-04-20 20:09:38,410 - INFO - 	Path to temporary NemoMod database '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/tmp/nemomod_intermediate_database.sqlite' not found. Creating...
+2023-04-20 20:09:38,412 - DEBUG - exception occured? None
+2023-04-20 20:09:38,412 - DEBUG - exception occured? None
+2023-04-20 20:09:38,413 - DEBUG - exception occured? None
+2023-04-20 20:09:40,717 - DEBUG - exception occured? None
+2023-04-20 20:09:40,717 - DEBUG - exception occured? None
+2023-04-20 20:09:40,717 - DEBUG - exception occured? None
+2023-04-20 20:09:40,718 - DEBUG - exception occured? None
+2023-04-20 20:09:40,718 - DEBUG - exception occured? None
+2023-04-20 20:09:40,843 - DEBUG - exception occured? None
+2023-04-20 20:09:40,859 - DEBUG - exception occured? None
+2023-04-20 20:09:40,859 - DEBUG - exception occured? None
+2023-04-20 20:09:40,859 - DEBUG - exception occured? None
+2023-04-20 20:09:40,861 - DEBUG - exception occured? None
+2023-04-20 20:09:40,861 - DEBUG - exception occured? None
+2023-04-20 20:09:40,861 - DEBUG - exception occured? None
+2023-04-20 20:09:40,862 - DEBUG - exception occured? None
+2023-04-20 20:09:40,862 - DEBUG - exception occured? None
+2023-04-20 20:09:40,862 - DEBUG - exception occured? None
+2023-04-20 20:10:31,587 - INFO - NemoMod ran successfully with the following status: <PyCall.jlwrap OPTIMAL>
+2023-04-20 21:01:07,279 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-04-20 21:01:07,287 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-04-20 21:01:07,378 - INFO - Calling Julia API...
+2023-04-20 21:01:07,380 - DEBUG - 
+2023-04-20 21:01:07,399 - DEBUG - exception occured? None
+2023-04-20 21:01:07,402 - DEBUG - exception occured? None
+2023-04-20 21:01:07,403 - DEBUG - exception occured? None
+2023-04-20 21:01:07,404 - DEBUG - exception occured? None
+2023-04-20 21:01:07,405 - DEBUG - exception occured? None
+2023-04-20 21:01:07,409 - DEBUG - exception occured? None
+2023-04-20 21:01:07,411 - DEBUG - exception occured? None
+2023-04-20 21:01:07,417 - DEBUG - exception occured? None
+2023-04-20 21:01:07,419 - DEBUG - exception occured? None
+2023-04-20 21:01:07,419 - DEBUG - 	Successfully activated Julia with compiled_modules = False
+2023-04-20 21:01:07,420 - DEBUG - 	Successfully imported julia.Base
+2023-04-20 21:01:07,424 - DEBUG - 	Successfully imported julia.Main
+2023-04-20 21:01:07,425 - DEBUG - 	Successfully imported julia.Pkg
+2023-04-20 21:01:07,429 - DEBUG - exception occured? None
+2023-04-20 21:01:07,430 - DEBUG - exception occured? None
+2023-04-20 21:01:07,431 - DEBUG - exception occured? None
+2023-04-20 21:01:07,432 - DEBUG - exception occured? None
+2023-04-20 21:01:07,434 - DEBUG - exception occured? None
+2023-04-20 21:01:07,434 - DEBUG - exception occured? None
+2023-04-20 21:01:07,437 - DEBUG - exception occured? None
+2023-04-20 21:01:07,438 - DEBUG - exception occured? None
+2023-04-20 21:01:07,438 - DEBUG - exception occured? None
+2023-04-20 21:01:07,627 - DEBUG - 	Available Packages:
+		'CSV'
+		 'HiGHS'
+		 'SQLite'
+		 'Clp'
+		 'JuMP'
+		 'NemoMod'
+		 'GAMS'
+		 'Cbc'
+		 'DataFrames'
+		 'Gurobi'
+		 'MathOptInterface'
+2023-04-20 21:01:07,629 - DEBUG - exception occured? None
+2023-04-20 21:01:07,630 - DEBUG - exception occured? None
+2023-04-20 21:01:07,631 - DEBUG - exception occured? None
+2023-04-20 21:01:07,722 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
+2023-04-20 21:01:07,725 - DEBUG - exception occured? None
+2023-04-20 21:01:07,726 - DEBUG - exception occured? None
+2023-04-20 21:01:07,726 - DEBUG - exception occured? None
+2023-04-20 21:01:07,765 - DEBUG - exception occured? None
+2023-04-20 21:01:07,766 - DEBUG - exception occured? None
+2023-04-20 21:01:07,767 - DEBUG - exception occured? None
+2023-04-20 21:01:07,767 - DEBUG - exception occured? None
+2023-04-20 21:01:07,767 - DEBUG - exception occured? None
+2023-04-20 21:01:07,770 - DEBUG - exception occured? None
+2023-04-20 21:01:07,770 - DEBUG - exception occured? None
+2023-04-20 21:01:07,770 - DEBUG - exception occured? None
+2023-04-20 21:01:07,772 - DEBUG - exception occured? None
+2023-04-20 21:01:07,772 - DEBUG - exception occured? None
+2023-04-20 21:01:07,772 - DEBUG - exception occured? None
+2023-04-20 21:01:07,773 - DEBUG - exception occured? None
+2023-04-20 21:01:07,774 - DEBUG - exception occured? None
+2023-04-20 21:01:07,774 - DEBUG - exception occured? None
+2023-04-20 21:01:07,774 - DEBUG - exception occured? None
+2023-04-20 21:01:07,775 - DEBUG - exception occured? None
+2023-04-20 21:01:07,776 - DEBUG - exception occured? None
+2023-04-20 21:01:07,776 - DEBUG - exception occured? None
+2023-04-20 21:01:07,776 - DEBUG - exception occured? None
+2023-04-20 21:01:07,776 - DEBUG - exception occured? None
+2023-04-20 21:01:07,777 - DEBUG - exception occured? None
+2023-04-20 21:01:08,038 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
+2023-04-20 21:01:10,031 - INFO - 	Path to temporary NemoMod database '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/tmp/nemomod_intermediate_database.sqlite' not found. Creating...
+2023-04-20 21:01:10,035 - DEBUG - exception occured? None
+2023-04-20 21:01:10,035 - DEBUG - exception occured? None
+2023-04-20 21:01:10,036 - DEBUG - exception occured? None
+2023-04-20 21:01:12,704 - DEBUG - exception occured? None
+2023-04-20 21:01:12,705 - DEBUG - exception occured? None
+2023-04-20 21:01:12,705 - DEBUG - exception occured? None
+2023-04-20 21:01:12,706 - DEBUG - exception occured? None
+2023-04-20 21:01:12,707 - DEBUG - exception occured? None
+2023-04-20 21:01:12,707 - DEBUG - exception occured? None
+2023-04-20 21:01:12,738 - DEBUG - exception occured? None
+2023-04-20 21:01:12,738 - DEBUG - exception occured? None
+2023-04-20 21:01:12,738 - DEBUG - exception occured? None
+2023-04-20 21:01:12,740 - DEBUG - exception occured? None
+2023-04-20 21:01:12,741 - DEBUG - exception occured? None
+2023-04-20 21:01:12,741 - DEBUG - exception occured? None
+2023-04-20 21:01:12,742 - DEBUG - exception occured? None
+2023-04-20 21:01:12,742 - DEBUG - exception occured? None
+2023-04-20 21:01:12,743 - DEBUG - exception occured? None
+2023-04-20 21:01:45,596 - INFO - NemoMod run failed with result <PyCall.jlwrap INFEASIBLE_OR_UNBOUNDED>. Populating missing data with value 0.0.
+2023-04-20 21:01:45,603 - INFO - Unable to retrieve energy demand by fuel in ENTC. Skipping adding unused fuel...
+2023-04-20 22:23:17,649 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-04-20 22:23:17,659 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-04-20 22:23:17,753 - INFO - Calling Julia API...
+2023-04-20 22:23:17,755 - DEBUG - 
+2023-04-20 22:23:17,793 - DEBUG - exception occured? None
+2023-04-20 22:23:17,794 - DEBUG - exception occured? None
+2023-04-20 22:23:17,794 - DEBUG - exception occured? None
+2023-04-20 22:23:17,795 - DEBUG - exception occured? None
+2023-04-20 22:23:17,796 - DEBUG - exception occured? None
+2023-04-20 22:23:17,800 - DEBUG - exception occured? None
+2023-04-20 22:23:17,808 - DEBUG - exception occured? None
+2023-04-20 22:23:17,816 - DEBUG - exception occured? None
+2023-04-20 22:23:17,818 - DEBUG - exception occured? None
+2023-04-20 22:23:17,818 - DEBUG - 	Successfully activated Julia with compiled_modules = False
+2023-04-20 22:23:17,819 - DEBUG - 	Successfully imported julia.Base
+2023-04-20 22:23:17,820 - DEBUG - 	Successfully imported julia.Main
+2023-04-20 22:23:17,822 - DEBUG - 	Successfully imported julia.Pkg
+2023-04-20 22:23:17,823 - DEBUG - exception occured? None
+2023-04-20 22:23:17,824 - DEBUG - exception occured? None
+2023-04-20 22:23:17,825 - DEBUG - exception occured? None
+2023-04-20 22:23:17,825 - DEBUG - exception occured? None
+2023-04-20 22:23:17,826 - DEBUG - exception occured? None
+2023-04-20 22:23:17,826 - DEBUG - exception occured? None
+2023-04-20 22:23:17,826 - DEBUG - exception occured? None
+2023-04-20 22:23:17,827 - DEBUG - exception occured? None
+2023-04-20 22:23:17,828 - DEBUG - exception occured? None
+2023-04-20 22:23:17,987 - DEBUG - 	Available Packages:
+		'CSV'
+		 'HiGHS'
+		 'SQLite'
+		 'Clp'
+		 'JuMP'
+		 'NemoMod'
+		 'GAMS'
+		 'Cbc'
+		 'DataFrames'
+		 'Gurobi'
+		 'MathOptInterface'
+2023-04-20 22:23:17,990 - DEBUG - exception occured? None
+2023-04-20 22:23:17,990 - DEBUG - exception occured? None
+2023-04-20 22:23:17,990 - DEBUG - exception occured? None
+2023-04-20 22:23:18,042 - INFO - Successfully activated Julia environment at '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/julia'
+2023-04-20 22:23:18,044 - DEBUG - exception occured? None
+2023-04-20 22:23:18,044 - DEBUG - exception occured? None
+2023-04-20 22:23:18,044 - DEBUG - exception occured? None
+2023-04-20 22:23:18,090 - DEBUG - exception occured? None
+2023-04-20 22:23:18,090 - DEBUG - exception occured? None
+2023-04-20 22:23:18,091 - DEBUG - exception occured? None
+2023-04-20 22:23:18,091 - DEBUG - exception occured? None
+2023-04-20 22:23:18,092 - DEBUG - exception occured? None
+2023-04-20 22:23:18,093 - DEBUG - exception occured? None
+2023-04-20 22:23:18,093 - DEBUG - exception occured? None
+2023-04-20 22:23:18,093 - DEBUG - exception occured? None
+2023-04-20 22:23:18,096 - DEBUG - exception occured? None
+2023-04-20 22:23:18,097 - DEBUG - exception occured? None
+2023-04-20 22:23:18,097 - DEBUG - exception occured? None
+2023-04-20 22:23:18,098 - DEBUG - exception occured? None
+2023-04-20 22:23:18,098 - DEBUG - exception occured? None
+2023-04-20 22:23:18,098 - DEBUG - exception occured? None
+2023-04-20 22:23:18,099 - DEBUG - exception occured? None
+2023-04-20 22:23:18,101 - DEBUG - exception occured? None
+2023-04-20 22:23:18,102 - DEBUG - exception occured? None
+2023-04-20 22:23:18,103 - DEBUG - exception occured? None
+2023-04-20 22:23:18,103 - DEBUG - exception occured? None
+2023-04-20 22:23:18,103 - DEBUG - exception occured? None
+2023-04-20 22:23:18,104 - DEBUG - exception occured? None
+2023-04-20 22:23:18,630 - INFO - Successfully initialized JuMP optimizer from solver module Gurobi.
+2023-04-20 22:23:20,682 - INFO - 	Path to temporary NemoMod database '/Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/tmp/nemomod_intermediate_database.sqlite' not found. Creating...
+2023-04-20 22:23:20,684 - DEBUG - exception occured? None
+2023-04-20 22:23:20,684 - DEBUG - exception occured? None
+2023-04-20 22:23:20,684 - DEBUG - exception occured? None
+2023-04-20 22:23:22,825 - DEBUG - exception occured? None
+2023-04-20 22:23:22,826 - DEBUG - exception occured? None
+2023-04-20 22:23:22,826 - DEBUG - exception occured? None
+2023-04-20 22:23:22,826 - DEBUG - exception occured? None
+2023-04-20 22:23:22,826 - DEBUG - exception occured? None
+2023-04-20 22:23:22,827 - DEBUG - exception occured? None
+2023-04-20 22:23:22,863 - DEBUG - exception occured? None
+2023-04-20 22:23:22,863 - DEBUG - exception occured? None
+2023-04-20 22:23:22,864 - DEBUG - exception occured? None
+2023-04-20 22:23:22,864 - DEBUG - exception occured? None
+2023-04-20 22:23:22,865 - DEBUG - exception occured? None
+2023-04-20 22:23:22,865 - DEBUG - exception occured? None
+2023-04-20 22:23:22,865 - DEBUG - exception occured? None
+2023-04-20 22:23:22,866 - DEBUG - exception occured? None
+2023-04-20 22:23:22,866 - DEBUG - exception occured? None
+2023-04-20 22:24:23,184 - INFO - NemoMod ran successfully with the following status: <PyCall.jlwrap OPTIMAL>

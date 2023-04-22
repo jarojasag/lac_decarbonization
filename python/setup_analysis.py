@@ -89,6 +89,7 @@ fpt_pkl_transition_probability_estimation_mean_with_growth_assumptions = os.path
 fp_csv_elasticity_of_industrial_production = os.path.join(dir_rbd_ind_prod_elast, "elasticity_of_industrial_production_to_gdp.csv")
 fp_csv_ippu_fc_efs = os.path.join(dir_rbd_ind_efs_fcs_ippu, "emission_factors_ippu_fcs.csv")
 fp_csv_ippu_frac_cement_clinker = os.path.join(dir_rbd_ind_cement_clinker_fraction, "clinker_fraction_cement_ippu.csv")
+fp_csv_ippu_net_imports_cement_clinker = os.path.join(dir_rbd_ind_cement_clinker_fraction, "net_imports_cement_clinker.csv")
 # files for Koppen Climate Classification
 fp_csv_kcc_cells_merged_to_country = os.path.join(dir_rbd_kcc, "kcc_cells_merged_to_country.csv")
 fp_csv_kcc_cell_counts_by_country_kcc = os.path.join(dir_rbd_kcc, "kcc_cell_counts_by_country.csv")
@@ -98,6 +99,7 @@ fp_csv_soc_cells_merged_to_country = os.path.join(dir_rbd_soc, "scc_cells_merged
 fp_csv_soc_average_soc_by_country = os.path.join(dir_rbd_soc, "soc_average_soc_by_country.csv")
 fp_csv_soc_fields_by_country_simple = os.path.join(dir_rbd_soc, "soc_fields_by_country.csv")
 # other generic data (used across sectors or for regions/attributes)
+fp_csv_countries_by_iso = os.path.join(dir_rbd_generic, "countries_by_iso.csv")
 fp_csv_population_centroids_by_iso = os.path.join(dir_rbd_generic, "population_centroids_by_iso.csv")
 
 ##  FILE-PATH DEPENDENT FUNCTIONS

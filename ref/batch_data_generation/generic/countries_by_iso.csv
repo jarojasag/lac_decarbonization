@@ -1,0 +1,217 @@
+category_name,region,iso_alpha_3,fao_area_code
+Afghanistan,afghanistan,AFG,2
+Albania,albania,ALB,3
+Algeria,algeria,DZA,4
+American Samoa,american_samoa,ASM,5
+Andorra,andorra,AND,6
+Angola,angola,AGO,7
+Antigua and Barbuda,antigua_and_barbuda,ATG,8
+Argentina,argentina,ARG,9
+Armenia,armenia,ARM,1
+Aruba,aruba,ABW,22
+Australia,australia,AUS,10
+Austria,austria,AUT,11
+Azerbaijan,azerbaijan,AZE,52
+Bahamas,bahamas,BHS,12
+Bahrain,bahrain,BHR,13
+Bangladesh,bangladesh,BGD,16
+Barbados,barbados,BRB,14
+Belarus,belarus,BLR,57
+Belgium,belgium,BEL,255
+Belize,belize,BLZ,23
+Benin,benin,BEN,53
+Bermuda,bermuda,BMU,17
+Bhutan,bhutan,BTN,18
+Bolivia,bolivia,BOL,19
+Bosnia and Herzegovina,bosnia_and_herzegovina,BIH,80
+Botswana,botswana,BWA,20
+Brazil,brazil,BRA,21
+British Virgin Islands,british_virgin_islands,VGB,239
+Brunei Darussalam,brunei_darussalam,BRN,26
+Bulgaria,bulgaria,BGR,27
+Burkina Faso,burkina_faso,BFA,233
+Burundi,burundi,BDI,29
+Cabo Verde,cabo_verde,CPV,35
+Cambodia,cambodia,KHM,115
+Cameroon,cameroon,CMR,32
+Canada,canada,CAN,33
+Cayman Islands,cayman_islands,CYM,36
+Central African Republic,central_african_republic,CAF,37
+Chad,chad,TCD,39
+Channel Islands,channel_islands,CHI,259
+Chile,chile,CHL,40
+China,china,CHN,351
+Colombia,colombia,COL,44
+Comoros,comoros,COM,45
+Costa Rica,costa_rica,CRI,48
+Cote d'Ivoire,cote_divoire,CIV,107
+Croatia,croatia,HRV,98
+Cuba,cuba,CUB,49
+Curacao,curacao,CUW,279
+Cyprus,cyprus,CYP,50
+Czechia,czechia,CZE,167
+Democratic People's Republic of Korea,democratic_peoples_republic_of_korea,PRK,116
+Democratic Republic of the Congo,democratic_republic_of_the_congo,COD,250
+Denmark,denmark,DNK,54
+Djibouti,djibouti,DJI,72
+Dominica,dominica,DMA,55
+Dominican Republic,dominican_republic,DOM,56
+Ecuador,ecuador,ECU,58
+Egypt,egypt,EGY,59
+El Salvador,el_salvador,SLV,60
+Equatorial Guinea,equatorial_guinea,GNQ,61
+Eritrea,eritrea,ERI,178
+Estonia,estonia,EST,63
+Eswatini,eswatini,SWZ,209
+Ethiopia,ethiopia,ETH,238
+Faroe Islands,faroe_islands,FRO,64
+Fiji,fiji,FJI,66
+Finland,finland,FIN,67
+France,france,FRA,68
+French Polynesia,french_polynesia,PYF,70
+Gabon,gabon,GAB,74
+Gambia,gambia,GMB,75
+Georgia,georgia,GEO,73
+Germany,germany,DEU,79
+Ghana,ghana,GHA,81
+Gibraltar,gibraltar,GIB,82
+Greece,greece,GRC,84
+Greenland,greenland,GRL,85
+Grenada,grenada,GRD,86
+Guam,guam,GUM,88
+Guatemala,guatemala,GTM,89
+Guinea,guinea,GIN,90
+Guinea-Bissau,guinea_bissau,GNB,175
+Guyana,guyana,GUY,91
+Haiti,haiti,HTI,93
+Honduras,honduras,HND,95
+"Hong Kong SAR, China",hong_kong,HKG,96
+Hungary,hungary,HUN,97
+Iceland,iceland,ISL,99
+India,india,IND,100
+Indonesia,indonesia,IDN,101
+Iran,iran,IRN,102
+Iraq,iraq,IRQ,103
+Ireland,ireland,IRL,104
+Isle of Man,isle_of_man,IMN,264
+Israel,israel,ISR,105
+Italy,italy,ITA,106
+Jamaica,jamaica,JAM,109
+Japan,japan,JPN,110
+Jordan,jordan,JOR,112
+Kazakhstan,kazakhstan,KAZ,108
+Kenya,kenya,KEN,114
+Kiribati,kiribati,KIR,83
+Kosovo,kosovo,XKX,-999
+Kuwait,kuwait,KWT,118
+Kyrgyzstan,kyrgyzstan,KGZ,113
+Lao People's Democratic Republic,lao,LAO,120
+Latvia,latvia,LVA,119
+Lebanon,lebanon,LBN,121
+Lesotho,lesotho,LSO,122
+Liberia,liberia,LBR,123
+Libya,libya,LBY,124
+Liechtenstein,liechtenstein,LIE,125
+Lithuania,lithuania,LTU,126
+Luxembourg,luxembourg,LUX,256
+"Macao SAR, China",macao,MAC,128
+Madagascar,madagascar,MDG,129
+Malawi,malawi,MWI,130
+Malaysia,malaysia,MYS,131
+Maldives,maldives,MDV,132
+Mali,mali,MLI,133
+Malta,malta,MLT,134
+Marshall Islands,marshall_islands,MHL,127
+Mauritania,mauritania,MRT,136
+Mauritius,mauritius,MUS,137
+Mexico,mexico,MEX,138
+Micronesia (Federated States of),micronesia,FSM,145
+Monaco,monaco,MCO,140
+Mongolia,mongolia,MNG,141
+Montenegro,montenegro,MNE,273
+Morocco,morocco,MAR,143
+Mozambique,mozambique,MOZ,144
+Myanmar,myanmar,MMR,28
+Namibia,namibia,NAM,147
+Nauru,nauru,NRU,148
+Nepal,nepal,NPL,149
+Netherlands,netherlands,NLD,150
+New Caledonia,new_caledonia,NCL,153
+New Zealand,new_zealand,NZL,156
+Nicaragua,nicaragua,NIC,157
+Niger,niger,NER,158
+Nigeria,nigeria,NGA,159
+North Macedonia,north_macedonia,MKD,154
+Northern Mariana Islands,northern_mariana_islands,MNP,163
+Norway,norway,NOR,162
+Oman,oman,OMN,221
+Pakistan,pakistan,PAK,165
+Palau,palau,PLW,180
+Panama,panama,PAN,166
+Papua New Guinea,papua_new_guinea,PNG,168
+Paraguay,paraguay,PRY,169
+Peru,peru,PER,170
+Philippines,philippines,PHL,171
+Poland,poland,POL,173
+Portugal,portugal,PRT,174
+Puerto Rico,puerto_rico,PRI,177
+Qatar,qatar,QAT,179
+Republic of Korea,republic_of_korea,KOR,117
+Republic of Moldova,republic_of_moldova,MDA,146
+Republic of the Congo,republic_of_the_congo,COG,46
+Romania,romania,ROU,183
+Russian Federation,russia,RUS,185
+Rwanda,rwanda,RWA,184
+Saint Kitts and Nevis,saint_kitts_and_nevis,KNA,188
+Saint Lucia,saint_lucia,LCA,189
+Saint Vincent and the Grenadines,saint_vincent_and_the_grenadines,VCT,191
+Saint-Martin (French part),saint_martin,MAF,281
+Samoa,samoa,WSM,244
+San Marino,san_marino,SMR,192
+Sao Tome and Principe,sao_tome_and_principe,STP,193
+Saudi Arabia,saudi_arabia,SAU,194
+Senegal,senegal,SEN,195
+Serbia,serbia,SRB,272
+Seychelles,seychelles,SYC,196
+Sierra Leone,sierra_leone,SLE,197
+Singapore,singapore,SGP,200
+Sint Maarten (Dutch part),sint_maarten,SXM,280
+Slovakia,slovakia,SVK,199
+Slovenia,slovenia,SVN,198
+Solomon Islands,solomon_islands,SLB,25
+Somalia,somalia,SOM,201
+South Africa,south_africa,ZAF,202
+South Sudan,south_sudan,SSD,277
+Spain,spain,ESP,203
+Sri Lanka,sri_lanka,LKA,38
+Sudan,sudan,SDN,276
+Suriname,suriname,SUR,207
+Sweden,sweden,SWE,210
+Switzerland,switzerland,CHE,211
+Syrian Arab Republic,syrian_arab_republic,SYR,212
+Tajikistan,tajikistan,TJK,208
+Thailand,thailand,THA,216
+Timor-Leste,timor_leste,TLS,176
+Togo,togo,TGO,217
+Tonga,tonga,TON,219
+Trinidad and Tobago,trinidad_and_tobago,TTO,220
+Tunisia,tunisia,TUN,222
+Turkey,turkey,TUR,223
+Turkmenistan,turkmenistan,TKM,213
+Turks and Caicos Islands,turks_and_caicos_islands,TCA,224
+Tuvalu,tuvalu,TUV,227
+Uganda,uganda,UGA,226
+Ukraine,ukraine,UKR,230
+United Arab Emirates,united_arab_emirates,ARE,225
+United Kingdom,united_kingdom,GBR,229
+United Republic of Tanzania,united_republic_of_tanzania,TZA,215
+United States Virgin Islands,united_states_virgin_islands,VIR,240
+United States of America,united_states_of_america,USA,231
+Uruguay,uruguay,URY,234
+Uzbekistan,uzbekistan,UZB,235
+Vanuatu,vanuatu,VUT,155
+Venezuela,venezuela,VEN,236
+Viet Nam,viet_nam,VNM,237
+Yemen,yemen,YEM,249
+Zambia,zambia,ZMB,251
+Zimbabwe,zimbabwe,ZWE,181

@@ -381,10 +381,21 @@ def check_set_values(
 
 def clean_field_names(
     nms: list,
-    dict_repl: Union[dict, None] = None
+    dict_repl: Union[dict, None] = None,
+    dict_repl_update: Union[dict, None] = None,
 ) -> list:
     """
-    Clean names of an input table to eliminate spaces/unwanted characters
+    Clean names of an input table to eliminate spaces/unwanted characters.
+
+    Function Arguments
+    ------------------
+    - nms: vector of names to clean
+    
+    Keyword Arguments
+    -----------------
+    - dict_repl: optional dictionary to use for replacement. If None, defaults
+        to internal replacement
+    - dict_repl_update: optional dictionary to use to update internal dict_repl
     """
 
     dict_repl = (
@@ -405,6 +416,8 @@ def clean_field_names(
         if not isinstance(dict_repl, dict)
         else dict_repl
     )
+    dict_repl.update(dict_repl_update) if (dict_repl_update is not None) else None
+
     # check return type
     return_df_q =  False
     if type(nms) in [pd.core.frame.DataFrame]:
