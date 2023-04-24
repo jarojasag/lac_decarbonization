@@ -2,7 +2,6 @@ from attribute_table import *
 import datetime
 import itertools
 import geopandas as gpd
-import geopy.distance
 import logging
 from model_attributes import *
 import numpy as np

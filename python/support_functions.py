@@ -1028,6 +1028,54 @@ def get_vector_growth_rates_from_first_element(
 
 
 
+def group_df_as_dict(
+    df_in: pd.DataFrame,
+    fields_group: List[str],
+    fields_out_set: Union[List[str], str, None] = None
+) -> Union[Dict[Tuple, pd.DataFrame], None]:
+    """
+    Group a data frame df_in by fields group and return a dictionary of unique 
+        fields_group -> applicable rows in the DataFrame.
+        
+    Returns None if fields_group is not specified properly (including specifying 
+        no fields)
+
+    Function Arguments
+    ------------------
+    - df_in: input data frame to use
+    - fields_group: fields to group on for generating the dictionary
+
+    Keyword Arguments
+    -----------------
+    - fields_out_set: If not None, then will extract unique elements in these 
+        fields (if a list, as a data frame of unique rows; if a single element,
+        then as a set)
+    """
+    
+    fields_group = [x for x in fields_group if x in df_in.columns]
+    if len(fields_group) == 0:
+        return None
+    
+    df_in_grouped = df_in.groupby(fields_group)
+    dict_out = {}
+
+    for i, df in df_in_grouped:
+        
+        val = df
+
+        if fields_out_set is not None:
+            val = (
+                val[fields_out_set].drop_duplicates()
+                if isinstance(fields_out_set, list)
+                else sorted(list(set(list(val[fields_out_set]))))
+            )
+
+        dict_out.update({i: val})
+        
+    return dict_out
+
+
+
 def filter_df_on_reference_df_rows(
     df_filter: pd.DataFrame,
     df_reference: pd.DataFrame,
