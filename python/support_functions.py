@@ -909,6 +909,39 @@ def get_csv_subset(
 
 
 
+def get_dict_from_lines(
+    lines: List[str],
+    splitter: Union[str, None] = None
+) -> Union[Dict, None]:
+    """
+    Return a dictionary for use in converting an ascii input to arrays.
+    
+    Function Arguments
+    ------------------
+    - lines: list of input lines directly read from file (strings)
+    
+    Keyword Arguments
+    -----------------
+    - spltter: string to split on. If None, splits on whitespace
+    """
+    
+    dict_out = {}
+    
+    for i, line in enumerate(lines):
+        
+        tup = line.strip().split(splitter)
+        key, val = (tup[0], tup[1]) if (len(tup) == 2) else (tup, None)
+
+        key = str(key)
+        val = tryparse_str_to_num(val)
+        
+
+        dict_out.update({key: val})
+        
+    return dict_out
+
+
+
 def get_repeating_vec_element_inds(
     inds: Union[list, np.ndarray],
     n_elements: int,
@@ -1623,7 +1656,7 @@ def scalar_bounds(
 def simple_df_agg(
     df_in: pd.DataFrame,
     fields_group: list,
-    dict_agg: str,
+    dict_agg: Dict[str, str],
     group_fields_ordered_for_sort_q: bool = False,
 ) -> pd.DataFrame:
     """
@@ -1635,7 +1668,8 @@ def simple_df_agg(
     ------------------
     - df_in: input data frame to aggregate over
     - fields_group: fields to group the data frame by
-    - dict_agg: aggregation function to apply to data fields
+    - dict_agg: dictionary mapping field to aggregation function; data fields to
+        aggregate are keys
 
     Keyword Arguments
     -----------------

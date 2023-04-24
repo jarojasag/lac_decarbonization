@@ -31,6 +31,24 @@ import warnings
 
 
 class region_solar:
+    """
+    Generate solar sunrise-sunset by time of year and use to develop diurnal 
+        irradiance scalars for capacity factors and demand scalars. 
+
+    Initialization Arguments
+    ------------------------
+    - iso: ISO Alpha 3 code
+    - lat: representative latitude to use for the region
+    - lon: representative longitude to use for the region
+
+    Notes
+    -----
+    - Leverages the suntime package (https://pypi.org/project/suntime/) to 
+        generate sun up/sun down.
+    - Baseline Assumption about 3.5 from 0.5 hr after sunrise to peak, then 2 hr 
+        from peak to 0.5 before sunset
+        * https://www.researchgate.net/figure/The-start-stop-and-peak-of-solar-generation-red-approximates-the-time-of-sunrise_fig1_310821721
+    """
     
     def __init__(self,
         iso: str,
@@ -45,6 +63,8 @@ class region_solar:
         self._init_timezone()
         
     
+
+
     def _init_sun(self,
     ) -> None:
         """
@@ -163,7 +183,11 @@ class region_solar:
             uses average over years specified in attr_time_period
         """
 
-        if (attributes is None) & (attr_hour is None) & (attr_time_period is None) & (attr_ts_group_1 is None):
+        if (
+            (attributes is None) & (attr_hour is None) & (attr_time_period is None) & (attr_ts_group_1 is None)
+        ) | (
+            (self.lat_pop is None) | (self.lon_pop is None)
+        ):
             return None
 
         # get defaults from model attributes
