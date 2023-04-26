@@ -909,6 +909,58 @@ def get_csv_subset(
 
 
 
+def get_cols_as_grouped_proportions(
+    df_in: pd.DataFrame,
+    fields_data: List[str],
+    fields_group: List[str],
+    drop_if_zero_sum: bool = False,
+    include_other_fields: bool = True,
+) -> Union[pd.DataFrame, None]:
+    """
+    Modify columns to be proportions based on a grouping of index fields. 
+        Returns None if invalid fields are found. Otherwise, returns a DataFrame 
+        with fields_data as proportions of the total within that column based on 
+        grouping fields_group.
+    
+    Function Arguments
+    ------------------
+    - df_in: DataFrame with columns to calculate proportions for
+    - fields_data: fields to calculate as proportions
+    - fields_group: fields to group on
+    
+    Keyword Arguments
+    -----------------
+    - drop_if_zero_sum: if the sum of columns is zero, drop?
+    - include_other_fields: include other data frame fields besides fields_data
+        and fields_group?
+    """
+    # verify fields and return None if 
+    fields_data = [x for x in fields_data if x in df_in.columns]
+    fields_group = [x for x in fields_group if x in df_in.columns]
+    if min(len(fields_data), len(fields_group)) == 0:
+        return None
+    
+    # convert to monthly annual proportions 
+    fields_incl = fields_group + fields_data
+    fields_incl += [x for x in df_in.columns if x not in fields_incl] if include_other_fields else []
+    df_grouped = df_in[fields_incl].groupby(fields_group)
+
+    df_out = []
+    for i, df in df_grouped:
+        arr = np.array(df[fields_data]) 
+        df[fields_data] = arr/arr.sum(axis = 0)
+        (
+            None
+            if (np.max(arr.sum(axis = 0)) == 0) & drop_if_zero_sum 
+            else df_out.append(df) 
+        )
+        
+    df_out = pd.concat(df_out, axis = 0).reset_index(drop = True) 
+    
+    return df_out
+
+
+
 def get_dict_from_lines(
     lines: List[str],
     splitter: Union[str, None] = None
@@ -1986,3 +2038,4 @@ def vector_limiter(
             np.put(v, w_sup, elems_new)
 
     return vecs
+

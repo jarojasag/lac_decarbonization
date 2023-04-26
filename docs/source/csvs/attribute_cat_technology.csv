@@ -16,7 +16,9 @@ Power Generation - Hydropower,``pp_hydropower``,Hydropower power plants, | Opera
 Power Generation - Natural Gas,``pp_gas``,"Natural gas power plants, including combined cycle, combustion turbine, and internal combustion engine generation technologies.", | Operational lifetime assumption: `EIA <https://www.eia.gov/todayinenergy/detail.php?id=34172>`_,,,25,none,none,``fuel_natural_gas``,none,none,0,0,1,0
 Power Generation - Natural Gas with CCS,``pp_gas_ccs``,Natural Gas with 90% carbon capture and sequestration, | Operational lifetime assumption: `EIA <https://www.eia.gov/todayinenergy/detail.php?id=34172>`_,,,25,none,none,``fuel_natural_gas``,none,none,0,0,1,0
 Power Generation - Nuclear,``pp_nuclear``,Nuclear (fission) power plants, | Operational lifetime assumption: `IAEA <https://www.iaea.org/sites/default/files/29402043133.pdf>`_,,,30,none,none,``fuel_nuclear``,none,none,0,0,1,0
-Power Generation - Ocean,``pp_ocean``,Energy derived from thermal and kinetic energy in ocean waters.,,,,25,none,none,``fuel_ocean``,none,none,0,0,1,0
+Power Generation - Ocean,``pp_ocean``,"Energy derived from thermal and kinetic energy in ocean waters. 
+ | 
+ | Operational lifetime taken from a mean of 5 plants shown in Table 1 of `Douziech, Hellweg, and Verones (2016)  <https://pubs.acs.org/doi/10.1021/acs.est.6b00156>`_",,,,34,none,none,``fuel_ocean``,none,none,0,0,1,0
 Power Generation - Oil,``pp_oil``,"Oil power plants, including internal combustion engine plants.",,,,40,none,none,``fuel_oil``,none,none,0,0,1,0
 Power Generation - Solar,``pp_solar``,Solar (photovoltaic) power plants, | Operational lifetime assumption: `US DOE EERE <https://www.energy.gov/eere/solar/end-life-management-solar-photovoltaics>`_,,,30,none,none,``fuel_solar``,none,none,0,0,1,0
 Power Generation - Waste Incineration,``pp_waste_incineration``,Treatment from waste incineration, | Operational lifetime assumption: `World Bank <https://olcstage.worldbank.org/sites/default/files/sco/E9CB337D-79D8-EAF4-44EE-AF3A7ADADADF/swm_m03/story_content/external_files/DMG_Incineration.pdf>`_,,,25,none,none,``fuel_waste``,none,none,0,0,1,0
