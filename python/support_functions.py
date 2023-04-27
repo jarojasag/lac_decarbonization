@@ -797,6 +797,102 @@ def filter_data_frame_by_group(
 
 
 
+def filter_df_on_reference_df_rows(
+    df_filter: pd.DataFrame,
+    df_reference: pd.DataFrame,
+    fields_index: List[str],
+    fields_compare: List[str],
+    fields_groupby: Union[List[str], None] = None,
+    filter_method: str = "any",
+    keep_comparison: bool = False
+) -> pd.DataFrame:
+    """
+    Compare two data frames and drop rows from df_filter that are contained in
+        df_reference. Merges on fields_index and filters based on
+        fields_compare. In each row, values associated with fields_index in
+        df_filter are compared to rows in df_reference with the same index rows.
+        If the values are different, then the row is kep in df_filter. If the
+        same, it is dropped.
+
+    Function Arguments
+    ------------------
+    - df_filter: DataFrame to filter based on rows from df_reference
+    - df_reference: DataFrame to use as a reference.
+    - fields_index: fields in both to use for indexing
+    - fields_compare: fields to use for comparison
+
+    Keyword Arguments
+    -----------------
+    - fields_groupby: fields that group rows; if any (or all) rows differ within
+        this group, the group will be kept. If they are all the same, the group
+        will be dropped.
+    - filter_method: "all" or "any"
+        * Set to "any" to keep rows where *any* field contained in
+            fields_compare is different.
+        * Set to "any" to keep rows where *all* fields contained in
+            fields_compare are different.
+    - keep_comparison: keep fields used for comparison?
+    """
+    # check field specifications
+    set_fields_both = set(df_filter.columns) & set(df_reference.columns)
+    fields_index = [x for x in fields_index if x in set_fields_both]
+    fields_compare = [x for x in fields_compare if x in set_fields_both]
+
+    # special return cases
+    if min(len(fields_index), len(fields_compare)) == 0:
+        return None
+    if not isinstance(df_filter, pd.DataFrame):
+        return None
+    if not isinstance(df_reference, pd.DataFrame):
+        return df_filter
+
+
+    ##  MERGE AND RENAME
+
+    dict_rnm = dict([(x, f"{x}_compare") for x in fields_compare])
+    dict_rnm_rev = reverse_dict(dict_rnm)
+    fields_compare_ref = [dict_rnm.get(x) for x in fields_compare]
+
+    df_compare = pd.merge(
+        df_filter,
+        df_reference[fields_index + fields_compare].rename(columns = dict_rnm),
+        on = fields_index
+    )
+
+    fields_groupby = [x for x in fields_groupby if x in fields_index]
+    fields_groupby = None if (len(fields_groupby) == 0) else fields_groupby
+
+    if fields_groupby is None:
+        df_check = (df_compare[fields_compare] != df_compare[fields_compare_ref].rename(columns = dict_rnm_rev))
+        series_keep = df_check.any(axis = 1) if (filter_method == "any") else df_check.all(axis = 1)
+        df_return = df_compare[series_keep][df_filter.columns].reset_index(drop = True)
+
+    else:
+        df_return = []
+        df_group = df_compare.groupby(fields_groupby)
+
+        for i in df_group:
+            i, df = i
+
+            df_check = (df[fields_compare] != df[fields_compare_ref].rename(columns = dict_rnm_rev))
+            series_keep = df_check.any(axis = 1) if (filter_method == "any") else df_check.all(axis = 1)
+            append_df = any(list(series_keep))
+
+            df_return.append(df) if append_df else None
+
+        df_return = pd.concat(df_return, axis = 0).reset_index(drop = True) if (len(df_return) > 0) else None
+
+    if df_return is not None:
+        df_return.drop(
+            [x for x in df_return.columns if x in fields_compare_ref], 
+            axis = 1,
+            inplace = True
+        ) if not keep_comparison else None
+
+    return df_return
+
+
+
 def filter_tuple(
     tup: Tuple,
     ignore_inds: Union[List[int], int]
@@ -1128,99 +1224,22 @@ def group_df_as_dict(
 
 
 
-def filter_df_on_reference_df_rows(
-    df_filter: pd.DataFrame,
-    df_reference: pd.DataFrame,
-    fields_index: List[str],
-    fields_compare: List[str],
-    fields_groupby: Union[List[str], None] = None,
-    filter_method: str = "any",
-    keep_comparison: bool = False
-) -> pd.DataFrame:
+def isnumber(
+    x: Any,
+    integer: bool = False
+) -> bool:
     """
-    Compare two data frames and drop rows from df_filter that are contained in
-        df_reference. Merges on fields_index and filters based on
-        fields_compare. In each row, values associated with fields_index in
-        df_filter are compared to rows in df_reference with the same index rows.
-        If the values are different, then the row is kep in df_filter. If the
-        same, it is dropped.
-
-    Function Arguments
-    ------------------
-    - df_filter: DataFrame to filter based on rows from df_reference
-    - df_reference: DataFrame to use as a reference.
-    - fields_index: fields in both to use for indexing
-    - fields_compare: fields to use for comparison
-
-    Keyword Arguments
-    -----------------
-    - fields_groupby: fields that group rows; if any (or all) rows differ within
-        this group, the group will be kept. If they are all the same, the group
-        will be dropped.
-    - filter_method: "all" or "any"
-        * Set to "any" to keep rows where *any* field contained in
-            fields_compare is different.
-        * Set to "any" to keep rows where *all* fields contained in
-            fields_compare are different.
-    - keep_comparison: keep fields used for comparison?
+    Check if x is an integer or float. Set integer = True to force integer only
+        checks.
     """
-    # check field specifications
-    set_fields_both = set(df_filter.columns) & set(df_reference.columns)
-    fields_index = [x for x in fields_index if x in set_fields_both]
-    fields_compare = [x for x in fields_compare if x in set_fields_both]
-
-    # special return cases
-    if min(len(fields_index), len(fields_compare)) == 0:
-        return None
-    if not isinstance(df_filter, pd.DataFrame):
-        return None
-    if not isinstance(df_reference, pd.DataFrame):
-        return df_filter
-
-
-    ##  MERGE AND RENAME
-
-    dict_rnm = dict([(x, f"{x}_compare") for x in fields_compare])
-    dict_rnm_rev = reverse_dict(dict_rnm)
-    fields_compare_ref = [dict_rnm.get(x) for x in fields_compare]
-
-    df_compare = pd.merge(
-        df_filter,
-        df_reference[fields_index + fields_compare].rename(columns = dict_rnm),
-        on = fields_index
+    types_check = (
+        (int, float, np.int64, np.int32, np.int, np.float64, np.float32, np.float)
+        if not integer
+        else (int, np.int64, np.int32, np.int)
     )
+    out = isinstance(x, types_check)
 
-    fields_groupby = [x for x in fields_groupby if x in fields_index]
-    fields_groupby = None if (len(fields_groupby) == 0) else fields_groupby
-
-    if fields_groupby is None:
-        df_check = (df_compare[fields_compare] != df_compare[fields_compare_ref].rename(columns = dict_rnm_rev))
-        series_keep = df_check.any(axis = 1) if (filter_method == "any") else df_check.all(axis = 1)
-        df_return = df_compare[series_keep][df_filter.columns].reset_index(drop = True)
-
-    else:
-        df_return = []
-        df_group = df_compare.groupby(fields_groupby)
-
-        for i in df_group:
-            i, df = i
-
-            df_check = (df[fields_compare] != df[fields_compare_ref].rename(columns = dict_rnm_rev))
-            series_keep = df_check.any(axis = 1) if (filter_method == "any") else df_check.all(axis = 1)
-            append_df = any(list(series_keep))
-
-            df_return.append(df) if append_df else None
-
-        df_return = pd.concat(df_return, axis = 0).reset_index(drop = True) if (len(df_return) > 0) else None
-
-    if df_return is not None:
-        df_return.drop(
-            [x for x in df_return.columns if x in fields_compare_ref], 
-            axis = 1,
-            inplace = True
-        ) if not keep_comparison else None
-
-    return df_return
+    return out
 
 
 
@@ -1514,6 +1533,52 @@ def print_setdiff(
     """
     missing_vals = sorted(list(set_required - set_check))
     return format_print_list(missing_vals)
+
+
+
+def project_from_array(
+    arr_in: np.ndarray,
+    max_deviation_from_mean: float = 0.2
+) -> np.ndarray:
+    """
+    Use a regression to project next value + apply bounds to maximum 
+        deviation from the observed mean. Useful for projecting a sequential
+        observation in a time series.
+        
+    Function Arguments
+    ------------------
+    - arr_in: 2-d array with rows representing observations (or time) and
+        columns representing different variables. 
+    
+    Keyword Arguments
+    -----------------
+    - max_deviation_from_mean: maximium proportional deviation from mean; used
+        to prevent large swings in the regression.
+    """
+    
+    n, m = arr_in.shape
+    x = np.array([range(n), np.ones(n)]).transpose()
+    xtx_inv = np.linalg.inv(np.dot(x.transpose(), x))
+    
+    vec_inputs_proj = np.array([[n + 1 , 1]])
+    vec_output_proj_by_class = np.zeros(m)
+                               
+    for i in range(m):       
+                               
+        y = np.array([arr_in[:, i]]).transpose()
+        y_bar = np.mean(y)
+        bounds = ((1 - max_deviation_from_mean)*y_bar, (1 + max_deviation_from_mean)*y_bar)
+        
+        xty = np.dot(x.transpose(), y)
+        coeffs = np.dot(xtx_inv, xty)
+
+        # revert to mean if any issues with NaNs show up (incl singularity)
+        val = np.dot(vec_inputs_proj, coeffs)[0, 0]
+        val = y_bar if np.isnan(val) else val
+        
+        vec_output_proj_by_class[i] = float(vec_bounds(val, bounds))
+        
+    return vec_output_proj_by_class
 
 
 
@@ -2039,3 +2104,94 @@ def vector_limiter(
 
     return vecs
 
+
+
+def zeros_to_small(
+    vec_in: np.ndarray,
+    axis: Union[int, None] = None,
+    min_scale: float = 10**(-6),
+    on_all_zeros_epsilon: Union[float, None] = None
+) -> np.ndarray:
+    """
+    Replace zeros in `vec_in` with a very small value
+    
+    Keyword Arguments
+    -----------------
+    - axis: optional axis to use for determining minimum. If None, uses global
+        minimum.
+        * axis = 0 will replace with the minimum in the column
+        * axis = 1 will replace with the minimum in the row
+    - min_scale: scalar applied to minimum non-zero value to generate 
+        replacements
+    - on_all_zeros_epsilon: epsilon (very small float) to use in place of a 
+        vector that is all zeros. If None, returns vec. 
+    """
+    
+    vec = vec_in.copy().astype(float)
+    vec = vec if (axis is None) else (
+        vec.transpose() if (axis == 1) else vec
+    )
+
+    if (axis in [0, 1]) and (len(vec.shape) > 1):
+
+        for i in range(vec.shape[1]):
+            
+            vec_new = zeros_to_small_vector(
+                vec[:, i],
+                min_scale = min_scale,
+                on_all_zeros_epsilon = on_all_zeros_epsilon
+            )
+
+            vec[:, i] = vec_new
+
+    else:
+
+        vec = zeros_to_small_vector(
+            vec,
+            min_scale = min_scale,
+            on_all_zeros_epsilon = on_all_zeros_epsilon
+        )
+
+    # re-transpose if necessary
+    vec = vec if (axis is None) else (
+        vec.transpose() if (axis == 1) else vec
+    )
+        
+    return vec
+
+
+
+def zeros_to_small_vector(
+    vec_in: np.ndarray,
+    min_scale: float = 10**(-6),
+    on_all_zeros_epsilon: Union[float, None] = None
+) -> np.ndarray:
+    """
+    Replace zeros in `vec_in` with a very small value
+    
+    Keyword Arguments
+    -----------------
+    - axis: optional axis to use for determining minimum. If None, uses global
+        minimum.
+        * axis = 0 will replace with the minimum in the column
+        * axis = 1 will replace with the minimum in the row
+    - min_scale: scalar applied to minimum non-zero value to generate 
+        replacements
+    - on_all_zeros_epsilon: epsilon (very small float) to use in place of a 
+        vector that is all zeros. If None, returns vec. 
+    """
+
+    vec = vec_in.copy()
+    w = np.where(vec > 0.0)
+
+    m_val = (
+        min(vec[w])*min_scale if (len(w[0]) > 0) else (
+            on_all_zeros_epsilon
+            if isinstance(on_all_zeros_epsilon, float) or isinstance(on_all_zeros_epsilon, int)
+            else 0.0
+        )
+    )
+
+    vec[vec == 0] = m_val
+
+    return vec

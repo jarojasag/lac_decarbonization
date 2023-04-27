@@ -436,9 +436,12 @@ class TimePeriods:
         """
         Set the following properties:
 
+            * self.all_time_periods
+            * self.all_years
             * self.attributes
             * self.dict_time_period_to_year
             * self.dict_year_to_time_period
+            * self.field_time_period
             * self.field_year
             * self.min_year
         """
@@ -447,12 +450,17 @@ class TimePeriods:
         dict_year_to_time_period = attributes.field_maps.get(f"{field_year}_to_{attributes.key}")
         dict_time_period_to_year = attributes.field_maps.get(f"{attributes.key}_to_{field_year}")
         
-        year_max = max((dict_year_to_time_period.keys()))
-        year_min = min((dict_year_to_time_period.keys()))
+        all_time_periods = attributes.key_values
+        all_years = sorted(list(set([dict_time_period_to_year.get(x) for x in all_time_periods])))
+        year_min, year_max = min(all_years), max(all_years)
 
+
+        self.all_time_periods = all_time_periods
+        self.all_years = all_years
         self.attributes = attributes
         self.dict_time_period_to_year = dict_time_period_to_year
         self.dict_year_to_time_period = dict_year_to_time_period
+        self.field_time_period = attributes.key
         self.field_year = field_year
         self.year_max = year_max
         self.year_min = year_min
@@ -460,15 +468,103 @@ class TimePeriods:
         return None
 
 
-    def year_to_tp(self,
-        year: int,
+
+    def tp_to_year(self,
+        time_period: int,
     ) -> int:
         """
-        Convert a year to a time period
+        Convert time period to a year. If time_period is numeric, uses closest
+            integer; otherwise, returns None
         """
+        time_period = (
+            time_period if isinstance(time_period, int) else (
+                int(np.round(time_period))
+                if isinstance(time_period, float)
+                else None
+            )     
+        )
+
+        if time_period is None:
+            return None
+
+        out = self.dict_time_period_to_year.get(
+            time_period,
+            time_period + self.year_min
+        )
+
+        return out
+    
+
+
+    def year_to_tp(self,
+        year: int,
+    ) -> Union[int, None]:
+        """
+        Convert a year to a time period. If year is numeric, uses closest
+            integer; otherwise, returns None
+        """
+        year = (
+            year if sf.isnumber(year, integer = True) else (
+                int(np.round(year))
+                if sf.isnumber(year)
+                else None
+            )     
+        )
+
+        if year is None:
+            return None
+
         out = self.dict_year_to_time_period.get(
             year,
             year - self.year_min
         )
 
         return out
+
+
+
+    def years_to_tps(self,
+        vec_years: Union[List, np.ndarray, pd.DataFrame, pd.Series],
+        field_time_period: Union[str, None] = None,
+        field_year: Union[str, None] = None,
+    ) -> np.ndarray:
+        """
+        Convert a vector of years to time periods. 
+
+        Function Arguments
+        ------------------
+        - vec_years: List-like input including years to convert to time period;
+            if DataFrame, will write to field_time_period (if None, default to
+            self.field_time_period) and look for field_year (source years,
+            defaults to self.field_year)
+
+        Keyword Arguments
+        -----------------
+        - field_time_period: optional specification of a field to store time 
+            period. Only used if vec_years is a DataFrame.
+        - field_year: optional specification of a field containing years. Only 
+            used if vec_years is a DataFrame.
+        """
+
+        vec = list(vec_years)
+        df_q = isinstance(vec_years, pd.DataFrame)
+        # check input if data frame
+        if df_q:
+
+            field_time_period = self.field_time_period if (field_time_period is None) else field_time_period
+            field_year = self.field_year if (field_year is None) else field_year
+
+            if field_year not in vec_years.columns:
+                return None
+
+            vec = list(vec_years[field_year])
+
+        out = np.array([self.year_to_tp(x) for x in vec])
+
+        if df_q:
+            df_out = vec_years.copy()
+            df_out[field_time_period] = out
+            out = df_out
+
+        return out
+
