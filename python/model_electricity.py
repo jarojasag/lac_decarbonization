@@ -2584,25 +2584,30 @@ class ElectricEnergy:
                         arr_entc_msp_fracs_specified,
                         1 - arr_enfu_import_fractions_adj[:, ind_enfu]
                     )
-                    
-                    
+
+
         ##  NEXT, ADJUST SPECIFICATIONS FOR ELECTRICITY
-        
+
         # get indices for pp techs
         inds_entc = [
             attribute_technology.get_key_value_index(x)
             for x in dict_tech_info.get("all_techs_pp")
         ]
-        
+
         # setup normalization of input fractions, but only apply if the total exceeds 1
         arr_entc_msp_fracs_specified = arr_entc_msp[:, inds_entc]
-        max_entc_msp_fracs_norm = max(
-            sf.vec_bounds(
-                arr_entc_msp_fracs_specified.sum(axis = 1),
-                (1, np.inf)
-            )
+        # CHANGED FROM MAX (SEE BELOW) 2023042027 (HEREHEREs)
+        vec_entc_div = sf.vec_bounds(
+            arr_entc_msp_fracs_specified.sum(axis = 1),
+            (1, np.inf)
         )
-        arr_entc_msp_fracs_specified /= max_entc_msp_fracs_norm
+        arr_entc_msp_fracs_specified = sf.do_array_mult(
+            arr_entc_msp_fracs_specified, 
+            1/vec_entc_div
+        )
+        #CHANGED HERE
+        #max_entc_msp_fracs_norm = max(vec_entc_div)
+        #arr_entc_msp_fracs_specified /= max_entc_msp_fracs_norm
         
         # multiply by 1 - import fraction
         arr_entc_msp[:, inds_entc] = sf.do_array_mult(
@@ -4933,7 +4938,7 @@ class ElectricEnergy:
         # --only used to adjust MSPs downward
         arr_enfu_import_fractions_adj_for_msp_adj = arr_enfu_import_fractions_adj.copy()
         arr_enfu_import_fractions_adj_for_msp_adj[:, self.ind_enfu_elec] += vec_entc_elec_demand_frac_from_tech_lower_limit
-
+        
         df_entc_msp = self.get_entc_import_adjust_msp(
             df_elec_trajectories,
             arr_enfu_import_fractions_adj_for_msp_adj,
@@ -4942,7 +4947,16 @@ class ElectricEnergy:
             dict_tech_info = dict_tech_info,
             regions = regions
         )
+        # HEREHERE
+        """
+        xx = df_entc_msp[
+            df_entc_msp["f"].isin(["fuel_electricity"]) &
+            df_entc_msp["y"].isin([1000])
+        ]
 
+        print(xx)
+        print(xx["val"].sum())
+        """;
         df_out = self.add_multifields_from_key_values(
             pd.concat([df_out, df_entc_msp[df_out.columns]], axis = 0),
             [

@@ -2039,7 +2039,14 @@ class ModelAttributes:
             extract_key = subsector_extract_key if (subsector_extract_key is not None) else (attr.key if (attr is not None) else "")
             pycat = extract_key if (attr is not None) else ""
 
-        return_val = list(sf.subset_df(attr.table, dict_subset)[pycat]) if (attr is not None) else None
+        return_val = None
+        if (attr is not None):
+            return_val = list(sf.subset_df(attr.table, dict_subset)[pycat])
+            return_val = (
+                [x for x in attr.key_values if x in return_val] 
+                if pycat == attr.key
+                else return_val
+            )
 
         return return_val
 
