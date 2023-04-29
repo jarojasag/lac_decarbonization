@@ -334,7 +334,7 @@ class SISEPUEDEModels:
 		##  5. Run Electricity and collect output
 
 		if ("Energy" in models_run) and include_electricity_in_energy and self.allow_electricity_run:
-			self._log("Running Energy model (Electricity: trying to call Julia)", type_log = "info")
+			self._log("Running Energy model (Electricity and Fuel Production: trying to call Julia)", type_log = "info")
 			if run_integrated and set(["Circular Economy", "AFOLU"]).issubset(set(models_run)):
 				df_input_data = self.model_attributes.transfer_df_variables(
 					df_input_data,
@@ -361,7 +361,7 @@ class SISEPUEDEModels:
 		##  6. Finally, add fugitive emissions from Non-Electric Energy and collect output
 
 		if "Energy" in models_run:
-			print("\n\tRunning Energy (Fugitive Emissions)")
+			self._log("Running Energy (Fugitive Emissions)", type_log = "info")
 			if run_integrated and set(["IPPU", "AFOLU"]).issubset(set(models_run)):
 				df_input_data = self.model_attributes.transfer_df_variables(
 					df_input_data,
@@ -370,7 +370,12 @@ class SISEPUEDEModels:
 				)
 
 			try:
-				df_return.append(self.model_energy.project(df_input_data, subsectors_project = self.model_attributes.subsec_name_fgtv))
+				df_return.append(
+					self.model_energy.project(
+						df_input_data, 
+						subsectors_project = self.model_attributes.subsec_name_fgtv
+					)
+				)
 				df_return = [sf.merge_output_df_list(df_return, self.model_attributes, "concatenate")] if run_integrated else df_return
 				self._log(f"Fugitive Emissions from Energy model run successfully completed", type_log = "info")
 
@@ -379,6 +384,10 @@ class SISEPUEDEModels:
 
 
 		# build output data frame
-		df_return = sf.merge_output_df_list(df_return, self.model_attributes, "concatenate") if (len(df_return) > 0) else pd.DataFrame()
+		df_return = (
+			sf.merge_output_df_list(df_return, self.model_attributes, "concatenate") 
+			if (len(df_return) > 0) 
+			else pd.DataFrame()
+		)
 
 		return df_return

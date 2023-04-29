@@ -431,20 +431,7 @@ class ModelAttributes:
         """
         Set some required attribute fields and check the attribute tables.
             Sets the following properties:
-
-            * self.field_enfu_biofuels_demand_category
-            * self.field_enfu_biogas_fuel_category
-            * self.field_enfu_electricity_demand_category
-            * self.field_enfu_upstream_to_fuel_category
-            * self.field_enfu_waste_fuel_category
         """
-
-        # miscellaneous parameters that need to be checked before running
-        self.field_enfu_biofuels_demand_category = "biomass_demand_category"
-        self.field_enfu_biogas_fuel_category = "biogas_fuel_category"
-        self.field_enfu_electricity_demand_category = "electricity_demand_category"
-        self.field_enfu_upstream_to_fuel_category = "upstream_to_fuel_category"
-        self.field_enfu_waste_fuel_category = "waste_fuel_category"
 
         # run checks and raise errors if invalid data are found in the attribute tables
         self._check_attribute_tables_agrc()
@@ -1339,20 +1326,40 @@ class ModelAttributes:
         """
         Check the Energy Fuels table to ensure that an electricity category is 
             specified
+
+            * self.field_enfu_biofuels_demand_category
+            * self.field_enfu_biogas_fuel_category
+            * self.field_enfu_electricity_demand_category
+            * self.field_enfu_hydrogen_fuel_category
+            * self.field_enfu_upstream_to_fuel_category
+            * self.field_enfu_waste_fuel_category
         """
         # share values
         subsec = self.subsec_name_enfu
         attr = self.get_attribute_table(subsec)
+
+        # miscellaneous parameters that need to be checked before running
+        self.field_enfu_biofuels_demand_category = "biomass_demand_category"
+        self.field_enfu_biogas_fuel_category = "biogas_fuel_category"
+        self.field_enfu_electricity_demand_category = "electricity_demand_category"
+        self.field_enfu_hydrogen_fuel_category = "hydrogen_fuel_category"
+        self.field_enfu_upstream_to_fuel_category = "upstream_to_fuel_category"
+        self.field_enfu_waste_fuel_category = "waste_fuel_category"
 
         # check binary variables
         fields_req_bin = [
             self.field_enfu_biofuels_demand_category,
             self.field_enfu_biogas_fuel_category,
             self.field_enfu_electricity_demand_category,
+            self.field_enfu_hydrogen_fuel_category,
             self.field_enfu_waste_fuel_category
         ]
         self._check_binary_fields(
-            attr, self.subsec_name_enfu, fields_req_bin, force_sum_to_one = True)
+            attr, 
+            self.subsec_name_enfu, 
+            fields_req_bin, 
+            force_sum_to_one = True
+        )
 
         # check specification of upstream fuel
         self._check_subsector_attribute_table_crosswalk(

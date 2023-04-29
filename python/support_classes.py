@@ -1,5 +1,5 @@
 ###
-###   DEVELOP SOME SIMPLE CLASSES THAT CODIFY SHARED FUNCTIONALITY 
+###   DEVELOP SOME SIMPLE CLASSES THAT CODIFY SHARED FUNCTIONALITY AND SUPPORT DATA PIPELINE
 ###
 
 import geopy.distance
@@ -17,10 +17,14 @@ class Regions:
         * Aggregation by World Bank global region
         * Finding the closest region (by population centroid)
         * Shared replacement dictionaries (IEA/WB/UN)
-        * and more
+        * And more
+
+    The Regions class is designed to provide convenient support for batch 
+        integration of global and regional datasets into the SISEPUEDE 
+        framework.
     """
     def __init__(self,
-        model_attributes: ModelAttributes
+        model_attributes: ModelAttributes,
     ):
 
         self._initialize_region_properties(model_attributes)
@@ -417,7 +421,10 @@ class Regions:
 
 class TimePeriods:
     """
-    Leverage some simple time period actions based on a model attributes
+    Leverage some simple time period actions based on a model attributes. The 
+        TimePeriods class provides a seamless method for converting years to 
+        time periods in SISEPUEDE and can be expanded to integrate months (if
+        modeling at that scale).
     """
     def __init__(self,
         model_attributes: ModelAttributes

@@ -1022,7 +1022,7 @@ def transformation_entc_renewable_target(
     dict_cats_entc_max_investment: Union[Dict[str, np.ndarray], None] = None,
     factor_vec_ramp_msp: Union[float, int, None] = None,
     field_region: str = "nation",
-    fuel_elec: str = "fuel_electricity",
+    fuel_elec: Union[str, None] = None,
     fuel_hydg: str = "fuel_hydrogen",
     magnitude_renewables: Union[Dict[str, float], float, None] = None,
     model_energy: Union[me.NonElectricEnergy, None] = None,
@@ -1075,6 +1075,8 @@ def transformation_entc_renewable_target(
         MinShareProduction declines to 0 for non-renewable energy technologies.
         If None, defaults to 1.5 (1 is the same rate).
     - field_region: field in df_input that specifies the region
+    - fuel_elec: $CAT-TECHNOLOGY$ category specifying electricity. If None, 
+        defaults to model_electricity.cat_enfu_fuel
     - magnitude_renewables: Dict mapping renewable categories to target minimum
         shares of production by the final time period OR float giving a uniform 
         value to apply to all renewable categories (as defined in 
@@ -1843,7 +1845,7 @@ def transformation_inen_shift_modvars(
     model_energy = me.NonElectricEnergy(model_attributes) if not isinstance(model_energy, me.NonElectricEnergy) else model_energy
     all_regions = sorted(list(set(df_input[field_region])))
     # dertivative vars (alphabetical)
-    attr_inen = model_attributes.get_attribute_table("Industrial Energy")
+    attr_inen = model_attributes.get_attribute_table(model_attributes.subsec_name_inen)
     attr_time_period = model_attributes.dict_attributes.get(f"dim_{model_attributes.dim_time_period}")
     df_out = []
     regions_apply = all_regions if (regions_apply is None) else [x for x in regions_apply if x in all_regions]

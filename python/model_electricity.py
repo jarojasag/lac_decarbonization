@@ -858,6 +858,12 @@ class ElectricEnergy:
                 self.model_attributes.field_enfu_electricity_demand_category: 1
             }
         )[0]
+        self.cat_enfu_hgen = self.model_attributes.get_categories_from_attribute_characteristic(
+            self.subsec_name_enfu, 
+            {
+                self.model_attributes.field_enfu_hydrogen_fuel_category: 1
+            }
+        )[0]
         self.cat_enfu_wste = self.model_attributes.get_categories_from_attribute_characteristic(
             self.subsec_name_enfu, 
             {
@@ -866,9 +872,11 @@ class ElectricEnergy:
         )[0]
 
         # associated indices
-        self.ind_enfu_bgas = self.model_attributes.get_attribute_table(self.subsec_name_enfu).get_key_value_index(self.cat_enfu_bgas)
-        self.ind_enfu_elec = self.model_attributes.get_attribute_table(self.subsec_name_enfu).get_key_value_index(self.cat_enfu_elec)
-        self.ind_enfu_wste = self.model_attributes.get_attribute_table(self.subsec_name_enfu).get_key_value_index(self.cat_enfu_wste)
+        attr_enfu = self.model_attributes.get_attribute_table(self.subsec_name_enfu)
+        self.ind_enfu_bgas = attr_enfu.get_key_value_index(self.cat_enfu_bgas)
+        self.ind_enfu_elec = attr_enfu.get_key_value_index(self.cat_enfu_elec)
+        self.ind_enfu_hgen = attr_enfu.get_key_value_index(self.cat_enfu_hgen)
+        self.ind_enfu_wste = attr_enfu.get_key_value_index(self.cat_enfu_wste)
 
         # get pivot dictionary
         tuple_dicts = self.get_enfu_dict_subsectors_to_energy_variables()
@@ -919,6 +927,7 @@ class ElectricEnergy:
         self.modvar_entc_fuelprod_output_activity_ratio_kerosene = "Fuel Production NemoMod OutputActivityRatio Kerosene"
         self.modvar_entc_fuelprod_output_activity_ratio_natural_gas = "Fuel Production NemoMod OutputActivityRatio Natural Gas"
         self.modvar_entc_fuelprod_output_activity_ratio_oil = "Fuel Production NemoMod OutputActivityRatio Oil"
+        self.modvar_entc_max_elec_prod_increase_for_msp = "Maximum Production Increase Fraction to Satisfy MinShareProduction Electricity"
         self.modvar_entc_nemomod_discounted_capital_investment = "NemoMod Discounted Capital Investment"
         self.modvar_entc_nemomod_discounted_operating_costs = "NemoMod Discounted Operating Costs"
         self.modvar_entc_nemomod_emissions_ch4_elec = "NemoMod :math:\\text{CH}_4 Emissions from Electricity Generation"
@@ -963,7 +972,7 @@ class ElectricEnergy:
         self.modvar_entc_nemomod_variable_cost = "NemoMod VariableCost"
 
         # set dictionaries 
-        self._set_dict_enfu_fuel_categories_to_iar_oar_variables()
+        self._set_dict_enfu_fuel_categories_to_entc_variables()
 
         # pivot dictionaries
         tuple_dicts = self.get_entc_dict_subsectors_to_emission_variables()
@@ -1000,8 +1009,9 @@ class ElectricEnergy:
         
 
 
-    def _set_dict_enfu_fuel_categories_to_iar_oar_variables(self,
+    def _set_dict_enfu_fuel_categories_to_entc_variables(self,
         key_iar: str = "input_activity_ratio",
+        key_mpi_frac_msp: str = "max_prod_increase_frac_msp",
         key_oar: str = "output_activity_ratio"
     ) -> None:
         """
@@ -1018,27 +1028,33 @@ class ElectricEnergy:
         - key_iar: key to use self.dict_entc_fuel_categories_to_fuel_variables
             for NemoMod InputActivityRatio variables associated with a fuel
             category. Set as self.key_iar
+        - key_mpi_frac_msp: key to use 
+            self.dict_entc_fuel_categories_to_fuel_variables for NemoMod 
+            `Maximum Production Increase Fraction to Satisfy MinShareProduction`  
+            variables associated with a fuel category. Set as 
+            self.key_mpi_frac_msp
         - key_oar: key to use self.dict_entc_fuel_categories_to_fuel_variables
             for NemoMod OutputActivityRatio variables associated with a fuel
             category. Set as self.key_oar
         """
 
-        pycat_enfu = self.model_attributes.get_subsector_attribute(self.subsec_name_enfu, "pycategory_primary")
-
-        self.key_iar = key_iar
-        self.key_oar = key_oar
+        pycat_enfu = self.model_attributes.get_subsector_attribute(self.subsec_name_enfu, "pycategory_primary") 
 
         tuple_out = self.model_attributes.assign_keys_from_attribute_fields(
             self.subsec_name_entc,
             pycat_enfu,
             {
-                "Fuel Production NemoMod InputActivityRatio": self.key_iar,
-                "Fuel Production NemoMod OutputActivityRatio": self.key_oar
+                "Fuel Production NemoMod InputActivityRatio": key_iar,
+                "Fuel Production NemoMod OutputActivityRatio": key_oar,
+                "Maximum Production Increase Fraction to Satisfy MinShareProduction": key_mpi_frac_msp
             },
             "varreqs_partial",
             True
         )
         
+        self.key_iar = key_iar
+        self.key_oar = key_oar
+        self.key_mpi_frac_msp = key_mpi_frac_msp
         self.dict_entc_fuel_categories_to_fuel_variables = tuple_out[0]
         self.dict_entc_fuel_categories_to_unassigned_fuel_variables = tuple_out[1]
         
@@ -2480,14 +2496,17 @@ class ElectricEnergy:
 
 
     
-    def get_entc_import_adjust_msp(self,
+    def get_entc_import_adjusted_msp(self,#HEREHERE
         df_elec_trajectories: pd.DataFrame,
         arr_enfu_import_fractions_adj: np.ndarray,
         attribute_fuel: Union[AttributeTable, None] = None,
         attribute_technology: Union[AttributeTable, None] = None,
         dict_tech_info: Union[Dict, None] = None,
+        drop_flag: Union[float, int] = None,
+        modvar_maxprod_msp_increase: Union[str, None] = None,
         modvar_msp: Union[str, None] = None,
         regions: Union[List[str], None] = None,
+        tuple_enfu_production_and_demands: Union[Tuple[pd.DataFrame], None] = None,
     ) -> Tuple[pd.DataFrame, Dict[str, str]]:
         """
         Minimum share of production is used to specify import fractions; this 
@@ -2516,9 +2535,28 @@ class ElectricEnergy:
             MinShareProductions
         - dict_tech_info: optional tech_info dictionary specified by
             .get_tech_info_dict() method (can be passed to reduce computation)
+        - drop_flag: optional specification of a drop flag used to indicate 
+            rows/variables for which the MSP Max Production constraint is not 
+            applicable (see 
+            ElectricEnergy.get_entc_maxprod_increase_adjusted_msp for more 
+            info). Defaults to self.drop_flag_tech_capacities if None.
+        - modvar_maxprod_msp_increase: SISEPUEDE model variable storing the 
+            maximum production increase (as a fraction of estimated last period
+            with free production) allowable due to exogenous MinShareProduction
         - modvar_msp: model variable used to specify MinShareProduction (ENTC)
         - regions: regions to specify. If None, defaults to configuration 
             regions
+        - tuple_enfu_production_and_demands: optional tuple of energy fuel 
+            demands produced by 
+            self.model_energy.project_enfu_production_and_demands():
+
+            (
+                arr_enfu_demands, 
+                arr_enfu_demands_distribution, 
+                arr_enfu_export, 
+                arr_enfu_imports, 
+                arr_enfu_production
+            )
         """
         # do some initialization from inputs
         attribute_fuel = self.model_attributes.get_attribute_table(self.subsec_name_enfu) if (attribute_fuel is None) else attribute_fuel
@@ -2533,11 +2571,23 @@ class ElectricEnergy:
         subsec_name_entc = self.model_attributes.subsec_name_entc
         
         # retrieve input MSP
+        """
         arr_entc_msp = self.model_attributes.get_standard_variables(
             df_elec_trajectories,
             modvar_msp,
             expand_to_all_cats = True,
             return_type = "array_base"
+        )
+        """;
+        arr_entc_msp = self.get_entc_maxprod_increase_adjusted_msp(
+            df_elec_trajectories,
+            adjust_free_msps_in_response = True,
+            attribute_fuel = attribute_fuel,
+            attribute_technology = attribute_technology,
+            drop_flag = drop_flag,
+            modvar_maxprod_msp_increase = modvar_maxprod_msp_increase,
+            modvar_msp = modvar_msp,
+            tuple_enfu_production_and_demands = tuple_enfu_production_and_demands,
         )
         
         # initialize an output dictionary mapping each tech to fuel
@@ -2596,7 +2646,8 @@ class ElectricEnergy:
 
         # setup normalization of input fractions, but only apply if the total exceeds 1
         arr_entc_msp_fracs_specified = arr_entc_msp[:, inds_entc]
-        # CHANGED FROM MAX (SEE BELOW) 2023042027 (HEREHEREs)
+
+        # CHANGED FROM MAX OF VECTOR TO WHOLE VECTOR 2023042027
         vec_entc_div = sf.vec_bounds(
             arr_entc_msp_fracs_specified.sum(axis = 1),
             (1, np.inf)
@@ -2605,9 +2656,6 @@ class ElectricEnergy:
             arr_entc_msp_fracs_specified, 
             1/vec_entc_div
         )
-        #CHANGED HERE
-        #max_entc_msp_fracs_norm = max(vec_entc_div)
-        #arr_entc_msp_fracs_specified /= max_entc_msp_fracs_norm
         
         # multiply by 1 - import fraction
         arr_entc_msp[:, inds_entc] = sf.do_array_mult(
@@ -2660,7 +2708,222 @@ class ElectricEnergy:
             self.field_nemomod_value
         )
 
-        return df_entc_msp_formatted    
+        return df_entc_msp_formatted
+    
+
+
+    def get_entc_maxprod_increase_adjusted_msp(self,
+        df_elec_trajectories: pd.DataFrame,
+        adjust_free_msps_in_response: bool = True,
+        attribute_fuel: Union[AttributeTable, None] = None,
+        attribute_technology: Union[AttributeTable, None] = None,
+        drop_flag: Union[float, int] = None,
+        modvar_maxprod_msp_increase: Union[str, None] = None,
+        modvar_msp: Union[str, None] = None,
+        tuple_enfu_production_and_demands: Union[Tuple[pd.DataFrame], None] = None,
+    ) -> np.ndarray:
+        """
+        Adjust the MinShareProduction input table to allow for the prevention of 
+            increases in production to satisfy exogenously specified 
+            MinShareProduction.
+            
+        Example use case: if a baseline relies on the specification of 
+            MinShareProduction, yet some technology will not be built after some
+            point in time, this variable can be specified to avoid the conlict
+            and preserve the relative balance of generation mixes.
+            
+        If no adjustments are found in modvar_maxprod_msp_increase, then the 
+            exogenous specification is returned. 
+            
+        * Returns an np.ndarray wide by all ENTC categories and long by rows in
+            df_elec_trajectories.
+            
+
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
+
+        Keyword Arguments
+        -----------------
+        - adjust_free_msps_in_response: MSP trajectories that are not subject to
+            no-growth restrictions--or "Free MSPs"--can be adjusted to preserve
+            the aggregate share of production that is accounted for by all MSP
+            specifications (for a given fuel). If False, Free MSPs are no 
+            adjusted.
+        - attribute_fuel: AttributeTable for fuel
+        - attribute_technology: AttributeTable used to denote technologies with 
+            MinShareProductions
+        - drop_flag: optional specification of a drop flag used to indicate 
+            rows/variables for which the MSP Max Production constraint is not 
+            applicable.Defaults to self.drop_flag_tech_capacities if None.
+        - modvar_maxprod_msp_increase: SISEPUEDE model variable storing the 
+            maximum production increase (as a fraction of estimated last period
+            with free production) allowable due to exogenous MinShareProduction
+        - modvar_msp: SISEPUEDE model variable storing the MinShareProduction
+        - tuple_enfu_production_and_demands: optional tuple of energy fuel 
+            demands produced by 
+            self.model_energy.project_enfu_production_and_demands():
+
+            (
+                arr_enfu_demands, 
+                arr_enfu_demands_distribution, 
+                arr_enfu_export, 
+                arr_enfu_imports, 
+                arr_enfu_production
+            )
+        """ 
+        
+        ##  INITIALIZATION
+        
+        attribute_technology = (
+            self.model_attributes.get_attribute_table(self.subsec_name_entc) 
+            if (attribute_technology is None) 
+            else attribute_technology
+        )
+        attribute_fuel = (
+            self.model_attributes.get_attribute_table(self.subsec_name_enfu) 
+            if (attribute_fuel is None) 
+            else attribute_fuel
+        )
+        drop_flag = (
+            self.drop_flag_tech_capacities 
+            if (drop_flag is None) 
+            else drop_flag
+        )
+        modvar_maxprod_msp_increase = (
+            self.modvar_entc_max_elec_prod_increase_for_msp
+            if modvar_maxprod_msp_increase is None
+            else modvar_maxprod_msp_increase
+        )
+        modvar_msp = (
+            self.modvar_entc_nemomod_min_share_production
+            if modvar_msp is None
+            else modvar_msp
+        )
+
+        # 
+        arr_entc_maxprod_msp_increase = self.model_attributes.get_standard_variables(
+            df_elec_trajectories, 
+            modvar_maxprod_msp_increase,
+            all_cats_missing_val = drop_flag,
+            expand_to_all_cats = True,
+            return_type = "array_base"
+        )
+        
+        # get unadjusted MSP
+        arr_entc_msp = self.model_attributes.get_standard_variables(
+            df_elec_trajectories,
+            modvar_msp,
+            expand_to_all_cats = True,
+            return_type = "array_base",
+            var_bounds = (0, 1)
+        )
+        
+        
+        ##  CHECK arr_entc_maxprod_msp_increase FOR NON-DROPS
+        ##    if there are no adjustments OR if there is no MSP to adjust
+        ##    return arr_entc_msp
+        
+        w_not_drop = np.where(arr_entc_maxprod_msp_increase != drop_flag)
+        if (len(w_not_drop[0]) == 0) or (np.max(arr_entc_msp.sum(axis = 1)) == 0):
+            return arr_entc_msp
+
+        
+        
+        ##  PROCEED WITH ADJUSTMENTS IF NECESSARY - START BY GETTING
+        
+        # retrieve production (units do not matter since we'll work with adjusting fractions)
+        tuple_enfu_production_and_demands = (
+            self.model_energy.project_enfu_production_and_demands(
+                df_elec_trajectories, 
+                target_energy_units = self.model_attributes.configuration.get("energy_units_nemomod")
+            )
+            if tuple_enfu_production_and_demands is None
+            else tuple_enfu_production_and_demands
+        )
+        
+        # get `vec_position_base_prod_est`, the vector storing the time period position of the last time period with free prodution estimate
+        dict_entc_cat_to_position_base_prod_est = {}
+        inds_modify = np.unique(w_not_drop[1])
+        for j in inds_modify:
+            # get i_last, the last row with a free production estimate
+            w_rows = np.where(w_not_drop[1] == j)
+            i_last = min(w_not_drop[0][w_rows[0]]) - 1
+            
+            cat = attribute_technology.key_values[j]
+            dict_entc_cat_to_position_base_prod_est.update({cat: i_last}) if (i_last >= 0) else None
+        
+
+        # get fuels to consider in iteration
+        fuels_adj = [
+            k for k, v in self.dict_entc_fuel_categories_to_fuel_variables.items()
+            if self.key_mpi_frac_msp in v.keys()
+        ]
+        
+        arr_entc_msp_unadj = arr_entc_msp.copy()
+        
+        
+        ##  LOOP OVER FUELS ASSOCIATED WITH PRODUCTION TO MODIFY MSPS
+
+        for fuel in fuels_adj:
+            # 
+            modvar = self.dict_entc_fuel_categories_to_fuel_variables.get(fuel).get(self.key_mpi_frac_msp)
+            cats_modvar = self.model_attributes.get_variable_categories(modvar)
+            cats_no_growth = [x for x in cats_modvar if x in dict_entc_cat_to_position_base_prod_est.keys()]
+            cats_response = [x for x in cats_modvar if x not in cats_no_growth]
+
+            # get column indices of categories that won't grow + those that respond & check sum of MSPs that are subject to non-growth
+            inds_no_growth = [attribute_technology.get_key_value_index(x) for x in cats_no_growth]
+            inds_response = [attribute_technology.get_key_value_index(x) for x in cats_response]
+            inds_all = inds_no_growth + inds_response
+            
+            if len(inds_no_growth) > 0:
+                
+                # get column totals of no-growth - only need to modify the array if there are no-growth ENTC cats associated with this fuel
+                vec_entc_msp_no_growth = arr_entc_msp[:, inds_no_growth].sum(axis = 1).copy()
+                vec_entc_msp_all = arr_entc_msp[:, inds_all].sum(axis = 1).copy()
+
+                if np.max(vec_entc_msp_no_growth) > 0:
+
+                    # get projected demand for the fuel
+                    ind_enfu_fuel = attribute_fuel.get_key_value_index(fuel)
+                    vec_prod_est_cur_fuel = tuple_enfu_production_and_demands[4][:, ind_enfu_fuel]
+
+                    # ordered by cats_no_growth
+                    row_inds_no_growth = [dict_entc_cat_to_position_base_prod_est.get(x) for x in cats_no_growth]
+
+                    for i, j in enumerate(inds_no_growth):
+
+                        # get the estimated production in period tp(row)
+                        row = row_inds_no_growth[i]
+                        est_prod_floor = vec_prod_est_cur_fuel[row]*arr_entc_msp[row, j]
+
+                        # next, get estimated fraction associated with preserving this estimated production, but use *current* MSP as uppber bound
+                        fracs_new = est_prod_floor/vec_prod_est_cur_fuel[(row + 1):]
+                        fracs_new *= 1 + sf.vec_bounds(arr_entc_maxprod_msp_increase[(row + 1):, j], (0, np.inf))
+                        bounds = [(0.0, x) for x in arr_entc_msp[(row + 1):, j]]
+                        fracs_new = sf.vec_bounds(fracs_new, bounds)
+
+                        # overwrite
+                        arr_entc_msp[(row + 1):, j] = fracs_new
+                        
+
+                    # next, check if response MSPs need to be re-scaled to preserve aggregate production shares
+                    if adjust_free_msps_in_response:
+                        
+                        vec_entc_msp_no_growth_post_adj = arr_entc_msp[:, inds_no_growth].sum(axis = 1)
+                        vec_entc_msp_all_post_adj = arr_entc_msp[:, inds_all].sum(axis = 1)
+                        
+                        vec_scale_response = vec_entc_msp_all - vec_entc_msp_no_growth_post_adj
+                        vec_scale_response /= vec_entc_msp_all - vec_entc_msp_no_growth
+                        vec_scale_response = np.nan_to_num(vec_scale_response, 1.0, posinf = 1.0)
+                        
+                        for j in inds_response:
+                            arr_entc_msp[:, j] *= vec_scale_response
+        
+        # return MSP adjusted 
+            
+        return arr_entc_msp
 
 
 
@@ -3713,7 +3976,7 @@ class ElectricEnergy:
         attribute_emission: AttributeTable = None,
         attribute_time_period: AttributeTable = None,
         dict_gas_to_emission_fields: dict = None,
-        drop_flag: int = -999,
+        drop_flag: Union[int, None] = None,
         regions: Union[List[str], None] = None,
     ) -> pd.DataFrame:
         """
@@ -3743,6 +4006,7 @@ class ElectricEnergy:
         dict_gas_to_emission_fields = self.model_attributes.dict_gas_to_total_emission_fields if (dict_gas_to_emission_fields is None) else dict_gas_to_emission_fields
         attribute_emission = self.model_attributes.dict_attributes.get("emission_gas") if (attribute_emission is None) else attribute_emission
         attribute_time_period = self.model_attributes.dict_attributes.get(self.model_attributes.dim_time_period) if (attribute_time_period is None) else attribute_time_period
+        drop_flag = self.drop_flag_tech_capacities if (drop_flag is None) else drop_flag
 
         modvars_limit = [
             self.model_socioeconomic.modvar_gnrl_emission_limit_ch4,
@@ -4842,10 +5106,8 @@ class ElectricEnergy:
         # do some initialization
         attribute_fuel = self.model_attributes.get_attribute_table(self.subsec_name_enfu) if (attribute_fuel is None) else attribute_fuel
         attribute_technology = self.model_attributes.get_attribute_table(self.subsec_name_entc) if (attribute_technology is None) else attribute_technology
-        modvar_import_fraction = self.modvar_enfu_frac_fuel_demand_imported if (modvar_import_fraction is None) else modvar_import_fraction
-        
-        # some attribute initializations
         dict_tech_info = self.get_tech_info_dict(attribute_technology = attribute_technology)
+        modvar_import_fraction = self.modvar_enfu_frac_fuel_demand_imported if (modvar_import_fraction is None) else modvar_import_fraction
 
         # get production, imports, exports, and demands to adjust import fractions
         if (tuple_enfu_production_and_demands is None) and (df_elec_trajectories is None):
@@ -4939,24 +5201,16 @@ class ElectricEnergy:
         arr_enfu_import_fractions_adj_for_msp_adj = arr_enfu_import_fractions_adj.copy()
         arr_enfu_import_fractions_adj_for_msp_adj[:, self.ind_enfu_elec] += vec_entc_elec_demand_frac_from_tech_lower_limit
         
-        df_entc_msp = self.get_entc_import_adjust_msp(
+        df_entc_msp = self.get_entc_import_adjusted_msp(
             df_elec_trajectories,
             arr_enfu_import_fractions_adj_for_msp_adj,
             attribute_fuel = attribute_fuel,
             attribute_technology = attribute_technology,
             dict_tech_info = dict_tech_info,
-            regions = regions
+            regions = regions,
+            tuple_enfu_production_and_demands = tuple_enfu_production_and_demands,
         )
-        # HEREHERE
-        """
-        xx = df_entc_msp[
-            df_entc_msp["f"].isin(["fuel_electricity"]) &
-            df_entc_msp["y"].isin([1000])
-        ]
 
-        print(xx)
-        print(xx["val"].sum())
-        """;
         df_out = self.add_multifields_from_key_values(
             pd.concat([df_out, df_entc_msp[df_out.columns]], axis = 0),
             [
@@ -5031,24 +5285,6 @@ class ElectricEnergy:
         dict_return = {self.model_attributes.table_nemomod_min_storage_charge: df_out}
 
         return dict_return
-
-
-
-    ##  format MinimumUtilization for NemoMod
-    def format_nemomod_table_minimum_utilization(self,
-        df_elec_trajectories: pd.DataFrame
-    ) -> pd.DataFrame:
-        """
-        Format the MinimumUtilization input table for NemoMod based on 
-            SISEPUEDE configuration parameters, input variables, integrated 
-            model outputs, and reference tables.
-
-        Function Arguments
-        ------------------
-        - df_elec_trajectories: data frame of model variable input trajectories
-        """
-
-        return None
 
 
 

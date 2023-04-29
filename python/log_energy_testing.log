@@ -811,3 +811,35 @@
 2023-04-27 15:23:14,284 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
 2023-04-27 15:31:04,689 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
 2023-04-27 15:31:04,703 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-04-28 11:50:16,994 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-04-28 11:50:17,011 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-04-28 11:51:15,205 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-04-28 11:51:15,216 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-04-28 11:51:27,219 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-04-28 11:51:27,231 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-04-28 11:52:09,766 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-04-28 11:52:09,779 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-04-28 12:04:29,162 - DEBUG - pickle loaded: /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/python/model_energy.py
+2023-04-28 12:04:29,350 - DEBUG - pickle loaded: /Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/jedi/third_party/typeshed/stdlib/3/builtins.pyi
+2023-04-28 12:04:29,915 - DEBUG - pickle loaded: /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/python/attribute_table.py
+2023-04-28 12:04:29,948 - DEBUG - pickle loaded: /Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/typing.py
+2023-04-28 12:04:29,971 - DEBUG - pickle loaded: /Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/jedi/third_party/typeshed/stdlib/3/typing.pyi
+2023-04-28 12:04:30,184 - DEBUG - pickle loaded: /Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/jedi/third_party/typeshed/stdlib/3/sys.pyi
+2023-04-28 12:43:42,328 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-04-28 12:43:42,344 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-04-28 13:19:13,848 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-04-28 13:19:13,861 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-04-28 13:33:50,082 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-04-28 13:33:50,097 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-04-28 13:34:10,434 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-04-28 13:34:10,446 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-04-28 13:34:26,606 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-04-28 13:34:26,621 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-04-28 13:38:07,796 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-04-28 13:38:07,811 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-04-28 18:07:34,440 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-04-28 18:07:34,454 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-04-28 18:45:03,639 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-04-28 18:45:03,653 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
+2023-04-28 18:45:33,022 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/SpecifiedDemandProfile.csv
+2023-04-28 18:45:33,035 - INFO - Successfully read NemoMod input table data from /Users/jsyme/Documents/Projects/git_jbus/lac_decarbonization/ref/nemo_mod/CapacityFactor.csv
