@@ -1746,6 +1746,7 @@ class ElectricEnergy:
             expand_to_all_cats = True
         )
         vec_enfu_energy_density_gravimetric = vec_enfu_energy_density_gravimetric[:, self.ind_enfu_bgas]
+
         # get minimum fuel fraction to electricity
         vec_enfu_minimum_fuel_frac_to_elec = self.model_attributes.get_standard_variables(
             df_elec_trajectories,
@@ -2496,7 +2497,7 @@ class ElectricEnergy:
 
 
     
-    def get_entc_import_adjusted_msp(self,#HEREHERE
+    def get_entc_import_adjusted_msp(self,
         df_elec_trajectories: pd.DataFrame,
         arr_enfu_import_fractions_adj: np.ndarray,
         attribute_fuel: Union[AttributeTable, None] = None,
@@ -2570,16 +2571,8 @@ class ElectricEnergy:
         subsec_name_enfu = self.model_attributes.subsec_name_enfu
         subsec_name_entc = self.model_attributes.subsec_name_entc
         
-        # retrieve input MSP
-        """
-        arr_entc_msp = self.model_attributes.get_standard_variables(
-            df_elec_trajectories,
-            modvar_msp,
-            expand_to_all_cats = True,
-            return_type = "array_base"
-        )
-        """;
-        arr_entc_msp = self.get_entc_maxprod_increase_adjusted_msp(
+        # retrieve input MSP that has been adjusted to the presene of max production limits
+        arr_entc_msp, arr_entc_activity_limits = self.get_entc_maxprod_increase_adjusted_msp(
             df_elec_trajectories,
             adjust_free_msps_in_response = True,
             attribute_fuel = attribute_fuel,
@@ -2717,15 +2710,23 @@ class ElectricEnergy:
         adjust_free_msps_in_response: bool = True,
         attribute_fuel: Union[AttributeTable, None] = None,
         attribute_technology: Union[AttributeTable, None] = None,
+        build_for_activity_limit: bool = True,
         drop_flag: Union[float, int] = None,
         modvar_maxprod_msp_increase: Union[str, None] = None,
         modvar_msp: Union[str, None] = None,
         tuple_enfu_production_and_demands: Union[Tuple[pd.DataFrame], None] = None,
-    ) -> np.ndarray:
+    ) -> Tuple[np.ndarray, Union[np.ndarray, None]]:
         """
         Adjust the MinShareProduction input table to allow for the prevention of 
             increases in production to satisfy exogenously specified 
-            MinShareProduction.
+            MinShareProduction. Returns a tuple of two NumPy arrays:
+
+            (arr_entc_msp, arr_entc_activity_limits)
+
+            where `arr_entc_activity_limits` is None if there are no MSPs 
+            entered. `arr_entc_activity_limits` gives an array of activity 
+            limits that can be passed to TotalTechnologyAnnualActivityLowerLimit
+            and TotalTechnologyAnnualActivityUpperLimit.
             
         Example use case: if a baseline relies on the specification of 
             MinShareProduction, yet some technology will not be built after some
@@ -2753,6 +2754,12 @@ class ElectricEnergy:
         - attribute_fuel: AttributeTable for fuel
         - attribute_technology: AttributeTable used to denote technologies with 
             MinShareProductions
+        - build_for_activity_limit: return output arrays designed for 
+            transfering MaxProd MSP increase costraints to 
+            TotalAnnualActivityLowerLimit and TotalAnnualActivityUpperLimit. If
+            True, replaces MSPs (after initiation) with 0s for affected 
+            technologies and provides estimates of limits. If False, preserves
+            MSPs.
         - drop_flag: optional specification of a drop flag used to indicate 
             rows/variables for which the MSP Max Production constraint is not 
             applicable.Defaults to self.drop_flag_tech_capacities if None.
@@ -2826,7 +2833,7 @@ class ElectricEnergy:
         
         w_not_drop = np.where(arr_entc_maxprod_msp_increase != drop_flag)
         if (len(w_not_drop[0]) == 0) or (np.max(arr_entc_msp.sum(axis = 1)) == 0):
-            return arr_entc_msp
+            return arr_entc_msp, None
 
         
         
@@ -2860,8 +2867,9 @@ class ElectricEnergy:
             if self.key_mpi_frac_msp in v.keys()
         ]
         
-        arr_entc_msp_unadj = arr_entc_msp.copy()
-        
+        # build activity limits to pass and initialize index storage for overwriting MSPs with 0 if build_for_activity_limit
+        arr_entc_activity_limits = np.ones(arr_entc_msp.shape)*drop_flag
+        w_set_to_no_growth = [[], []]
         
         ##  LOOP OVER FUELS ASSOCIATED WITH PRODUCTION TO MODIFY MSPS
 
@@ -2904,9 +2912,14 @@ class ElectricEnergy:
                         bounds = [(0.0, x) for x in arr_entc_msp[(row + 1):, j]]
                         fracs_new = sf.vec_bounds(fracs_new, bounds)
 
-                        # overwrite
+                        # overwrite MSP and add to activity limit output
                         arr_entc_msp[(row + 1):, j] = fracs_new
-                        
+                        arr_entc_activity_limits[(row + 1):, j] = fracs_new*vec_prod_est_cur_fuel[(row + 1):]
+
+                        # update indices
+                        r = list(range(row + 1, len(arr_entc_msp)))
+                        w_set_to_no_growth[0] += r
+                        w_set_to_no_growth[1] += list([j for x in r])
 
                     # next, check if response MSPs need to be re-scaled to preserve aggregate production shares
                     if adjust_free_msps_in_response:
@@ -2921,9 +2934,12 @@ class ElectricEnergy:
                         for j in inds_response:
                             arr_entc_msp[:, j] *= vec_scale_response
         
+    
+        if build_for_activity_limit:
+            arr_entc_msp[w_set_to_no_growth[0], w_set_to_no_growth[1]] = 0.0
+
         # return MSP adjusted 
-            
-        return arr_entc_msp
+        return arr_entc_msp, arr_entc_activity_limits
 
 
 
@@ -3432,12 +3448,12 @@ class ElectricEnergy:
         table_nemomod: str,
         fields_index_nemomod: list,
         field_melt_nemomod: str,
-        df_append: pd.DataFrame = None,
+        df_append: Union[pd.DataFrame, None] = None,
         dict_fields_to_pass: dict = {},
-        drop_flag: Union[float, int] = None,
+        drop_flag: Union[float, int, None] = None,
         override_time_period_transformation: bool = False,
         regions: Union[List[str], None] = None,
-        scalar_to_nemomod_units: float = 1,
+        scalar_to_nemomod_units: Union[float, None] = 1,
         **kwargs
     ) -> pd.DataFrame:
         """
@@ -3473,26 +3489,41 @@ class ElectricEnergy:
         """
 
         # set some defaults
-        subsector = self.model_attributes.get_variable_subsector(modvar, throw_error_q = False)
+
+        subsector = (
+            modvar if (modvar in self.model_attributes.all_subsectors)
+            else self.model_attributes.get_variable_subsector(modvar, throw_error_q = False)
+        )
         if subsector is None:
             return None
 
         attr = self.model_attributes.get_attribute_table(subsector)
         pycat = self.model_attributes.get_subsector_attribute(subsector, "pycategory_primary")
-        
-        # get the variable
-        df_out = self.model_attributes.get_standard_variables(
-            df_elec_trajectories,
-            modvar,
-            override_vector_for_single_mv_q = True,
-            return_type = "array_base",
-            expand_to_all_cats = False,
-            **kwargs
+        scalar_to_nemomod_units = 1.0 if not sf.isnumber(scalar_to_nemomod_units) else scalar_to_nemomod_units
+
+        # get the variable from the data frame
+        df_out = (
+            self.model_attributes.get_standard_variables(
+                df_elec_trajectories,
+                modvar,
+                override_vector_for_single_mv_q = True,
+                return_type = "array_base",
+                expand_to_all_cats = False,
+                **kwargs
+            )
+            if modvar != subsector
+            else np.array(df_elec_trajectories[[x for x in attr.key_values if x in df_elec_trajectories.columns]])
         )
 
+        # do any conversions and initialize the output dataframe
         df_out *= scalar_to_nemomod_units
-        cats_ordered_out = self.model_attributes.get_variable_categories(modvar)
+        cats_ordered_out = (
+            self.model_attributes.get_variable_categories(modvar)
+            if (modvar != subsector)
+            else attr.key_values
+        )
         df_out = pd.DataFrame(df_out, columns = cats_ordered_out)
+
 
         # add a year (would not be in data frame)
         if (self.field_nemomod_year in fields_index_nemomod) and (self.model_attributes.dim_time_period in df_elec_trajectories.columns):
@@ -3847,7 +3878,7 @@ class ElectricEnergy:
     def format_nemomod_attribute_table_storage(self,
         attribute_storage: AttributeTable = None,
         dict_rename: dict = None
-    ) -> pd.DataFrame:
+    ) -> Dict[str, pd.DataFrame]:
         """
         Format the STORAGE dimension table for NemoMod based on SISEPUEDE 
             configuration parameters, input variables, integrated model outputs, 
@@ -3862,17 +3893,35 @@ class ElectricEnergy:
         """
 
         # set some defaults
-        attribute_storage = self.model_attributes.get_attribute_table(self.subsec_name_enst) if (attribute_storage is None) else attribute_storage
+        attribute_storage = (
+            self.model_attributes.get_attribute_table(self.subsec_name_enst) 
+            if (attribute_storage is None) 
+            else attribute_storage
+        )
         pycat_strg = self.model_attributes.get_subsector_attribute(self.subsec_name_enst, "pycategory_primary")
-        dict_rename = {pycat_strg: self.field_nemomod_value, "description": self.field_nemomod_description} if (dict_rename is None) else dict_rename
+        dict_rename = (
+            {
+                pycat_strg: self.field_nemomod_value, 
+                "description": self.field_nemomod_description
+            } 
+            if (dict_rename is None) 
+            else dict_rename
+        )
 
         # set values out
         df_out = attribute_storage.table.copy()
         df_out.rename(columns = dict_rename, inplace = True)
-        fields_ord = [x for x in self.fields_nemomod_sort_hierarchy if (x in df_out.columns)] + [f"netzero{x}" for x in ["year", "tg1", "tg2"]]
-        df_out = df_out[fields_ord].sort_values(by = fields_ord).reset_index(drop = True)
+        fields_ord = [x for x in self.fields_nemomod_sort_hierarchy if (x in df_out.columns)] 
+        fields_ord += [f"netzero{x}" for x in ["year", "tg1", "tg2"]]
+        df_out = (
+            df_out[fields_ord]
+            .sort_values(by = fields_ord)
+            .reset_index(drop = True)
+        )
 
-        return {self.model_attributes.table_nemomod_storage: df_out}
+        dict_return = {self.model_attributes.table_nemomod_storage: df_out}
+
+        return dict_return
 
 
 
@@ -3880,7 +3929,7 @@ class ElectricEnergy:
         attribute_fuel: Union[AttributeTable, None] = None,
         attribute_technology: Union[AttributeTable, None] = None,
         dict_rename: dict = None
-    ) -> pd.DataFrame:
+    ) -> Dict[str, pd.DataFrame]:
         """
         Format the TECHNOLOGY dimension table for NemoMod based on SISEPUEDE 
             configuration parameters, input variables, integrated model outputs, 
@@ -3921,22 +3970,24 @@ class ElectricEnergy:
         })
 
         fields_ord = [x for x in self.fields_nemomod_sort_hierarchy if (x in df_out.columns)]
-        df_out = pd.concat(
-            [df_out[fields_ord], df_out_dummies[fields_ord], df_append[fields_ord]],
-            axis = 0
-        ).sort_values(
-            by = fields_ord
-        ).reset_index(
-            drop = True
+        df_out = (
+            pd.concat(
+                [df_out[fields_ord], df_out_dummies[fields_ord], df_append[fields_ord]],
+                 axis = 0
+            )
+            .sort_values(by = fields_ord)
+            .reset_index(drop = True)
         )
 
-        return {self.model_attributes.table_nemomod_technology: df_out}
+        dict_return = {self.model_attributes.table_nemomod_technology: df_out}
+
+        return dict_return
 
 
-    ##  format TECHNOLOGY for NemoMod
+
     def format_nemomod_attribute_table_year(self,
         time_period_as_year: bool = None
-    ) -> pd.DataFrame:
+    ) -> Dict[str, pd.DataFrame]:
         """
         Format the YEAR dimension table for NemoMod based on SISEPUEDE 
             configuration parameters, input variables, integrated model outputs, 
@@ -3962,7 +4013,9 @@ class ElectricEnergy:
             self.field_nemomod_description: [f"SISEPUEDE {desc_name} {y}" for y in years]
         })
 
-        return {self.model_attributes.table_nemomod_year: df_out}
+        dict_return = {self.model_attributes.table_nemomod_year: df_out}
+
+        return dict_return
 
 
 
@@ -3978,7 +4031,7 @@ class ElectricEnergy:
         dict_gas_to_emission_fields: dict = None,
         drop_flag: Union[int, None] = None,
         regions: Union[List[str], None] = None,
-    ) -> pd.DataFrame:
+    ) -> Dict[str, pd.DataFrame]:
         """
         Format the AnnualEmissionLimit input tables for NemoMod based on 
             SISEPUEDE configuration parameters, input variables, integrated 
@@ -4069,6 +4122,7 @@ class ElectricEnergy:
             ],
             regions = regions
         )
+        
         dict_return = {self.model_attributes.table_nemomod_annual_emission_limit: df_out}
 
         return dict_return
@@ -5987,6 +6041,10 @@ class ElectricEnergy:
             TotalTechnologyAnnualActivityUpperLimit by scaling 
             MinShareProduction. 
 
+        NOTE: Only should be used with integration technologies, not those that 
+            are the results of adjustments to MSP (see 
+            ElectricEnergy.get_entc_maxprod_increase_adjusted_msp). 
+
         Returns np.ndarray (vector) of TotalTechnologyAnnualActivityLowerLimit
             as a fraction of non-fuel production energy demands. Note that this 
             fraction is >= than the true fraction, since demands for electricity 
@@ -6057,7 +6115,7 @@ class ElectricEnergy:
 
         #    NOTE: This fraction is >= than the true fraction, since demands for electricity increase with fuel production
         table_name = self.model_attributes.table_nemomod_total_technology_annual_activity_lower_limit
-        df_tech_lower_limit = self.format_nemomod_table_total_technology_activity_lower_limit(df_elec_trajectories).get(table_name)
+        df_tech_lower_limit = self.get_total_technology_activity_lower_limit_no_msp_adjustment(df_elec_trajectories).get(table_name)
         vector_reference_time_period = list(df_elec_trajectories[self.model_attributes.dim_time_period])
 
         vec_entc_prod_lower_limit = np.array(
@@ -6649,7 +6707,6 @@ class ElectricEnergy:
 
     def format_nemomod_table_total_capacity_tables(self,
         df_elec_trajectories: pd.DataFrame,
-        df_total_technology_activity_lower_limit: Union[dict, pd.DataFrame, None] = None,
         regions: Union[List[str], None] = None,
     ) -> pd.DataFrame:
         """
@@ -6667,32 +6724,11 @@ class ElectricEnergy:
         Function Arguments
         ------------------
         - df_elec_trajectories: data frame of model variable input trajectories
-        - df_total_technology_activity_lower_limit: dictionary with key 
-            "TotalTechnologyAnnualActivityLowerLimit": data frame or data frame 
-            giving minimum capacities implied by 
-            TotalTechnologyAnnualActivityLowerLimit. If None, accesses 
-            ElectricEnergy.format_nemomod_table_total_technology_activity_lower_limit(
-                df_elec_trajectories, 
-                return_type = "CapacityCheck"
-            )
         - regions: regions to specify. If None, defaults to configuration 
             regions
         """
 
         dict_return = {}
-        # check the lower limit
-        tablename_lower_lim = self.model_attributes.table_nemomod_total_technology_annual_activity_lower_limit
-        if isinstance(df_total_technology_activity_lower_limit, dict):
-            df_total_technology_activity_lower_limit = df_total_technology_activity_lower_limit.get(tablename_lower_lim)
-
-        # check if it's none (applicable if entered as none or if the input dictionary fails)
-        if df_total_technology_activity_lower_limit is None:
-            df_total_technology_activity_lower_limit = self.format_nemomod_table_total_technology_activity_lower_limit(
-                df_elec_trajectories, 
-                regions = regions,
-                return_type = "CapacityCheck"
-            )
-            df_total_technology_activity_lower_limit = df_total_technology_activity_lower_limit.get(tablename_lower_lim)
 
         # get some scalars
         scalar_total_annual_max_capacity = self.model_attributes.get_scalar(self.modvar_entc_nemomod_total_annual_max_capacity, "power")
@@ -6717,16 +6753,6 @@ class ElectricEnergy:
                 scalar_to_nemomod_units = scalar_total_annual_max_capacity
             )
         )
-        # verify that the maximum capacity meets or exceed the minimum activity lower limit
-        df_max_capacity, df_min = self.verify_min_max_constraint_inputs(
-            dict_return[self.model_attributes.table_nemomod_total_annual_max_capacity],
-            df_total_technology_activity_lower_limit,
-            self.field_nemomod_value,
-            self.field_nemomod_value,
-            field_id = self.field_nemomod_id,
-            conflict_resolution_option = "swap"
-        )
-        dict_return.update({self.model_attributes.table_nemomod_total_annual_max_capacity: df_max_capacity})
 
         # TotalAnnualMaxCapacityInvestment
         dict_return.update(
@@ -6787,8 +6813,8 @@ class ElectricEnergy:
 
         # check tables - capacity
         dfs_verify = self.verify_min_max_constraint_inputs(
-            dict_return[self.model_attributes.table_nemomod_total_annual_max_capacity],
-            dict_return[self.model_attributes.table_nemomod_total_annual_min_capacity],
+            dict_return.get(self.model_attributes.table_nemomod_total_annual_max_capacity),
+            dict_return.get(self.model_attributes.table_nemomod_total_annual_min_capacity),
             self.field_nemomod_value,
             self.field_nemomod_value,
             field_id = self.field_nemomod_id
@@ -6803,8 +6829,8 @@ class ElectricEnergy:
 
         # check tables - capacity investment
         dfs_verify = self.verify_min_max_constraint_inputs(
-            dict_return[self.model_attributes.table_nemomod_total_annual_max_capacity_investment],
-            dict_return[self.model_attributes.table_nemomod_total_annual_min_capacity_investment],
+            dict_return.get(self.model_attributes.table_nemomod_total_annual_max_capacity_investment),
+            dict_return.get(self.model_attributes.table_nemomod_total_annual_min_capacity_investment),
             self.field_nemomod_value,
             self.field_nemomod_value,
             field_id = self.field_nemomod_id
@@ -6928,8 +6954,8 @@ class ElectricEnergy:
 
         # check tables - capacity
         dfs_verify = self.verify_min_max_constraint_inputs(
-            dict_return[self.model_attributes.table_nemomod_total_annual_max_capacity_storage],
-            dict_return[self.model_attributes.table_nemomod_total_annual_min_capacity_storage],
+            dict_return.get(self.model_attributes.table_nemomod_total_annual_max_capacity_storage),
+            dict_return.get(self.model_attributes.table_nemomod_total_annual_min_capacity_storage),
             self.field_nemomod_value,
             self.field_nemomod_value,
             field_id = self.field_nemomod_id
@@ -6944,8 +6970,8 @@ class ElectricEnergy:
 
         # check tables - capacity investment
         dfs_verify = self.verify_min_max_constraint_inputs(
-            dict_return[self.model_attributes.table_nemomod_total_annual_max_capacity_investment_storage],
-            dict_return[self.model_attributes.table_nemomod_total_annual_min_capacity_investment_storage],
+            dict_return.get(self.model_attributes.table_nemomod_total_annual_max_capacity_investment_storage),
+            dict_return.get(self.model_attributes.table_nemomod_total_annual_min_capacity_investment_storage),
             self.field_nemomod_value,
             self.field_nemomod_value,
             field_id = self.field_nemomod_id
@@ -6964,15 +6990,221 @@ class ElectricEnergy:
 
     def format_nemomod_table_total_technology_activity_lower_limit(self,
         df_elec_trajectories: pd.DataFrame,
+        attribute_fuel: AttributeTable = None,
         attribute_technology: AttributeTable = None,
+        drop_flag: Union[float, int] = None,
         regions: Union[List[str], None] = None, 
-        return_type: str = "NemoMod"
-    ) -> pd.DataFrame:
+        return_type: str = "NemoMod",
+        tuple_enfu_production_and_demands: Union[Tuple[pd.DataFrame], None] = None,
+        **kwargs
+    ) -> Dict[str, pd.DataFrame]:
         """
         Format the TotalTechnologyAnnualActivityLowerLimit input tables for 
             NemoMod based on SISEPUEDE configuration parameters, input 
             variables, integrated model outputs, and reference tables.
 
+        In SISEPUEDE, this table is used in conjunction with 
+            TotalTechnologyAnnualActivityUpperLimit to pass biogas and waste
+            incineration production from collection in Circular Economy and 
+            AFOLU.
+
+
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
+
+        Keyword Arguments
+        -----------------
+        - attribute_fuel: AttributeTable for fuels
+        - attribute_technology: AttributeTable for technology, used to identify 
+            whether or not a technology can charge a storage. If None, use 
+            ModelAttributes default.
+        - drop_flag: optional specification of a drop flag used to indicate 
+            rows/variables for which the MSP Max Production constraint is not 
+            applicable (see 
+            ElectricEnergy.get_entc_maxprod_increase_adjusted_msp for more 
+            info). Defaults to self.drop_flag_tech_capacities if None.
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
+        - return_type: type of return. Acceptable values are "NemoMod" and 
+            "CapacityCheck". Invalid entries default to "NemoMod"
+            * NemoMod (default): return the 
+                TotalTechnologyAnnualActivityLowerLimit input table for the 
+                NemoMod database
+            * CapacityCheck: return a table of specified minimum capacities
+                 associated with the technology.
+        - tuple_enfu_production_and_demands: optional tuple of energy fuel 
+            demands produced by 
+            self.model_energy.project_enfu_production_and_demands():
+
+            (
+                arr_enfu_demands, 
+                arr_enfu_demands_distribution, 
+                arr_enfu_export, 
+                arr_enfu_imports, 
+                arr_enfu_production
+            )
+        - **kwargs: passed to self.get_entc_maxprod_increase_adjusted_msp
+        """
+
+        # some initialization
+        attribute_fuel = (
+            self.model_attributes.get_attribute_table(self.subsec_name_enfu) 
+            if (attribute_fuel is None) 
+            else attribute_fuel
+        )
+        attribute_technology = (
+            self.model_attributes.get_attribute_table(self.subsec_name_entc) 
+            if (attribute_technology is None) 
+            else attribute_technology
+        )
+        drop_flag = self.drop_flag_tech_capacities if (drop_flag is None) else drop_flag
+        table_name = self.model_attributes.table_nemomod_total_technology_annual_activity_lower_limit
+    
+
+        ##  GET BASELIINE TotalTechnologyActivityLowerLimit + POTENTIAL ADD ON FROM MSP ADJUSTMENT
+
+        # get baseline TTALL
+        dict_out = self.get_total_technology_activity_lower_limit_no_msp_adjustment(
+            df_elec_trajectories,
+            attribute_technology = attribute_technology, 
+            regions = regions,
+            return_type = "NemoMod",
+        )
+
+        # update with MSP
+        dict_out = self.update_ttal_dictionary_with_limit_from_msp(
+            df_elec_trajectories,
+            dict_out,
+            attribute_fuel = attribute_fuel,
+            attribute_technology = attribute_technology,
+            drop_flag = drop_flag,
+            key_ttal = table_name,
+            regions = regions, 
+            tuple_enfu_production_and_demands = tuple_enfu_production_and_demands,
+            **kwargs
+        )
+
+        return dict_out
+    
+
+
+    def format_nemomod_table_total_technology_activity_upper_limit(self,
+        df_elec_trajectories: pd.DataFrame,
+        attribute_fuel: AttributeTable = None,
+        attribute_technology: AttributeTable = None,
+        drop_flag: Union[float, int] = None,
+        regions: Union[List[str], None] = None, 
+        return_type: str = "NemoMod",
+        tuple_enfu_production_and_demands: Union[Tuple[pd.DataFrame], None] = None,
+        **kwargs
+    ) -> Dict[str, pd.DataFrame]:
+        """
+        Format the TotalTechnologyAnnualActivityUpperLimit input tables for 
+            NemoMod based on SISEPUEDE configuration parameters, input 
+            variables, integrated model outputs, and reference tables.
+
+        In SISEPUEDE, this table is used in conjunction with 
+            TotalTechnologyAnnualActivityLowerLimit to pass biogas and waste
+            incineration production from collection in Circular Economy and 
+            AFOLU.
+
+
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
+
+        Keyword Arguments
+        -----------------
+        - attribute_fuel: AttributeTable for fuels
+        - attribute_technology: AttributeTable for technology, used to identify 
+            whether or not a technology can charge a storage. If None, use 
+            ModelAttributes default.
+        - drop_flag: optional specification of a drop flag used to indicate 
+            rows/variables for which the MSP Max Production constraint is not 
+            applicable (see 
+            ElectricEnergy.get_entc_maxprod_increase_adjusted_msp for more 
+            info). Defaults to self.drop_flag_tech_capacities if None.
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
+        - return_type: type of return. Acceptable values are "NemoMod" and 
+            "CapacityCheck". Invalid entries default to "NemoMod"
+            * NemoMod (default): return the 
+                TotalTechnologyAnnualActivityLowerLimit input table for the 
+                NemoMod database
+            * CapacityCheck: return a table of specified minimum capacities
+                 associated with the technology.
+        - tuple_enfu_production_and_demands: optional tuple of energy fuel 
+            demands produced by 
+            self.model_energy.project_enfu_production_and_demands():
+
+            (
+                arr_enfu_demands, 
+                arr_enfu_demands_distribution, 
+                arr_enfu_export, 
+                arr_enfu_imports, 
+                arr_enfu_production
+            )
+        - **kwargs: passed to self.get_entc_maxprod_increase_adjusted_msp
+        """
+
+        # some initialization
+        attribute_fuel = (
+            self.model_attributes.get_attribute_table(self.subsec_name_enfu) 
+            if (attribute_fuel is None) 
+            else attribute_fuel
+        )
+        attribute_technology = (
+            self.model_attributes.get_attribute_table(self.subsec_name_entc) 
+            if (attribute_technology is None) 
+            else attribute_technology
+        )
+        drop_flag = self.drop_flag_tech_capacities if (drop_flag is None) else drop_flag
+        table_name = self.model_attributes.table_nemomod_total_technology_annual_activity_upper_limit
+    
+
+        ##  GET BASELIINE TotalTechnologyActivityLowerLimit + POTENTIAL ADD ON FROM MSP ADJUSTMENT
+
+        # get baseline TTALL
+        dict_out = self.get_total_technology_activity_upper_limit_no_msp_adjustment(
+            df_elec_trajectories,
+            attribute_technology = attribute_technology, 
+            regions = regions,
+            return_type = "NemoMod",
+        )
+
+        # update with MSP
+        dict_out = self.update_ttal_dictionary_with_limit_from_msp(
+            df_elec_trajectories,
+            dict_out,
+            attribute_fuel = attribute_fuel,
+            attribute_technology = attribute_technology,
+            drop_flag = drop_flag,
+            key_ttal = table_name,
+            regions = regions, 
+            tuple_enfu_production_and_demands = tuple_enfu_production_and_demands,
+            **kwargs
+        )
+
+        return dict_out
+
+
+
+    def get_total_technology_activity_lower_limit_no_msp_adjustment(self,
+        df_elec_trajectories: pd.DataFrame,
+        attribute_technology: AttributeTable = None,
+        regions: Union[List[str], None] = None, 
+        return_type: str = "NemoMod",
+    ) -> Dict[str, pd.DataFrame]:
+        """
+        Construct the TotalTechnologyAnnualActivityLowerLimit input tables for 
+            NemoMod based on SISEPUEDE configuration parameters, input 
+            variables, integrated model outputs, and reference tables WITHOUT
+            adjusting for the implementation of the Max Production Inrease from
+            MinShareProduction. 
+
+        NOTE: this table is called elsewhere in ElectricEnergy 
+        
         In SISEPUEDE, this table is used in conjunction with 
             TotalTechnologyAnnualActivityUpperLimit to pass biogas and waste
             incineration production from collection in Circular Economy and 
@@ -7007,7 +7239,11 @@ class ElectricEnergy:
             return_type = "NemoMod"
 
         # some attribute initializations
-        attribute_technology = self.model_attributes.get_attribute_table(self.subsec_name_entc) if (attribute_technology is None) else attribute_technology
+        attribute_technology = (
+            self.model_attributes.get_attribute_table(self.subsec_name_entc) 
+            if (attribute_technology is None) 
+            else attribute_technology
+        )
         pycat_enfu = self.model_attributes.get_subsector_attribute(self.subsec_name_enfu, "pycategory_primary")
         pycat_entc = self.model_attributes.get_subsector_attribute(self.subsec_name_entc, "pycategory_primary")
 
@@ -7016,6 +7252,7 @@ class ElectricEnergy:
         cat_entc_pp_waste = self.get_entc_cat_for_integration("wste")
         ind_entc_pp_biogas = attribute_technology.get_key_value_index(cat_entc_pp_biogas)
         ind_entc_pp_waste = attribute_technology.get_key_value_index(cat_entc_pp_waste)
+
         # get some scalars to use if returning a capacity constraint dataframe
         if return_type == "CapacityCheck":
             units_energy_config = self.model_attributes.configuration.get("energy_units")
@@ -7092,19 +7329,23 @@ class ElectricEnergy:
         }
 
         return dict_return
+    
 
 
-
-    def format_nemomod_table_total_technology_activity_upper_limit(self,
+    def get_total_technology_activity_upper_limit_no_msp_adjustment(self,
         df_elec_trajectories: pd.DataFrame,
         attribute_technology: AttributeTable = None,
         regions: Union[List[str], None] = None, 
         return_type: str = "NemoMod"
     ) -> pd.DataFrame:
         """
-        Format the TotalTechnologyAnnualActivityUpperLimit input tables for 
+        Construct the TotalTechnologyAnnualActivityUpperLimit input tables for 
             NemoMod based on SISEPUEDE configuration parameters, input 
-            variables, integrated model outputs, and reference tables.
+            variables, integrated model outputs, and reference tables WITHOUT
+            adjusting for the implementation of the Max Production Inrease from
+            MinShareProduction. 
+
+        NOTE: this table is called elsewhere in ElectricEnergy 
 
         In SISEPUEDE, this table is used in conjunction with 
             TotalTechnologyAnnualActivityUpperLimit to pass biogas and waste
@@ -7225,6 +7466,150 @@ class ElectricEnergy:
         }
 
         return dict_return
+    
+
+
+    def update_ttal_dictionary_with_limit_from_msp(self,#HEREHERE
+        df_elec_trajectories: pd.DataFrame,
+        dict_ttal: Union[Dict[str, pd.DataFrame], None],
+        attribute_fuel: AttributeTable = None,
+        attribute_technology: AttributeTable = None,
+        drop_flag: Union[float, int] = None,
+        key_ttal: Union[str, None] = None,
+        regions: Union[List[str], None] = None, 
+        return_type: str = "NemoMod",
+        tuple_enfu_production_and_demands: Union[Tuple[pd.DataFrame], None] = None,
+        **kwargs
+    ) -> Dict[str, pd.DataFrame]:
+        """
+        Format the TotalTechnologyAnnualActivityLowerLimit input tables for 
+            NemoMod based on SISEPUEDE configuration parameters, input 
+            variables, integrated model outputs, and reference tables.
+
+        In SISEPUEDE, this table is used in conjunction with 
+            TotalTechnologyAnnualActivityUpperLimit to pass biogas and waste
+            incineration production from collection in Circular Economy and 
+            AFOLU.
+
+
+        Function Arguments
+        ------------------
+        - df_elec_trajectories: data frame of model variable input trajectories
+        - dict_ttal: dictionary from TotalTechnologyActivityLowerLimit or
+            TotalTechnologyActivityUpperLimit 
+
+        Keyword Arguments
+        -----------------
+        - attribute_fuel: AttributeTable for fuels
+        - attribute_technology: AttributeTable for technology, used to identify 
+            whether or not a technology can charge a storage. If None, use 
+            ModelAttributes default.
+        - drop_flag: optional specification of a drop flag used to indicate 
+            rows/variables for which the MSP Max Production constraint is not 
+            applicable (see 
+            ElectricEnergy.get_entc_maxprod_increase_adjusted_msp for more 
+            info). Defaults to self.drop_flag_tech_capacities if None.
+        - key_ttal: key in dict_ttal that includes maps to the table to modify.
+            If None, calls first key available (will not present any issues if 
+            only one key is passed)
+        - regions: regions to specify. If None, defaults to configuration 
+            regions
+        - return_type: type of return. Acceptable values are "NemoMod" and 
+            "CapacityCheck". Invalid entries default to "NemoMod"
+            * NemoMod (default): return the 
+                TotalTechnologyAnnualActivityLowerLimit input table for the 
+                NemoMod database
+            * CapacityCheck: return a table of specified minimum capacities
+                 associated with the technology.
+        - tuple_enfu_production_and_demands: optional tuple of energy fuel 
+            demands produced by 
+            self.model_energy.project_enfu_production_and_demands():
+
+            (
+                arr_enfu_demands, 
+                arr_enfu_demands_distribution, 
+                arr_enfu_export, 
+                arr_enfu_imports, 
+                arr_enfu_production
+            )
+        - **kwargs: passed to self.get_entc_maxprod_increase_adjusted_msp
+        """
+
+        # some initialization
+        attribute_fuel = (
+            self.model_attributes.get_attribute_table(self.subsec_name_enfu) 
+            if (attribute_fuel is None) 
+            else attribute_fuel
+        )
+        attribute_technology = (
+            self.model_attributes.get_attribute_table(self.subsec_name_entc) 
+            if (attribute_technology is None) 
+            else attribute_technology
+        )
+        drop_flag = self.drop_flag_tech_capacities if (drop_flag is None) else drop_flag
+        table_name = list(dict_ttal.keys())[0] if (key_ttal is None) else key_ttal
+
+
+        # retrieve input MSP and activity limit
+        arr_entc_msp, arr_entc_activity_limits = self.get_entc_maxprod_increase_adjusted_msp(
+            df_elec_trajectories,
+            adjust_free_msps_in_response = True,
+            attribute_fuel = attribute_fuel,
+            attribute_technology = attribute_technology,
+            tuple_enfu_production_and_demands = tuple_enfu_production_and_demands,
+            **kwargs
+        )
+
+        # if the MSP is adjusted using TTALL, modify the outputs using the addition
+        if arr_entc_activity_limits is not None:
+
+            # set up activity limits to append
+            df_entc_activity_limits_append = pd.DataFrame(
+                arr_entc_activity_limits,
+                columns = attribute_technology.key_values
+            )
+            df_entc_activity_limits_append[self.model_attributes.dim_time_period] = list(df_elec_trajectories[self.model_attributes.dim_time_period])
+
+            # reformat for NemoMod input
+            df_entc_activity_limits_append = self.format_model_variable_as_nemomod_table(
+                df_entc_activity_limits_append,
+                self.model_attributes.subsec_name_entc,
+                "TMP",
+                [
+                    self.field_nemomod_id,
+                    self.field_nemomod_year,
+                    self.field_nemomod_region
+                ],
+                self.field_nemomod_technology,
+                drop_flag = drop_flag,
+                regions = regions,
+            ).get("TMP")
+
+            # get the prepend (existing) and reduce the MSP appendage to eliminate potential conflicts
+            df_prepend = dict_ttal.get(table_name)
+            df_entc_activity_limits_append = df_entc_activity_limits_append[
+                ~df_entc_activity_limits_append[self.field_nemomod_technology].isin(list(df_prepend[self.field_nemomod_technology]))
+            ].reset_index(drop = True)
+
+            # concatenate and reset IDs 
+            df_out = self.add_multifields_from_key_values(
+                pd.concat(
+                    [df_prepend, df_entc_activity_limits_append], 
+                    axis = 0
+                ), 
+                [
+                    self.field_nemomod_id, 
+                    self.field_nemomod_region,
+                    self.field_nemomod_technology,
+                    self.field_nemomod_year
+                ],
+                override_time_period_transformation = True,
+                regions = regions
+            )
+
+            dict_ttal.update({table_name: df_out})
+
+        return dict_ttal
 
 
 
@@ -8502,7 +8887,8 @@ class ElectricEnergy:
                 self.format_nemomod_table_total_technology_activity_lower_limit(
                     df_elec_trajectories, 
                     attribute_technology = attribute_technology,
-                    regions = regions
+                    regions = regions,
+                    tuple_enfu_production_and_demands = tuple_enfu_production_and_demands
                 )
             )
             # TotalTechnologyAnnualActivityUpperLimit
@@ -8510,7 +8896,8 @@ class ElectricEnergy:
                 self.format_nemomod_table_total_technology_activity_upper_limit(
                     df_elec_trajectories, 
                     attribute_technology = attribute_technology,
-                    regions = regions
+                    regions = regions,
+                    tuple_enfu_production_and_demands = tuple_enfu_production_and_demands
                 )
             )
             
@@ -8522,7 +8909,7 @@ class ElectricEnergy:
                     df_reference_capacity_factor,
                     attribute_technology = attribute_technology,
                     attribute_region = attribute_region,
-                    regions = regions
+                    regions = regions,
                 )
             )
         # SpecifiedDemandProfile
@@ -8531,7 +8918,7 @@ class ElectricEnergy:
                 self.format_nemomod_table_specified_demand_profile(
                     df_reference_specified_demand_profile,
                     attribute_region = attribute_region,
-                    regions = regions
+                    regions = regions,
                 )
             )
 

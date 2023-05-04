@@ -151,7 +151,7 @@ def transformation_general(
 ) -> pd.DataFrame:
     """
     Generalized function to implement some common transformations. Many other
-        transformation functions are wraper for this function.
+        transformation functions are wrappers for this function.
 
     Function Arguments
     ------------------
@@ -159,8 +159,8 @@ def transformation_general(
     - dict_modvar_specs: dictionary mapping model variable to some
         characteristics:
 
-        REQUIRED
-        --------
+        REQUIRED KEYS
+        -------------
         * "magnitude": magnitude of change to apply by final
         * "magnitude_type": type of magnitude to use. Valid types include
             * "baseline_additive": add the magnitude to the baseline
@@ -183,6 +183,7 @@ def transformation_general(
                 Must specify "categories_source" & "categories_target" in
                 dict_modvar_specs. See description below in OPTIONAL for
                 information on specifying this.
+            * "vector_specification": simply enter a vector to use for region
         * "vec_ramp": implementation ramp vector to use for the variable
 
         OPTIONAL
@@ -245,10 +246,12 @@ def transformation_general(
     # core vars (ordered)
     model_energy = me.NonElectricEnergy(model_attributes) if not isinstance(model_energy, me.NonElectricEnergy) else model_energy
     all_regions = sorted(list(set(df_input[field_region])))
+ 
     # dertivative vars (alphabetical)
     attr_time_period = model_attributes.dict_attributes.get(f"dim_{model_attributes.dim_time_period}")
     df_out = []
     regions_apply = all_regions if (regions_apply is None) else [x for x in regions_apply if x in all_regions]
+
     # valid specifications of magnitude type
     magnitude_types_valid = [
         "baseline_additive",
@@ -257,7 +260,8 @@ def transformation_general(
         "final_value",
         "transfer_value",
         "transfer_value_scalar",
-        "transfer_value_to_acheieve_magnitude"
+        "transfer_value_to_acheieve_magnitude",
+        "vector_specification"
     ]
 
 
@@ -269,24 +273,33 @@ def transformation_general(
         # default verified to true; set to false if any condition is not met
         verified_modvar = True
         dict_modvar_specs_cur = dict_modvar_specs.get(modvar)
-
-        # check magnitude
-        magnitude = dict_modvar_specs_cur.get("magnitude")
-        verified_modvar = (isinstance(magnitude, int) or isinstance(magnitude, float)) & verified_modvar
-
+        
         # check magnitude type
         magnitude_type = dict_modvar_specs_cur.get("magnitude_type")
         verified_modvar = (magnitude_type in magnitude_types_valid) & verified_modvar
-
+        
+        # check magnitude
+        magnitude = dict_modvar_specs_cur.get("magnitude")
+        verified_modvar = (
+            sf.isnumber(magnitude)
+            if magnitude_type not in ["vector_specification"]
+            else (
+                all([sf.isnumber(x) for x in magnitude])
+                if isinstance(magnitude, list) or isinstance(magnitude, np.ndarray)
+                else False
+            )
+        ) & verified_modvar
+        
         # check ramp vector
         vec_ramp = dict_modvar_specs_cur.get("vec_ramp")
+        vec_ramp = np.array(vec_ramp) if isinstance(vec_ramp, list) else vec_ramp
         verified_modvar = isinstance(vec_ramp, np.ndarray) & verified_modvar
-
+        
         # check for bounds
         bounds = dict_modvar_specs_cur.get("bounds")
         bounds = None if not (isinstance(bounds, tuple) and len(bounds) == 2) else bounds
         verified_modvar = ((bounds is not None) & verified_modvar) if (magnitude_type == "baseline_scalar_diff_reduction") else verified_modvar
-
+        
         # check for categories
         categories = dict_modvar_specs_cur.get("categories")
         categories = None if not isinstance(categories, list) else categories
@@ -295,15 +308,28 @@ def transformation_general(
         categories_source = dict_modvar_specs_cur.get("categories_source")
         categories_source = None if not isinstance(categories_source, list) else categories_source
         categories_target = dict_modvar_specs_cur.get("categories_target")
-        categories_target = dict((k, v) for k, v in categories_target.items() if isinstance(v, int) or isinstance(v, float)) if isinstance(categories_target, dict) else None
+        categories_target = (
+            dict((k, v) for k, v in categories_target.items() if isinstance(v, int) or isinstance(v, float)) 
+            if isinstance(categories_target, dict) 
+            else None
+        )
         # check special case
-        verified_modvar = ((categories_source is not None) & verified_modvar) if (magnitude_type in ["transfer_value", "transfer_value_to_acheieve_magnitude"]) else verified_modvar
-        verified_modvar = ((categories_target is not None) & verified_modvar) if (magnitude_type in ["transfer_value", "transfer_value_to_acheieve_magnitude"]) else verified_modvar
+        verified_modvar = (
+            ((categories_source is not None) & verified_modvar) 
+            if (magnitude_type in ["transfer_value", "transfer_value_to_acheieve_magnitude"]) 
+            else verified_modvar
+        )
+        verified_modvar = (
+            ((categories_target is not None) & verified_modvar) 
+            if (magnitude_type in ["transfer_value", "transfer_value_to_acheieve_magnitude"]) 
+            else verified_modvar
+        )
 
         # check for time period as baseline
         tp_baseline = dict_modvar_specs_cur.get("time_period_baseline")
         tp_baseline = max(attr_time_period.key_values) if (tp_baseline not in attr_time_period.key_values) else tp_baseline
 
+        
 
         ## IF VERIFIED, ADD TO CLEANED DICTIONARY
 
@@ -348,16 +374,16 @@ def transformation_general(
 
     modvars = sorted(list(dict_modvar_specs_clean.keys()))
 
-
     ##  ITERATE OVER REGIONS AND MODVARS TO BUILD TRANSFORMATION
-
+    
     for region in all_regions:
-        df_in = df_input[df_input[field_region] == region].sort_values(by = [model_attributes.dim_time_period]).reset_index(drop = True)
+        df_in = df_input[df_input[ field_region] == region].sort_values(by = [model_attributes.dim_time_period]).reset_index(drop = True)
         df_in_new = df_in.copy()
         vec_tp = list(df_in[model_attributes.dim_time_period])
         n_tp = len(df_in)
 
         if region in regions_apply:
+            
             for modvar in modvars:
 
                 dict_cur = dict_modvar_specs_clean.get(modvar)
@@ -369,6 +395,7 @@ def transformation_general(
                 categories_target = dict_cur.get("categories_target")
                 magnitude = dict_cur.get("magnitude")
                 magnitude_type = dict_cur.get("magnitude_type")
+                mix_to_transform = (magnitude_type not in ["vector_specification"])
                 tp_baseline = dict_cur.get("tp_baseline")
                 vec_ramp = dict_cur.get("vec_ramp")
                 vector_targets_ordered = dict_cur.get("vector_targets_ordered")
@@ -458,6 +485,15 @@ def transformation_general(
                     arr_final = np.concatenate([arr_new_source, arr_new_target], axis = 1)
                     fields_adjust = fields_adjust_source + fields_adjust_target
 
+                elif magnitude_type in ["vector_specification"]:
+                    
+                    # CASE WHERE VECTOR IS EXPLICITLY SPECIFIED
+
+                    arr_final = np.array(df_in_new[fields_adjust])
+                    for j, field in enumerate(fields_adjust):
+                        arr_final[:, j] = magnitude
+
+
                 else:
 
                     # CASE WITH MOST STANDARD MODIFICATIONS
@@ -489,9 +525,13 @@ def transformation_general(
 
                 # check if bounds need to be applied
                 arr_final = sf.vec_bounds(arr_final, bounds) if (bounds is not None) else arr_final
-                vec_ramp = sf.vec_bounds(vec_ramp, (0, 1))
-                arr_transform = sf.do_array_mult(arr_base, 1 - vec_ramp)
-                arr_transform += sf.do_array_mult(arr_final, vec_ramp)
+                
+                if mix_to_transform:
+                    vec_ramp = sf.vec_bounds(vec_ramp, (0, 1))
+                    arr_transform = sf.do_array_mult(arr_base, 1 - vec_ramp)
+                    arr_transform += sf.do_array_mult(arr_final, vec_ramp)
+                else:
+                    arr_transform = arr_final
 
                 # update dataframe if needed
                 for fld in enumerate(fields_adjust):
@@ -503,6 +543,7 @@ def transformation_general(
 
     # concatenate and add strategy if applicable
     df_out = pd.concat(df_out, axis = 0).reset_index(drop = True)
+
     if isinstance(strategy_id, int):
         df_out = sf.add_data_frame_fields_from_dict(
             df_out,
@@ -602,7 +643,6 @@ def transformation_entc_hydrogen_electrolysis(
         "fp_hydrogen_reformation"
     ],
     field_region: str = "nation",
-    model_energy: Union[me.NonElectricEnergy, None] = None,
     **kwargs
 ) -> pd.DataFrame:
     """
@@ -622,8 +662,6 @@ def transformation_entc_hydrogen_electrolysis(
     - cats_response: hydrogen production categories that respond to the target
     - field_region: field in df_input that specifies the region
     - magnitude: final magnitude of generation capacity.
-    - model_energy: optional NonElectricEnergy object to pass to
-        transformation_general
     - regions_apply: optional set of regions to use to define strategy. If None,
         applies to all regions.
     - strategy_id: optional specification of strategy id to add to output
@@ -660,7 +698,7 @@ def transformation_entc_hydrogen_electrolysis(
             }
         },
         field_region = field_region,
-        model_energy = model_energy,
+        model_energy = model_electricity.model_energy,
         **kwargs
     )
 
@@ -705,7 +743,6 @@ def transformation_entc_increase_efficiency_of_electricity_production(
     model_electricity: ml.ElectricEnergy,
     bounds: Tuple = (0, 0.9),
     field_region: str = "nation",
-    model_energy: Union[me.NonElectricEnergy, None] = None,
     **kwargs
 ) -> pd.DataFrame:
     """
@@ -726,8 +763,6 @@ def transformation_entc_increase_efficiency_of_electricity_production(
         efficiency
     - field_region: field in df_input that specifies the region
     - magnitude: final magnitude of generation capacity.
-    - model_energy: optional NonElectricEnergy object to pass to
-        transformation_general
     - regions_apply: optional set of regions to use to define strategy. If None,
         applies to all regions.
     - strategy_id: optional specification of strategy id to add to output
@@ -757,7 +792,7 @@ def transformation_entc_increase_efficiency_of_electricity_production(
             }
         },
         field_region = field_region,
-        model_energy = model_energy,
+        model_energy = model_electricity.model_energy,
         **kwargs
     )
 
@@ -772,7 +807,6 @@ def transformation_entc_increase_renewables(
     model_attributes: ma.ModelAttributes,
     model_electricity: ml.ElectricEnergy,
     field_region: str = "nation",
-    model_energy: Union[me.NonElectricEnergy, None] = None,
     **kwargs
 ) -> pd.DataFrame:
     """
@@ -792,8 +826,6 @@ def transformation_entc_increase_renewables(
     -----------------
     - field_region: field in df_input that specifies the region
     - magnitude: final magnitude of generation capacity.
-    - model_energy: optional NonElectricEnergy object to pass to
-        transformation_general
     - regions_apply: optional set of regions to use to define strategy. If None,
         applies to all regions.
     - strategy_id: optional specification of strategy id to add to output
@@ -839,7 +871,7 @@ def transformation_entc_increase_renewables(
             }
         },
         field_region = field_region,
-        model_energy = model_energy,
+        model_energy = model_electricity.model_energy,
         **kwargs
     )
 
@@ -864,8 +896,8 @@ def transformation_entc_least_cost_solution(
     vec_ramp: np.ndarray,
     model_attributes: ma.ModelAttributes,
     model_electricity: ml.ElectricEnergy,
+    drop_flag: Union[int, float, None] = None,
     field_region: str = "nation",
-    model_energy: Union[me.NonElectricEnergy, None] = None,
     **kwargs
 ) -> pd.DataFrame:
     """
@@ -882,30 +914,42 @@ def transformation_entc_least_cost_solution(
 
     Keyword Arguments
     -----------------
+    - drop_flag: value in 
+        model_electricity.modvar_entc_max_elec_prod_increase_for_msp used to 
+        signal the presence of no constraint. Defaults to 
+        model_electricity.drop_flag_tech_capacities if None
     - field_region: field in df_input that specifies the region
     - magnitude: final magnitude of generation capacity.
-    - model_energy: optional NonElectricEnergy object to pass to
-        transformation_general
     - regions_apply: optional set of regions to use to define strategy. If None,
         applies to all regions.
     - strategy_id: optional specification of strategy id to add to output
         dataframe (only added if integer)
     """
 
+    # initialize some key elements
     attr_entc = model_attributes.get_attribute_table(model_attributes.subsec_name_entc)
     attr_enfu = model_attributes.get_attribute_table(model_attributes.subsec_name_enfu)
-
+    drop_flag = model_electricity.drop_flag_tech_capacities if not sf.isnumber(drop_flag) else drop_flag
     dict_tech_info = model_electricity.get_tech_info_dict()
+    fields_to_drop_flag = model_attributes.build_varlist(
+        None, 
+        model_electricity.modvar_entc_max_elec_prod_increase_for_msp
+    )
     
     # specify ramp vec t
     # this one will eliminate MSP and REMT immediately
     # 
     #vec_implementation_ramp_short = sf.vec_bounds(vec_ramp/min(vec_ramp[vec_ramp != 0]), (0, 1))
     vec_implementation_ramp_short = sf.vec_bounds(vec_ramp*2, (0, 1))
+    
+    
+    # check for variables and initialize fields_check as drops
+    df_transformed = df_input.copy()
+    df_transformed[fields_to_drop_flag] = drop_flag
 
     # 
     df_transformed = transformation_general(
-        df_input,
+        df_transformed,
         model_attributes, 
         {
             model_electricity.modvar_entc_nemomod_min_share_production: {
@@ -927,7 +971,7 @@ def transformation_entc_least_cost_solution(
             }
         },
         field_region = field_region,
-        model_energy = model_energy,
+        model_energy = model_electricity.model_energy,
         **kwargs
     )
 
@@ -941,7 +985,6 @@ def transformation_entc_reduce_cost_of_renewables(
     vec_ramp: np.ndarray,
     model_attributes: ma.ModelAttributes,
     model_electricity: ml.ElectricEnergy,
-    model_energy: Union[me.NonElectricEnergy, None] = None,
     **kwargs
 ) -> pd.DataFrame:
     """
@@ -959,8 +1002,6 @@ def transformation_entc_reduce_cost_of_renewables(
     Keyword Arguments
     -----------------
     - field_region: field in df_input that specifies the region
-    - model_energy: optional NonElectricEnergy object to pass to
-        transformation_general
     - regions_apply: optional set of regions to use to define strategy. If None,
         applies to all regions.
     - strategy_id: optional specification of strategy id to add to output
@@ -999,7 +1040,7 @@ def transformation_entc_reduce_cost_of_renewables(
         df_input,
         model_attributes,
         dict_run,
-        model_energy = model_energy,
+        model_energy = model_electricity.model_energy,
         **kwargs
     )
 
@@ -1020,12 +1061,12 @@ def transformation_entc_renewable_target(
         "fp_hydrogen_reformation"
     ],
     dict_cats_entc_max_investment: Union[Dict[str, np.ndarray], None] = None,
+    drop_flag: Union[int, float, None] = None,
     factor_vec_ramp_msp: Union[float, int, None] = None,
     field_region: str = "nation",
     fuel_elec: Union[str, None] = None,
     fuel_hydg: str = "fuel_hydrogen",
     magnitude_renewables: Union[Dict[str, float], float, None] = None,
-    model_energy: Union[me.NonElectricEnergy, None] = None,
     **kwargs
 ) -> pd.DataFrame:
     """
@@ -1071,6 +1112,10 @@ def transformation_entc_renewable_target(
 
         where `cat_entc_i` is a category, `vec` gives values as numpy vector, and
         `type` gives the type of the time series.
+    - drop_flag: value in 
+        model_electricity.modvar_entc_max_elec_prod_increase_for_msp used to 
+        signal the presence of no constraint. Defaults to 
+        model_electricity.drop_flag_tech_capacities if None
     - factor_vec_ramp_msp: factor used to accelerate the rate at which
         MinShareProduction declines to 0 for non-renewable energy technologies.
         If None, defaults to 1.5 (1 is the same rate).
@@ -1082,8 +1127,6 @@ def transformation_entc_renewable_target(
         value to apply to all renewable categories (as defined in 
         `cats_renewable`). If None, the renewable minimum share of production 
         for each renewable category is kept stable as soon as vec_remp != 0.
-    - model_energy: optional NonElectricEnergy object to pass to
-        transformation_general
     - regions_apply: optional set of regions to use to define strategy. If None,
         applies to all regions.
     - strategy_id: optional specification of strategy id to add to output
@@ -1097,6 +1140,13 @@ def transformation_entc_renewable_target(
     attr_enfu = model_attributes.get_attribute_table(model_attributes.subsec_name_enfu)
     cats_renewable = [x for x in attr_entc.key_values if x in cats_renewable]
     inds_renewable = [attr_entc.get_key_value_index(x) for x in cats_renewable]
+
+    # some info for drops related to MSP Max Prod increase relative to base (model_electricity.modvar_entc_max_elec_prod_increase_for_msp)
+    drop_flag = model_electricity.drop_flag_tech_capacities if not sf.isnumber(drop_flag) else drop_flag
+    fields_to_drop_flag = model_attributes.build_varlist(
+        None, 
+        model_electricity.modvar_entc_max_elec_prod_increase_for_msp
+    )
 
     # get fuel categories and technology dictionary
     fuel_elec = model_electricity.cat_enfu_elec if (fuel_elec not in attr_enfu.key_values) else fuel_elec
@@ -1166,7 +1216,9 @@ def transformation_entc_renewable_target(
     tmpi = None
     for df in dfs:
         
+        # get data frame and turn off MSP Max Prod
         tup, df = df
+        #df[fields_to_drop_flag] = drop_flag
 
         ##################################################
         #    1. IMPLEMENT RENEWABLE GENERATION TARGET    #
@@ -1214,7 +1266,7 @@ def transformation_entc_renewable_target(
                 }
             },
             field_region = field_region,
-            model_energy = model_energy,
+            model_energy = model_electricity.model_energy,
             **kwargs
         )
 
@@ -1269,7 +1321,7 @@ def transformation_entc_renewable_target(
                         }
                     },
                     field_region = field_region,
-                    model_energy = model_energy,
+                    model_energy = model_electricity.model_energy,
                     **kwargs
                 )
 
@@ -1292,7 +1344,7 @@ def transformation_entc_renewable_target(
                         }
                     },
                     field_region = field_region,
-                    model_energy = model_energy,
+                    model_energy = model_electricity.model_energy,
                     **kwargs
                 )
 
@@ -1316,7 +1368,7 @@ def transformation_entc_renewable_target(
                         }
                     },
                     field_region = field_region,
-                    model_energy = model_energy,
+                    model_energy = model_electricity.model_energy,
                     **kwargs
                 )
 
@@ -1409,7 +1461,7 @@ def transformation_entc_renewable_target(
             }
         },
         field_region = field_region,
-        model_energy = model_energy,
+        model_energy = model_electricity.model_energy,
         **kwargs
     )
 
@@ -1426,7 +1478,6 @@ def transformation_entc_specify_transmission_losses(
     field_region: str = "nation",
     magnitude_type: str = "final_value",
     min_loss: Union[float, None] = 0.02,
-    model_energy: Union[me.NonElectricEnergy, None] = None,
     **kwargs
 ) -> pd.DataFrame:
     """
@@ -1448,8 +1499,6 @@ def transformation_entc_specify_transmission_losses(
     - magnitude_type: string 
     - min_loss: minimum feasible transmission loss. If None, transmission losses
         can be reduced to 0
-    - model_energy: optional NonElectricEnergy object to pass to
-        transformation_general
     - **kwargs: passed to transformation_general()
     """
 
@@ -1475,7 +1524,7 @@ def transformation_entc_specify_transmission_losses(
                     "vec_ramp": vec_ramp
                 }
             },
-            model_energy = model_energy,
+            model_energy = model_electricity.model_energy,
             **kwargs
         )
 
@@ -1506,7 +1555,7 @@ def transformation_entc_specify_transmission_losses(
                         "vec_ramp": vec_ramp
                     }
                 },
-                model_energy = model_energy,
+                model_energy = model_electricity.model_energy,
                 **kwargs
             )
 
@@ -1530,7 +1579,6 @@ def transformation_entc_retire_fossil_fuel_early(
     model_attributes: ma.ModelAttributes,
     model_electricity: ml.ElectricEnergy,
     magnitude: float = 0.0,
-    model_energy: Union[me.NonElectricEnergy, None] = None,
     **kwargs
 ) -> pd.DataFrame:
     """
@@ -1547,8 +1595,6 @@ def transformation_entc_retire_fossil_fuel_early(
     Keyword Arguments
     -----------------
     - magnitude: final magnitude of generation capacity.
-    - model_energy: optional NonElectricEnergy object to pass to
-        transformation_general
     - regions_apply: optional set of regions to use to define strategy. If None,
         applies to all regions.
     - strategy_id: optional specification of strategy id to add to output
@@ -1579,7 +1625,7 @@ def transformation_entc_retire_fossil_fuel_early(
                             "time_period_baseline": get_time_period(model_attributes, "max")
                         }
                     },
-                    model_energy = model_energy,
+                    model_energy = model_electricity.model_energy,
                     **kwargs
                 )
     return df_out

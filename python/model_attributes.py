@@ -2975,7 +2975,6 @@ class ModelAttributes:
 
 
 
-    ##  function transfer variables from one data frame (source) to another (target)
     def transfer_df_variables(self,
         df_target: pd.DataFrame,
         df_source: pd.DataFrame,

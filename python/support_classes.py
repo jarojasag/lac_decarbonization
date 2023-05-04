@@ -575,3 +575,111 @@ class TimePeriods:
 
         return out
 
+
+
+
+
+
+class Transformation:
+    """
+    Create a Transformation class to support construction in sectoral 
+        transformations. 
+
+    Initialization Arguments
+    ------------------------
+    - name: name of the transformation. Must be defined in 
+        attr_strategy.table[field_strategy_name"]
+    - func: the function associatd
+    """
+    
+    def __init__(self,
+        name: str,
+        func: Callable,
+        attr_strategy: Union[AttributeTable, None],
+        field_strategy_name: str = "strategy",
+    ):
+        
+        self._initialize_function(func)
+        self._initialize_name(
+            name, 
+            attr_strategy, 
+            field_strategy_name
+        )
+        
+
+        
+    
+    
+    def __call__(self,
+        *args,
+        **kwargs
+    ) -> Any:
+        
+        val = self.function(
+            *args,
+            strat = self.id,
+            **kwargs
+        )
+
+        return val
+        
+    
+    
+    def _initialize_function(self,
+        func: Callable,
+    ) -> None:
+        """
+        Initialize the transformation function. Sets the following
+            properties:
+
+            * self.__doc__
+            * self.function
+        """
+        
+        if not callable(func):
+            raise ValueError(f"Invalid type {type(func)}: the object 'func' is not callable.")
+            
+        self.function = func
+        
+        return None
+        
+        
+        
+    def _initialize_name(self,
+        name: str,
+        attr_strategy: Union[AttributeTable, None],
+        field_strategy_name: str,
+    ) -> None:
+        """
+        Initialize the transformation name. Sets the following
+            properties:
+
+            * self.id
+            * self.name
+        """
+        
+        # initialize and check name/id num
+        id_num = (
+            attr_strategy.field_maps.get(f"{field_strategy_name}_to_{attr_strategy.key}")
+            if attr_strategy is not None
+            else None
+        )
+        id_num = id_num.get(name) if (id_num is not None) else -1
+
+        if id_num is None:
+            raise ValueError(f"Invalid strategy name '{name}' specified in support_classes.Transformation: strategy not found.")
+
+        id_num = id_num if (id_num is not None) else -1
+
+
+        self.id = int(id_num)
+        self.name = str(name)
+        
+        return None
+        
+
+
+
+    
+    
+    
