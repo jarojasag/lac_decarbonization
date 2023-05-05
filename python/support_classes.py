@@ -589,12 +589,15 @@ class Transformation:
     ------------------------
     - name: name of the transformation. Must be defined in 
         attr_strategy.table[field_strategy_name"]
-    - func: the function associatd
+    - func: the function associated with the transformation OR an ordered list 
+        of functions representing compositional order, e.g., 
+
+        [f1, f2, f3, ... , fn] -> fn(f{n-1}(...(f2(f1(x))))))
     """
     
     def __init__(self,
         name: str,
-        func: Callable,
+        func: Union[Callable, List[Callable]],
         attr_strategy: Union[AttributeTable, None],
         field_strategy_name: str = "strategy",
     ):
@@ -626,21 +629,53 @@ class Transformation:
     
     
     def _initialize_function(self,
-        func: Callable,
+        func: Union[Callable, List[Callable]],
     ) -> None:
         """
         Initialize the transformation function. Sets the following
             properties:
 
-            * self.__doc__
             * self.function
         """
         
-        if not callable(func):
+        function = None
+
+        if isinstance(func, list):
+
+            func = [x for x in func if callable(x)]
+
+            if len(func) > 0:  
+
+                def function_out(
+                    x: Any, 
+                    **kwargs
+                ) -> Any:
+                    f"""
+                    Composite Transformation function for {self.name}
+                    """
+                    out = (
+                        x.copy() 
+                        if isinstance(x, pd.DataFrame) | isinstance(x, np.ndarray)
+                        else x
+                    )
+
+                    for f in func:
+                        out = f(out, **kwargs)
+
+                    return out
+
+                function = function_out
+
+
+        elif callable(func):
+            function = func
+
+        # check if function assignment failed; if not, assign
+        if function is None:
             raise ValueError(f"Invalid type {type(func)}: the object 'func' is not callable.")
-            
-        self.function = func
         
+        self.function = function
+
         return None
         
         

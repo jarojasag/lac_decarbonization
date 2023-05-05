@@ -1,3 +1,9 @@
+# 
+#  COMMAND LINE RUNTIME FOR SISEPUEDE
+#
+# NOTE NOTE: SHOULD START WITH JULIA_NUM_THREADS=XX TO SET THREADS ACCESSIBLE TO JULIA WHEN RUNNING NemoMod
+#
+#
 import warnings
 warnings.filterwarnings("ignore")
 import argparse
@@ -39,6 +45,11 @@ def parse_arguments() -> dict:
     parser.add_argument(
         "--integrated",
         help = "Include this flag to run included models as integrated sectors. Output from upstream models will be passed as inputs to downstream models.",
+        action = "store_true"
+    )
+    parser.add_argument(
+        "--regions",
+        help = "Set Regions to run.",
         action = "store_true"
     )
     parsed_args = parser.parse_args()

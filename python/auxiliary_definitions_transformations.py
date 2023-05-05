@@ -18,107 +18,6 @@ from typing import *
 ###                              ###
 ####################################
 
-def transformation_test_elec(
-    df_input: pd.DataFrame,
-    model_attributes: ma.ModelAttributes,
-    vec_ramp: np.ndarray,
-    all_regions: Union[List[str], None] = None,
-    field_region = "nation",
-    model_energy: Union[me.NonElectricEnergy, None] = None,
-    strategy_id: int = 3001
-) -> pd.DataFrame:
-
-    model_energy = me.NonElectricEnergy(model_attributes) if not isinstance(model_energy, me.NonElectricEnergy) else model_energy
-    all_regions = sorted(list(set(df_input[field_region]))) if (all_regions is None) else all_regions
-    df_out = []
-
-    # model variables to explore
-    modvars = [
-        model_energy.modvar_trns_fuel_fraction_biofuels,
-        model_energy.modvar_trns_fuel_fraction_diesel,
-        model_energy.modvar_trns_fuel_fraction_electricity,
-        model_energy.modvar_trns_fuel_fraction_gasoline,
-        model_energy.modvar_trns_fuel_fraction_hydrogen,
-        model_energy.modvar_trns_fuel_fraction_kerosene,
-        model_energy.modvar_trns_fuel_fraction_natural_gas
-    ]
-
-
-    #
-    all_regions = sorted(list(set(df_input[field_region]))) if (all_regions is None) else all_regions
-
-    for region in all_regions:
-
-        df_in = df_input[df_input[field_region] == region].reset_index(drop = True)
-        df_in_new = df_in.copy()
-        n_tp = len(df_in)
-        fields_fuelmix = [x for x in df_in.columns if x.startswith("frac_trns_fuelmix_")]
-
-
-        # get electric categories and build dictionary of target values
-        cats_elec = model_attributes.get_variable_categories(model_energy.modvar_trns_fuel_fraction_electricity)
-        cats_half = ["aviation", "water_borne"]
-        dict_targets_final_tp = dict((x, 1.0 if x not in cats_half else 0.5) for x in cats_elec)
-
-        # l
-        for cat in dict_targets_final_tp.keys():
-
-            target_value = dict_targets_final_tp.get(cat)
-            scale_non_elec = 1 - target_value
-            field_elec = model_attributes.build_varlist(
-                model_attributes.subsec_name_trns,
-                model_energy.modvar_trns_fuel_fraction_electricity,
-                restrict_to_category_values = [cat]
-            )[0]
-
-            val_final_elec = float(df_in[field_elec].iloc[n_tp - 1])
-
-            # get model variables that need to be adjusted
-            modvars_adjust = []
-            for modvar in modvars:
-                modvars_adjust.append(modvar) if cat in model_attributes.get_variable_categories(modvar) else None
-
-            # loop over adjustment variables to build new trajectories
-            for modvar in modvars_adjust:
-                field_cur = model_attributes.build_varlist(
-                    model_attributes.subsec_name_trns,
-                    modvar,
-                    restrict_to_category_values = [cat]
-                )[0]
-                vec_old = np.array(df_in[field_cur])
-                val_final = vec_old[n_tp - 1]
-                val_new = (
-                    np.nan_to_num(
-                        (val_final/(1 - val_final_elec))*scale_non_elec,
-                        0.0,
-                        posinf = 0.0
-                    )
-                    if (field_cur != field_elec) 
-                    else target_value
-                )
-                vec_new = vec_ramp*val_new + (1 - vec_ramp)*vec_old
-
-                df_in_new[field_cur] = vec_new
-
-        df_out.append(df_in_new)
-
-    df_out = pd.concat(df_out, axis = 0).reset_index(drop = True)
-
-    df_out = sf.add_data_frame_fields_from_dict(
-        df_out,
-        {
-            model_attributes.dim_strategy_id: strategy_id
-        },
-        prepend_q = True,
-        overwrite_fields = True
-    )
-
-    return df_out
-
-
-
-
-
 
 ###########################
 #    SUPPORT FUNCTIONS    #
@@ -144,7 +43,7 @@ def transformation_general(
     df_input: pd.DataFrame,
     model_attributes: ma.ModelAttributes,
     dict_modvar_specs: Dict[str, Dict[str, str]],
-    field_region = "nation",
+    field_region: str = "nation",
     model_energy: Union[me.NonElectricEnergy, None] = None,
     regions_apply: Union[List[str], None] = None,
     strategy_id: Union[int, None] = None
@@ -1887,34 +1786,22 @@ def transformation_inen_shift_modvars(
         dataframe (only added if integer)
     """
 
-    # core vars (ordered)
-    model_energy = me.NonElectricEnergy(model_attributes) if not isinstance(model_energy, me.NonElectricEnergy) else model_energy
-    all_regions = sorted(list(set(df_input[field_region])))
+    # model variables to explore
+    model_energy = (
+        me.NonElectricEnergy(model_attributes) 
+        if not isinstance(model_energy, me.NonElectricEnergy) 
+        else model_energy
+    )
+    modvars = model_energy.modvars_inen_list_fuel_fraction
+    if return_modvars_only:
+        return modvars
+
     # dertivative vars (alphabetical)
+    all_regions = sorted(list(set(df_input[field_region])))
     attr_inen = model_attributes.get_attribute_table(model_attributes.subsec_name_inen)
     attr_time_period = model_attributes.dict_attributes.get(f"dim_{model_attributes.dim_time_period}")
     df_out = []
     regions_apply = all_regions if (regions_apply is None) else [x for x in regions_apply if x in all_regions]
-
-    # model variables to explore
-    modvars = [
-        model_energy.modvar_inen_frac_en_coal,
-        model_energy.modvar_inen_frac_en_coke,
-        model_energy.modvar_inen_frac_en_diesel,
-        model_energy.modvar_inen_frac_en_electricity,
-        model_energy.modvar_inen_frac_en_furnace_gas,
-        model_energy.modvar_inen_frac_en_gasoline,
-        model_energy.modvar_inen_frac_en_hydrogen,
-        model_energy.modvar_inen_frac_en_kerosene,
-        model_energy.modvar_inen_frac_en_natural_gas,
-        model_energy.modvar_inen_frac_en_oil,
-        model_energy.modvar_inen_frac_en_hgl,
-        model_energy.modvar_inen_frac_en_solar,
-        model_energy.modvar_inen_frac_en_solid_biomass
-    ]
-
-    if return_modvars_only:
-        return modvars
 
     dict_modvar_specs_def = {model_energy.modvar_inen_frac_en_electricity: 1}
     dict_modvar_specs = dict_modvar_specs_def if not isinstance(dict_modvar_specs, dict) else dict_modvar_specs
