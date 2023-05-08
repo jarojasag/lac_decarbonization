@@ -2214,9 +2214,13 @@ class ModelAttributes:
             return attr_sec.field_maps[map_retrieve][key]
 
 
-    ##  function to return a list of subsectors by sector
-    def get_sector_subsectors(self, sector: str):
 
+    def get_sector_subsectors(self, 
+        sector: str
+    ) -> List[str]:
+        """
+        Return a list of subsectors by sector
+        """
         self.check_sector(sector)
         subsectors = list(
             sf.subset_df(
@@ -2228,11 +2232,14 @@ class ModelAttributes:
         return subsectors
 
 
-    ##  function for retrieving different attributes associated with a subsector
+
     def get_subsector_attribute(self,
         subsector: str,
         return_type: str
     ) -> Union[float, int, str, None]:
+        """
+        Retrieve different attributes associated with a subsector
+        """
 
         dict_out = {
             "pycategory_primary": self.dict_attributes[self.table_name_attr_subsector].field_maps["subsector_to_primary_category_py"][subsector],
@@ -2259,12 +2266,13 @@ class ModelAttributes:
             return None
 
 
-    ##  retrieve time periods
-    def get_time_periods(self) -> tuple:
+
+    def get_time_periods(self
+    ) -> tuple:
         """
-            Get all time periods defined in SISEPUEDE. Returns a tuple of the form (time_periods, n), where:
-            - time_periods is a list of all time periods
-            - n is the number of defined time periods
+        Get all time periods defined in SISEPUEDE. Returns a tuple of the form (time_periods, n), where:
+        - time_periods is a list of all time periods
+        - n is the number of defined time periods
 
         """
         pydim_time_period = self.get_dimensional_attribute(self.dim_time_period, "pydim")
@@ -2272,12 +2280,13 @@ class ModelAttributes:
         return time_periods, len(time_periods)
 
 
-    ##  get all years associated with time periods
+
     def get_time_period_years(self,
         field_year: str = "year"
     ) -> list:
         """
-            Get a list of all years (as integers) associated with time periods in SISEPUEDE. Returns None if no years are defined.
+        Get a list of all years (as integers) associated with time periods in 
+            SISEPUEDE. Returns None if no years are defined.
         """
         pydim_time_period = self.get_dimensional_attribute(self.dim_time_period, "pydim")
         attr_tp = self.dict_attributes[pydim_time_period]
@@ -2291,13 +2300,16 @@ class ModelAttributes:
         return all_years
 
 
-    ##  retrieve a dictionary that maps variables to each other based on shared categories within a subsector
+
     def get_var_dicts_by_shared_category(self,
         subsector:str,
         category_pivot:str,
         fields_to_filter_on:list
     ) -> dict:
-
+        """
+        Retrieve a dictionary that maps variables to each other based on shared 
+            categories within a subsector
+        """
         dict_out = {}
 
         # get available dictionaries
@@ -4184,7 +4196,6 @@ class ModelAttributes:
 
 
 
-    ##  function for retrieving the variable schema associated with a variable
     def get_variable_attribute(self, 
         variable: str, 
         attribute: str

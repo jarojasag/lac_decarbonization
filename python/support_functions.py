@@ -1224,6 +1224,19 @@ def group_df_as_dict(
 
 
 
+def islistlike(
+    x: Any
+) -> bool:
+    """
+    Check if x is a list, np.array, or range
+    """
+    types_check = (list, np.ndarray, range)
+    out = isinstance(x, types_check)
+
+    return out
+
+
+
 def isnumber(
     x: Any,
     integer: bool = False

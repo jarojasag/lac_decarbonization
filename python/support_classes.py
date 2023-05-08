@@ -500,6 +500,54 @@ class TimePeriods:
         )
 
         return out
+
+
+    
+    def tps_to_years(self,
+        vec_tps: Union[List, np.ndarray, pd.DataFrame, pd.Series],
+        field_time_period: Union[str, None] = None,
+        field_year: Union[str, None] = None,
+    ) -> np.ndarray:
+        """
+        Convert a vector of years to time periods. 
+
+        Function Arguments
+        ------------------
+        - vec_tps: List-like input including time periods to convert to years; 
+            if DataFrame, will write to field_year (if None, default to
+            self.field_year) and look for field_time_period (source time 
+            periods, defaults to self.field_time_period)
+
+        Keyword Arguments
+        -----------------
+        - field_time_period: optional specification of a field to store time 
+            period. Only used if vec_years is a DataFrame.
+        - field_year: optional specification of a field containing years. Only 
+            used if vec_years is a DataFrame.
+        """
+
+        df_q = isinstance(vec_tps, pd.DataFrame)
+        # check input if data frame
+        if df_q:
+            
+            field_time_period = self.field_time_period if (field_time_period is None) else field_time_period
+            field_year = self.field_year if (field_year is None) else field_year
+            if field_time_period not in vec_tps.columns:
+                return None
+
+            vec = list(vec_tps[field_time_period])
+
+        else:
+            vec = list(vec_tps)
+
+        out = np.array([self.tp_to_year(x) for x in vec])
+
+        if df_q:
+            df_out = vec_tps.copy()
+            df_out[field_year] = out
+            out = df_out
+
+        return out
     
 
 
@@ -553,18 +601,18 @@ class TimePeriods:
             used if vec_years is a DataFrame.
         """
 
-        vec = list(vec_years)
         df_q = isinstance(vec_years, pd.DataFrame)
         # check input if data frame
         if df_q:
 
             field_time_period = self.field_time_period if (field_time_period is None) else field_time_period
             field_year = self.field_year if (field_year is None) else field_year
-
             if field_year not in vec_years.columns:
                 return None
 
             vec = list(vec_years[field_year])
+        else:
+            vec = list(vec_years)
 
         out = np.array([self.year_to_tp(x) for x in vec])
 
