@@ -6134,7 +6134,6 @@ class ElectricEnergy:
    
 
 
-
     def format_nemomod_table_specified_annual_demand(self,
         df_elec_trajectories: pd.DataFrame,
         attribute_fuel: Union[AttributeTable, None] = None,
@@ -6188,7 +6187,10 @@ class ElectricEnergy:
 
         # calculate total grid demand for electricity
         tuple_enfu_production_and_demands = (
-            self.model_energy.project_enfu_production_and_demands(df_elec_trajectories, target_energy_units = self.model_attributes.configuration.get("energy_units_nemomod")) 
+            self.model_energy.project_enfu_production_and_demands(
+                df_elec_trajectories, 
+                target_energy_units = self.model_attributes.configuration.get("energy_units_nemomod")
+            ) 
             if (tuple_enfu_production_and_demands is None) 
             else tuple_enfu_production_and_demands
         )

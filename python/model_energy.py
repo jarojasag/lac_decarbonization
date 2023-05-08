@@ -2771,13 +2771,14 @@ class NonElectricEnergy:
             vec_rates_gdp_per_capita,
             dict_arrs_scoe_frac_energy
         )
+
         # get total demands by fuel
         dict_demands_by_fuel_heat = {}
         for k in list(set(dict_scoe_demands_by_fuel_heat_hh.keys()) & set(dict_scoe_demands_by_fuel_heat_mmmgdp.keys())):
             arr_tmp_demands_total = dict_scoe_demands_by_fuel_heat_hh[k] + dict_scoe_demands_by_fuel_heat_mmmgdp[k]
             arr_tmp_demands_total *= arr_scoe_demscalar_heat_energy_demand
             dict_demands_by_fuel_heat.update({k: arr_tmp_demands_total})
-
+            
 
         ##  GET EMISSION FACTORS
 

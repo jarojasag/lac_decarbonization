@@ -118,8 +118,13 @@ class Configuration:
 
 
 
-    # function to retrieve a configuration value
-    def get(self, key: str, raise_error_q: bool = False):
+    def get(self, 
+        key: str, 
+        raise_error_q: bool = False
+    ) -> Any:
+        """
+        Retrieve a configuration value associated with key
+        """
         out = self.dict_config.get(key)
         if (out is None) and raise_error_q:
             raise KeyError(f"Configuration parameter '{key}' not found.")
@@ -128,7 +133,6 @@ class Configuration:
 
 
 
-    # function for retrieving a configuration file and population missing values with defaults
     def get_config_information(self,
         attr_area: AttributeTable = None,
         attr_energy: AttributeTable = None,
@@ -144,7 +148,11 @@ class Configuration:
         field_req_param: str = "configuration_file_parameter",
         field_default_val: str = "default_value",
         delim: str = ","
-    ) -> dict:
+    ) -> dict: 
+        """
+        Retrieve a configuration file and population missing values with 
+            defaults
+        """
 
         # set some variables from defaults
         attr_area = attr_area if (attr_area is not None) else self.attr_area
@@ -3373,7 +3381,7 @@ class ModelAttributes:
 
 
 
-    def build_default_sampling_range_df(self
+    def build_default_sampling_range_df(self,
     ) -> pd.DataFrame:
         """
         Build a sampling range dataframe from defaults contained in

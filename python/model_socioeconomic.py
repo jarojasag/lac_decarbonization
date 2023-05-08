@@ -40,7 +40,7 @@ class Socioeconomic:
     ##  FUNCTIONS FOR MODEL ATTRIBUTE DIMENSIONS
 
     def check_df_fields(self, 
-        df_se_trajectories: pd.DataFrame
+        df_se_trajectories: pd.DataFrame,
     ) -> None:
         check_fields = self.required_variables
         # check for required variables
@@ -62,18 +62,19 @@ class Socioeconomic:
 
 
 
-    def get_required_dimensions(self):
+    def get_required_dimensions(self,
+    ) -> List[str]:
         ## TEMPORARY - derive from attributes later
         required_doa = [self.model_attributes.dim_time_period]
         return required_doa
 
 
 
-    def get_se_input_output_fields(self):
+    def get_se_input_output_fields(self,
+    ) -> Tuple:
         required_doa = [self.model_attributes.dim_time_period]
         required_vars, output_vars = self.model_attributes.get_input_output_fields(self.required_subsectors)
         return required_vars + self.get_required_dimensions(), output_vars
-
 
 
 
@@ -114,12 +115,27 @@ class Socioeconomic:
         vec_rates_gdp_per_capita = vec_gdp_per_capita[1:]/vec_gdp_per_capita[0:-1] - 1
 
         # calculate the housing occupancy rate
-        vec_gnrl_elast_occrate_to_gdppc = self.model_attributes.get_standard_variables(df_se_trajectories, self.modvar_gnrl_elasticity_occrate_to_gdppc, False, return_type = "array_base")
-        vec_gnrl_init_occrate = self.model_attributes.get_standard_variables(df_se_trajectories, self.modvar_gnrl_init_occ_rate, False, return_type = "array_base")
-        vec_gnrl_growth_occrate = sf.project_growth_scalar_from_elasticity(vec_rates_gdp, vec_gnrl_elast_occrate_to_gdppc, False, "standard")
+        vec_gnrl_elast_occrate_to_gdppc = self.model_attributes.get_standard_variables(
+            df_se_trajectories, 
+            self.modvar_gnrl_elasticity_occrate_to_gdppc, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base"
+        )
+        vec_gnrl_init_occrate = self.model_attributes.get_standard_variables(
+            df_se_trajectories, 
+            self.modvar_gnrl_init_occ_rate, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base"
+        )
+        vec_gnrl_growth_occrate = sf.project_growth_scalar_from_elasticity(
+            vec_rates_gdp_per_capita, 
+            vec_gnrl_elast_occrate_to_gdppc, 
+            False, 
+            "standard"
+        )
         vec_gnrl_occrate = vec_gnrl_init_occrate[0]*vec_gnrl_growth_occrate
         vec_gnrl_num_hh = np.round(vec_pop/vec_gnrl_occrate).astype(int)
-        
+
         # add to output
         df_out = [
             df_se_trajectories.reset_index(drop = True),
