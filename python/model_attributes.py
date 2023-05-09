@@ -861,7 +861,9 @@ class ModelAttributes:
         self.subsec_name_econ = "Economy"
         self.subsec_name_gnrl = "General"
 
+        return None
 
+        
 
     def _initialize_basic_template_substrings(self,
     ) -> None:
@@ -884,6 +886,8 @@ class ModelAttributes:
         self.substr_varreqs = "table_varreqs_by_"
         self.substr_varreqs_allcats = f"{self.substr_varreqs}category_"
         self.substr_varreqs_partialcats = f"{self.substr_varreqs}partial_category_"
+
+        return None
 
 
 
@@ -912,6 +916,8 @@ class ModelAttributes:
         self.varchar_str_unit_monetary = "$UNIT-MONETARY$"
         self.varchar_str_unit_power = "$UNIT-POWER$"
         self.varchar_str_unit_volume = "$UNIT-VOLUME$"
+
+        return None
 
 
 
@@ -952,10 +958,12 @@ class ModelAttributes:
             self.attribute_configuration_parameters
         )
 
+        return None
+
 
 
     def _initialize_emission_modvars_by_gas(self
-    ) -> tuple:
+    ) -> None:
         """
         Get dictionaries that gives all total emission component variables
             by gas. Sets the following properties:
@@ -998,6 +1006,8 @@ class ModelAttributes:
         self.dict_gas_to_total_emission_fields = dict_fields_by_gas
         self.dict_gas_to_total_emission_modvars = dict_modvar_by_gas
 
+        return None
+
 
 
     def _initialize_sector_sets(self,
@@ -1038,10 +1048,12 @@ class ModelAttributes:
         self.all_subsectors_with_primary_category = l_with
         self.all_subsectors_without_primary_category = l_without
 
+        return None
+
 
 
     def _initialize_variables_by_subsector(self,
-    ) -> dict:
+    ) -> None:
         """
         Initialize some dictionaries describing variables by subsector.
             Initializes the following properties:
@@ -1096,6 +1108,8 @@ class ModelAttributes:
         self.dict_model_variable_to_category_restriction = dict_vartypes_out
         self.dict_model_variables_to_variables = dict_vars_to_fields
         self.dict_variables_to_model_variables = dict_fields_to_vars
+
+        return None
 
 
 
