@@ -19,7 +19,7 @@ import warnings
 
 
 
-class TransformationsEnergy:
+class TransformationsCircularEconomy:
     """
     Build energy transformations using general transformations defined in
         auxiliary_definitions_transformations. Wraps more general forms from 

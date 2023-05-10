@@ -19,12 +19,12 @@ import warnings
 
 
 
-class TransformationsEnergy:
+class TransformationsIntegrated:
     """
-    Build energy transformations using general transformations defined in
-        auxiliary_definitions_transformations. Wraps more general forms from 
-        auxiliary_definitions_transformations into functions and classes
-        with shared ramps, paramters, and build functionality.
+    Build cross-sectoral transformations using general transformations defined 
+        in auxiliary_definitions_transformation and transformations from other
+        subectors. Turns  auxiliary_definitions_transformations into functions 
+        and classes with shared ramps, paramters, and build functionality.
 
     NOTE: To update transformations, users need to follow three steps:
 

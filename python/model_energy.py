@@ -3658,27 +3658,36 @@ class NonElectricEnergy:
         ##  ECON/GNRL VECTOR AND ARRAY INITIALIZATION
 
         # get some vectors from the se model
-        vec_hh = self.model_attributes.get_standard_variables(
+        array_pop = self.model_attributes.get_standard_variables(
             df_neenergy_trajectories, 
-            self.model_socioeconomic.modvar_grnl_num_hh, 
+            self.model_socioeconomic.modvar_gnrl_subpop, 
+            override_vector_for_single_mv_q = False, 
             return_type = "array_base"
         )
         vec_gdp = self.model_attributes.get_standard_variables(
             df_neenergy_trajectories, 
             self.model_socioeconomic.modvar_econ_gdp, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base"
+        )
+        vec_gdp_per_capita = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.model_socioeconomic.modvar_econ_gdp_per_capita, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base"
+        )
+        vec_hh = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.model_socioeconomic.modvar_grnl_num_hh, 
+            override_vector_for_single_mv_q = False, 
             return_type = "array_base"
         )
         vec_pop = self.model_attributes.get_standard_variables(
             df_neenergy_trajectories, 
             self.model_socioeconomic.modvar_gnrl_pop_total, 
+            override_vector_for_single_mv_q = False, 
             return_type = "array_base"
         )
-        array_pop = self.model_attributes.get_standard_variables(
-            df_neenergy_trajectories, 
-            self.model_socioeconomic.modvar_gnrl_subpop, 
-            return_type = "array_base"
-        )
-        vec_gdp_per_capita = np.array(df_se_internal_shared_variables["vec_gdp_per_capita"])
         vec_rates_gdp = np.array(df_se_internal_shared_variables["vec_rates_gdp"].dropna())
         vec_rates_gdp_per_capita = np.array(df_se_internal_shared_variables["vec_rates_gdp_per_capita"].dropna())
 

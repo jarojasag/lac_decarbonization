@@ -76,7 +76,7 @@ class CircularEconomy:
         self.modvar_waso_ef_n2o_compost = ":math:\\text{N}_2\\text{O} Composting Emission Factor"
         self.modvar_waso_ef_n2o_incineration = ":math:\\text{N}_2\\text{O} Incineration Emission Factor"
         self.modvar_waso_elast_msw = "Elasticity of Municipal Solid Waste Produced to GDP per Capita"
-        self.modvar_waso_emissions_ch4_biogas = ":math:\\text{CH}_4 Emissions from Anearobic Biogas"
+        self.modvar_waso_emissions_ch4_biogas = ":math:\\text{CH}_4 Emissions from Anaerobic Biogas"
         self.modvar_waso_emissions_ch4_compost = ":math:\\text{CH}_4 Emissions from Composting"
         self.modvar_waso_emissions_ch4_incineration = ":math:\\text{CH}_4 Emissions from Incineration"
         self.modvar_waso_emissions_ch4_landfill = ":math:\\text{CH}_4 Emissions from Landfills"
@@ -522,10 +522,36 @@ class CircularEconomy:
         ##  ECON/GNRL VECTOR AND ARRAY INITIALIZATION
 
         # get some vectors
-        vec_gdp = self.model_attributes.get_standard_variables(df_ce_trajectories, self.model_socioeconomic.modvar_econ_gdp, False, return_type = "array_base")
-        vec_pop = self.model_attributes.get_standard_variables(df_ce_trajectories, self.model_socioeconomic.modvar_gnrl_pop_total, False, return_type = "array_base")
-        array_pop = self.model_attributes.get_standard_variables(df_ce_trajectories, self.model_socioeconomic.modvar_gnrl_subpop, False, return_type = "array_base")
-        vec_gdp_per_capita = np.array(df_se_internal_shared_variables["vec_gdp_per_capita"])
+        array_pop = self.model_attributes.get_standard_variables(
+            df_ce_trajectories, 
+            self.model_socioeconomic.modvar_gnrl_subpop, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base"
+        )
+        vec_gdp = self.model_attributes.get_standard_variables(
+            df_ce_trajectories, 
+            self.model_socioeconomic.modvar_econ_gdp, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base"
+        )
+        vec_gdp_per_capita = self.model_attributes.get_standard_variables(
+            df_ce_trajectories, 
+            self.model_socioeconomic.modvar_econ_gdp_per_capita, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base"
+        )
+        vec_hh = self.model_attributes.get_standard_variables(
+            df_ce_trajectories, 
+            self.model_socioeconomic.modvar_grnl_num_hh, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base"
+        )
+        vec_pop = self.model_attributes.get_standard_variables(
+            df_ce_trajectories, 
+            self.model_socioeconomic.modvar_gnrl_pop_total, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base"
+        )
         vec_rates_gdp = np.array(df_se_internal_shared_variables["vec_rates_gdp"].dropna())
         vec_rates_gdp_per_capita = np.array(df_se_internal_shared_variables["vec_rates_gdp_per_capita"].dropna())
 
@@ -847,10 +873,36 @@ class CircularEconomy:
         ##  ECON/GNRL VECTOR AND ARRAY INITIALIZATION
 
         # get some vectors
-        vec_gdp = self.model_attributes.get_standard_variables(df_ce_trajectories, self.model_socioeconomic.modvar_econ_gdp, False, return_type = "array_base")
-        vec_pop = self.model_attributes.get_standard_variables(df_ce_trajectories, self.model_socioeconomic.modvar_gnrl_pop_total, False, return_type = "array_base")
-        array_pop = self.model_attributes.get_standard_variables(df_ce_trajectories, self.model_socioeconomic.modvar_gnrl_subpop, False, return_type = "array_base")
-        vec_gdp_per_capita = np.array(df_se_internal_shared_variables["vec_gdp_per_capita"])
+        array_pop = self.model_attributes.get_standard_variables(
+            df_ce_trajectories, 
+            self.model_socioeconomic.modvar_gnrl_subpop, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base"
+        )
+        vec_gdp = self.model_attributes.get_standard_variables(
+            df_ce_trajectories, 
+            self.model_socioeconomic.modvar_econ_gdp, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base"
+        )
+        vec_gdp_per_capita = self.model_attributes.get_standard_variables(
+            df_ce_trajectories, 
+            self.model_socioeconomic.modvar_econ_gdp_per_capita, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base"
+        )
+        vec_hh = self.model_attributes.get_standard_variables(
+            df_ce_trajectories, 
+            self.model_socioeconomic.modvar_grnl_num_hh, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base"
+        )
+        vec_pop = self.model_attributes.get_standard_variables(
+            df_ce_trajectories, 
+            self.model_socioeconomic.modvar_gnrl_pop_total, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base"
+        )
         vec_rates_gdp = np.array(df_se_internal_shared_variables["vec_rates_gdp"].dropna())
         vec_rates_gdp_per_capita = np.array(df_se_internal_shared_variables["vec_rates_gdp_per_capita"].dropna())
 

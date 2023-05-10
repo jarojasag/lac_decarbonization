@@ -18,6 +18,7 @@ class Socioeconomic:
 
         # economy and general variables
         self.modvar_econ_gdp = "GDP"
+        self.modvar_econ_gdp_per_capita = "GDP per Capita"
         self.modvar_econ_va = "Value Added"
         self.modvar_gnrl_area = "Area of Country"
         self.modvar_gnrl_elasticity_occrate_to_gdppc = "Elasticity National Occupation Rate to GDP Per Capita"
@@ -79,36 +80,67 @@ class Socioeconomic:
 
 
     def project(self, 
-        df_se_trajectories: pd.DataFrame
-    ) -> tuple:
-
+        df_se_trajectories: pd.DataFrame,
+        project_for_internal: bool = True,
+    ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
         """
-        Returns a tuple:
-
-            (1) the first element of the return tuple is a modified version of 
-                df_se_trajectories data frame that includes socioeconomic 
-                projections. This should be passed to other models.
-
-            (2) the second element of the return tuple is a data frame with 
-                n_time_periods - 1 rows that represents growth rates in the 
-                socioeconomic sector. Row i represents the growth rate from time 
-                i to time i + 1.
-
         Function Arguments
         ------------------
         - df_se_trajectories: pd.DataFrame with input variable trajectories for 
             the Socioeconomic model.
 
+        Keyword Arguments
+        -----------------
+        - project_for_internal: 
+            
+            * If True, returns a tuple with the following ordered elements:
+
+            [0] the first element of the return tuple is a modified version of 
+                df_se_trajectories data frame that includes socioeconomic 
+                projections. This should be passed to other models.
+
+            [1] the second element of the return tuple is a data frame with 
+                n_time_periods - 1 rows that represents growth rates in the 
+                socioeconomic sector. Row i represents the growth rate from time 
+                i to time i + 1.
+
+            * If False, returns only the variables calculated in SE 
         """
         # add population and interpolate if necessary
         self.model_attributes.manage_pop_to_df(df_se_trajectories, "add")
         self.check_df_fields(df_se_trajectories)
         dict_dims, df_se_trajectories, n_projection_time_periods, projection_time_periods = self.model_attributes.check_projection_input_df(df_se_trajectories, True, True, True)
 
+        # initialize output
+        df_out = (
+            [df_se_trajectories.reset_index(drop = True)]
+            if project_for_internal
+            else [df_se_trajectories[self.required_dimensions].copy()]
+        )
+
+
         # get some basic emission drivers
-        vec_gdp = self.model_attributes.get_standard_variables(df_se_trajectories, self.modvar_econ_gdp, False, return_type = "array_base")#np.array(df_afolu_trajectories[field_gdp])
-        vec_pop = np.sum(self.model_attributes.get_standard_variables(df_se_trajectories, self.modvar_gnrl_subpop, False, return_type = "array_base"), axis = 1)
-        vec_gdp_per_capita = vec_gdp/vec_pop
+        vec_gdp = self.model_attributes.get_standard_variables(
+            df_se_trajectories, 
+            self.modvar_econ_gdp, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base"
+        )
+        vec_pop = np.sum(
+            self.model_attributes.get_standard_variables(
+                df_se_trajectories, 
+                self.modvar_gnrl_subpop, 
+                override_vector_for_single_mv_q = False, 
+                return_type = "array_base"
+            ), 
+            axis = 1
+        )
+        vec_gdp_per_capita = np.nan_to_num(vec_gdp/vec_pop, 0.0, posinf = 0.0)
+        vec_gdp_per_capita *= self.model_attributes.get_variable_unit_conversion_factor(
+            self.modvar_econ_gdp,
+            self.modvar_econ_gdp_per_capita,
+            "monetary"
+        )
 
         # growth rates
         vec_rates_gdp = vec_gdp[1:]/vec_gdp[0:-1] - 1
@@ -137,21 +169,35 @@ class Socioeconomic:
         vec_gnrl_num_hh = np.round(vec_pop/vec_gnrl_occrate).astype(int)
 
         # add to output
-        df_out = [
-            df_se_trajectories.reset_index(drop = True),
+        df_out += [
+            self.model_attributes.array_to_df(vec_gdp_per_capita, self.modvar_econ_gdp_per_capita, False),
             self.model_attributes.array_to_df(vec_gnrl_occrate, self.modvar_gnrl_occ_rate, False),
             self.model_attributes.array_to_df(vec_gnrl_num_hh, self.modvar_grnl_num_hh, False)
         ]
         df_se_trajectories = pd.concat(df_out, axis = 1).reset_index(drop = True)
 
-        # get internal variables that are shared between downstream sectors
-        time_periods_df = np.array(df_se_trajectories[self.model_attributes.dim_time_period])[0:-1]
-        df_se_internal_shared_variables = df_se_trajectories[[self.model_attributes.dim_time_period]].copy().reset_index(drop = True)
-        df_se_internal_shared_variables["vec_gdp_per_capita"] = vec_gdp_per_capita
-        df_se_internal_shared_variables = pd.merge(
-            df_se_internal_shared_variables,
-            pd.DataFrame({self.model_attributes.dim_time_period: time_periods_df, "vec_rates_gdp": vec_rates_gdp, "vec_rates_gdp_per_capita": vec_rates_gdp_per_capita}),
-            how = "left"
-        )
 
-        return (df_se_trajectories, df_se_internal_shared_variables)
+        ##  setup output
+        out = df_se_trajectories
+
+        if project_for_internal:
+            # get internal variables that are shared between downstream sectors
+            time_periods_df = np.array(df_se_trajectories[self.model_attributes.dim_time_period])[0:-1]
+            df_se_internal_shared_variables = df_se_trajectories[[self.model_attributes.dim_time_period]].copy().reset_index(drop = True)
+
+            # build data frame of rates--will not have values in the final time period
+            df_se_internal_shared_variables = pd.merge(
+                df_se_internal_shared_variables,
+                pd.DataFrame(
+                    {
+                        self.model_attributes.dim_time_period: time_periods_df, 
+                        "vec_rates_gdp": vec_rates_gdp, 
+                        "vec_rates_gdp_per_capita": vec_rates_gdp_per_capita
+                    }
+                ),
+                how = "left"
+            )
+
+            out = (df_se_trajectories, df_se_internal_shared_variables)
+
+        return out

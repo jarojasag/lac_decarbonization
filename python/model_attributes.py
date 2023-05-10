@@ -863,7 +863,7 @@ class ModelAttributes:
 
         return None
 
-        
+
 
     def _initialize_basic_template_substrings(self,
     ) -> None:
@@ -962,7 +962,8 @@ class ModelAttributes:
 
 
 
-    def _initialize_emission_modvars_by_gas(self
+    def _initialize_emission_modvars_by_gas(self,
+        key_other_totals: str = "multigas",
     ) -> None:
         """
         Get dictionaries that gives all total emission component variables
@@ -970,6 +971,11 @@ class ModelAttributes:
 
             * self.dict_gas_to_total_emission_fields
             * self.dict_gas_to_total_emission_modvars
+
+        Keyword Arguments
+        -----------------
+        - key_other_totals: key to use for gasses that are associated with 
+            multiple gasses (if applicable)
         """
         # get tables and initialize dictionary out
         all_tabs = self.dict_varreqs.keys()
@@ -990,18 +996,20 @@ class ModelAttributes:
                 # get emission and add to dictionary
                 emission = self.get_variable_characteristic(modvar, self.varchar_str_emission_gas)
 
-                if emission is not None:
-                    # add to fields by gas
-                    if emission in dict_fields_by_gas.keys():
-                        dict_fields_by_gas[emission] += varlist
-                    else:
-                        dict_fields_by_gas.update({emission: varlist})
+                key = emission if (emission is not None) else key_other_totals
 
-                    # add to modvars by gas
-                    if emission in dict_modvar_by_gas.keys():
-                        dict_modvar_by_gas[emission].append(modvar)
-                    else:
-                        dict_modvar_by_gas.update({emission: [modvar]})
+                # add to fields by gas
+                (
+                    dict_fields_by_gas[key].extend(varlist)
+                    if key in dict_fields_by_gas.keys()
+                    else dict_fields_by_gas.update({key: varlist})
+                )
+                # add to modvars by gas
+                (
+                    dict_modvar_by_gas[key].append(modvar)
+                    if key in dict_modvar_by_gas.keys()
+                    else dict_modvar_by_gas.update({key: [modvar]})
+                )
 
         self.dict_gas_to_total_emission_fields = dict_fields_by_gas
         self.dict_gas_to_total_emission_modvars = dict_modvar_by_gas

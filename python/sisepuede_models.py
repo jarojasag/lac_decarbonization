@@ -284,7 +284,11 @@ class SISEPUEDEModels:
 
 			try:
 				df_return.append(self.model_circecon.project(df_input_data))
-				df_return = [sf.merge_output_df_list(df_return, self.model_attributes, "concatenate")] if run_integrated else df_return
+				df_return = (
+					[sf.merge_output_df_list(df_return, self.model_attributes, "concatenate")] 
+					if run_integrated 
+					else df_return
+				)
 				self._log(f"CircularEconomy model run successfully completed", type_log = "info")
 
 			except Exception as e:
@@ -304,7 +308,11 @@ class SISEPUEDEModels:
 
 			try:
 				df_return.append(self.model_ippu.project(df_input_data))
-				df_return = [sf.merge_output_df_list(df_return, self.model_attributes, "concatenate")] if run_integrated else df_return
+				df_return = (
+					[sf.merge_output_df_list(df_return, self.model_attributes, "concatenate")] 
+					if run_integrated 
+					else df_return
+				)
 				self._log(f"IPPU model run successfully completed", type_log = "info")
 
 			except Exception as e:
@@ -324,7 +332,11 @@ class SISEPUEDEModels:
 
 			try:
 				df_return.append(self.model_energy.project(df_input_data))
-				df_return = [sf.merge_output_df_list(df_return, self.model_attributes, "concatenate")] if run_integrated else df_return
+				df_return = (
+					[sf.merge_output_df_list(df_return, self.model_attributes, "concatenate")] 
+					if run_integrated 
+					else df_return
+				)
 				self._log(f"NonElectricEnergy without Fugitive Emissions model run successfully completed", type_log = "info")
 
 			except Exception as e:
@@ -351,14 +363,18 @@ class SISEPUEDEModels:
 					regions = regions
 				)
 				df_return.append(df_elec)
-				df_return = [sf.merge_output_df_list(df_return, self.model_attributes, "concatenate")] if run_integrated else df_return
+				df_return = (
+					[sf.merge_output_df_list(df_return, self.model_attributes, "concatenate")] 
+					if run_integrated 
+					else df_return
+				)
 				self._log(f"ElectricEnergy model run successfully completed", type_log = "info")
 
 			except Exception as e:
 				self._log(f"Error running ElectricEnergy model: {e}", type_log = "error")
 
 
-		##  6. Finally, add fugitive emissions from Non-Electric Energy and collect output
+		##  6. Add fugitive emissions from Non-Electric Energy and collect output
 
 		if "Energy" in models_run:
 			self._log("Running Energy (Fugitive Emissions)", type_log = "info")
@@ -376,11 +392,38 @@ class SISEPUEDEModels:
 						subsectors_project = self.model_attributes.subsec_name_fgtv
 					)
 				)
-				df_return = [sf.merge_output_df_list(df_return, self.model_attributes, "concatenate")] if run_integrated else df_return
+				df_return = (
+					[sf.merge_output_df_list(df_return, self.model_attributes, "concatenate")] 
+					if run_integrated 
+					else df_return
+				)
 				self._log(f"Fugitive Emissions from Energy model run successfully completed", type_log = "info")
 
 			except Exception as e:
 				self._log(f"Error running Fugitive Emissions from Energy model: {e}", type_log = "error")
+
+
+		##  7. Add Socioeconomic outpu at the end to avoid double-initiation throughout models
+
+		if len(df_return) > 0:
+			self._log("Appending Socioeconomic outputs", type_log = "info")
+
+			try:
+				df_return.append(
+					self.model_socioeconomic.project(
+						df_input_data, 
+						project_for_internal = False
+					)
+				)
+				df_return = (
+					[sf.merge_output_df_list(df_return, self.model_attributes, "concatenate")] 
+					if run_integrated 
+					else df_return
+				)
+				self._log(f"Socioeconomic outputs successfully appended.", type_log = "info")
+
+			except Exception as e:
+				self._log(f"Error appending Socioeconomic outputs: {e}", type_log = "error")
 
 
 		# build output data frame

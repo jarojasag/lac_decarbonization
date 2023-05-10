@@ -19,9 +19,9 @@ import warnings
 
 
 
-class TransformationsEnergy:
+class TransformationsAFOLU:
     """
-    Build energy transformations using general transformations defined in
+    Build AFOLU transformations using general transformations defined in
         auxiliary_definitions_transformations. Wraps more general forms from 
         auxiliary_definitions_transformations into functions and classes
         with shared ramps, paramters, and build functionality.

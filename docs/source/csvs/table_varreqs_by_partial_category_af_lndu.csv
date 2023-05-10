@@ -1,7 +1,7 @@
 ﻿Variable Type,Variable,Information,Variable Schema,Dashboard,Categories,Notes,Data Link,Reference,Internal Model Variable,Default LHS Scalar Minimum at Final Time Period,Default LHS Scalar Maximum at Final Time Period,``$CAT-SOIL-MANAGEMENT$``,Emissions Total by Gas Component
 Input,Fraction of Increasing Net Exports Met," | Fractional of changes to net exports to meet. Values less than 1 reduce endogenous production rates (yields in crops, heads per acre in livestock) if changes to net imports are negative. 
  | 
- | **Note**: Applied **after carrying capacity scalars** are accounted for.",``frac_lndu_increasing_net_exports_met_$CAT-LANDUSE$``,,``croplands``|``grasslands``,,,,0,1,1,none,1
+ | **Note**: Applied **after carrying capacity scalars** are accounted for.",``frac_lndu_increasing_net_exports_met_$CAT-LANDUSE$``,,``croplands``|``grasslands``,,,,0,1,1,none,0
 Input,Fraction of Increasing Net Imports Met," | Fractional of changes to net imports to meet. Values less than 1 increase endogenous production rates (yields in crops, heads per acre in livestock) if changes to net imports are positive. 
  | 
  | **Note**: Applied **after carrying capacity scalars** are accounted for.",``frac_lndu_increasing_net_imports_met_$CAT-LANDUSE$``,,``croplands``|``grasslands``,,,,0,1,1,none,0
@@ -28,7 +28,7 @@ Input,Land Use Yield Reallocation Factor,"The land use yield reallocation factor
  | 
  | For :math:`\eta \in (0, 1)`, there is a mix of reallocation and net imports, which scales linearly between extremes.
 ",``lndu_reallocation_factor``,,none,,,,0,0,2,none,0
-Input,Pasture Fraction of Grassland,Proportion of grasslands that are available as pastures. Used in land use reallocation and fertilizer application.,``frac_lndu_proportion_$CAT-LANDUSE$_pasture``,,``grasslands``,,,,0,1,1,none,1
+Input,Pasture Fraction of Grassland,Proportion of grasslands that are available as pastures. Used in land use reallocation and fertilizer application.,``frac_lndu_proportion_$CAT-LANDUSE$_pasture``,,``grasslands``,,,,0,1,1,none,0
 Input,Soil Carbon Land Management Factor," | See :math:`F_{MG}` in Equation 2.25 and Box 2.2, V4, C2 IPPC GNGHGI (2019R). 
  | 
  | Used to represent changes in tillage (croplands) and grazing practices (grasslands)",``factor_lndu_soil_management_$CAT-LANDUSE$``,,``croplands``|``grasslands``,,,,0,1,1,none,0
