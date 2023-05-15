@@ -1,25 +1,209 @@
-import support_functions as sf
-from model_attributes import *
 from attribute_table import AttributeTable
-import pandas as pd
+from model_attributes import *
+import logging
 import numpy as np
+import pandas as pd
+import support_functions as sf
+
+
 
 class Socioeconomic:
+    """
+    Use Socioeconomic to calculate key drivers of emissions that are shared 
+        across SISEPUEDE emissions models and sectors/subsectors. Includes 
+        model variables for the following model subsectors (non-emission):
 
-    def __init__(self, attributes: ModelAttributes):
+        * Economic (ECON)
+        * General (GNRL)
 
-        self.model_attributes = attributes
-        self.required_dimensions = self.get_required_dimensions()
-        self.required_subsectors, self.required_base_subsectors = self.get_required_subsectors()
-        self.required_variables, self.output_variables = self.get_se_input_output_fields()
+    For additional information, see the SISEPUEDE readthedocs at:
+
+        https://sisepuede.readthedocs.io/en/latest/energy_non_electric.html
+
+    
+
+    Intialization Arguments
+    -----------------------
+    - model_attributes: ModelAttributes object used in SISEPUEDE
+
+    Optional Arguments
+    ------------------
+    - logger: optional logger object to use for event logging
+
+    """
+    def __init__(self, 
+        model_attributes: ModelAttributes,
+        logger: Union[logging.Logger, None] = None,
+    ):
+
+        self.logger = logger
+        self.model_attributes = model_attributes
+        self._initialize_input_output_components()
+
+        # initialize subsector variables
+        self._initialize_subsector_vars_econ()
+        self._initialize_subsector_vars_gnrl()
+
+        # initialize other properties
+        self._initialize_other_properties()
+        
+
+    
+    def __call__(self,
+        *args,
+        **kwargs
+    ) -> pd.DataFrame:
+
+        return self.project(*args, **kwargs)
 
 
-        ##  set some model fields to connect to the attribute tables
 
-        # economy and general variables
+
+
+    ##############################################
+    #    INITIALIZATION AND SUPPORT FUNCTIONS    #
+    ##############################################
+
+    def check_df_fields(self, 
+        df_se_trajectories: pd.DataFrame,
+    ) -> None:
+        """
+        Check df fields to verify proper fields are present. If fill_value is
+            not None, will instantiate missing values with fill_value.
+        """
+        check_fields = self.required_variables
+
+        # check for required variables
+        if not set(check_fields).issubset(df_se_trajectories.columns):
+            set_missing = list(set(check_fields) - set(df_se_trajectories.columns))
+            set_missing = sf.format_print_list(set_missing)
+            raise KeyError(f"Socioconomic projection cannot proceed: The fields {set_missing} are missing.")
+        
+        return None
+
+
+
+    def _initialize_input_output_components(self,
+    ) -> None:
+        """
+        Set a range of input components, including required dimensions, 
+            subsectors, input and output fields, and integration variables.
+            Sets the following properties:
+
+            * self.output_model_variables
+            * self.output_variables
+            * self.required_dimensions
+            * self.required_subsectors
+            * self.required_base_subsectors
+            * self.required_model_variables
+            * self.required_variables
+        """
+
+        ##  START WITH REQUIRED DIMENSIONS (TEMPORARY - derive from attributes later)
+
+        required_doa = [self.model_attributes.dim_time_period]
+        self.required_dimensions = required_doa
+
+
+        ##  ADD REQUIRED SUBSECTORS (TEMPORARY - derive from attributes)
+        
+        subsectors = sorted(list(
+            sf.subset_df(
+                self.model_attributes.dict_attributes.get("abbreviation_subsector").table, 
+                {
+                    "sector": ["Socioeconomic"]
+                }
+            )["subsector"]
+        ))
+        subsectors_base = subsectors.copy()
+
+        self.required_subsectors = subsectors
+        self.required_base_subsectors = subsectors_base
+
+
+        ##  SET INPUT OUTPUT VARIABLES
+
+        required_doa = [self.model_attributes.dim_time_period]
+        required_vars, output_vars = self.model_attributes.get_input_output_fields(subsectors)
+
+        # get input/output model variables`
+        required_model_vars = sorted(list(set(
+            [
+                self.model_attributes.dict_variables_to_model_variables.get(x) 
+                for x in required_vars
+            ]
+        )))
+
+        output_model_vars = sorted(list(set(
+            [
+                self.model_attributes.dict_variables_to_model_variables.get(x) 
+                for x in output_vars
+            ]
+        )))
+
+        self.output_model_variables = output_model_vars
+        self.output_variables = output_vars
+        self.required_model_variables = required_model_vars
+        self.required_variables = required_vars + required_doa
+
+        return None
+    
+
+
+    def _initialize_other_properties(self,
+    ) -> None:
+        """
+        Initialize other properties that don't fit elsewhere. Sets the 
+            following properties:
+
+            * self.n_time_periods
+            * self.time_periods
+        """
+        
+        # time periods
+        time_periods, n_time_periods = self.model_attributes.get_time_periods()
+
+
+        ##  SET PROPERTIES
+
+        self.n_time_periods = n_time_periods
+        self.time_periods = time_periods
+
+        return None
+
+
+
+    def _initialize_subsector_vars_econ(self,
+    ) -> None:
+        """
+        Initialize Economic (ECON) subsector vars for use in Socioeconomic. 
+            Initializes the following properties:
+
+            * self.cat_econ_*
+            * self.dict_modvars_econ_*
+            * self.ind_econ_*
+            * self.modvar_econ_*
+        """
+
         self.modvar_econ_gdp = "GDP"
         self.modvar_econ_gdp_per_capita = "GDP per Capita"
-        self.modvar_econ_va = "Value Added"
+
+        return None
+
+
+    
+    def _initialize_subsector_vars_gnrl(self,
+    ) -> None:
+        """
+        Initialize General (GNRL) subsector vars for use in Socioeconomic. 
+            Initializes the following properties:
+
+            * self.cat_gnrl_*
+            * self.dict_modvars_gnrl_*
+            * self.ind_gnrl_*
+            * self.modvar_gnrl_*
+        """
+
         self.modvar_gnrl_area = "Area of Country"
         self.modvar_gnrl_elasticity_occrate_to_gdppc = "Elasticity National Occupation Rate to GDP Per Capita"
         self.modvar_gnrl_emission_limit_ch4 = ":math:\\text{CH}_4 Annual Emission Limit"
@@ -32,55 +216,41 @@ class Socioeconomic:
         self.modvar_gnrl_subpop = "Population"
         self.modvar_gnrl_pop_total = "Total Population"
 
-
-        ##  MISCELLANEOUS VARIABLES
-
-        self.time_periods, self.n_time_periods = self.model_attributes.get_time_periods()
-
-
-    ##  FUNCTIONS FOR MODEL ATTRIBUTE DIMENSIONS
-
-    def check_df_fields(self, 
-        df_se_trajectories: pd.DataFrame,
-    ) -> None:
-        check_fields = self.required_variables
-        # check for required variables
-        if not set(check_fields).issubset(df_se_trajectories.columns):
-            set_missing = list(set(check_fields) - set(df_se_trajectories.columns))
-            set_missing = sf.format_print_list(set_missing)
-            raise KeyError(f"Socioconomic projection cannot proceed: The fields {set_missing} are missing.")
-        
         return None
 
 
+    
+    def _log(self,
+        msg: str,
+        type_log: str = "log",
+        **kwargs
+    ) -> None:
+        """
+        Clean implementation of sf._optional_log in-line using default logger.
+            See ?sf._optional_log for more information
 
-    def get_required_subsectors(self
-    ) -> Tuple:
-        subsectors = list(sf.subset_df(self.model_attributes.dict_attributes["abbreviation_subsector"].table, {"sector": ["Socioeconomic"]})["subsector"])
-        subsectors_base = subsectors.copy()
+        Function Arguments
+        ------------------
+        - msg: message to log
 
-        return subsectors, subsectors_base
-
-
-
-    def get_required_dimensions(self,
-    ) -> List[str]:
-        ## TEMPORARY - derive from attributes later
-        required_doa = [self.model_attributes.dim_time_period]
-        return required_doa
-
-
-
-    def get_se_input_output_fields(self,
-    ) -> Tuple:
-        required_doa = [self.model_attributes.dim_time_period]
-        required_vars, output_vars = self.model_attributes.get_input_output_fields(self.required_subsectors)
-        return required_vars + self.get_required_dimensions(), output_vars
+        Keyword Arguments
+        -----------------
+        - type_log: type of log to use
+        - **kwargs: passed as logging.Logger.METHOD(msg, **kwargs)
+        """
+        sf._optional_log(self.logger, msg, type_log = type_log, **kwargs)
 
 
+
+
+
+    ###################################
+    #    PRIMARY PROJECTION METHOD    #
+    ###################################
 
     def project(self, 
         df_se_trajectories: pd.DataFrame,
+        ignore_time_periods: bool = False,
         project_for_internal: bool = True,
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
         """
@@ -91,6 +261,8 @@ class Socioeconomic:
 
         Keyword Arguments
         -----------------
+        - ignore_time_periods: If True, will project independent of time period
+            restrictions. Should generally be left as False
         - project_for_internal: 
             
             * If True, returns a tuple with the following ordered elements:
@@ -109,7 +281,10 @@ class Socioeconomic:
         # add population and interpolate if necessary
         self.model_attributes.manage_pop_to_df(df_se_trajectories, "add")
         self.check_df_fields(df_se_trajectories)
-        dict_dims, df_se_trajectories, n_projection_time_periods, projection_time_periods = self.model_attributes.check_projection_input_df(df_se_trajectories, True, True, True)
+        dict_dims, df_se_trajectories, n_projection_time_periods, projection_time_periods = self.model_attributes.check_projection_input_df(
+            df_se_trajectories,
+            override_time_periods = ignore_time_periods,
+        )
 
         # initialize output
         df_out = (
@@ -118,7 +293,6 @@ class Socioeconomic:
             else [df_se_trajectories[self.required_dimensions].copy()]
         )
 
-
         # get some basic emission drivers
         vec_gdp = self.model_attributes.get_standard_variables(
             df_se_trajectories, 
@@ -126,6 +300,7 @@ class Socioeconomic:
             override_vector_for_single_mv_q = False, 
             return_type = "array_base"
         )
+
         vec_pop = np.sum(
             self.model_attributes.get_standard_variables(
                 df_se_trajectories, 

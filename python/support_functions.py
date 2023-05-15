@@ -1340,11 +1340,25 @@ def match_df_to_target_df(
 def merge_output_df_list(
     dfs_output_data: list,
     model_attributes,
-    merge_type: str = "concatenate"
+    merge_type: str = "concatenate",
+    additional_dimensions: Union[List[str], None] = None,
 ) -> pd.DataFrame:
     """
     Merge data frames together into a single output when they share ordered 
         dimensions of analysis (from ModelAttribute class)
+
+    Function Arguments
+    ------------------
+    - dfs_output_data: list of data frames to join
+    - model_attributes: model_attributes.ModelAttributes object (NOT referenced 
+        here to avoid loading package, which would create circular logic)
+    
+    Keyword Arguments
+    -----------------
+    - additional_dimensions: optional specification of additional dimensions to 
+        join on
+    - merge_type: "concatenate" or "merge". "merge" is slower but may be 
+        necessary if row indices are not the same across 
     """
     # check type
     valid_merge_types = ["concatenate", "merge"]
@@ -1354,41 +1368,56 @@ def merge_output_df_list(
 
     # start building the output dataframe and retrieve dimensions of analysis for merging/ordering
     dfs_output_data = [x for x in dfs_output_data if (x is not None)]
-    df_out = dfs_output_data[0]
-    dims_to_order = model_attributes.sort_ordered_dimensions_of_analysis
+    df_out = dfs_output_data[0].copy()
+    dims_to_order = model_attributes.sort_ordered_dimensions_of_analysis.copy()
+    dims_to_order += (
+        sorted(list(set(additional_dimensions)))
+        if islistlike(additional_dimensions)
+        else []
+    )
     dims_in_out = set([x for x in dims_to_order if x in df_out.columns])
 
+    # some basic returns
     if (len(dfs_output_data) == 0):
         return None
 
     if len(dfs_output_data) == 1:
         return dfs_output_data[0]
 
-    elif len(dfs_output_data) > 1:
-        # loop to merge where applicable
-        for i in range(1, len(dfs_output_data)):
-            if merge_type == "concatenate":
-                # check available dims; if there are ones that aren't already contained, keep them. Otherwise, drop
-                fields_dat = [x for x in dfs_output_data[i].columns if (x not in dims_to_order)]
-                fields_new_dims = [x for x in dfs_output_data[i].columns if (x in dims_to_order) and (x not in dims_in_out)]
-                dims_in_out = dims_in_out | set(fields_new_dims)
-                dfs_output_data[i] = dfs_output_data[i][fields_new_dims + fields_dat]
-
-            elif merge_type == "merge":
-                df_out = pd.merge(df_out, dfs_output_data[i])
-
-        # clean up - assume merged may need to be re-sorted on rows
+ 
+    # loop to merge where applicable
+    for i in range(1, len(dfs_output_data)):
         if merge_type == "concatenate":
-            fields_dim = [x for x in dims_to_order if x in dims_in_out]
-            df_out = pd.concat(dfs_output_data, axis = 1).reset_index(drop = True)
+            # check available dims; if there are ones that aren't already contained, keep them. Otherwise, drop
+            fields_dat = [x for x in dfs_output_data[i].columns if (x not in dims_to_order)]
+            fields_new_dims = [
+                x for x in dfs_output_data[i].columns 
+                if (x in dims_to_order) 
+                and (x not in dims_in_out)
+            ]
+            dims_in_out = dims_in_out | set(fields_new_dims)
+            dfs_output_data[i] = dfs_output_data[i][fields_new_dims + fields_dat]
 
         elif merge_type == "merge":
-            fields_dim = [x for x in dims_to_order if x in df_out.columns]
-            df_out = pd.concat(df_out, axis = 1).sort_values(by = fields_dim).reset_index(drop = True)
+            df_out = pd.merge(df_out, dfs_output_data[i])
 
-        fields_dat = sorted([x for x in df_out.columns if x not in dims_in_out])
 
-        return df_out[fields_dim + fields_dat]
+    # clean up - assume merged may need to be re-sorted on rows
+    if merge_type == "concatenate":
+        fields_dim = [x for x in dims_to_order if x in dims_in_out]
+        df_out = pd.concat(dfs_output_data, axis = 1).reset_index(drop = True)
+
+    elif merge_type == "merge":
+        fields_dim = [x for x in dims_to_order if x in df_out.columns]
+        df_out = (
+            pd.concat(df_out, axis = 1)
+            .sort_values(by = fields_dim)
+            .reset_index(drop = True)
+        )
+
+    fields_dat = sorted([x for x in df_out.columns if x not in dims_in_out])
+
+    return df_out[fields_dim + fields_dat]
 
 
 

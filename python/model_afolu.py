@@ -713,14 +713,13 @@ class AFOLU:
     #    SUBSECTOR SPECIFIC FUNCTIONS    #
     ######################################
 
-
     ###   AGRICULTURE
 
     def check_cropland_fractions(self,
         df_in,
         frac_type = "initial",
-        thresh_for_correction: float = 0.01
-    ):
+        thresh_for_correction: float = 0.01,
+    ) -> np.ndarray:
 
             if frac_type not in ["initial", "calculated"]:
                 raise ValueError(f"Error in frac_type '{frac_type}': valid values are 'initial' and 'calculated'.")
@@ -933,8 +932,8 @@ class AFOLU:
         arrs_lndu_land_conv: np.ndarray,
         arrs_lndu_soc_conversion_factors: np.ndarray,
         time_dependence_stock_change: int,
-        shape_param: Union[float, int] = None
-    ):
+        shape_param: Union[float, int] = None,
+    ) -> np.ndarray:
         """
         Calculate the SOC stock change with time dependence (includes some 
             qualitative non-linearities)
@@ -1043,7 +1042,6 @@ class AFOLU:
 
 
 
-    ##  get land use scalar max out states
     def get_lndu_scalar_max_out_states(self,
         scalar_in: Union[int, float],
         attribute_land_use: AttributeTable = None
@@ -1069,11 +1067,9 @@ class AFOLU:
         lmo_approach = "decrease_only" if (lmo_approach is None) else lmo_approach
 
         if (
-            (lmo_approach == "decrease_only") and (scalar_in < 1)
-        ) or (
-            (lmo_approach == "increase_only") and (scalar_in > 1)
-        ) or (
-            (lmo_approach == "decrease_and_increase")
+            ((lmo_approach == "decrease_only") & (scalar_in < 1))
+            | ((lmo_approach == "increase_only") & (scalar_in > 1))
+            | (lmo_approach == "decrease_and_increase")
         ):
             out = [(1 if (x in self.cats_lndu_max_out_transition_probs) else 0) for x in attribute_land_use.key_values]
         else:
@@ -1224,9 +1220,9 @@ class AFOLU:
             scalar_adj += mask_max_out_states*scale_max_out_states
 
 
-
         q_j = sf.vec_bounds(mat_column*scalar_adj, (0, 1))
         area_target = target_scalar*np.dot(vec_x, mat_column)
+
         # index of probabilities that are scalable
         w_scalable = np.where((q_j < 1) & (q_j > 0))[0]
         w_unscalable = np.where((q_j == 1) | (q_j == 0))[0]
@@ -2115,16 +2111,19 @@ class AFOLU:
 
         # IPPU components
         if dict_check_integrated_variables[self.subsec_name_ippu]:
+
             # get projections of industrial wood and paper product demand
             attr_ippu = self.model_attributes.get_attribute_table(self.subsec_name_ippu)
             ind_paper = attr_ippu.get_key_value_index(self.cat_ippu_paper)
             ind_wood = attr_ippu.get_key_value_index(self.cat_ippu_wood)
+
             # production data
             arr_production, dfs_ippu_harvested_wood = self.model_ippu.get_production_with_recycling_adjustment(df_afolu_trajectories, vec_rates_gdp)
             list_ippu_vars = self.model_attributes.build_varlist(self.subsec_name_ippu, self.model_ippu.modvar_ippu_demand_for_harvested_wood)
             arr_frst_harvested_wood_industrial = 0.0
             vec_frst_harvested_wood_industrial_paper = 0.0
             vec_frst_harvested_wood_industrial_wood = 0.0
+
             # find the data frame with output
             keep_going = True
             i = 0
@@ -2137,9 +2136,11 @@ class AFOLU:
                     keep_going = False
 
                 i += 1
+
             # remove some unneeded vars
             array_ippu_production = 0
             dfs_ippu_harvested_wood = 0
+
         else:
             arr_frst_harvested_wood_industrial = 0.0
             vec_frst_harvested_wood_industrial_paper = 0.0
@@ -2283,17 +2284,22 @@ class AFOLU:
 
     def reassign_pops_from_proj_to_carry(self,
         arr_lu_derived: np.ndarray,
-        arr_dem_based: np.ndarray
+        arr_dem_based: np.ndarray,
     ) -> np.ndarray:
         """
-            Before assigning net imports, there are many non-grazing animals to consider (note that these animals are generally not emission-intensive animals)
-            Due to 0 graze area, their estimated population is infinite, or stored as a negative
-            We assign their population as the demand-estimated population.
+        Before assigning net imports, there are many non-grazing animals to 
+            consider (note that these animals are generally not 
+            emission-intensive animals).
+        
+        Due to 0 graze area, their estimated population is infinite, or stored 
+            as a negative.
 
-            Function Arguments
-            ------------------
-            - arr_lu_derived: array of animal populations based on land use
-            - arr_dem_based: array of animal populations based on demand
+        We assign their population as the demand-estimated population.
+
+        Function Arguments
+        ------------------
+        - arr_lu_derived: array of animal populations based on land use
+        - arr_dem_based: array of animal populations based on demand
         """
         if arr_lu_derived.shape != arr_dem_based.shape:
             raise ValueError(f"Error in reassign_pops_from_proj_to_carry: array dimensions do not match: arr_lu_derived = {arr_lu_derived.shape}, arr_dem_based = {arr_dem_based.shape}.")
@@ -2321,17 +2327,27 @@ class AFOLU:
     ) -> pd.DataFrame:
 
         """
-            The project() method takes a data frame of input variables (ordered by time series) and returns a data frame of output variables (model projections for agriculture and livestock, forestry, and land use) the same order.
+        The project() method takes a data frame of input variables (ordered by 
+            time series) and returns a data frame of output variables (model
+            projections for agriculture and livestock, forestry, and land use) 
+            the same order.
 
-            Function Arguments
-            ------------------
-            - df_afolu_trajectories: pd.DataFrame with all required input fields as columns. The model will not run if any required variables are missing, but errors will detail which fields are missing.
+        Function Arguments
+        ------------------
+        - df_afolu_trajectories: pd.DataFrame with all required input fields as 
+            columns. The model will not run if any required variables are 
+            missing, but errors will detail which fields are missing.
 
-            Notes
-            -----
-            - The .project() method is designed to be parallelized or called from command line via __main__ in run_sector_models.py.
-            - df_afolu_trajectories should have all input fields required (see AFOLU.required_variables for a list of variables to be defined)
-            - the df_afolu_trajectories.project method will run on valid time periods from 1 .. k, where k <= n (n is the number of time periods). By default, it drops invalid time periods. If there are missing time_periods between the first and maximum, data are interpolated.
+        Notes
+        -----
+        - The .project() method is designed to be parallelized or called from 
+            command line via __main__ in run_sector_models.py.
+        - df_afolu_trajectories should have all input fields required (see 
+            AFOLU.required_variables for a list of variables to be defined)
+        - the df_afolu_trajectories.project method will run on valid time 
+            periods from 1 .. k, where k <= n (n is the number of time periods). 
+            By default, it drops invalid time periods. If there are missing 
+            time_periods between the first and maximum, data are interpolated.
         """
 
         ##  CHECKS

@@ -46,7 +46,7 @@ class NonElectricEnergy:
     """
     def __init__(self,
         attributes: ModelAttributes,
-        logger: Union[logging.Logger, None] = None
+        logger: Union[logging.Logger, None] = None,
     ):
 
         self.logger = logger
@@ -1346,7 +1346,11 @@ class NonElectricEnergy:
                 )
             ] if (arr_fgtv_production is not None) else []
             
-            df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")
+            df_out = sf.merge_output_df_list(
+                df_out, 
+                self.model_attributes, 
+                merge_type = "concatenate"
+            )
 
 
         # return a tuple
@@ -2032,7 +2036,11 @@ class NonElectricEnergy:
         ]
 
 
-        df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")
+        df_out = sf.merge_output_df_list(
+            df_out, 
+            self.model_attributes, 
+            merge_type = "concatenate"
+        )
         self.model_attributes.add_subsector_emissions_aggregates(df_out, [self.subsec_name_ccsq], False)
 
         return df_out
@@ -2275,7 +2283,11 @@ class NonElectricEnergy:
         global df_out_exp
         df_out_exp = df_out
         # concatenate and add subsector emission totals
-        df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")
+        df_out = sf.merge_output_df_list(
+            df_out, 
+            self.model_attributes, 
+            merge_type = "concatenate"
+        )
         self.model_attributes.add_subsector_emissions_aggregates(df_out, [self.subsec_name_fgtv], False)
 
         return df_out
@@ -2586,7 +2598,11 @@ class NonElectricEnergy:
         ]
 
         # concatenate and add subsector emission totals
-        df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")
+        df_out = sf.merge_output_df_list(
+            df_out, 
+            self.model_attributes, 
+            merge_type = "concatenate"
+        )
         self.model_attributes.add_subsector_emissions_aggregates(df_out, [self.subsec_name_inen], False)
 
         return df_out
@@ -2922,7 +2938,11 @@ class NonElectricEnergy:
         ]
 
 
-        df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")
+        df_out = sf.merge_output_df_list(
+            df_out, 
+            self.model_attributes, 
+            merge_type = "concatenate"
+        )
         self.model_attributes.add_subsector_emissions_aggregates(df_out, [self.subsec_name_scoe], False)
 
         return df_out
@@ -3007,7 +3027,7 @@ class NonElectricEnergy:
                     df_transport_demand
                 ],
                 self.model_attributes,
-                "concatenate"
+                merge_type = "concatenate"
             )
 
             append_trde_outputs = True
@@ -3455,7 +3475,11 @@ class NonElectricEnergy:
         ]
 
         # concatenate and add subsector emission totals
-        df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")
+        df_out = sf.merge_output_df_list(
+            df_out, 
+            self.model_attributes, 
+            merge_type = "concatenate"
+        )
         self.model_attributes.add_subsector_emissions_aggregates(df_out, [self.subsec_name_trns], False)
 
         return df_out
@@ -3590,7 +3614,11 @@ class NonElectricEnergy:
         )
 
         # build output dataframe
-        df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")
+        df_out = sf.merge_output_df_list(
+            df_out, 
+            self.model_attributes, 
+            merge_type = "concatenate"
+        )
 
         return df_out
 
@@ -3716,10 +3744,14 @@ class NonElectricEnergy:
             df_trajectories = sf.merge_output_df_list(
                 [df_neenergy_trajectories] + df_out,
                 self.model_attributes,
-                "concatenate"
+                merge_type = "concatenate"
             )
             df_out.append(self.project_fugitive_emissions(df_trajectories, dict_dims, n_projection_time_periods, projection_time_periods))
 
         # concatenate and add subsector emission totals
-        df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")
+        df_out = sf.merge_output_df_list(
+            df_out, 
+            self.model_attributes, 
+            merge_type = "concatenate"
+        )
         return df_out

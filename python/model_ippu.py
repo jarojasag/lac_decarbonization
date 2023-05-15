@@ -1301,7 +1301,7 @@ class IPPU:
         ]
         
         # concatenate and add subsector emission totals
-        df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")
+        df_out = sf.merge_output_df_list(df_out, self.model_attributes, merge_type = "concatenate")
         self.model_attributes.add_subsector_emissions_aggregates(df_out, self.required_base_subsectors, False)
         self.model_attributes._add_specified_total_fields_to_emission_total(df_out, vars_additional_sum)
 

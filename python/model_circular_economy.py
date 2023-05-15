@@ -20,23 +20,309 @@ import time
 
 class CircularEconomy:
     """
-    NonElectricEnergy DOCSTRING to go here
+    Use CircularEconomy to calculate emissions from waste management in
+        SISEPUEDE. Includes emissions from the following subsectors:
+
+        * Solid Waste (WASO)
+        * Wastewater Treatment (TRWW)
+
+    Additionally, includes the following non-emissions models:
+
+        * Liquid Waste (WALI)
+
+    For additional information, see the SISEPUEDE readthedocs at:
+
+        https://sisepuede.readthedocs.io/en/latest/energy_non_electric.html
+
+    
+
+    Intialization Arguments
+    -----------------------
+    - model_attributes: ModelAttributes object used in SISEPUEDE
+
+    Optional Arguments
+    ------------------
+    - logger: optional logger object to use for event logging
 
     """
-    def __init__(
-        self,
+    def __init__(self,
         attributes: ModelAttributes,
-        logger: Union[logging.Logger, None] = None
+        logger: Union[logging.Logger, None] = None,
     ):
-
+        
+        self.logger = logger
         self.model_attributes = attributes
-        self.required_dimensions = self.get_required_dimensions()
-        self.required_subsectors, self.required_base_subsectors = self.get_required_subsectors()
-        self.required_variables, self.output_variables = self.get_ce_input_output_fields()
-        self.required_variables_wali, self.output_variables_wali = self.get_ce_input_output_fields([x for x in self.required_subsectors if (x != "Solid Waste")])
 
-        ##  set some model fields to connect to the attribute tables
+        self._initialize_input_output_components()
 
+        # initialize variables
+        self._initialize_subsector_vars_trww()
+        self._initialize_subsector_vars_wali()
+        self._initialize_subsector_vars_waso()
+        self._initialize_integrated_variables()
+
+        # initialize other properties and internal models
+        self._initialize_parameters_biophysical()
+        self._initialize_other_properties()
+        self._initialize_models()
+
+
+
+
+
+    ##################################
+    #    INITIALIZATION FUNCTIONS    #
+    ##################################
+
+    def check_df_fields(self,
+        df_ce_trajectories,
+        check_fields = None,
+    ) -> None:
+        if check_fields == None:
+            check_fields = self.required_variables
+        # check for required variables
+        if not set(check_fields).issubset(df_ce_trajectories.columns):
+            set_missing = list(set(check_fields) - set(df_ce_trajectories.columns))
+            set_missing = sf.format_print_list(set_missing)
+            raise KeyError(f"Circular Economy projection cannot proceed: The fields {set_missing} are missing.")
+        
+        return None
+
+
+
+    def _initialize_input_output_components(self,
+    ) -> None:
+        """
+        Set a range of input components, including required dimensions, 
+            subsectors, input and output fields, and integration variables.
+            Sets the following properties:
+
+            * self.output_model_variables
+            * self.output_variables
+            * self.output_variables_wali
+            * self.required_dimensions
+            * self.required_subsectors
+            * self.required_base_subsectors
+            * self.required_model_variables
+            * self.required_variables
+            * self.required_variables_wali
+            
+        """
+
+        ##  START WITH REQUIRED DIMENSIONS (TEMPORARY - derive from attributes later)
+
+        required_doa = [self.model_attributes.dim_time_period]
+        self.required_dimensions = required_doa
+
+
+        ##  ADD REQUIRED SUBSECTORS (TEMPORARY - derive from attributes)
+        
+        subsectors_gnrl = [self.model_attributes.subsec_name_econ, self.model_attributes.subsec_name_gnrl]
+        subsectors = self.model_attributes.get_sector_subsectors("Circular Economy")
+        subsectors_base = subsectors.copy()
+        subsectors += subsectors_gnrl
+
+        self.required_subsectors = subsectors
+        self.required_base_subsectors = subsectors_base
+
+
+        ##  SET INPUT OUTPUT VARIABLES
+
+        required_doa = [self.model_attributes.dim_time_period]
+        required_vars, output_vars = self.model_attributes.get_input_output_fields(subsectors)
+        required_vars_wali, output_vars_wali = self.model_attributes.get_input_output_fields(
+            [x for x in subsectors if (x != self.model_attributes.subsec_name_waso)]
+        )
+
+        # get input/output model variables`
+        required_model_vars = sorted(list(set(
+            [
+                self.model_attributes.dict_variables_to_model_variables.get(x) 
+                for x in required_vars
+            ]
+        )))
+
+        output_model_vars = sorted(list(set(
+            [
+                self.model_attributes.dict_variables_to_model_variables.get(x) 
+                for x in output_vars
+            ]
+        )))
+
+
+        self.output_model_variables = output_model_vars
+        self.output_variables = output_vars
+        self.output_variables_wali = output_vars_wali
+        self.required_model_variables = required_model_vars
+        self.required_variables = required_vars + required_doa
+        self.required_variables_wali = required_vars_wali + required_doa
+
+        return None
+
+
+
+    def _initialize_integrated_variables(self,
+    ) -> None:
+        """
+        Sets integrated and cross-sectoral variables, including the following 
+            properties:
+
+            * self.modvar_lsmm_*
+            * self.modvar_lvst_*
+            * self.integration_variables
+        """
+
+        self.modvar_lsmm_dung_incinerated = "Dung Incinerated"
+        self.modvar_lvst_animal_weight = "Animal Weight"
+        self.modvar_lvst_net_imports = "Change to Net Imports of Livestock"
+        self.modvar_lvst_pop = "Livestock Head Count"
+        self.modvar_lvst_total_animal_mass = "Total Domestic Animal Mass"
+
+        list_vars_required_for_integration = [
+            self.modvar_lsmm_dung_incinerated,
+            self.modvar_lvst_pop,
+			self.modvar_lvst_net_imports,
+            self.modvar_lvst_animal_weight,
+            self.modvar_lvst_total_animal_mass
+		]
+
+
+        ##  SET PROPERTIES
+
+        self.integration_variables = list_vars_required_for_integration
+
+        return None
+
+
+
+    def _initialize_models(self,
+        model_attributes: Union[ModelAttributes, None] = None
+    ) -> None:
+        """
+        Initialize SISEPUEDE model classes for fetching variables and 
+            accessing methods. Initializes the following properties:
+
+            * self.model_socioeconomic
+
+
+        Keyword Arguments
+        -----------------
+        - model_attributes: ModelAttributes object used to instantiate
+            models. If None, defaults to self.model_attributes.
+        """
+
+        model_attributes = self.model_attributes if (model_attributes is None) else model_attributes
+        
+        self.model_socioeconomic = Socioeconomic(model_attributes)
+
+        return None
+
+
+    
+    def _initialize_other_properties(self,
+    ) -> None:
+        """
+        Initialize other properties that don't fit elsewhere. Sets the 
+            following properties:
+
+            * self.n_time_periods
+            * self.time_periods
+            * self.vars_wali_to_trww
+        """
+        # valid subsectors in .project()
+        vars_wali_to_trww = self.model_attributes.get_ordered_vars_by_nonprimary_category(
+            self.model_attributes.subsec_name_wali,
+            self.model_attributes.subsec_name_trww, 
+            "key_varreqs_all"
+        )
+        
+        # time periods
+        time_periods, n_time_periods = self.model_attributes.get_time_periods()
+
+
+        ##  SET PROPERTIES
+
+        self.n_time_periods = n_time_periods
+        self.time_periods = time_periods
+        self.vars_wali_to_trww = vars_wali_to_trww
+
+        return None
+
+
+    
+    def _initialize_parameters_biophysical(self,
+    ) -> None:
+        """
+        Initialize some biophysical parameters used in solid and liquid waste
+            models. Sets the following properties:
+
+            * self.factor_f_npr (fraction of protein composed of nitrogen)
+            * self.factor_n2on_to_n2o
+            * self.factor_c_to_co2
+            * self.factor_molecular_weight_ch4
+            * self.landfill_gas_frac_methane
+        """
+
+        self.landfill_gas_frac_methane = 0.5
+
+        # fraction of protein composed of nitrogen
+        self.factor_f_npr = 0.16
+        self.factor_n2on_to_n2o = float(11/7)
+        self.factor_c_to_co2 = float(11/3)
+        self.factor_molecular_weight_ch4 = float(4/3)
+
+        return None
+
+
+
+    def _initialize_subsector_vars_trww(self,
+    ) -> None:
+        """
+        Initialize model variables, categories, and indices associated with
+            TRWW (Wastewater Treatment). Sets the following properties:
+
+            * self.cat_trww_****
+            * self.ind_trww_****
+            * self.modvar_trww_****
+        """
+
+        self.modvar_trww_ef_n2o_wastewater_treatment = ":math:\\text{N}_2\\text{O} Wastewater Treatment Emission Factor"
+        self.modvar_trww_emissions_ch4_treatment = ":math:\\text{CH}_4 Emissions from Wastewater Treatment"
+        self.modvar_trww_emissions_n2o_treatment = ":math:\\text{N}_2\\text{O} Emissions from Wastewater Treatment"
+        self.modvar_trww_emissions_n2o_effluent = ":math:\\text{N}_2\\text{O} Emissions from Wastewater Effluent"
+        self.modvar_trww_frac_n_removed = "Fraction of Nitrogen Removed in Treatment"
+        self.modvar_trww_frac_p_removed = "Fraction of Phosphorous Removed in Treatment"
+        self.modvar_trww_frac_tow_removed = "Fraction of Total Organic Waste Removed in Treatment"
+        self.modvar_trww_krem = ":math:\\text{K}_{REM} Sludge Factor"
+        self.modvar_trww_mcf = "Wastewater Treatment Methane Correction Factor"
+        self.modvar_trww_recovered_biogas = "Biogas Recovered from Wastewater Treatment Plants"
+        self.modvar_trww_rf_biogas_recovered = "Biogas Recovery Factor at Wastewater Treatment Plants"
+        self.modvar_trww_septic_sludge_compliance = "Septic Sludge Compliance Fraction"
+        self.modvar_trww_sludge_produced = "Mass of Sludge Produced"
+        self.modvar_trww_total_bod_in_effluent = "Total BOD Organic Waste in Effluent"
+        self.modvar_trww_total_bod_treated = "Total BOD Removed in Treatment"
+        self.modvar_trww_total_cod_in_effluent = "Total COD Organic Waste in Effluent"
+        self.modvar_trww_total_cod_treated = "Total COD Removed in Treatment"
+        self.modvar_trww_total_n_in_effluent = "Total Nitrogen in Effluent"
+        self.modvar_trww_total_n_treated = "Total Nitrogen Removed in Treatment"
+        self.modvar_trww_total_p_in_effluent = "Total Phosphorous in Effluent"
+        self.modvar_trww_total_p_treated = "Total Phosphorous Removed in Treatment"
+        self.modvar_trww_vol_ww_treated = "Volume of Wastewater Treated"
+
+        return None
+
+
+    
+    def _initialize_subsector_vars_wali(self,
+    ) -> None:
+        """
+        Initialize model variables, categories, and indices associated with
+            WALI (Liquid Waste). Sets the following properties:
+
+            * self.cat_wali_****
+            * self.ind_wali_****
+            * self.modvar_wali_****
+        """
         # liquid waste model variables
         self.modvar_wali_bod_correction = "BOD Correction Factor for TOW"
         self.modvar_wali_bod_per_capita = "BOD per Capita"
@@ -65,7 +351,21 @@ class CircularEconomy:
         self.modvar_wali_treatpath_untreated_no_sewerage = "Treatment Fraction Untreated No Sewerage"
         self.modvar_wali_treatpath_untreated_with_sewerage = "Treatment Fraction Untreated With Sewerage"
 
-        # domestic solid waste model variables
+        return None
+
+
+
+    def _initialize_subsector_vars_waso(self,
+    ) -> None:
+        """
+        Initialize model variables, categories, and indices associated with
+            WASO (Solid Waste). Sets the following properties:
+
+            * self.cat_waso_****
+            * self.ind_waso_****
+            * self.modvar_waso_****
+        """
+
         self.modvar_waso_annual_vkmt_per_collection_vehicle = "Average VKMT Per Waste Collection Vehicle"
         self.modvar_waso_annual_waste_collected_per_collection_vehicle = "Average Annual Waste Transported Per Waste Collection Vehicle"
         self.modvar_waso_composition_isw = "Initial Composition Fraction Industrial Solid Waste"
@@ -118,127 +418,7 @@ class CircularEconomy:
         self.modvar_waso_waste_total_open_dumped = "Total Waste Open Dumped"
         self.modvar_waso_waste_total_recycled = "Total Waste Recycled"
 
-        # wastewater treatment
-        self.modvar_trww_ef_n2o_wastewater_treatment = ":math:\\text{N}_2\\text{O} Wastewater Treatment Emission Factor"
-        self.modvar_trww_emissions_ch4_treatment = ":math:\\text{CH}_4 Emissions from Wastewater Treatment"
-        self.modvar_trww_emissions_n2o_treatment = ":math:\\text{N}_2\\text{O} Emissions from Wastewater Treatment"
-        self.modvar_trww_emissions_n2o_effluent = ":math:\\text{N}_2\\text{O} Emissions from Wastewater Effluent"
-        self.modvar_trww_frac_n_removed = "Fraction of Nitrogen Removed in Treatment"
-        self.modvar_trww_frac_p_removed = "Fraction of Phosphorous Removed in Treatment"
-        self.modvar_trww_frac_tow_removed = "Fraction of Total Organic Waste Removed in Treatment"
-        self.modvar_trww_krem = ":math:\\text{K}_{REM} Sludge Factor"
-        self.modvar_trww_mcf = "Wastewater Treatment Methane Correction Factor"
-        self.modvar_trww_recovered_biogas = "Biogas Recovered from Wastewater Treatment Plants"
-        self.modvar_trww_rf_biogas_recovered = "Biogas Recovery Factor at Wastewater Treatment Plants"
-        self.modvar_trww_septic_sludge_compliance = "Septic Sludge Compliance Fraction"
-        self.modvar_trww_sludge_produced = "Mass of Sludge Produced"
-        self.modvar_trww_total_bod_in_effluent = "Total BOD Organic Waste in Effluent"
-        self.modvar_trww_total_bod_treated = "Total BOD Removed in Treatment"
-        self.modvar_trww_total_cod_in_effluent = "Total COD Organic Waste in Effluent"
-        self.modvar_trww_total_cod_treated = "Total COD Removed in Treatment"
-        self.modvar_trww_total_n_in_effluent = "Total Nitrogen in Effluent"
-        self.modvar_trww_total_n_treated = "Total Nitrogen Removed in Treatment"
-        self.modvar_trww_total_p_in_effluent = "Total Phosphorous in Effluent"
-        self.modvar_trww_total_p_treated = "Total Phosphorous Removed in Treatment"
-        self.modvar_trww_vol_ww_treated = "Volume of Wastewater Treated"
-
-
-        ##  INTEGRATION VARIABLES
-
-        # set variables from other sectors - AFOLU
-        self.modvar_lsmm_dung_incinerated = "Dung Incinerated"
-        self.modvar_lvst_animal_weight = "Animal Weight"
-        self.modvar_lvst_net_imports = "Change to Net Imports of Livestock"
-        self.modvar_lvst_pop = "Livestock Head Count"
-        self.modvar_lvst_total_animal_mass = "Total Domestic Animal Mass"
-        # set integration variables
-        self.integration_variables = self.set_integrated_variables()
-
-
-        ##  MISCELLANEOUS VARIABLES
-
-        self.time_periods, self.n_time_periods = self.model_attributes.get_time_periods()
-        self.vars_wali_to_trww = self.model_attributes.get_ordered_vars_by_nonprimary_category("Liquid Waste", "Wastewater Treatment", "key_varreqs_all")
-
-        # TEMP:SET TO DERIVE FROM ATTRIBUTE TABLES AND/OR CONFIGURATION FILE---
-        self.landfill_gas_frac_methane = 0.5
-        # SET TO READ FROM CONFIGURATION FILE
-        self.back_projection_number_of_time_steps = 10
-        self.back_projection_number_periods_for_average_growth = 10
-
-        # fraction of protein composed of nitrogen
-        self.factor_f_npr = 0.16
-        self.factor_n2on_to_n2o = float(11/7)
-        self.factor_c_to_co2 = float(11/3)
-        self.factor_molecular_weight_ch4 = float(4/3)
-
-        # add socioeconomic class
-        self.model_socioeconomic = Socioeconomic(self.model_attributes)
-
-
-
-
-
-
-    ##################################
-    #    INITIALIZATION FUNCTIONS    #
-    ##################################
-
-    def check_df_fields(self,
-        df_ce_trajectories,
-        check_fields = None
-    ) -> None:
-        if check_fields == None:
-            check_fields = self.required_variables
-        # check for required variables
-        if not set(check_fields).issubset(df_ce_trajectories.columns):
-            set_missing = list(set(check_fields) - set(df_ce_trajectories.columns))
-            set_missing = sf.format_print_list(set_missing)
-            raise KeyError(f"Circular Economy projection cannot proceed: The fields {set_missing} are missing.")
-
-
-
-    def get_required_subsectors(self,
-    ):
-        subsectors = self.model_attributes.get_sector_subsectors("Circular Economy")
-        subsectors_base = subsectors.copy()
-        subsectors += ["Economy", "General"]
-        return subsectors, subsectors_base
-
-
-
-    def get_required_dimensions(self,
-    ) -> list:
-        ## TEMPORARY - derive from attributes later
-        required_doa = [self.model_attributes.dim_time_period]
-        return required_doa
-
-
-
-    def get_ce_input_output_fields(self,
-        subsectors = None
-    ) -> Tuple:
-        if subsectors == None:
-            subsectors = self.required_subsectors
-        required_doa = [self.model_attributes.dim_time_period]
-        required_vars, output_vars = self.model_attributes.get_input_output_fields(subsectors)
-        return required_vars + self.get_required_dimensions(), output_vars
-
-
-
-    def set_integrated_variables(self,
-    ) -> None:
-        list_vars_required_for_integration = [
-        # DROP FIRST THREE
-            # TEMP INCLUDE
-            self.modvar_lsmm_dung_incinerated,
-            self.modvar_lvst_pop,
-			self.modvar_lvst_net_imports,
-            self.modvar_lvst_animal_weight,
-            self.modvar_lvst_total_animal_mass
-		]
-
-        return list_vars_required_for_integration
+        return None
 
 
 
@@ -255,7 +435,8 @@ class CircularEconomy:
         **kwargs
     ) -> None:
         """
-        Clean implementation of sf._optional_log in-line using default logger. See ?sf._optional_log for more information
+        Clean implementation of sf._optional_log in-line using default logger.
+            See ?sf._optional_log for more information
 
         Function Arguments
         ------------------
@@ -279,54 +460,70 @@ class CircularEconomy:
     ###                               ###
     #####################################
 
-    ##  first order decay model
     def fod(self,
         array_waso_waste: np.ndarray,
         vec_ddocm_factors: np.ndarray,
         array_k: np.ndarray,
         vec_mcf: np.ndarray,
         vec_oxf: np.ndarray = 0.0,
-        vec_frac_captured: np.ndarray = 0.0
-    ):
+        vec_frac_captured: np.ndarray = 0.0,
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
-            fod() executes the First-Order Decay model for waste decomposition
+        Executes the First-Order Decay model for waste decomposition
 
-            Function Arguments
-            ------------------
-            array_waso_waste: np.ndarray of solid waste mass by category (2 dim)
+        Function Arguments
+        ------------------
+        - array_waso_waste: np.ndarray of solid waste mass by category (2 dim)
+        - vec_ddocm_factors: np.ndarray vector (by category/column-wise) of 
+            DDOCm factors (DOC*DOCf) by waste category
+        - array_k: np.array (same shape as array_waso_waste) or vector (by 
+            category, or column-wise) of methane generation rates k. If a 
+            vector, k will be assumed to be constant for all time periods.
+        - vec_mcf: np.ndarray vector (by period, or row-wise) or scalar of 
+            methane correction values by time period (len should be same as 
+            array_waso_waste)
 
-            vec_ddocm_factors: np.ndarray vector (by category/column-wise) of DDOCm factors (DOC*DOCf) by waste category
-
-            array_k: np.array (same shape as array_waso_waste) or vector (by category, or column-wise) of methane generation rates k. If a vector, k will be assumed to be constant for all time periods.g
-
-            vec_mcf: np.ndarray vector (by period, or row-wise) or scalar of methane correction values by time period (len should be same as array_waso_waste)
-
-            vec_oxf: np.ndarray vector (by period, or row-wise) or scalar of oxidisation factors. Should not exceed 0.1. Default is 0.
+        Keyword Arguments
+        -----------------
+        - vec_frac_captured: vector of fraction of biogas captured
+        - vec_oxf: np.ndarray vector (by period, or row-wise) or scalar of 
+            oxidisation factors. Should not exceed 0.1. Default is 0.
         """
 
         # check shapes
         if len(array_waso_waste.shape) == 1:
             array_waso_waste = np.array([array_waso_waste]).transpose()
+        
         elif len(array_waso_waste.shape) != 2:
             raise ValueError(f"Error in FOD: array_waso_waste should be a two dimensional array (rows are time periods, columns are categories)")
+        
+        
         if len(array_k.shape) == 1:
             if len(array_k) != array_waso_waste.shape[1]:
                 raise ValueError(f"Error in FOD: array_k does not have the same number of categories as array_waso_waste.")
+        
         elif len(array_k.shape) == 2:
             if array_k.shape != array_waso_waste.shape:
                 raise ValueError(f"Error in FOD: incompatible array specification of array_k (shape '{array_k.shape}'). It should have shape '{array_waso_waste.shape}'")
+        
         elif len(vec_ddocm_factors) != array_waso_waste.shape[1]:
                 raise ValueError(f"Error in FOD: vec_ddocm_factors does not have the same number of categories as array_waso_waste.")
+        
         elif len(vec_mcf) != array_waso_waste.shape[0]:
                 raise ValueError(f"Error in FOD: vec_mcf does not have the same time periods as array_waso_waste.")
+        
         elif (type(vec_oxf) == np.ndarray) & (len(vec_oxf) != array_waso_waste.shape[0]):
             raise ValueError(f"Error in FOD: vec_oxf does not have the same time periods as array_waso_waste.")
+        
         elif (type(vec_frac_captured) == np.ndarray) & (len(vec_frac_captured) != array_waso_waste.shape[0]):
             raise ValueError(f"Error in FOD: vec_frac_captured does not have the same time periods as array_waso_waste.")
 
         # start building output array
-        if len(array_k.shape) == 1:
-            array_k = np.repeat([array_k], len(array_waso_waste), axis = 0)
+        array_k = (
+            np.repeat([array_k], len(array_waso_waste), axis = 0)
+            if len(array_k.shape) == 1
+            else array_k
+        )
 
         # initialize arrays for FOD model
         m, n = array_waso_waste.shape
@@ -340,6 +537,7 @@ class CircularEconomy:
             vec_k = np.exp(-array_k[i - 1])
             vec_ddocm_accumulated_cur = array_waso_waste[i] + array_ddocm_accumulated[i - 1]*vec_k
             vec_ddocm_decomposed_cur = array_ddocm_accumulated[i - 1]*(1 - vec_k)
+            
             # update arrays with accumulated and decomposed waste
             inds = i*n + np.arange(0, n)
             np.put(array_ddocm_accumulated, inds, vec_ddocm_accumulated_cur)
@@ -355,78 +553,119 @@ class CircularEconomy:
         return array_ch4_total, vec_ch4_recovered
 
 
-    ##  function to retrieve historical solid waste data. Valid methods are "back_project" (default) and historical (under construction, but designed to read from a file)
+    
     def get_historical_solid_waste(self,
-            array: np.ndarray = None,
-            method: str = None,
-            n_periods: int = 10,
-            bp_gr: float = None
-        ) -> np.ndarray:
+        array: np.ndarray = None,
+        method: str = None,
+        n_periods: int = 10,
+        bp_gr: float = None,
+    ) -> np.ndarray:
 
-            """
-                get_waste_historical() is used to to obtain the historical data for solid waste disposal based on a method (either "back_project" or "historical". Historical is currently undefined.)
-
-                Function Arguments
-                ------------------
-                array: np.ndarray, optional. If method == "back_project", this array is used to back project waste. Can be set to None if using historical
-
-                method: str, "back_project" or "historical". Default is set in the configuration file.
-
-                n_periods: int, number of periods to use in the back_project method. Reset if using historical.
-
-                n_gr_periods: int number of periods in back_project method used to estimate growth rate.
-
-            """
-            # retrieve methods
-            if type(method) == type(None):
-                method = self.model_attributes.configuration.get("historical_solid_waste_method")
-            # check specification
-            if method not in self.model_attributes.configuration.valid_historical_solid_waste_method:
-                valid_vals = sf.format_print_list(self.model_attributes.configuration.valid_historical_solid_waste_method)
-                raise ValueError(f"Invalid specification of historical waste retrieval method '{method}': Method not found. Valid values are {valid_vals}.")
-
-            # get
-            if method == "back_project":
-
-                if type(array) != np.ndarray:
-                    raise ValueError("Error: specify an array to use for back projection.")
-                if type(bp_gr) == type(None):
-                    raise ValueError("Error: specify a back projection growth rate.")
-                if type(n_periods) != int:
-                    raise ValueError("Error: specify a number of periods to project solid waste backwards.")
-
-                array_bp = sf.back_project_array(array, n_periods, bp_gr)
-                inds_hist = np.arange(0, n_periods)
-                inds_model = np.arange(n_periods, n_periods + len(array))
-                return inds_hist, inds_model, np.concatenate([array_bp, array])
-
-            elif method == "historical":
-                """
-                    ADD HISTORICAL APPROACH HERE
-                """
-                raise ValueError("Historical approach to get_waste_historical currecntly undefined. Use 'back_project' until completed.")
-
-
-
-    ##  project protein consumption
-    def project_protein_consumption(self, df_ce_trajectories: pd.DataFrame, vec_pop: np.ndarray, vec_rates_gdp_per_capita: np.ndarray = None) -> np.array:
         """
-            project_protein_consumption() projects protein consumption (in kg) based on livestock growth, or, if not integrated, a specified elasticity
+        Obtain the historical data for solid waste disposal based on a method 
+            (either "back_project" or "historical"). 
+            
+        **CAUTION**: Historical is currently undefined.
+
+        Keyword Arguments
+        ------------------
+        - array: np.ndarray, optional. If method == "back_project", this array 
+            is used to back project waste. Can be set to None if using 
+            historical
+        - method: str, "back_project" or "historical". Default is set in the 
+            configuration file.
+        - n_periods: int, number of periods to use in the back_project method. 
+            Reset if using historical.
+        - n_gr_periods: int number of periods in back_project method used to 
+            estimate growth rate.
+        """
+        # retrieve methods
+        if type(method) == type(None):
+            method = self.model_attributes.configuration.get("historical_solid_waste_method")
+
+        # check specification
+        if method not in self.model_attributes.configuration.valid_historical_solid_waste_method:
+            valid_vals = sf.format_print_list(self.model_attributes.configuration.valid_historical_solid_waste_method)
+            raise ValueError(f"Invalid specification of historical waste retrieval method '{method}': Method not found. Valid values are {valid_vals}.")
+
+
+        if method == "historical":
+            """
+            ##
+            ## NOTE: ADD HISTORICAL APPROACH HERE
+            ##
+            """
+            msg = "Historical approach to get_waste_historical is currently undefined."
+            self._log(msg, type_log = "error")
+
+            if array is None:
+                raise ValueError(f"{msg} Unable to use array for back projections. ")
+            
+            method = "back_project"
+            self._log(f"Updating method to '{method}' while historical is in development.", type_log = "warning")
+
+
+        if method == "back_project":
+
+            if type(array) != np.ndarray:
+                raise ValueError("Error: specify an array to use for back projection.")
+
+            if type(bp_gr) == type(None):
+                raise ValueError("Error: specify a back projection growth rate.")
+
+            if type(n_periods) != int:
+                raise ValueError("Error: specify a number of periods to project solid waste backwards.")
+
+            array_bp = sf.back_project_array(array, n_periods, bp_gr)
+            inds_hist = np.arange(0, n_periods)
+            inds_model = np.arange(n_periods, n_periods + len(array))
+
+            return inds_hist, inds_model, np.concatenate([array_bp, array])
+
+        
+
+
+    def project_protein_consumption(self, 
+        df_ce_trajectories: pd.DataFrame, 
+        vec_pop: np.ndarray, 
+        vec_rates_gdp_per_capita: np.ndarray = None,
+    ) -> np.array:
+        """
+        Projects protein consumption (in kg) based on livestock growth, or, if 
+            not integrated, a specified elasticity.
         """
         # get scalar that represents the impact of a reduction of protein in the vegetarian diet
         vec_wali_frac_protein_in_diet_with_rm = self.model_attributes.get_standard_variables(
             df_ce_trajectories, 
-            self.modvar_wali_frac_protein_with_red_meat, True, return_type = "array_base")
+            self.modvar_wali_frac_protein_with_red_meat, 
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_base"
+        )
         vec_wali_frac_protein_in_diet_without_rm = self.model_attributes.get_standard_variables(
             df_ce_trajectories, 
-            self.modvar_wali_frac_protein_without_red_meat, True, return_type = "array_base")
+            self.modvar_wali_frac_protein_without_red_meat, 
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_base"
+        )
         vec_wali_protein_scalar_no_rm = vec_wali_frac_protein_in_diet_without_rm/vec_wali_frac_protein_in_diet_with_rm
-        vec_gnrl_frac_eating_red_meat = self.model_attributes.get_standard_variables(df_ce_trajectories, self.model_socioeconomic.modvar_gnrl_frac_eating_red_meat, True, return_type = "array_base", var_bounds = (0, 1))
+        vec_gnrl_frac_eating_red_meat = self.model_attributes.get_standard_variables(
+            df_ce_trajectories, 
+            self.model_socioeconomic.modvar_gnrl_frac_eating_red_meat, 
+            override_vector_for_single_mv_q = True, 
+            return_type = "array_base", 
+            var_bounds = (0, 1)
+        )
         vec_wali_protein_scalar = (vec_gnrl_frac_eating_red_meat + vec_wali_protein_scalar_no_rm*(1 - vec_gnrl_frac_eating_red_meat)).flatten()
+        
         # get protein consumed per person in kg/year
         vec_wali_protein_per_capita = self.model_attributes.get_standard_variables(
             df_ce_trajectories, 
-            self.modvar_wali_protein_per_capita, False, return_type = "array_base")*self.model_attributes.configuration.get("days_per_year")
+            self.modvar_wali_protein_per_capita, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base"
+        )
+        vec_wali_protein_per_capita *= self.model_attributes.configuration.get("days_per_year")
+        
         # get livestock population (a) and net imports (b) if available; otherwise, default to an elasticity
         modvar_proj_protein_driver_a, array_project_protein_driver_a = self.model_attributes.get_optional_or_integrated_standard_variable(
             df_ce_trajectories,
@@ -446,27 +685,32 @@ class CircularEconomy:
         # project depending on availability
         if modvar_proj_protein_driver_a == self.modvar_lvst_pop:
             """
-                use estimate of total animal weight for increase in protein content in diet
-                - note that projections of animal demand takes into account shifts in diet away from red meat
-                - however, we still have to correct for the reduction of protein in non-red meat diets
+            use estimate of total animal weight for increase in protein content 
+                in diet
+            - note that projections of animal demand takes into account shifts 
+                in diet away from red meat
+            - however, we still have to correct for the reduction of protein in 
+                non-red meat diets
             """
             array_lvst_total_dem = array_project_protein_driver_a + array_project_protein_driver_b
             vec_lvst_weights = self.model_attributes.get_ordered_category_attribute("Livestock", "animal_weight_kg")
             vec_protein_growth = np.sum(array_lvst_total_dem*vec_lvst_weights, axis = 1)
             vec_protein_growth = np.concatenate([np.ones(1), np.cumprod(vec_protein_growth[1:]/vec_protein_growth[0:-1])])
         else:
-            if type(vec_rates_gdp_per_capita) == type(None):
+            if vec_rates_gdp_per_capita is None:
                 raise ValueError(f"Error in project_protein_consumption: Livestock growth rates not found in data frame. To use the '{self.modvar_wali_optional_elasticity_protein_to_gdppc}' variable, specify a vector of gdp growth rates.")
+            
             # in this case, array_project_protein_driver_a == array_project_protein_driver_a
             vec_wali_elast_protein = array_project_protein_driver_a.flatten()
             vec_protein_growth = sf.project_growth_scalar_from_elasticity(vec_rates_gdp_per_capita, vec_wali_elast_protein, False, "standard")
-        # total protein
+       
+       # total protein
         vec_wali_protein_kg = vec_wali_protein_per_capita*vec_pop*vec_protein_growth*vec_wali_protein_scalar
 
         return vec_wali_protein_kg
 
 
-    ##  project emissions and outputs from liquid waste and wastewater treatment subsectors
+
     def project_waste_liquid(self,
         df_ce_trajectories: pd.DataFrame,
         df_se_internal_shared_variables: pd.DataFrame = None,
@@ -474,38 +718,52 @@ class CircularEconomy:
         n_projection_time_periods: int = None,
         projection_time_periods: list = None
     ) -> pd.DataFrame:
-
         """
-            project_waste_liquid() takes a data frame (ordered by time series) and returns a data frame of the same order
+        Project emissions and outputs from liquid waste and wastewater treatment 
+            subsectors project_waste_liquid() takes a data frame (ordered by 
+            time series) and returns a data frame of the same order
 
-            Function Arguments
-            ------------------
-            df_ce_trajectories: pd.DataFrame of input variable trajectories
+        Function Arguments
+        ------------------
+        - df_ce_trajectories: pd.DataFrame of input variable trajectories
+        - df_se_internal_shared_variables: Default = None. Data frame of 
+            socioeconomic projections that are used internally. If none, the 
+            socioeconomic model will be called to project based on the input 
+            data frame.
+        - dict_dims: dictionary of scenario dimensions (if applicable). 
+            Default = None. If none, ModelAttribute.check_projection_input_df() 
+            will be run to obtain it.
+        - n_projection_time_periods: number of time periods in the projection. 
+            Default = None. If none, ModelAttribute.check_projection_input_df() 
+            will be run to obtain it.
+        - projection_time_periods: list of time periods in the projection. 
+            Default = None. If none, ModelAttribute.check_projection_input_df() 
+            will be run to obtain it.
 
-            df_se_internal_shared_variables: Default = None. Data frame of socioeconomic projections that are used internally. If none, the socioeconomic model will be called to project based on the input data frame.
 
-            dict_dims: dictionary of scenario dimensions (if applicable). Default = None. If none, ModelAttribute.check_projection_input_df() will be run to obtain it.
-
-            n_projection_time_periods: number of time periods in the projection. Default = None. If none, ModelAttribute.check_projection_input_df() will be run to obtain it.
-
-            projection_time_periods: list of time periods in the projection. Default = None. If none, ModelAttribute.check_projection_input_df() will be run to obtain it.
-
-
-            Notes
-            -----
-            - designed to be parallelized or called from command line via __main__ in run_afolu.py
-            - df_ce_trajectories should have all input fields required (see CircularEconomy.required_variables for a list of variables to be defined) for the Liquid Waste and Wastewater Treatment sectors
-            - the df_ce_trajectories.project_waste_liquid method will run on valid time periods from 1 .. k, where k <= n (n is the number of time periods). By default, it drops invalid time periods. If there are missing time_periods between the first and maximum, data are interpolated.
+        Notes
+        -----
+        - designed to be parallelized or called from command line via __main__ 
+            in run_afolu.py
+        - df_ce_trajectories should have all input fields required (see 
+            CircularEconomy.required_variables for a list of variables to be 
+            defined) for the Liquid Waste and Wastewater Treatment sectors
+        - the df_ce_trajectories.project_waste_liquid method will run on valid 
+            time periods from 1 .. k, where k <= n (n is the number of time 
+            periods). By default, it drops invalid time periods. If there are 
+            missing time_periods between the first and maximum, data are 
+            interpolated.
         """
 
         ##  CHECKS
 
         # make sure socioeconomic variables are added and
-        if type(df_se_internal_shared_variables) == type(None):
+        if df_se_internal_shared_variables is None:
             df_ce_trajectories, df_se_internal_shared_variables = self.model_socioeconomic.project(df_ce_trajectories)
+        
         # check that all required fields are contained—assume that it is ordered by time period
         self.check_df_fields(df_ce_trajectories, self.required_variables_wali)
-        if type(None) in [type(dict_dims), type(n_projection_time_periods), type(projection_time_periods)]:
+        if (dict_dims is None) | (n_projection_time_periods is None) | (projection_time_periods is None):
             dict_dims, df_ce_trajectories, n_projection_time_periods, projection_time_periods = self.model_attributes.check_projection_input_df(df_ce_trajectories, True, True, True)
 
 
@@ -617,19 +875,22 @@ class CircularEconomy:
 
         ##  GET TOTALS BY TREATMENT PATHWAY
 
-        # domestiic
+        # domestic
         for cdw in cats_dom_ww:
             # get population category
             cat_gnrl = clean_schema(self.model_attributes.dict_attributes[pycat_wali].field_maps[f"{pycat_wali}_to_{pycat_gnrl}"][cdw])
             ind_gnrl = attr_gnrl.get_key_value_index(cat_gnrl)
+
             # the associated vector of wastewater produced + bod produced
             vec_bod = array_wali_bod_total[:, ind_gnrl]
             vec_ww = array_wali_domww_total[:, ind_gnrl]
+
             # get the treatment pathway
             vars_treatment_path = []
             for var in self.vars_wali_to_trww:
                 vars_treatment_path += self.model_attributes.build_varlist("Liquid Waste", var, [cdw])
             array_pathways = sf.check_row_sums(np.array(df_ce_trajectories[vars_treatment_path]), msg_pass = f" 'df_ce_trajectories[vars_treatment_path]' for wali category '{cdw}'")
+            
             # add to output arrays
             array_trww_total_bod_by_pathway += (array_pathways.transpose()*vec_bod)
             array_trww_total_ww_bod_by_pathway += (array_pathways.transpose()*vec_ww)
@@ -637,14 +898,17 @@ class CircularEconomy:
         # industrial
         for cdw in cats_ind_ww:
             ind_industry = 0
+
             # the associated vector of wastewater produced + bod produced
             vec_cod = array_wali_cod_total[:, ind_industry]
             vec_ww = array_wali_indww_total[:, ind_industry]
+            
             # get the treatment pathway
             vars_treatment_path = []
             for var in self.vars_wali_to_trww:
                 vars_treatment_path += self.model_attributes.build_varlist("Liquid Waste", var, [cdw])
             array_pathways = sf.check_row_sums(np.array(df_ce_trajectories[vars_treatment_path]), msg_pass = f" 'df_ce_trajectories[vars_treatment_path]' for wali category '{cdw}'")
+            
             # add to output arrays
             array_trww_total_cod_by_pathway += (array_pathways.transpose()*vec_cod)
             array_trww_total_ww_cod_by_pathway += (array_pathways.transpose()*vec_ww)
@@ -656,10 +920,12 @@ class CircularEconomy:
         array_trww_total_ww_bod_by_pathway = array_trww_total_ww_bod_by_pathway.transpose()
         array_trww_total_ww_cod_by_pathway = array_trww_total_ww_cod_by_pathway.transpose()
         array_trww_total_ww_by_pathway = array_trww_total_ww_bod_by_pathway + array_trww_total_ww_cod_by_pathway
+        
         # data frame for output
         df_trww_total_bod_by_pathway = self.model_attributes.array_to_df(array_trww_total_bod_by_pathway*factor_trww_emissions_mass_to_tow_mass, self.modvar_trww_total_bod_treated)
         df_trww_total_cod_by_pathway = self.model_attributes.array_to_df(array_trww_total_cod_by_pathway*factor_trww_emissions_mass_to_tow_mass, self.modvar_trww_total_cod_treated)
         df_trww_total_ww_by_pathway = self.model_attributes.array_to_df(array_trww_total_ww_by_pathway, self.modvar_trww_vol_ww_treated)
+        
         # add to output
         df_out += [
             df_trww_total_bod_by_pathway,
@@ -817,36 +1083,52 @@ class CircularEconomy:
         return df_out
 
 
-    ##  project emissions and outputs from solid waste (excluding recylcing energy and process emissions, which are handled in IPPU)
+
     def project_waste_solid(self,
         df_ce_trajectories: pd.DataFrame,
         df_se_internal_shared_variables: pd.DataFrame = None,
         dict_dims: dict = None,
         n_projection_time_periods: int = None,
-        projection_time_periods: list = None
+        projection_time_periods: list = None,
     ) -> pd.DataFrame:
 
         """
-            project_waste_solid() takes a data frame (ordered by time series) and returns a data frame of the same order
+        Project emissions and outputs from solid waste (excluding recylcing 
+            energy and process emissions, which are handled in IPPU). Takes a 
+            data frame (ordered by time series) and returns a data frame of the 
+            same order
 
-            Function Arguments
-            ------------------
-            df_ce_trajectories: pd.DataFrame of input variable trajectories.
+        Function Arguments
+        ------------------
+        - df_ce_trajectories: pd.DataFrame of input variable trajectories.
 
-            df_se_internal_shared_variables: Default = None. Data frame of socioeconomic projections that are used internally. If none, the socioeconomic model will be called to project based on the input data frame.
+        Keyword Arguments
+        ------------------
+        - df_se_internal_shared_variables: Default = None. Data frame of 
+            socioeconomic projections that are used internally. If none, the 
+            socioeconomic model will be called to project based on the input
+            DataFrame.
+        - dict_dims: dictionary of scenario dimensions (if applicable). If none, 
+            ModelAttribute.check_projection_input_df() will be run to obtain it.
+        - n_projection_time_periods: int giving number of time periods in the 
+            projection. If none, ModelAttribute.check_projection_input_df() 
+            will be run to obtain it.
+        - projection_time_periods: list of time periods in the projection. If 
+            None, ModelAttribute.check_projection_input_df() will be run to 
+            obtain it.
 
-            dict_dims: dictionary of scenario dimensions (if applicable). Default = None. If none, ModelAttribute.check_projection_input_df() will be run to obtain it.
-
-            n_projection_time_periods: int giving number of time periods in the projection. Default = None. If none, ModelAttribute.check_projection_input_df() will be run to obtain it.
-
-            projection_time_periods: list of time periods in the projection. Default = None. If none, ModelAttribute.check_projection_input_df() will be run to obtain it.
-
-
-            Notes
-            -----
-            - designed to be parallelized or called from command line via __main__ in run_afolu.py
-            - df_ce_trajectories should have all input fields required (see CircularEconomy.required_variables for a list of variables to be defined) for the Solid Waste sector
-            - the df_ce_trajectories.project_waste_liquid method will run on valid time periods from 1 .. k, where k <= n (n is the number of time periods). By default, it drops invalid time periods. If there are missing time_periods between the first and maximum, data are interpolated.
+        Notes
+        -----
+        - designed to be parallelized or called from command line via __main__ 
+            in run_afolu.py
+        - df_ce_trajectories should have all input fields required (see 
+            CircularEconomy.required_variables for a list of variables to be 
+            defined) for the Solid Waste sector
+        - the df_ce_trajectories.project_waste_liquid method will run on valid 
+            time periods from 1 .. k, where k <= n (n is the number of time 
+            periods). By default, it drops invalid time periods. If there are 
+            missing time_periods between the first and maximum, data are 
+            interpolated.
         """
 
         ##  CHECKS
@@ -1207,8 +1489,8 @@ class CircularEconomy:
             vec_waso_ddocm,
             array_waso_k,
             vec_waso_mfc_landfill,
-            vec_waso_oxf_landfill,
-            vec_waso_avg_frac_landfill_gas_capture
+            vec_frac_captured = vec_waso_avg_frac_landfill_gas_capture,
+            vec_oxf = vec_waso_oxf_landfill,
         )
         # convert units
         array_waso_emissions_ch4_landfill *= factor_waso_mass_to_emission_mass
@@ -1222,13 +1504,18 @@ class CircularEconomy:
         array_waso_waste_landfill = array_waso_waste_landfill[rowind_waso_model_periods_landfill]
         array_waso_emissions_ch4_landfill = array_waso_emissions_ch4_landfill[rowind_waso_model_periods_landfill]
         vec_waso_landfill_gas_recovered = vec_waso_landfill_gas_recovered[rowind_waso_model_periods_landfill]
+        
         # recovery can include caputre or flaring: multiply by some fraction that is captured for energy
         vec_waso_landfill_gas_recovered *= self.model_attributes.get_standard_variables(
             df_ce_trajectories, 
-            self.modvar_waso_frac_landfill_gas_ch4_to_energy, False, return_type = "array_base", var_bounds = (0, 1))
+            self.modvar_waso_frac_landfill_gas_ch4_to_energy, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base", 
+            var_bounds = (0, 1)
+        )
 
 
-        ##  Open Dumping
+        ##  OPEN DUMPING
 
         # use the first-order decay model for open dumping
         array_waso_emissions_ch4_open_dump, vec_waso_open_dump_gas_recovered = self.fod(
@@ -1236,13 +1523,15 @@ class CircularEconomy:
             vec_waso_ddocm,
             array_waso_k,
             vec_waso_mfc_open_dump,
-            0.0,
-            0.9
+            vec_frac_captured = 0.0,
+            vec_oxf = 0.0,
         )
+
         # eliminate back-projected or historical waste and convert units
         array_waso_waste_open_dump = array_waso_waste_open_dump[rowind_waso_model_periods_open_dump]
         array_waso_emissions_ch4_open_dump *= factor_waso_mass_to_emission_mass
         array_waso_emissions_ch4_open_dump = array_waso_emissions_ch4_open_dump[rowind_waso_model_periods_open_dump]
+        
         # get data frames
         df_out += [
             self.model_attributes.array_to_df(array_waso_emissions_ch4_landfill, self.modvar_waso_emissions_ch4_landfill, False),
@@ -1267,9 +1556,9 @@ class CircularEconomy:
         return df_out
 
 
-    ##  primary method for integrated liquid/solid waste
+
     def project(self,
-        df_ce_trajectories: pd.DataFrame
+        df_ce_trajectories: pd.DataFrame,
     ) -> pd.DataFrame:
 
         """
@@ -1336,7 +1625,7 @@ class CircularEconomy:
         ]
 
         # concatenate and add subsector emission totals
-        df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")
+        df_out = sf.merge_output_df_list(df_out, self.model_attributes, merge_type = "concatenate")
         self.model_attributes.add_subsector_emissions_aggregates(df_out, self.required_base_subsectors, False)
 
         return df_out

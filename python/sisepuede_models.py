@@ -285,7 +285,7 @@ class SISEPUEDEModels:
 			try:
 				df_return.append(self.model_circecon.project(df_input_data))
 				df_return = (
-					[sf.merge_output_df_list(df_return, self.model_attributes, "concatenate")] 
+					[sf.merge_output_df_list(df_return, self.model_attributes, merge_type = "concatenate")] 
 					if run_integrated 
 					else df_return
 				)
@@ -309,7 +309,7 @@ class SISEPUEDEModels:
 			try:
 				df_return.append(self.model_ippu.project(df_input_data))
 				df_return = (
-					[sf.merge_output_df_list(df_return, self.model_attributes, "concatenate")] 
+					[sf.merge_output_df_list(df_return, self.model_attributes, merge_type = "concatenate")] 
 					if run_integrated 
 					else df_return
 				)
@@ -333,7 +333,7 @@ class SISEPUEDEModels:
 			try:
 				df_return.append(self.model_energy.project(df_input_data))
 				df_return = (
-					[sf.merge_output_df_list(df_return, self.model_attributes, "concatenate")] 
+					[sf.merge_output_df_list(df_return, self.model_attributes, merge_type = "concatenate")] 
 					if run_integrated 
 					else df_return
 				)
@@ -364,7 +364,7 @@ class SISEPUEDEModels:
 				)
 				df_return.append(df_elec)
 				df_return = (
-					[sf.merge_output_df_list(df_return, self.model_attributes, "concatenate")] 
+					[sf.merge_output_df_list(df_return, self.model_attributes, merge_type = "concatenate")] 
 					if run_integrated 
 					else df_return
 				)
@@ -393,7 +393,7 @@ class SISEPUEDEModels:
 					)
 				)
 				df_return = (
-					[sf.merge_output_df_list(df_return, self.model_attributes, "concatenate")] 
+					[sf.merge_output_df_list(df_return, self.model_attributes, merge_type = "concatenate")] 
 					if run_integrated 
 					else df_return
 				)
@@ -416,7 +416,7 @@ class SISEPUEDEModels:
 					)
 				)
 				df_return = (
-					[sf.merge_output_df_list(df_return, self.model_attributes, "concatenate")] 
+					[sf.merge_output_df_list(df_return, self.model_attributes, merge_type = "concatenate")] 
 					if run_integrated 
 					else df_return
 				)
@@ -428,7 +428,7 @@ class SISEPUEDEModels:
 
 		# build output data frame
 		df_return = (
-			sf.merge_output_df_list(df_return, self.model_attributes, "concatenate") 
+			sf.merge_output_df_list(df_return, self.model_attributes, merge_type = "concatenate") 
 			if (len(df_return) > 0) 
 			else pd.DataFrame()
 		)

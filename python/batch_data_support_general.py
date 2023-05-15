@@ -34,7 +34,9 @@ def exogenous_demands_to_sispeuede_ies(
     elasticity_bounds: Union[Tuple[float, float], None] = None,
     elasticity_default: float = 1.0,
     field_iso: Union[str, None] = None,
+    fill_missing_se: Union[float, int, None] = None,
     max_dev_from_mean: Union[float, int, None] = None,
+    model_socioeconomic: Union[se.Socioeconomic, None] = None,
     sup_elast_magnitude: Union[float, int, None] = None,
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
@@ -87,13 +89,18 @@ def exogenous_demands_to_sispeuede_ies(
         found
     - field_iso: field in df_inputs containing ISO codes. If None, defaults to 
         Regions.field_iso (see support_classses.Regions)
+    - fill_missing_se: optional value to use to fill missing fields required for
+        Socioeconomic.project() 
+        * NOTE: use with caution; if any required variables not present in 
+            df_inputs, this will fill fields used to define those missing 
+            variables with the value in fill_missing_se.
     - max_dev_from_mean: maximum devation from the mean to allow in projections
     - sup_elast_magnitude: Supremum for the magnitude of an elasticity; prevent 
         wild swings or crashing to 0. If None, no supremum is applied
     """
     
     ##  CHECKS
-    
+
     # run some checks - check that the driver is not associated with categories
     cats_driver = model_attributes.get_variable_categories(modvar_driver)
     if cats_driver is not None:
@@ -103,7 +110,14 @@ def exogenous_demands_to_sispeuede_ies(
             return None
     else:
         cat_driver = None
-        
+
+    # check if driver requires socioeconomic run
+    model_socioeconomic = (
+        se.Socioeconomic(model_attributes) 
+        if model_socioeconomic is None
+        else model_socioeconomic
+    )
+   
     # check subsector equivalience
     subsec_demand = model_attributes.get_variable_subsector(modvar_demand)
     subsec_elasticity = model_attributes.get_variable_subsector(modvar_elasticity)
@@ -176,13 +190,11 @@ def exogenous_demands_to_sispeuede_ies(
             restrict_to_category_values = [x]
         )[0] in fields_dem
     ]
-
     fields_elast = model_attributes.build_varlist(
         None,
         modvar_elasticity,
         restrict_to_category_values = cats_dem
     )
-
     fields_scalars = model_attributes.build_varlist(
         None,
         modvar_scalar_demand,
@@ -196,15 +208,58 @@ def exogenous_demands_to_sispeuede_ies(
     df_prodinit = []
     df_demscalar = []
     
-    df_inputs_by_iso = df_inputs.groupby([field_iso])
+    df_inputs_by_iso = (
+        df_inputs[
+            df_inputs[field_iso].isin(regions.all_isos)
+        ]
+        .reset_index(drop = True)
+        .groupby([field_iso])
+    )
 
-
+    global dfi
+    dfi = df_inputs
+    
     # maximum magntiude of elasticity to include in means
 
     for i, df in df_inputs_by_iso:
 
+        # set a data frame for the driver; can be pulled from socioeconomic
+        if modvar_driver in model_socioeconomic.output_model_variables:
+            
+            if fill_missing_se is not None:
+                # check if fields need to be filled
+                fields_fill = [x for x in model_socioeconomic.required_variables if (x not in df_inputs.columns)]
+                fields_dim_fill = [x for x in fields_fill if x in model_socioeconomic.required_dimensions]
+                fill_missing_se_doa = int(np.round(fill_missing_se))
+
+                df[fields_fill] = fill_missing_se
+                df[fields_dim_fill] = fill_missing_se_doa
+
+            df_se = model_socioeconomic.project(
+                df.reset_index(drop = True), 
+                ignore_time_periods = True,
+                project_for_internal = False
+            )
+
+            fields_add = [x for x in df_se.columns if x not in df.columns]
+            for fld in fields_add:
+                df[fld] = np.array(df_se[fld])
+
+            df.dropna(inplace = True, subset = [field_driver] + fields_dem)
+
+        if len(df) == 0:
+            continue
+
+
         # get historical, then add dummy year
-        df_hist = df[df[field_year].isin(years_historical)].sort_values(by = [field_year]).reset_index(drop = True)
+        df_hist = (
+            df[
+                df[field_year].isin(years_historical)
+            ]
+            .sort_values(by = [field_year])
+            .reset_index(drop = True)
+        )
+
         df_years = pd.DataFrame({field_year: years_historical})
         df_hist = pd.merge(df_years, df_hist, how = "left")
         df_hist.interpolate(inplace = True)
@@ -212,6 +267,10 @@ def exogenous_demands_to_sispeuede_ies(
 
         # get production array and and project first non-historical time period from regression
         arr_dem = np.array(df_hist[fields_dem])
+        
+        global arr_dem_out
+        arr_dem_out = arr_dem
+
         arr_dem_proj_first_post_historical = sf.project_from_array(
             arr_dem, 
             max_deviation_from_mean = max_dev_from_mean
@@ -228,7 +287,16 @@ def exogenous_demands_to_sispeuede_ies(
                 for i in range(len(fields_dem))
             )
         )
-        df_hist = pd.concat([df_hist, pd.DataFrame(df_hist_append)], axis = 0).reset_index(drop = True)
+        df_hist = (
+            pd.concat(
+                [
+                    df_hist, 
+                    pd.DataFrame(df_hist_append)
+                ],
+                axis = 0
+            )
+            .reset_index(drop = True)
+        )
 
         # overwrite driver since the final value is missing
         df_hist = sf.match_df_to_target_df(
@@ -253,6 +321,7 @@ def exogenous_demands_to_sispeuede_ies(
         # get elasticity of production to driver
         arr_elast = sf.do_array_mult(arr_dem_change, 1/vec_driver_change)
         arr_elast = np.nan_to_num(arr_elast, 1.0, posinf = 1.0, neginf = -1.0)
+
         df_elast = pd.DataFrame(arr_elast, columns = fields_elast)
         df_hist = pd.concat([df_hist, df_elast], axis = 1)
         df_hist = df_hist[df_hist[field_year].isin(years_historical)].reset_index(drop = True)
@@ -320,9 +389,9 @@ def exogenous_demands_to_sispeuede_ies(
         
         
         ##  BUILD INITIAL PRODUCTION
-        
+
         df_years_full[field_iso] = i
-        
+        """
         df_prod_0 = {field_iso: [i]}
         df_prod_0.update(
             dict(
@@ -330,10 +399,22 @@ def exogenous_demands_to_sispeuede_ies(
                 for i, field in enumerate(fields_dem)
             )
         )
-        df_prod_0 = pd.merge(
-            df_years_full, 
-            pd.DataFrame(df_prod_0),
-            how = "left"
+        """;
+        df_prod_0 = (
+            df[
+                df[field_year].isin(list(years_historical) + [max(years_historical) + 1])
+            ][[field_iso, field_year] + fields_dem]
+            .sort_values(by = [field_year])
+            .reset_index(drop = True)
+        )
+        df_prod_0 = (
+            pd.merge(
+                df_years_full, 
+                df_prod_0,
+                #pd.DataFrame(df_prod_0),
+                how = "left"
+            )
+            .interpolate(method = "ffill")
         )
         df_prod_0 = df_prod_0[[field_year, field_iso] + fields_dem]
 

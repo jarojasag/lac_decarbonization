@@ -1067,6 +1067,7 @@ class ModelAttributes:
             Initializes the following properties:
 
             * self.all_model_variables
+            * self.all_variables
             * self.dict_model_variables_by_subsector
             * self.dict_model_variable_to_subsector
             * self.dict_model_variable_to_category_restriction
@@ -1083,7 +1084,7 @@ class ModelAttributes:
 
         modvars_all = []
 
-        for subsector in self.all_subsectors_with_primary_category:#self.dict_attributes["abbreviation_subsector"].field_maps["subsector_to_primary_category_py"].keys():
+        for subsector in self.all_subsectors_with_primary_category:
 
             # get model variables
             dict_var_type, vars_by_subsector = self.get_subsector_variables(subsector)
@@ -1109,8 +1110,12 @@ class ModelAttributes:
                     dict(zip(var_lists, [var for x in var_lists]))
                 )
 
+        # get all variables as a list
+        all_variables = sorted(list(dict_fields_to_vars.keys()))
+
         # set properties
         self.all_model_variables = modvars_all
+        self.all_variables = all_variables
         self.dict_model_variables_by_subsector = dict_vars_by_subsector
         self.dict_model_variable_to_subsector = dict_vars_to_subsector
         self.dict_model_variable_to_category_restriction = dict_vartypes_out
@@ -2948,14 +2953,18 @@ class ModelAttributes:
 
 
 
-    ##  function to check the projection input dataframe and (1) return time periods available, (2) a dicitonary of scenario dimenions, and (3) an interpolated data frame if there are missing values.
     def check_projection_input_df(self,
         df_project: pd.DataFrame,
-        # options for formatting the input data frame to correct for errors
         interpolate_missing_q: bool = True,
         strip_dims: bool = True,
-        drop_invalid_time_periods: bool = True
+        drop_invalid_time_periods: bool = True,
+        override_time_periods: bool = False,
     ) -> tuple:
+        """
+        Check the projection input dataframe and (1) return time periods 
+            available, (2) a dicitonary of scenario dimenions, and (3) an 
+            interpolated data frame if there are missing values.
+        """
         # check for required fields
         sf.check_fields(df_project, [self.dim_time_period])
 
@@ -2977,7 +2986,11 @@ class ModelAttributes:
         df_time = self.dict_attributes["dim_time_period"].table[[self.dim_time_period]]
         set_times_project = set(df_project[self.dim_time_period])
         set_times_defined = set(df_time[self.dim_time_period])
-        set_times_keep = set_times_project & set_times_defined
+        set_times_keep = (
+            set_times_project & set_times_defined
+            if not override_time_periods
+            else set_times_project 
+        )
 
         # raise errors if issues occur
         if (not set_times_project.issubset(set_times_defined)) and (not drop_invalid_time_periods):
@@ -2985,7 +2998,7 @@ class ModelAttributes:
 
         # intiialize interpolation_q and check for consecutive time steps to determine if a merge + interpolation is needed
         interpolate_q = False
-
+        
         if (set_times_keep != set(range(min(set_times_keep), max(set_times_keep) + 1))):
             if not interpolate_missing_q:
                 raise ValueError(f"Error in specified times: some time periods are missing and interpolate_missing_q = False. Modeling will not proceed. Set interpolate_missing_q = True to interpolate missing values.")
@@ -3011,7 +3024,11 @@ class ModelAttributes:
         df_project = df_project.interpolate() if interpolate_q else df_project
         df_project = df_project[df_project[self.dim_time_period].isin(set_times_keep)]
         df_project.sort_values(by = [self.dim_time_period], inplace = True)
-        df_project = df_project[[self.dim_time_period] + fields_dat] if strip_dims else df_project[fields_dims_notime + [self.dim_time_period] + fields_dat]
+        df_project = (
+            df_project[[self.dim_time_period] + fields_dat] 
+            if strip_dims 
+            else df_project[fields_dims_notime + [self.dim_time_period] + fields_dat]
+        )
 
         return dict_dims, df_project, n_projection_time_periods, projection_time_periods
 
@@ -3077,7 +3094,7 @@ class ModelAttributes:
                         df_ext[1].drop(vars_to_drop, axis = 1, inplace = True)
                 dfs_extract.append(df_ext[1])
 
-        return sf.merge_output_df_list(dfs_extract, self, join_type)
+        return sf.merge_output_df_list(dfs_extract, self, merge_type = join_type)
 
 
 
@@ -4407,13 +4424,15 @@ class ModelAttributes:
 
 
 
-    # return a list of variables by sector
+
     def get_variables_by_sector(self, 
         sector: str, 
         return_var_type: str = "input"
-    ) -> list:
+    ) -> List[str]:
+        """
+        Return a list of variables by sector
+        """
         df_attr_sec = self.dict_attributes[self.table_name_attr_subsector].table
-        #list_out = list(np.concatenate([self.build_varlist(x) for x in list(df_attr_sec[df_attr_sec["sector"] == sector]["subsector"])]))
         sectors = list(df_attr_sec[df_attr_sec["sector"] == sector]["subsector"])
         vars_input, vars_output = self.get_input_output_fields(sectors)
 
@@ -4422,26 +4441,30 @@ class ModelAttributes:
         elif return_var_type == "output":
             return vars_output
         elif return_var_type == "both":
-            vars_both = vars_input + vars_output
-            vars_both.sort()
+            vars_both = sorted(vars_input + vars_output)
             return vars_both
         else:
             raise ValueError(f"Invalid return_var_type specification '{return_var_type}' in get_variables_by_sector: valid values are 'input', 'output', and 'both'.")
 
 
 
-    ##  generate a blank data frame of length n with varlist on columns
     def instantiate_blank_modvar_df_by_categories(self,
         modvar: str,
         n: int,
         blank_val: Union[int, float] = 0.0
     ) -> pd.DataFrame:
-
         """
-            Create a blank data frame, filled with blank_val, with properly ordered variable names.
-            - modvar: the model variable to build the dataframe for
-            - n: the length of the data frame
-            - blank_val: the value to use to fill the frame
+        Create a blank data frame, filled with blank_val, with properly ordered 
+            variable names.
+
+        Function Arguments
+        ------------------
+        - modvar: the model variable to build the dataframe for
+        - n: the length of the data frame
+
+        Keyword Arguments
+        -----------------
+        - blank_val: the value to use to fill the frame
         """
         subsec = self.get_variable_subsector(modvar)
         cols = self.build_varlist(subsec, modvar)
@@ -4461,7 +4484,7 @@ class ModelAttributes:
         variable_type = None
     ) -> tuple:
         """
-        separate a variable requirement dictionary into those associated with
+        Separate a variable requirement dictionary into those associated with
             simple vars and those with outer
 
         Function Arguments
@@ -4514,79 +4537,83 @@ class ModelAttributes:
 
 
 
-    ##  swap columns in an array based on categories
     def swap_array_categories(self,
         array_in: np.ndarray,
         vec_ordered_cats_source: np.ndarray,
         vec_ordered_cats_target: np.ndarray,
-        subsector: str
-    ):
+        subsector: str,
+    ) -> np.ndarray:
         """
-            Swap category columns in an array
+        Swap category columns in an array
 
-            Function Arguments
-            ------------------
-            - array_in: array with data. Must be merged to all categories for the subsector.
-            - vec_ordered_cats_source: array of source categories to swap with targets (source_i -> target_i). Must be well defined categories
-            - vec_ordered_cats_target: array of target categories to swap with the source. Must be well defined categories
-            - subsector: subsector in which the swap occurs
+        Function Arguments
+        ------------------
+        - array_in: array with data. Must be merged to all categories for the 
+            subsector.
+        - vec_ordered_cats_source: array of source categories to swap with 
+            targets (source_i -> target_i). Must be well defined categories
+        - vec_ordered_cats_target: array of target categories to swap with the 
+            source. Must be well defined categories
+        - subsector: subsector in which the swap occurs
 
-            Notes
-            -----
-            - Source categories cannot be defined in the target categories vector, and vis-verse
-            - Categories that aren't well-defined will be dropped
+        Notes
+        -----
+        - Source categories cannot be defined in the target categories vector, 
+            and vis-versa
+        - Categories that aren't well-defined will be dropped
         """
 
+        # get and check subsector
         subsector = self.check_subsector(subsector, throw_error_q = False)
-
-        if subsector is not None:
-            attr = self.get_attribute_table(subsector)
-            if len(set(vec_ordered_cats_source) & set(vec_ordered_cats_target)) > 0:
-                warnings.warn("Invalid swap specification in 'swap_array_categories': categories can only exist in source or target")
-                return array_in
-            else:
-
-                ##  build source/target swaps
-
-                vec_source = []
-                vec_target = []
-                # iterate to get well-defined swaps
-                for i in range(min(len(vec_ordered_cats_source), len(vec_ordered_cats_target))):
-                    cat_source = clean_schema(vec_ordered_cats_source[i])
-                    cat_target = clean_schema(vec_ordered_cats_target[i])
-                    if (cat_source in attr.key_values) and (cat_target in attr.key_values):
-                        vec_source.append(cat_source)
-                        vec_target.append(cat_target)
-
-                # some warnings - source
-                set_drops_source = set(vec_ordered_cats_source) - set(vec_source)
-                if len(set_drops_source) > 0:
-                    vals_dropped_source = sf.format_print_list(list(set_drops_source))
-                    warnings.warn(f"Source values {vals_dropped_source} dropped in swap_array_categories (either not well-defined categories or there was no associated target category).")
-
-                # some warnings - target
-                set_drops_target = set(vec_ordered_cats_target) - set(vec_target)
-                if len(set_drops_target) > 0:
-                    vals_dropped_target = sf.format_print_list(list(set_drops_target))
-                    warnings.warn(f"target values {vals_dropped_target} dropped in swap_array_categories (either not well-defined categories or there was no associated target category).")
-
-                # build dictionary
-                dict_swap = dict(zip(vec_source, vec_target))
-                dict_swap.update(sf.reverse_dict(dict_swap))
-                # set up the new categories
-                cats_new = [dict_swap.get(x, x) for x in attr.key_values]
-
-                array_new = self.merge_array_var_partial_cat_to_array_all_cats(
-                    array_in,
-                    None,
-                    output_cats = cats_new,
-                    output_subsec = subsector
-                )
-
-                return array_new
-        else:
+        if subsector is None:
             return array_in
 
+        # check subsector attribute
+        attr = self.get_attribute_table(subsector)
+        if len(set(vec_ordered_cats_source) & set(vec_ordered_cats_target)) > 0:
+            warnings.warn("Invalid swap specification in 'swap_array_categories': categories can only exist in source or target")
+            return array_in
+
+
+        ##  BUILD SOURCE/TARGET SWAPS
+
+        vec_source = []
+        vec_target = []
+
+        # iterate to get well-defined swaps
+        for i in range(min(len(vec_ordered_cats_source), len(vec_ordered_cats_target))):
+            cat_source = clean_schema(vec_ordered_cats_source[i])
+            cat_target = clean_schema(vec_ordered_cats_target[i])
+            if (cat_source in attr.key_values) and (cat_target in attr.key_values):
+                vec_source.append(cat_source)
+                vec_target.append(cat_target)
+
+        # some warnings - source
+        set_drops_source = set(vec_ordered_cats_source) - set(vec_source)
+        if len(set_drops_source) > 0:
+            vals_dropped_source = sf.format_print_list(list(set_drops_source))
+            warnings.warn(f"Source values {vals_dropped_source} dropped in swap_array_categories (either not well-defined categories or there was no associated target category).")
+
+        # some warnings - target
+        set_drops_target = set(vec_ordered_cats_target) - set(vec_target)
+        if len(set_drops_target) > 0:
+            vals_dropped_target = sf.format_print_list(list(set_drops_target))
+            warnings.warn(f"target values {vals_dropped_target} dropped in swap_array_categories (either not well-defined categories or there was no associated target category).")
+
+        # build dictionary and set up the new categories
+        dict_swap = dict(zip(vec_source, vec_target))
+        dict_swap.update(sf.reverse_dict(dict_swap))
+        cats_new = [dict_swap.get(x, x) for x in attr.key_values]
+
+        array_new = self.merge_array_var_partial_cat_to_array_all_cats(
+            array_in,
+            None,
+            output_cats = cats_new,
+            output_subsec = subsector
+        )
+
+        return array_new
+            
 
 
     def switch_variable_category(self, 
@@ -4594,8 +4621,8 @@ class ModelAttributes:
         target_variable: str, 
         attribute_field: str, 
         cats_to_switch = None, 
-        dict_force_override = None
-    ) -> list:
+        dict_force_override = None,
+    ) -> List[str]:
         """
         attribute_field is the field in the primary category attriubte table to 
             use for the switch; if dict_force_override is specified, then this 
@@ -4632,20 +4659,23 @@ class ModelAttributes:
     #########################################
     #    INTERNALLY-CALCULATED VARIABLES    #
     #########################################
-
  
     def get_mutex_cats_for_internal_variable(self, 
         subsector: str, 
         variable: str, 
         attribute_sum_specification_field: str, 
-        return_type: str = "fields"
+        return_type: str = "fields",
     ) -> Union[List[str], None]:
         """
         retrives mutually-exclusive fields used to sum to generate internal 
             variables
-        """
-        # attribute_sum_specification_field gives the field in the category attribute table that defines what to sum over (e.g., gdp component in the value added)
+
+        - attribute_sum_specification_field gives the field in the category 
+            attribute table that defines what to sum over (e.g., gdp component 
+            in the value added)
        
+        """
+        # 
         # get categories to sum over
         pycat_primary = self.get_subsector_attribute(subsector, "pycategory_primary")
         df_tmp = self.dict_attributes[pycat_primary].table
@@ -4664,7 +4694,6 @@ class ModelAttributes:
 
 
 
-    ##  
     def get_simple_input_to_output_emission_arrays(self,
         df_ef: pd.DataFrame,
         df_driver: pd.DataFrame,
@@ -4712,16 +4741,18 @@ class ModelAttributes:
 
 
 
-    ##  function to add a variable based on components
     def manage_internal_variable_to_df(self,
-        df_in:pd.DataFrame,
+        df_in: pd.DataFrame,
         subsector: str,
         internal_variable: str,
         component_variable: str,
         attribute_sum_specification_field: str,
         action: str = "add",
         return_type: type = float
-    ):
+    ) -> None:
+        """
+        Add a variable based on components. Inline modifier of df_in
+        """
         # get the field to add
         field_check = self.build_varlist(subsector, variable_subsec = internal_variable)[0]
         valid_actions = ["add", "remove", "check"]
@@ -4743,14 +4774,25 @@ class ModelAttributes:
 
 
 
-    ##  manage internal variables in data frames
-    def manage_gdp_to_df(self, df_in: pd.DataFrame, action: str = "add"):
-        return self.manage_internal_variable_to_df(df_in, "Economy", "GDP", "Value Added", "gdp_component", action, float)
+    def manage_pop_to_df(self, 
+        df_in: pd.DataFrame, 
+        action: str = "add"
+    ) -> pd.DataFrame:
+        """
+        Add total population to df_in
+        """
+        out = self.manage_internal_variable_to_df(
+            df_in, 
+            "General", 
+            "Total Population", 
+            "Population", 
+            "total_population_component", 
+            action, 
+            int
+        )
 
+        return out
 
-
-    def manage_pop_to_df(self, df_in: pd.DataFrame, action: str = "add"):
-        return self.manage_internal_variable_to_df(df_in, "General", "Total Population", "Population", "total_population_component", action, int)
 
 
 

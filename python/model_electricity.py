@@ -9293,7 +9293,7 @@ class ElectricEnergy:
 
 
         # concatenate and add subsector emission totals
-        df_out = sf.merge_output_df_list(df_out, self.model_attributes, "concatenate")
+        df_out = sf.merge_output_df_list(df_out, self.model_attributes, merge_type = "concatenate")
         self.model_attributes.add_subsector_emissions_aggregates(df_out, [self.subsec_name_entc], False)
 
 

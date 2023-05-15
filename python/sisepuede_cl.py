@@ -118,7 +118,7 @@ def main(args: dict) -> None:
                 model_circecon.integration_variables
             )
         df_output_data.append(model_circecon.project(df_input_data))
-        df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")] if run_integrated_q else df_output_data
+        df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, merge_type = "concatenate")] if run_integrated_q else df_output_data
 
 
     # run IPPU and collect output
@@ -133,7 +133,7 @@ def main(args: dict) -> None:
                 model_ippu.integration_variables
             )
         df_output_data.append(model_ippu.project(df_input_data))
-        df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")] if run_integrated_q else df_output_data
+        df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, merge_type = "concatenate")] if run_integrated_q else df_output_data
 
 
     # run Non-Electric Energy and collect output
@@ -150,7 +150,7 @@ def main(args: dict) -> None:
         else:
             print("LOG ERROR HERE: CANNOT RUN WITHOUT IPPU")
         df_output_data.append(model_energy.project(df_input_data))
-        df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")] if run_integrated_q else df_output_data
+        df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, merge_type = "concatenate")] if run_integrated_q else df_output_data
 
 
     # run Electricity and collect output
@@ -170,7 +170,7 @@ def main(args: dict) -> None:
         try:
             df_elec =  model_elecricity.project(df_input_data, engine)
             df_output_data.append(df_elec)
-            df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")] if run_integrated_q else df_output_data
+            df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, merge_type = "concatenate")] if run_integrated_q else df_output_data
         except Exception as e:
             #LOGGING
             print(f"Error running ElectricEnergy model: {e}")
@@ -191,11 +191,11 @@ def main(args: dict) -> None:
             print("LOG ERROR HERE: CANNOT RUN WITHOUT IPPU AND AFOLU")
 
         df_output_data.append(model_energy.project(df_input_data, subsectors_project = sa.model_attributes.subsec_name_fgtv))
-        df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")] if run_integrated_q else df_output_data
+        df_output_data = [sf.merge_output_df_list(df_output_data, sa.model_attributes, merge_type = "concatenate")] if run_integrated_q else df_output_data
 
 
     # build output data frame
-    df_output_data = sf.merge_output_df_list(df_output_data, sa.model_attributes, "concatenate")
+    df_output_data = sf.merge_output_df_list(df_output_data, sa.model_attributes, merge_type = "concatenate")
 
 
     print("\n*** MODEL RUNS COMPLETE ***\n")
