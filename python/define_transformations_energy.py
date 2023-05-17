@@ -78,6 +78,8 @@ class TransformationsEnergy:
 
     Optional Arguments
     ------------------
+    - df_input: optional data frame to initialize with. If used, transformations
+        can be called without arguments.
 	- fp_nemomod_temp_sqlite_db: optional file path to use for SQLite database
 		used in Julia NemoMod Electricity model
         * If None, defaults to a temporary path sql database
@@ -89,6 +91,7 @@ class TransformationsEnergy:
         dict_config: Dict,
         dir_jl: str,
         fp_nemomod_reference_files: str,
+        df_input: Union[pd.DataFrame, None] = None,
         field_region: Union[str, None] = None,
 		fp_nemomod_temp_sqlite_db: Union[str, None] = None,
 		logger: Union[logging.Logger, None] = None,
@@ -101,6 +104,7 @@ class TransformationsEnergy:
         self._initialize_models(dir_jl, fp_nemomod_reference_files)
         self._initialize_parameters(dict_config = dict_config)
         self._initialize_ramp()
+        self._initialize_baseline_inputs(df_input)
         self._initialize_transformations()
 
 
@@ -424,6 +428,7 @@ class TransformationsEnergy:
             an error if issues arise. Sets the following properties
 
             * self.attribute_strategy
+            * self.attribute_technology
             * self.key_region
             * self.model_attributes
             * self.regions (support_classes.Regions object)
@@ -445,6 +450,9 @@ class TransformationsEnergy:
         )
         field_region = model_attributes.dim_region if (field_region is None) else field_region
 
+        # add technology attribute
+        attribute_technology = model_attributes.dict_attributes.get(f"cat_technology")
+
         # set some useful classes
         time_periods = sc.TimePeriods(model_attributes)
         regions = sc.Regions(model_attributes)
@@ -453,12 +461,36 @@ class TransformationsEnergy:
         ##  SET PROPERTIES
         
         self.attribute_strategy = attribute_strategy
+        self.attribute_technology = attribute_technology
         self.baseline_strategy = baseline_strategy
         self.key_region = field_region
         self.key_strategy = attribute_strategy.key
         self.model_attributes = model_attributes
         self.time_periods = time_periods
         self.regions = regions
+
+        return None
+
+
+
+    def _initialize_baseline_inputs(self,
+        df_inputs: Union[pd.DataFrame, None],
+    ) -> None:
+        """
+        Initialize the baseline inputs dataframe based on the initialization 
+            value of df_inputs. It not initialied, sets as None. Sets the 
+            following properties:
+
+            * self.baseline_inputs
+        """
+
+        baseline_inputs = (
+            self.transformation_en_baseline(df_inputs, strat = self.baseline_strategy) 
+            if isinstance(df_inputs, pd.DataFrame) 
+            else None
+        )
+
+        self.baseline_inputs = baseline_inputs
 
         return None
 
@@ -631,10 +663,12 @@ class TransformationsEnergy:
             * self.dict_entc_renewable_target_cats_max_investment
             * self.vec_implementation_ramp
             * self.vec_implementation_ramp_renewable_cap
+            * self.vec_msp_resolution_cap
         """
         
         vec_implementation_ramp = self.build_implementation_ramp_vector()
         vec_implementation_ramp_renewable_cap = self.get_vir_max_capacity(vec_implementation_ramp)
+        vec_msp_resolution_cap = self.build_msp_cap_vector(vec_implementation_ramp)
 
         dict_entc_renewable_target_cats_max_investment = dict(
             (
@@ -651,6 +685,7 @@ class TransformationsEnergy:
         self.dict_entc_renewable_target_cats_max_investment = dict_entc_renewable_target_cats_max_investment
         self.vec_implementation_ramp = vec_implementation_ramp
         self.vec_implementation_ramp_renewable_cap = vec_implementation_ramp_renewable_cap
+        self.vec_msp_resolution_cap = vec_msp_resolution_cap
 
         return None
 
@@ -667,13 +702,27 @@ class TransformationsEnergy:
             
         Sets the following properties:
 
+            * self.all_transformations
+            * self.all_transformations_non_baseline
             * self.dict_transformations
+            * self.transformation_id_baseline
             * self.transformation_***
         """
 
         attr_strategy = self.attribute_strategy
         all_transformations = []
         dict_transformations = {}
+
+        ##################
+        #    BASELINE    #
+        ##################
+
+        self.baseline = sc.Transformation(
+            "Baseline NDP", 
+            self.transformation_en_baseline, 
+            attr_strategy
+        )
+        all_transformations.append(self.baseline)
 
 
         ##############
@@ -1448,7 +1497,7 @@ class TransformationsEnergy:
 
     
 
-        ## specify dictionary of transformations
+        ## specify dictionary of transformations and get all transformations + baseline/non-baseline
 
         dict_transformations = dict(
             (x.id, x) 
@@ -1456,12 +1505,26 @@ class TransformationsEnergy:
             if x.id in attr_strategy.key_values
         )
         all_transformations = sorted(list(dict_transformations.keys()))
+        all_transformations_non_baseline = [
+            x for x in all_transformations 
+            if not dict_transformations.get(x).baseline
+        ]
+
+        transformation_id_baseline = [
+            x for x in all_transformations 
+            if x not in all_transformations_non_baseline
+        ]
+        transformation_id_baseline = transformation_id_baseline[0] if (len(transformation_id_baseline) > 0) else None
+
 
         # SET ADDDITIONAL PROPERTIES
 
         self.all_transformations = all_transformations
+        self.all_transformations_non_baseline = all_transformations_non_baseline
         self.dict_transformations = dict_transformations
+        self.transformation_id_baseline = transformation_id_baseline
 
+        return None
 
 
 
@@ -1471,7 +1534,7 @@ class TransformationsEnergy:
     ###    OTHER NON-TRANSFORMATION FUNCTIONS    ###
     ###                                          ###
     ################################################
-
+                        
     def build_implementation_ramp_vector(self,
         year_0: Union[int, None] = None,
         n_years_ramp: Union[int, None] = None,
@@ -1490,8 +1553,8 @@ class TransformationsEnergy:
         year_0 = self.year_0_ramp if (year_0 is None) else year_0
         n_years_ramp = self.n_tp_ramp if (n_years_ramp is None) else n_years_ramp
 
-        tp_0 = self.time_periods.year_to_tp(year_0) #10
-        n_tp = len(self.time_periods.all_time_periods) #25
+        tp_0 = self.time_periods.year_to_tp(year_0)
+        n_tp = len(self.time_periods.all_time_periods)
 
         vec_out = np.array([max(0, min((x - tp_0)/n_years_ramp, 1)) for x in range(n_tp)])
 
@@ -1499,8 +1562,32 @@ class TransformationsEnergy:
 
 
 
+    def build_msp_cap_vector(self,
+        vec_ramp: np.ndarray,
+    ) -> np.ndarray:
+        """
+        Build the cap vector for MSP adjustments. 
+            Derived from self.vec_implementation_ramp
+
+        Function Arguments
+		------------------
+        - vec_ramp: implementation ramp vector to use. Will set cap at first 
+            non-zero period
+
+        Keyword Arguments
+		-----------------
+        """
+        vec_out = np.array([
+            (self.model_electricity.drop_flag_tech_capacities if (x == 0) else 0) 
+            for x in vec_ramp
+        ])
+
+        return vec_out
+    
+
+
     def build_strategies_long(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         include_base_df: bool = True,
         strategies: Union[List[str], List[int], None] = None,
     ) -> pd.DataFrame:
@@ -1510,12 +1597,13 @@ class TransformationsEnergy:
 
         Function Arguments
 		------------------
-        - df_input: baseline (untransformed) data frame to use to build 
-            strategies. Must contain self.key_region and 
-            self.model_attributes.dim_time_period in columns
 
         Keyword Arguments
 		-----------------
+        - df_input: baseline (untransformed) data frame to use to build 
+            strategies. Must contain self.key_region and 
+            self.model_attributes.dim_time_period in columns. If None, defaults
+            to self.baseline_inputs
         - include_base_df: include df_input in the output DataFrame? If False,
             only includes strategies associated with transformation 
         - strategies: strategies to build for. Can be a mixture of strategy_ids
@@ -1525,13 +1613,14 @@ class TransformationsEnergy:
         # INITIALIZE STRATEGIES TO LOOP OVER
 
         strategies = (
-            self.all_transformations
+            self.all_transformations_non_baseline
             if strategies is None
-            else strategies
+            else [x for x in self.all_transformations_non_baseline if x in strategies]
         )
         strategies = [self.get_strategy(x) for x in strategies]
         strategies = sorted([x.id for x in strategies if x is not None])
         n = len(strategies)
+
 
         # LOOP TO BUILD
         
@@ -1541,10 +1630,23 @@ class TransformationsEnergy:
             type_log = "info"
         )
         
-        df_out = df_input.copy()
-        if self.key_strategy not in df_out.columns:
-            df_out[self.key_strategy] = self.baseline_strategy
-        df_out = [df_out for x in range(len(strategies) + 1)]
+        # initialize baseline
+        df_out = (
+            self.transformation_en_baseline(df_input)
+            if df_input is not None
+            else (
+                self.baseline_inputs
+                if self.baseline_inputs is not None
+                else None
+            )
+        )
+
+        if df_out is None:
+            return None
+
+        # initialize to overwrite dataframes
+        iter_shift = int(include_base_df)
+        df_out = [df_out for x in range(len(strategies) + iter_shift)]
 
         for i, strat in enumerate(strategies):
             t0_cur = time.time()
@@ -1552,7 +1654,7 @@ class TransformationsEnergy:
 
             if transformation is not None:
                 try:
-                    df_out[i + 1] = transformation(df_out[i + 1])
+                    df_out[i + iter_shift] = transformation(df_out[i + iter_shift])
                     t_elapse = sf.get_time_elapsed(t0_cur)
                     self._log(
                         f"\tSuccessfully built transformation {self.key_strategy} = {transformation.id} ('{transformation.name}') in {t_elapse} seconds.",
@@ -1579,8 +1681,6 @@ class TransformationsEnergy:
 
         
 
-
-    
     def get_strategy(self,
         strat: Union[int, str, None],
         field_strategy_name: str = "strategy",
@@ -1677,7 +1777,7 @@ class TransformationsEnergy:
                 np.put(vec_implementation_ramp_max_capacity, dict_values_to_inds.get(k), k)
 
         return vec_implementation_ramp_max_capacity 
-
+    
 
 
     def _log(self,
@@ -1711,18 +1811,57 @@ class TransformationsEnergy:
     ###                                      ###
     ############################################
 
+    ##########################################################
+    #    BASELINE - TREATED AS TRANSFORMATION TO INPUT DF    #
+    ##########################################################
+    """
+    NOTE: needed for certain modeling approaches; e.g., preventing new hydro 
+        from being built. The baseline can be preserved as the input DataFrame 
+        by the Transformation as a passthrough (e.g., return input DataFrame) 
+
+    NOTE: modifications to input variables should ONLY affect Energy variables
+    """
+
+    def transformation_en_baseline(self,
+        df_input: pd.DataFrame,
+        strat: Union[int, None] = None,
+    ) -> pd.DataFrame:
+        """
+        Implement the "Baseline" from which other transformations deviate 
+            (ENERGY only)
+        """
+        # NOTE: SET TO PULL FROM CONFIGURATION
+        cats_to_cap = ["pp_hydropower"]
+
+        df_out = self.transformation_support_entc_change_msp_max(
+            df_input,
+            cats_to_cap,
+            strat = strat
+        )
+
+        return df_out
+
+
+
     ##############################
     #    CCSQ TRANSFORMATIONS    #
     ##############################
 
     def transformation_ccsq_increase_air_capture(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "Increase Direct Air Capture" CCSQ transformation on input 
             DataFrame df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+
         df_strat_cur = adt.transformation_ccsq_increase_direct_air_capture(
             df_input,
             50,
@@ -1740,15 +1879,21 @@ class TransformationsEnergy:
     ##############################
     #    ENTC TRANSFORMATIONS    #
     ##############################
-
+    
     def transformation_entc_least_cost(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "Least Cost" ENTC transformation on input DataFrame
             df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
         df_strat_cur = adt.transformation_entc_least_cost_solution(
             df_input,
             self.vec_implementation_ramp,
@@ -1763,13 +1908,20 @@ class TransformationsEnergy:
 
 
     def transformation_entc_reduce_transmission_losses(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "Reduce Transmission Losses" ENTC transformation on input 
             DataFrame df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
         df_strat_cur = adt.transformation_entc_specify_transmission_losses(
             df_input,
             0.06,
@@ -1777,7 +1929,7 @@ class TransformationsEnergy:
             self.model_attributes,
             self.model_electricity,
             field_region = self.key_region,
-            strategy_id = strat
+            strategy_id = strat,
         )
 
         return df_strat_cur
@@ -1785,13 +1937,19 @@ class TransformationsEnergy:
 
 
     def transformation_entc_renewables_target(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "renewables target" transformation (shared repeatability),
             which includes 95% renewable energy target and green hydrogen
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
 
         df_strat_cur = adt.transformation_entc_renewable_target(
             df_input,
@@ -1810,8 +1968,109 @@ class TransformationsEnergy:
 
 
 
+    def transformation_support_entc_change_msp_max(self,
+        df_input: Union[pd.DataFrame, None],
+        cats_to_cap: Union[List[str], None],
+        strat: Union[int, None] = None,
+        **kwargs,
+    ) -> pd.DataFrame:
+        """
+        Implement a transformation for the baseline to resolve constraint
+            conflicts between TotalTechnologyAnnualActivityUpperLimit/
+            TotalTechnologyAnnualActivityLowerLimit if MinShareProduction is 
+            Specified. 
+
+        This transformation will turn on the MSP Max method in ElectricEnergy,
+            which will cap electric production (for a given technology) at the 
+            value estimated for the last non-engaged time period. 
+            
+        E.g., suppose a technology has the following estimated electricity 
+            production (estimated endogenously and excluding demands for ENTC) 
+            and associated value of msp_max (stored in the "Maximum Production 
+            Increase Fraction to Satisfy MinShareProduction Electricity" 
+            SISEPUEDE model variable):
+
+            time_period     est. production     msp_max
+                            implied by MSP     
+            -----------     ---------------     -------
+            0               10                  -999
+            1               10.5                -999
+            2               11                  -999
+            3               11.5                -999
+            4               12                  0
+            .
+            .
+            .
+            n - 2           23                  0
+            n - 1           23.1                0
+
+            Then the MSP for this technology would be adjusted to never exceed 
+            the value of 11.5, which was found at time_period 3. msp_max = 0
+            means that a 0% increase is allowable in the MSP passed to NemoMod,
+            so the specified MSP trajectory (which is passed to NemoMod) is 
+            adjusted to reflect this change.
+        
+        NOTE: Only the *first value* after that last non-specified time period
+            affects this variable. Using the above table as an example, entering 
+            0 in time_period 4 and 1 in time_period 5 means that 0 is used for 
+            all time_periods on and after 4.
+        
+
+        Function Arguments
+        ------------------
+        - df_input: input data frame containing baseline trajectories
+
+        Keyword Arguments
+        -----------------
+        - cats_to_cap: list of categories to cap using the transformation
+            implementation vector self.vec_implementation_ramp. If None, 
+            defaults to pp_hydropower
+        - strat: strategy number to pass
+        - **kwargs: passed to ade.transformations_general()
+        """
+       
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+
+        # CHECK CATEGORIES TO CAP
+
+        cats_to_cap = (
+            ["pp_hydropower"]
+            if cats_to_cap is None
+            else cats_to_cap
+        )
+        cats_to_cap = [x for x in self.attribute_technology.key_values if x in cats_to_cap]
+        if cats_to_cap is None:
+            return None
+
+        # build dictionary if valid
+        dict_cat_to_vector = dict(
+            (x, self.vec_msp_resolution_cap)
+            for x in cats_to_cap
+        )
+
+
+        # SET UP INPUT DICTIONARY
+
+        df_out = adt.transformation_entc_change_msp_max(
+            df_input,
+            dict_cat_to_vector,
+            self.model_electricity,
+            drop_flag = self.model_electricity.drop_flag_tech_capacities,
+            vec_ramp = self.vec_implementation_ramp,
+            strategy_id = strat,
+            **kwargs
+        )
+ 
+        return df_out
+
+
+
     def transformation_support_entc_clean_grid(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
         include_hydrogen = True,
     ) -> pd.DataFrame:
@@ -1821,6 +2080,13 @@ class TransformationsEnergy:
             hydrogen. Shared across numerous ENTC and EN functions. Set
             `include_hydrogen = False` to exclude the green hydrogen component.
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
         # ENTC: 95% of today's fossil-fuel electricity is generated by renewables in 2050
         df_strat_cur = self.transformation_entc_renewables_target(
             df_input,
@@ -1839,13 +2105,19 @@ class TransformationsEnergy:
 
 
     def transformation_support_entc_green_hydrogen(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement "green hydrogen" transformation requirements by forcing at 
             least 95% of hydrogen production to come from electrolysis.
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
 
         df_strat_cur = adt.transformation_entc_hydrogen_electrolysis(
             df_input,
@@ -1866,13 +2138,20 @@ class TransformationsEnergy:
     ##############################
         
     def transformation_fgtv_maximize_flaring(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "Maximize Flaring" FGTV transformation on input DataFrame
             df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
         df_strat_cur = adt.transformation_fgtv_maximize_flaring(
             df_input,
             0.8, 
@@ -1888,13 +2167,20 @@ class TransformationsEnergy:
 
 
     def transformation_fgtv_minimize_leaks(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "Minimize Leaks" FGTV transformation on input DataFrame
             df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
         df_strat_cur = adt.transformation_fgtv_reduce_leaks(
             df_input,
             0.8, 
@@ -1914,7 +2200,7 @@ class TransformationsEnergy:
     ##############################
 
     def transformation_inen_fuel_switch_high_temp(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
@@ -1922,6 +2208,13 @@ class TransformationsEnergy:
             hydrogen and electricity" INEN transformation on input DataFrame 
             df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
         df_strat_cur = adt.transformation_inen_shift_modvars(
             df_input,
             2*self.frac_inen_high_temp_elec_hydg,
@@ -1943,7 +2236,7 @@ class TransformationsEnergy:
 
 
     def transformation_inen_fuel_switch_low_and_high_temp(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
@@ -1954,6 +2247,13 @@ class TransformationsEnergy:
             as a composition due to the electricity shift in high-heat 
             categories)
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
         # set up fractions 
         frac_shift_hh_elec = self.frac_inen_low_temp_elec + self.frac_inen_high_temp_elec_hydg
         frac_shift_hh_elec /= self.frac_inen_shift_denom
@@ -2001,13 +2301,20 @@ class TransformationsEnergy:
 
 
     def transformation_inen_fuel_switch_low_temp_to_heat_pump(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "Fuel switch low-temp thermal processes to industrial heat 
             pumps" INEN transformation on input DataFrame df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
         df_strat_cur = adt.transformation_inen_shift_modvars(
             df_input,
             self.frac_inen_low_temp_elec,
@@ -2027,13 +2334,20 @@ class TransformationsEnergy:
 
 
     def transformation_inen_maximize_efficiency_energy(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "Maximize Industrial Energy Efficiency" INEN 
             transformation on input DataFrame df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
         df_strat_cur = adt.transformation_inen_maximize_energy_efficiency(
             df_input,
             0.3, 
@@ -2049,13 +2363,20 @@ class TransformationsEnergy:
 
 
     def transformation_inen_maximize_efficiency_production(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "Maximize Industrial Production Efficiency" INEN 
             transformation on input DataFrame df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
         df_strat_cur = adt.transformation_inen_maximize_production_efficiency(
             df_input,
             0.4, 
@@ -2075,13 +2396,20 @@ class TransformationsEnergy:
     ##############################
 
     def transformation_scoe_fuel_switch_electrify(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "Switch to electricity for heat using heat pumps, electric 
             stoves, etc." INEN transformation on input DataFrame df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
         df_strat_cur = adt.transformation_scoe_electrify_category_to_target(
             df_input,
             0.95,
@@ -2097,13 +2425,20 @@ class TransformationsEnergy:
 
 
     def transformation_scoe_reduce_heat_energy_demand(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "Reduce end-use demand for heat energy by improving 
             building shell" SCOE transformation on input DataFrame df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
         df_strat_cur = adt.transformation_scoe_reduce_demand_for_heat_energy(
             df_input,
             0.5,
@@ -2119,13 +2454,20 @@ class TransformationsEnergy:
 
 
     def transformation_scoe_increase_applicance_efficiency(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "Increase appliance efficiency" SCOE transformation on 
             input DataFrame df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
         df_strat_cur = adt.transformation_scoe_reduce_demand_for_appliance_energy(
             df_input,
             0.5,
@@ -2152,6 +2494,12 @@ class TransformationsEnergy:
         Implement the "Reduce Demand" TRDE transformation on input DataFrame
             df_trde
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
 
         df_out = adt.transformation_trde_reduce_demand(
             df_trde,
@@ -2168,13 +2516,19 @@ class TransformationsEnergy:
 
 
     def transformation_trns_electrify_road_light_duty(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "Electrify Light-Duty" TRNS transformation on input 
             DataFrame df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
 
         df_out = adt.transformation_trns_fuel_shift_to_target(
             df_input,
@@ -2197,13 +2551,20 @@ class TransformationsEnergy:
     
     
     def transformation_trns_electrify_rail(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "Electrify Rail" TRNS transformation on input DataFrame
             df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
         model_energy = self.model_energy
 
         df_out = adt.transformation_trns_fuel_shift_to_target(
@@ -2227,13 +2588,20 @@ class TransformationsEnergy:
     
     
     def transformation_trns_fuel_switch_maritime(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "Fuel-Swich Maritime" TRNS transformation on input 
             DataFrame df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
         model_energy = self.model_energy
 
         # transfer 70% of diesel + gasoline to hydrogen
@@ -2281,13 +2649,20 @@ class TransformationsEnergy:
     
     
     def transformation_trns_fuel_switch_road_medium_duty(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "Fuel-Switch Medium Duty" TRNS transformation on input 
             DataFrame df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
         model_energy = self.model_energy
 
         # transfer 70% of diesel + gasoline to electricity
@@ -2335,13 +2710,20 @@ class TransformationsEnergy:
 
     
     def transformation_trns_increase_efficiency_electric(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "Increase Electric Efficiency" TRNS transformation on 
             input DataFrame df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
         df_out = adt.transformation_trns_increase_energy_efficiency_electric(
             df_input,
             0.25, 
@@ -2357,13 +2739,20 @@ class TransformationsEnergy:
 
 
     def transformation_trns_increase_efficiency_non_electric(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "Increase Non-Electric Efficiency" TRNS transformation on 
             input DataFrame df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
         df_out = adt.transformation_trns_increase_energy_efficiency_non_electric(
             df_input,
             0.25, 
@@ -2379,13 +2768,19 @@ class TransformationsEnergy:
 
 
     def transformation_trns_increase_occupancy_light_duty(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "Increase Vehicle Occupancy" TRNS transformation on input 
             DataFrame df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
 
         df_out = adt.transformation_trns_increase_vehicle_occupancy(
             df_input,
@@ -2402,13 +2797,20 @@ class TransformationsEnergy:
 
 
     def transformation_trns_mode_shift_freight(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "Mode Shift Freight" TRNS transformation on input 
             DataFrame df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
         df_out = adt.transformation_general(
             df_input,
             self.model_attributes,
@@ -2434,13 +2836,19 @@ class TransformationsEnergy:
 
 
     def transformation_trns_mode_shift_public_private(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "Mode Shift Passenger Vehicles to Others" TRNS 
             transformation on input DataFrame df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
 
         df_out = adt.transformation_general(
             df_input,
@@ -2469,13 +2877,19 @@ class TransformationsEnergy:
     
 
     def transformation_trns_mode_shift_regional(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "Mode Shift Regional Travel" TRNS transformation on input 
             DataFrame df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
 
         df_out = adt.transformation_general(
             df_input,

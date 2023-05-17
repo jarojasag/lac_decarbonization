@@ -25,7 +25,7 @@ from typing import *
 
 def get_time_period(
     model_attributes: ma.ModelAttributes,
-    return_type: str = "max"
+    return_type: str = "max",
 ) -> int:
     """
     Get max or min time period using model_attributes. Set return_type = "max"
@@ -46,7 +46,7 @@ def transformation_general(
     field_region: str = "nation",
     model_energy: Union[me.NonElectricEnergy, None] = None,
     regions_apply: Union[List[str], None] = None,
-    strategy_id: Union[int, None] = None
+    strategy_id: Union[int, None] = None,
 ) -> pd.DataFrame:
     """
     Generalized function to implement some common transformations. Many other
@@ -530,6 +530,134 @@ def transformation_ccsq_increase_direct_air_capture(
 #    ENERGY TECHNOLOGY TRANSFORMATIONS    #
 ###########################################
 
+def transformation_entc_change_msp_max(
+    df_input: pd.DataFrame,
+    dict_cat_to_vector: Dict[str, float],
+    model_electricity: ml.ElectricEnergy,
+    drop_flag: Union[int, float, None] = None,
+    vec_ramp: Union[np.ndarray, None] = None,
+    **kwargs
+) -> pd.DataFrame:
+    """
+    Implement a transformation for the baseline to resolve constraint
+        conflicts between TotalTechnologyAnnualActivityUpperLimit/
+        TotalTechnologyAnnualActivityLowerLimit if MinShareProduction is 
+        Specified. 
+
+    This transformation will turn on the MSP Max method in ElectricEnergy,
+        which will cap electric production (for a given technology) at the 
+        value estimated for the last non-engaged time period. 
+        
+    E.g., suppose a technology has the following estimated electricity 
+        production (estimated endogenously and excluding demands for ENTC) 
+        and associated value of msp_max (stored in the "Maximum Production 
+        Increase Fraction to Satisfy MinShareProduction Electricity" 
+        SISEPUEDE model variable):
+
+        time_period     est. production     msp_max
+                        implied by MSP     
+        -----------     ---------------     -------
+        0               10                  -999
+        1               10.5                -999
+        2               11                  -999
+        3               11.5                -999
+        4               12                  0
+        .
+        .
+        .
+        n - 2           23                  0
+        n - 1           23.1                0
+
+        Then the MSP for this technology would be adjusted to never exceed 
+        the value of 11.5, which was found at time_period 3. msp_max = 0
+        means that a 0% increase is allowable in the MSP passed to NemoMod,
+        so the specified MSP trajectory (which is passed to NemoMod) is 
+        adjusted to reflect this change.
+    
+    NOTE: Only the *first value* after that last non-specified time period
+        affects this variable. Using the above table as an example, entering 
+        0 in time_period 4 and 1 in time_period 5 means that 0 is used for 
+        all time_periods on and after 4.
+    
+    NOTE: both dict_cat_to_vector and vec_ramp cannot be None. If both are None,
+        returns df_input
+
+    Function Arguments
+    ------------------
+    - df_input: input data frame containing baseline trajectories
+    - dict_cat_to_vector: dictionary mapping a technology category to two an 
+        input vector. The vector uses a drop flag to (generally -999) to 
+        identify time periods that are not subject to an MSP Max Prod; other 
+        values greater than 0 are used to identify the maximum deviation 
+        from the *last time period with a non-drop flag*, entered as a 
+        proportion.
+    - model_electricity: Electricity and Fuel Production model used to call 
+        variables
+
+    Keyword Arguments
+    -----------------
+    - drop_flag: value in 
+        model_electricity.modvar_entc_max_elec_prod_increase_for_msp used to 
+        signal the presence of no constraint. Defaults to 
+        model_electricity.drop_flag_tech_capacities if None
+    - vec_ramp: ramp vec used for implementation
+        * NOTE: if dict_cat_to_vector, will defaulto cap hydro based on the 
+            implementation schedule. If both 
+    - **kwargs: passed to ade.transformations_general()
+    """
+    if (not isinstance(dict_cat_to_vector, dict)) & (not sf.islistlike(vec_ramp)):
+        return df_input
+
+    # initialize some key components
+    drop_flag = model_electricity.drop_flag_tech_capacities if not sf.isnumber(drop_flag) else drop_flag
+    modvar_msp_max = model_electricity.modvar_entc_max_elec_prod_increase_for_msp
+
+    # check for variables and initialize fields_check as drops
+    model_attributes = model_electricity.model_attributes
+    fields_check = model_attributes.build_varlist(None, modvar_msp_max)
+    df_out = df_input.copy()
+    df_out[fields_check] = drop_flag
+    
+
+    # default specification is to cap hydro (no hydropower growth)
+    vec_msp = (
+        np.array([(drop_flag if (x == 0) else 0) for x in vec_ramp])
+        if vec_ramp is not None
+        else None
+    )
+    dict_cat_to_vector = (
+        {
+            "pp_hydropower": vec_msp
+        }
+        if not isinstance(dict_cat_to_vector, dict)
+        else dict_cat_to_vector
+    )
+
+    for cat, vec in dict_cat_to_vector.items():
+        
+        dict_trans = {
+            modvar_msp_max: {
+                "bounds": (drop_flag, np.inf),
+                "categories": [cat],
+                "magnitude": vec,
+                "magnitude_type": "vector_specification",
+                "vec_ramp": vec
+            }
+        }
+        
+        # call general transformation
+        df_out = transformation_general(
+            df_out,
+            model_attributes,
+            dict_trans,
+            model_energy = model_electricity.model_energy,
+            **kwargs
+        )
+
+    return df_out
+
+
+
 def transformation_entc_hydrogen_electrolysis(
     df_input: pd.DataFrame,
     magnitude: float,
@@ -543,7 +671,7 @@ def transformation_entc_hydrogen_electrolysis(
     ],
     field_region: str = "nation",
     **kwargs
-) -> pd.DataFrame:
+    ) -> pd.DataFrame:
     """
     Implement the "Green hydrogen" transformation.
 
@@ -578,7 +706,7 @@ def transformation_entc_hydrogen_electrolysis(
     if len(cats_to_apply) == 0:
         return df_input
 
-   
+
     #vec_implementation_ramp_short = sf.vec_bounds(vec_ramp/min(vec_ramp[vec_ramp != 0]), (0, 1))
     vec_implementation_ramp_short = sf.vec_bounds(vec_ramp*2, (0, 1))
 

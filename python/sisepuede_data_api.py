@@ -26,7 +26,8 @@ import warnings
 
 class SISEPUEDEBatchDataRepository:
     """
-    Interact with 
+    Interact with the sisepuede_data git hub repository (read and write) using
+        SISEPUEDE model variables.
 
     Initialization Arguments
     ------------------------

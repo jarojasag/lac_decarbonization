@@ -693,19 +693,22 @@ class Transformation:
             func = [x for x in func if callable(x)]
 
             if len(func) > 0:  
-
+                
+                # define a dummy function and assign
                 def function_out(
-                    x: Any, 
+                    *args, 
                     **kwargs
                 ) -> Any:
                     f"""
                     Composite Transformation function for {self.name}
                     """
-                    out = (
-                        x.copy() 
-                        if isinstance(x, pd.DataFrame) | isinstance(x, np.ndarray)
-                        else x
-                    )
+                    out = None
+                    if len(args) > 0:
+                        out = (
+                            args[0].copy() 
+                            if isinstance(args[0], pd.DataFrame) | isinstance(args[0], np.ndarray)
+                            else args[0]
+                        )
 
                     for f in func:
                         out = f(out, **kwargs)
@@ -713,7 +716,6 @@ class Transformation:
                     return out
 
                 function = function_out
-
 
         elif callable(func):
             function = func
@@ -737,6 +739,9 @@ class Transformation:
         Initialize the transformation name. Sets the following
             properties:
 
+            * self.baseline 
+                - bool indicating whether or not it represents the baseline 
+                    strategy
             * self.id
             * self.name
         """
@@ -754,7 +759,18 @@ class Transformation:
 
         id_num = id_num if (id_num is not None) else -1
 
+        # check baseline
+        baseline = (
+            attr_strategy.field_maps.get(f"{attr_strategy.key}_to_baseline_{attr_strategy.key}")
+            if attr_strategy is not None
+            else None
+        )
+        baseline = (baseline.get(id_num, 0) == 1)
 
+
+        ##  set properties
+
+        self.baseline = bool(baseline)
         self.id = int(id_num)
         self.name = str(name)
         
