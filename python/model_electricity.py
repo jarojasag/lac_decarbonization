@@ -452,16 +452,26 @@ class ElectricEnergy:
             "gurobi": "Gurobi",
             "highs": "HiGHS"
         }
+        self.dict_julia_package_to_solver = sf.reverse_dict(self.dict_solver_to_julia_package)
 
-        # check solver
-        self.solver = self.model_attributes.configuration.get("nemomod_solver") if (solver is None) else solver
-        sf.check_set_values([self.solver], self.model_attributes.configuration.valid_solver)
-        if self.solver not in self.dict_solver_to_julia_package.keys():
-            self._log(f"Solver '{self.solver}' not found in _initialize_julia(); check self.dict_solver_to_julia_package to ensure it lines up with configuration.valid_solver. Resetting to best available...", type_log = "warning")
+        # check solver specification in configuration
+        solver = self.model_attributes.configuration.get("nemomod_solver") if (solver is None) else solver
+        sf.check_set_values([solver], self.model_attributes.configuration.valid_solver)
+        if solver not in self.dict_solver_to_julia_package.keys():
+            self._log(f"""
+                Solver '{solver}' not found in _initialize_julia(); 
+                check self.dict_solver_to_julia_package to ensure it lines up with 
+                configuration.valid_solver. Resetting to best available...""", 
+                type_log = "warning"
+            )
             solver = "ANYSOLVER" # non-existant solver; SISEPUEDEPJSF.check_solvers will check for best available
 
+        # check solver specification in julia, and reassign solver to dependent on Julia's specification
         self.julia_main.include(self.fp_pyjulia_support_functions)
-        self.solver_package = self.julia_main.SISEPUEDEPJSF.check_solvers(self.dict_solver_to_julia_package.get(self.solver))
+        self.solver_package = self.julia_main.SISEPUEDEPJSF.check_solvers(
+            self.dict_solver_to_julia_package.get(solver)
+        )
+        self.solver = self.dict_julia_package_to_solver.get(self.solver_package)
 
         # load
         try:
@@ -2571,8 +2581,12 @@ class ElectricEnergy:
         subsec_name_enfu = self.model_attributes.subsec_name_enfu
         subsec_name_entc = self.model_attributes.subsec_name_entc
         
-        # retrieve input MSP that has been adjusted to the presene of max production limits
-        arr_entc_msp, arr_entc_activity_limits = self.get_entc_maxprod_increase_adjusted_msp(
+        # retrieve input MSP that has been adjusted to the presence of max production limits
+        (
+            arr_entc_msp, 
+            arr_entc_activity_limits,
+            vec_frac_msp_accounted_for_by_growth_limit
+        ) = self.get_entc_maxprod_increase_adjusted_msp(
             df_elec_trajectories,
             adjust_free_msps_in_response = True,
             attribute_fuel = attribute_fuel,
@@ -2582,51 +2596,57 @@ class ElectricEnergy:
             modvar_msp = modvar_msp,
             tuple_enfu_production_and_demands = tuple_enfu_production_and_demands,
         )
+
+        global tmp
+        global tmp2
+        tmp = arr_entc_msp
+        tmp2 = vec_frac_msp_accounted_for_by_growth_limit
         
         # initialize an output dictionary mapping each tech to fuel
         dict_output_tech_to_fuel = {}
         
 
         ##  GET ADJUSTMENTS FOR NON-ELECTRIC FUELS (SPECIFIED BY InputActivityRatio/OutputActivityRatio)
-        
+        # 20230522: use vec_frac_msp_accounted_for_by_growth_limit + arr_entc_msp.sum(axis = 1) to determine if 
+        #  import renmorm needs to occur 
         for fuel in dict_fuel_cats.keys():
 
-            # filter on output activity ratio (oar)
+            # filter on output activity ratio (oar) -- skip if modvar not found
             dict_iar_oar_var = dict_fuel_cats.get(fuel)
             modvar_oar = dict_iar_oar_var.get(self.key_oar)
+            if modvar_oar is None:
+                continue
 
-            if modvar_oar is not None:
-                
-                # check categories
-                cats_entc = self.model_attributes.get_variable_categories(modvar_oar)
-                cats_shared = set(cats_entc_msp) & set(cats_entc)  
-                
-                if len(cats_shared) > 0:
-                    
-                    cats_shared = sorted(list(cats_shared))
-                    dict_output_tech_to_fuel.update(
-                        dict((x, fuel) for x in cats_shared)
-                    )
-                    
-                    # get some indices
-                    ind_enfu = attribute_fuel.get_key_value_index(fuel)
-                    inds_entc = [attribute_technology.get_key_value_index(x) for x in cats_shared]
+            # check categories -- skip if none are shared
+            cats_entc = self.model_attributes.get_variable_categories(modvar_oar)
+            cats_shared = set(cats_entc_msp) & set(cats_entc)  
+            if len(cats_shared) == 0:
+                continue
+            
+            cats_shared = sorted(list(cats_shared))
+            dict_output_tech_to_fuel.update(
+                dict((x, fuel) for x in cats_shared)
+            )
+            
+            # get some indices
+            ind_enfu = attribute_fuel.get_key_value_index(fuel)
+            inds_entc = [attribute_technology.get_key_value_index(x) for x in cats_shared]
 
-                    # setup normalization of input fractions, but only apply if the total exceeds 1
-                    arr_entc_msp_fracs_specified = arr_entc_msp[:, inds_entc]
-                    max_entc_msp_fracs_norm = max(
-                        sf.vec_bounds(
-                            arr_entc_msp_fracs_specified.sum(axis = 1),
-                            (1, np.inf)
-                        )
-                    )
-                    arr_entc_msp_fracs_specified /= max_entc_msp_fracs_norm
-                    
-                    # get import fraction and re-normalize again
-                    arr_entc_msp[:, inds_entc] = sf.do_array_mult(
-                        arr_entc_msp_fracs_specified,
-                        1 - arr_enfu_import_fractions_adj[:, ind_enfu]
-                    )
+            # setup normalization of input fractions, but only apply if the total exceeds 1
+            arr_entc_msp_fracs_specified = arr_entc_msp[:, inds_entc]
+            max_entc_msp_fracs_norm = max(
+                sf.vec_bounds(
+                    arr_entc_msp_fracs_specified.sum(axis = 1),
+                    (1, np.inf)
+                )
+            )
+            arr_entc_msp_fracs_specified /= max_entc_msp_fracs_norm
+            
+            # get import fraction and re-normalize again
+            arr_entc_msp[:, inds_entc] = sf.do_array_mult(
+                arr_entc_msp_fracs_specified,
+                1 - arr_enfu_import_fractions_adj[:, ind_enfu]
+            )
 
 
         ##  NEXT, ADJUST SPECIFICATIONS FOR ELECTRICITY
@@ -2640,7 +2660,9 @@ class ElectricEnergy:
         # setup normalization of input fractions, but only apply if the total exceeds 1
         arr_entc_msp_fracs_specified = arr_entc_msp[:, inds_entc]
 
+
         # CHANGED FROM MAX OF VECTOR TO WHOLE VECTOR 2023042027
+
         vec_entc_div = sf.vec_bounds(
             arr_entc_msp_fracs_specified.sum(axis = 1),
             (1, np.inf)
@@ -2719,14 +2741,21 @@ class ElectricEnergy:
         """
         Adjust the MinShareProduction input table to allow for the prevention of 
             increases in production to satisfy exogenously specified 
-            MinShareProduction. Returns a tuple of two NumPy arrays:
+            MinShareProduction. Returns a tuple of three NumPy arrays:
 
-            (arr_entc_msp, arr_entc_activity_limits)
+            (
+                arr_entc_msp, 
+                arr_entc_activity_limits,
+                vec_frac_msp_accounted_for_by_growth_limit
+            )
+
 
             where `arr_entc_activity_limits` is None if there are no MSPs 
-            entered. `arr_entc_activity_limits` gives an array of activity 
+            entered; `arr_entc_activity_limits` gives an array of activity 
             limits that can be passed to TotalTechnologyAnnualActivityLowerLimit
-            and TotalTechnologyAnnualActivityUpperLimit.
+            and TotalTechnologyAnnualActivityUpperLimit; and 
+            `vec_frac_msp_accounted_for_by_growth_limit` gives the fraction of MSP 
+            accountred for by the new growth limit.
             
         Example use case: if a baseline relies on the specification of 
             MinShareProduction, yet some technology will not be built after some
@@ -2749,7 +2778,7 @@ class ElectricEnergy:
         - adjust_free_msps_in_response: MSP trajectories that are not subject to
             no-growth restrictions--or "Free MSPs"--can be adjusted to preserve
             the aggregate share of production that is accounted for by all MSP
-            specifications (for a given fuel). If False, Free MSPs are no 
+            specifications (for a given fuel). If False, Free MSPs are not 
             adjusted.
         - attribute_fuel: AttributeTable for fuel
         - attribute_technology: AttributeTable used to denote technologies with 
@@ -2867,10 +2896,12 @@ class ElectricEnergy:
             if self.key_mpi_frac_msp in v.keys()
         ]
         
-        # build activity limits to pass and initialize index storage for overwriting MSPs with 0 if build_for_activity_limit
+        # build activity limits to pass & initialize index storage for overwriting MSPs with 0 if build_for_activity_limit
         arr_entc_activity_limits = np.ones(arr_entc_msp.shape)*drop_flag
         w_set_to_no_growth = [[], []]
         
+        
+
         ##  LOOP OVER FUELS ASSOCIATED WITH PRODUCTION TO MODIFY MSPS
 
         for fuel in fuels_adj:
@@ -2880,66 +2911,73 @@ class ElectricEnergy:
             cats_no_growth = [x for x in cats_modvar if x in dict_entc_cat_to_position_base_prod_est.keys()]
             cats_response = [x for x in cats_modvar if x not in cats_no_growth]
 
+            # initialize fraction accounted for by MSP Max applicable categories
+            vec_frac_msp_accounted_for_by_growth_limit = np.zeros(len(df_elec_trajectories))
+
             # get column indices of categories that won't grow + those that respond & check sum of MSPs that are subject to non-growth
             inds_no_growth = [attribute_technology.get_key_value_index(x) for x in cats_no_growth]
             inds_response = [attribute_technology.get_key_value_index(x) for x in cats_response]
             inds_all = inds_no_growth + inds_response
             
-            if len(inds_no_growth) > 0:
+            if len(inds_no_growth) == 0:
+                continue
+
+            # get column totals of no-growth - only need to modify the array if there are no-growth ENTC cats associated with this fuel
+            vec_entc_msp_no_growth = arr_entc_msp[:, inds_no_growth].sum(axis = 1).copy()
+            vec_entc_msp_all = arr_entc_msp[:, inds_all].sum(axis = 1).copy()
+
+            if np.max(vec_entc_msp_no_growth) == 0:
+                continue
+
+            # get projected demand for the fuel
+            ind_enfu_fuel = attribute_fuel.get_key_value_index(fuel)
+            vec_prod_est_cur_fuel = tuple_enfu_production_and_demands[4][:, ind_enfu_fuel]#HEREHERE
+
+            # ordered by cats_no_growth
+            row_inds_no_growth = [dict_entc_cat_to_position_base_prod_est.get(x) for x in cats_no_growth]
+
+            for i, j in enumerate(inds_no_growth):
+
+                # get the estimated production in period tp(row)
+                row = row_inds_no_growth[i]
+                est_prod_floor = vec_prod_est_cur_fuel[row]*arr_entc_msp[row, j]
+
+                # next, get estimated fraction associated with preserving this estimated production, but use *current* MSP as uppber bound
+                fracs_new = est_prod_floor/vec_prod_est_cur_fuel[(row + 1):]
+                fracs_new *= 1 + sf.vec_bounds(arr_entc_maxprod_msp_increase[(row + 1):, j], (0, np.inf))
+                bounds = [(0.0, x) for x in arr_entc_msp[(row + 1):, j]]
+                fracs_new = sf.vec_bounds(fracs_new, bounds)
+
+                # overwrite MSP and add to activity limit output
+                arr_entc_msp[(row + 1):, j] = fracs_new
+                arr_entc_activity_limits[(row + 1):, j] = fracs_new*vec_prod_est_cur_fuel[(row + 1):]
+                vec_frac_msp_accounted_for_by_growth_limit[(row + 1):] += fracs_new
+
+                # update indices
+                r = list(range(row + 1, len(arr_entc_msp)))
+                w_set_to_no_growth[0] += r
+                w_set_to_no_growth[1] += list([j for x in r])
+
+            # next, check if response MSPs need to be re-scaled to preserve aggregate production shares
+            if adjust_free_msps_in_response:
+
+                vec_entc_msp_no_growth_post_adj = arr_entc_msp[:, inds_no_growth].sum(axis = 1)
+                vec_entc_msp_all_post_adj = arr_entc_msp[:, inds_all].sum(axis = 1)
                 
-                # get column totals of no-growth - only need to modify the array if there are no-growth ENTC cats associated with this fuel
-                vec_entc_msp_no_growth = arr_entc_msp[:, inds_no_growth].sum(axis = 1).copy()
-                vec_entc_msp_all = arr_entc_msp[:, inds_all].sum(axis = 1).copy()
+                vec_scale_response = vec_entc_msp_all - vec_entc_msp_no_growth_post_adj
+                vec_scale_response /= vec_entc_msp_all - vec_entc_msp_no_growth
+                vec_scale_response = np.nan_to_num(vec_scale_response, 1.0, posinf = 1.0)
+                
+                for j in inds_response:
+                    arr_entc_msp[:, j] *= vec_scale_response
 
-                if np.max(vec_entc_msp_no_growth) > 0:
-
-                    # get projected demand for the fuel
-                    ind_enfu_fuel = attribute_fuel.get_key_value_index(fuel)
-                    vec_prod_est_cur_fuel = tuple_enfu_production_and_demands[4][:, ind_enfu_fuel]
-
-                    # ordered by cats_no_growth
-                    row_inds_no_growth = [dict_entc_cat_to_position_base_prod_est.get(x) for x in cats_no_growth]
-
-                    for i, j in enumerate(inds_no_growth):
-
-                        # get the estimated production in period tp(row)
-                        row = row_inds_no_growth[i]
-                        est_prod_floor = vec_prod_est_cur_fuel[row]*arr_entc_msp[row, j]
-
-                        # next, get estimated fraction associated with preserving this estimated production, but use *current* MSP as uppber bound
-                        fracs_new = est_prod_floor/vec_prod_est_cur_fuel[(row + 1):]
-                        fracs_new *= 1 + sf.vec_bounds(arr_entc_maxprod_msp_increase[(row + 1):, j], (0, np.inf))
-                        bounds = [(0.0, x) for x in arr_entc_msp[(row + 1):, j]]
-                        fracs_new = sf.vec_bounds(fracs_new, bounds)
-
-                        # overwrite MSP and add to activity limit output
-                        arr_entc_msp[(row + 1):, j] = fracs_new
-                        arr_entc_activity_limits[(row + 1):, j] = fracs_new*vec_prod_est_cur_fuel[(row + 1):]
-
-                        # update indices
-                        r = list(range(row + 1, len(arr_entc_msp)))
-                        w_set_to_no_growth[0] += r
-                        w_set_to_no_growth[1] += list([j for x in r])
-
-                    # next, check if response MSPs need to be re-scaled to preserve aggregate production shares
-                    if adjust_free_msps_in_response:
-                        
-                        vec_entc_msp_no_growth_post_adj = arr_entc_msp[:, inds_no_growth].sum(axis = 1)
-                        vec_entc_msp_all_post_adj = arr_entc_msp[:, inds_all].sum(axis = 1)
-                        
-                        vec_scale_response = vec_entc_msp_all - vec_entc_msp_no_growth_post_adj
-                        vec_scale_response /= vec_entc_msp_all - vec_entc_msp_no_growth
-                        vec_scale_response = np.nan_to_num(vec_scale_response, 1.0, posinf = 1.0)
-                        
-                        for j in inds_response:
-                            arr_entc_msp[:, j] *= vec_scale_response
-        
-    
         if build_for_activity_limit:
             arr_entc_msp[w_set_to_no_growth[0], w_set_to_no_growth[1]] = 0.0
 
-        # return MSP adjusted 
-        return arr_entc_msp, arr_entc_activity_limits
+        # return MSP adjusted, activity limits, and the fraction of MSP accountred for by the new growth limit
+        tup_out = arr_entc_msp, arr_entc_activity_limits, vec_frac_msp_accounted_for_by_growth_limit
+
+        return tup_out
 
 
 
@@ -3053,6 +3091,48 @@ class ElectricEnergy:
         scalar = self.model_attributes.get_energy_equivalent(units_source, self.units_energy_nemomod)
         
         return (scalar if (scalar is not None) else 1)
+    
+
+
+    def get_nemomod_optimizer(self,
+        solver: Union[str, None] = None,
+    ) -> "Pycall.jlwrap":
+        """
+        Retrieve the optimizer for NemoMod. Use to set any parameters 
+            related to the solver (e.g., NumericFocus in Gurobi)
+
+        Returns an optimizer object. 
+
+        NOTE: Update to read from a config
+
+        Keword Arguments
+        ------------------
+        - solver: string denoting solver to use. If None, defaults to 
+            self.solver
+        """
+        
+        # set optimizer
+        solver = self.solver if (solver is None) else solver
+        optimizer = self.julia_jump.Model(self.solver_module.Optimizer)
+
+        # set some generic properties
+        self.julia_jump.set_time_limit_sec(optimizer, self.solver_time_limit)
+        self.julia_jump.set_silent(optimizer)
+
+
+        ##  SOLVER SPECIFIC PROPERTIES (setup from config for later)
+
+        # gams/cplex parameters
+        if (solver == "gams_cplex"):
+            self.julia_jump.set_optimizer_attribute(optimizer, "Solver", "cplex")
+
+        # gurobi parameters            
+        if (solver == "gurobi"):
+            # see https://www.gurobi.com/documentation/9.5/refman/numericfocus.html#parameter:NumericFocus
+            self.julia_jump.set_optimizer_attribute(optimizer, "NumericFocus", 2)
+            #print(self.julia_base.propertynames(optimizer))
+
+        return optimizer
 
 
 
@@ -3223,7 +3303,6 @@ class ElectricEnergy:
 
 
 
-    ##  get variable cost of fuels (as dummy technologies) with prices based on volumetric energy density
     def get_variable_cost_fuels_volumetric_density(self,
         df_elec_trajectories: pd.DataFrame,
         regions: Union[List[str], None] = None,
@@ -7471,7 +7550,7 @@ class ElectricEnergy:
     
 
 
-    def update_ttal_dictionary_with_limit_from_msp(self,#HEREHERE
+    def update_ttal_dictionary_with_limit_from_msp(self,
         df_elec_trajectories: pd.DataFrame,
         dict_ttal: Union[Dict[str, pd.DataFrame], None],
         attribute_fuel: AttributeTable = None,
@@ -7553,7 +7632,11 @@ class ElectricEnergy:
 
 
         # retrieve input MSP and activity limit
-        arr_entc_msp, arr_entc_activity_limits = self.get_entc_maxprod_increase_adjusted_msp(
+        (
+            arr_entc_msp, 
+            arr_entc_activity_limits, 
+            vec_frac_msp_accounted_for_by_growth_limit
+        ) = self.get_entc_maxprod_increase_adjusted_msp(
             df_elec_trajectories,
             adjust_free_msps_in_response = True,
             attribute_fuel = attribute_fuel,
@@ -9168,13 +9251,8 @@ class ElectricEnergy:
         vector_calc_time_periods = self.model_attributes.configuration.get("nemomod_time_periods") if (vector_calc_time_periods is None) else [x for x in attr_time_period.key_values if x in vector_calc_time_periods]
         vector_calc_time_periods = self.transform_field_year_nemomod(vector_calc_time_periods)
 
-        # get the optimizer (must reset each time)
-        optimizer = self.julia_jump.Model(self.solver_module.Optimizer)
-        self.julia_jump.set_optimizer_attribute(optimizer, "Solver", "cplex") if (solver == "gams_cplex") else None
-        self.julia_jump.set_time_limit_sec(optimizer, self.solver_time_limit)
-        self.julia_jump.set_silent(optimizer)
-
-        # set up vars to save
+        # get the optimizer (must reset each time) and vars to save
+        optimizer = self.get_nemomod_optimizer(solver)
         vars_to_save = ", ".join(self.required_nemomod_output_tables)
 
         try:

@@ -635,29 +635,39 @@ class Transformation:
 
     Initialization Arguments
     ------------------------
-    - name: name of the transformation. Must be defined in 
-        attr_strategy.table[field_strategy_name"]
+    - code: strategy code associated with the transformation. Must be defined in 
+        attr_strategy.table[field_strategy_code]
     - func: the function associated with the transformation OR an ordered list 
         of functions representing compositional order, e.g., 
 
         [f1, f2, f3, ... , fn] -> fn(f{n-1}(...(f2(f1(x))))))
+
+    - attr_strategy: AttributeTable usd to define strategies from 
+        ModelAttributes
+
+    Keyword Arguments
+    -----------------
+    - field_strategy_code: field in attr_strategy.table containing the strategy
+        codes
+    - field_strategy_name: field in attr_strategy.table containing the strategy
+        name
     """
     
     def __init__(self,
-        name: str,
+        code: str,
         func: Union[Callable, List[Callable]],
         attr_strategy: Union[AttributeTable, None],
+        field_strategy_code: str = "strategy_code",
         field_strategy_name: str = "strategy",
     ):
         
         self._initialize_function(func)
-        self._initialize_name(
-            name, 
+        self._initialize_code(
+            code, 
             attr_strategy, 
+            field_strategy_code,
             field_strategy_name
         )
-        
-
         
     
     
@@ -673,7 +683,68 @@ class Transformation:
         )
 
         return val
+    
+
+
+
+
+    def _initialize_code(self,
+        code: str,
+        attr_strategy: Union[AttributeTable, None],
+        field_strategy_code: str,
+        field_strategy_name: str,
+    ) -> None:
+        """
+        Initialize the transformation name. Sets the following
+            properties:
+
+            * self.baseline 
+                - bool indicating whether or not it represents the baseline 
+                    strategy
+            * self.code
+            * self.id
+            * self.name
+        """
         
+        # initialize and check code/id num
+        id_num = (
+            attr_strategy.field_maps.get(f"{field_strategy_code}_to_{attr_strategy.key}")
+            if attr_strategy is not None
+            else None
+        )
+        id_num = id_num.get(code) if (id_num is not None) else -1
+
+        if id_num is None:
+            raise ValueError(f"Invalid strategy code '{code}' specified in support_classes.Transformation: strategy not found.")
+
+        id_num = id_num if (id_num is not None) else -1
+
+        # initialize and check name/id num
+        name = (
+            attr_strategy.field_maps.get(f"{attr_strategy.key}_to_{field_strategy_name}")
+            if attr_strategy is not None
+            else None
+        )
+        name = name.get(id_num) if (name is not None) else ""
+
+        # check baseline
+        baseline = (
+            attr_strategy.field_maps.get(f"{attr_strategy.key}_to_baseline_{attr_strategy.key}")
+            if attr_strategy is not None
+            else None
+        )
+        baseline = (baseline.get(id_num, 0) == 1)
+
+
+        ##  set properties
+
+        self.baseline = bool(baseline)
+        self.code = str(code)
+        self.id = int(id_num)
+        self.name = str(name)
+        
+        return None
+
     
     
     def _initialize_function(self,
@@ -728,53 +799,6 @@ class Transformation:
 
         return None
         
-        
-        
-    def _initialize_name(self,
-        name: str,
-        attr_strategy: Union[AttributeTable, None],
-        field_strategy_name: str,
-    ) -> None:
-        """
-        Initialize the transformation name. Sets the following
-            properties:
-
-            * self.baseline 
-                - bool indicating whether or not it represents the baseline 
-                    strategy
-            * self.id
-            * self.name
-        """
-        
-        # initialize and check name/id num
-        id_num = (
-            attr_strategy.field_maps.get(f"{field_strategy_name}_to_{attr_strategy.key}")
-            if attr_strategy is not None
-            else None
-        )
-        id_num = id_num.get(name) if (id_num is not None) else -1
-
-        if id_num is None:
-            raise ValueError(f"Invalid strategy name '{name}' specified in support_classes.Transformation: strategy not found.")
-
-        id_num = id_num if (id_num is not None) else -1
-
-        # check baseline
-        baseline = (
-            attr_strategy.field_maps.get(f"{attr_strategy.key}_to_baseline_{attr_strategy.key}")
-            if attr_strategy is not None
-            else None
-        )
-        baseline = (baseline.get(id_num, 0) == 1)
-
-
-        ##  set properties
-
-        self.baseline = bool(baseline)
-        self.id = int(id_num)
-        self.name = str(name)
-        
-        return None
         
 
 

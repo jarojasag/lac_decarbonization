@@ -555,7 +555,7 @@ class TransformationsEnergy:
         self.key_config_cats_entc_renewable = "categories_entc_renewable"
         self.key_config_cats_inen_high_heat = "categories_inen_high_heat",
         self.key_config_dict_entc_renewable_target_msp = "dict_entc_renewable_target_msp"
-        self.key_config_frac_inen_high_temp_elec_hydg = "frac_inen_low_temp_elec"
+        self.key_config_frac_inen_high_temp_elec_hydg = "frac_inen_high_temp_elec_hydg"
         self.key_config_frac_inen_low_temp_elec = "frac_inen_low_temp_elec"
         self.key_config_n_tp_ramp = "n_tp_ramp"
         self.key_config_vir_renewable_cap_delta_frac = "vir_renewable_cap_delta_frac"
@@ -718,43 +718,19 @@ class TransformationsEnergy:
         ##################
 
         self.baseline = sc.Transformation(
-            "Baseline NDP", 
+            "BASE", 
             self.transformation_en_baseline, 
             attr_strategy
         )
         all_transformations.append(self.baseline)
 
 
-        ##############
-        #    CCSQ    #
-        ##############
+        ####################
+        #    ENERGY ALL    #
+        ####################
 
-        self.ccsq_increase_air_capture = sc.Transformation(
-            "CCSQ: Increase direct air capture", 
-            self.transformation_ccsq_increase_air_capture, 
-            attr_strategy
-        )
-        all_transformations.append(self.ccsq_increase_air_capture)
-
-
-        self.ccsq_increase_air_capture_with_rep = sc.Transformation(
-            "CCSQ: Increase direct air capture with renewable energy production", 
-            [
-                self.transformation_ccsq_increase_air_capture,
-                self.transformation_support_entc_clean_grid
-            ],
-            attr_strategy
-        )
-        all_transformations.append(self.ccsq_increase_air_capture_with_rep)
-
-
-
-        ##############
-        #    ENTC    #
-        ##############
-
-        self.entc_all = sc.Transformation(
-            "EN: All Energy transformations", 
+        self.en_all = sc.Transformation(
+            "EN:ALL", 
             [
                 self.transformation_ccsq_increase_air_capture,
                 self.transformation_entc_reduce_transmission_losses,
@@ -782,11 +758,11 @@ class TransformationsEnergy:
             ], 
             attr_strategy
         )
-        all_transformations.append(self.entc_all)
+        all_transformations.append(self.en_all)
 
 
-        self.entc_bundle_efficiency = sc.Transformation(
-            "EN: Efficiency bundle", 
+        self.en_bundle_efficiency = sc.Transformation(
+            "EN:BUNDLE_EFFICIENCY", 
             [
                 self.transformation_inen_fuel_switch_low_temp_to_heat_pump,
                 self.transformation_inen_maximize_efficiency_energy,
@@ -798,11 +774,11 @@ class TransformationsEnergy:
             ], 
             attr_strategy
         )
-        all_transformations.append(self.entc_bundle_efficiency)
+        all_transformations.append(self.en_bundle_efficiency)
 
 
-        self.entc_bundle_efficiency_with_rep = sc.Transformation(
-            "EN: Efficiency bundle with renewable energy production", 
+        self.en_bundle_efficiency_with_rep = sc.Transformation(
+            "EN:BUNDLE_EFFICIENCY_REP", 
             [
                 self.transformation_inen_fuel_switch_low_temp_to_heat_pump,
                 self.transformation_inen_maximize_efficiency_energy,
@@ -815,11 +791,11 @@ class TransformationsEnergy:
             ], 
             attr_strategy
         )
-        all_transformations.append(self.entc_bundle_efficiency_with_rep)
+        all_transformations.append(self.en_bundle_efficiency_with_rep)
 
 
-        self.entc_bundle_fuel_switch = sc.Transformation(
-            "EN: Fuel switch bundle", 
+        self.en_bundle_fuel_switch = sc.Transformation(
+            "EN:BUNDLE_FUEL_SWITCH", 
             [
                 self.transformation_inen_fuel_switch_low_and_high_temp,
                 self.transformation_scoe_fuel_switch_electrify,
@@ -830,11 +806,11 @@ class TransformationsEnergy:
             ], 
             attr_strategy
         )
-        all_transformations.append(self.entc_bundle_fuel_switch)
+        all_transformations.append(self.en_bundle_fuel_switch)
 
 
-        self.entc_bundle_fuel_switch_with_rep = sc.Transformation(
-            "EN: Fuel switch bundle with renewable energy production", 
+        self.en_bundle_fuel_switch_with_rep = sc.Transformation(
+            "EN:BUNDLE_FUEL_SWITCH_REP", 
             [
                 self.transformation_inen_fuel_switch_low_and_high_temp,
                 self.transformation_scoe_fuel_switch_electrify,
@@ -846,11 +822,40 @@ class TransformationsEnergy:
             ], 
             attr_strategy
         )
-        all_transformations.append(self.entc_bundle_fuel_switch_with_rep)
+        all_transformations.append(self.en_bundle_fuel_switch_with_rep)
 
+
+
+        ##############
+        #    CCSQ    #
+        ##############
+
+        self.ccsq_increase_air_capture = sc.Transformation(
+            "CCSQ:INCREASE_CAPTURE", 
+            self.transformation_ccsq_increase_air_capture, 
+            attr_strategy
+        )
+        all_transformations.append(self.ccsq_increase_air_capture)
+
+
+        self.ccsq_increase_air_capture_with_rep = sc.Transformation(
+            "CCSQ:INCREASE_CAPTURE_REP", 
+            [
+                self.transformation_ccsq_increase_air_capture,
+                self.transformation_support_entc_clean_grid
+            ],
+            attr_strategy
+        )
+        all_transformations.append(self.ccsq_increase_air_capture_with_rep)
+
+
+
+        ##############
+        #    ENTC    #
+        ##############
 
         self.entc_least_cost = sc.Transformation(
-            "ENTC: Least cost solution", 
+            "ENTC:LEAST_COST", 
             self.transformation_entc_least_cost, 
             attr_strategy
         )
@@ -858,7 +863,7 @@ class TransformationsEnergy:
 
         
         self.entc_reduce_transmission_losses = sc.Transformation(
-            "ENTC: Reduce transmission losses", 
+            "ENTC:DEC_LOSSES", 
             self.transformation_entc_reduce_transmission_losses, 
             attr_strategy
         )
@@ -866,7 +871,7 @@ class TransformationsEnergy:
 
 
         self.entc_reduce_transmission_losses_with_rep = sc.Transformation(
-            "ENTC: Reduce transmission losses with renewable energy production",
+            "ENTC:DEC_LOSSES_REP",
             [
                 self.transformation_entc_reduce_transmission_losses,
                 self.transformation_support_entc_clean_grid
@@ -877,7 +882,7 @@ class TransformationsEnergy:
 
 
         self.entc_renewable_electricity = sc.Transformation(
-            "ENTC: 95% of electricity is generated by renewables in 2050", 
+            "ENTC:TARGET_RENEWABLE_ELEC", 
             self.transformation_entc_renewables_target, 
             attr_strategy
         )
@@ -890,7 +895,7 @@ class TransformationsEnergy:
         ##############
 
         self.fgtv_all = sc.Transformation(
-            "FGTV: All Fugitive Emissions transformations", 
+            "FGTV:ALL", 
             [
                 self.transformation_fgtv_maximize_flaring,
                 self.transformation_fgtv_minimize_leaks
@@ -901,7 +906,7 @@ class TransformationsEnergy:
 
 
         self.fgtv_all_with_rep = sc.Transformation(
-            "FGTV: All Fugitive Emissions transformations with renewable energy production", 
+            "FGTV:ALL_REP", 
             [
                 self.transformation_fgtv_maximize_flaring,
                 self.transformation_fgtv_minimize_leaks,
@@ -913,7 +918,7 @@ class TransformationsEnergy:
 
 
         self.fgtv_maximize_flaring = sc.Transformation(
-            "FGTV: Maximize flaring", 
+            "FGTV:INC_FLARE", 
             self.transformation_fgtv_maximize_flaring, 
             attr_strategy
         )
@@ -921,7 +926,7 @@ class TransformationsEnergy:
 
 
         self.fgtv_maximize_flaring_with_rep = sc.Transformation(
-            "FGTV: Maximize flaring with renewable energy production", 
+            "FGTV:INC_FLARE_REP", 
             [
                 self.transformation_fgtv_maximize_flaring,
 		        self.transformation_support_entc_clean_grid
@@ -932,7 +937,7 @@ class TransformationsEnergy:
 
 
         self.fgtv_minimize_leaks = sc.Transformation(
-            "FGTV: Minimize leaks", 
+            "FGTV:DEC_LEAKS", 
             self.transformation_fgtv_minimize_leaks, 
             attr_strategy
         )
@@ -940,7 +945,7 @@ class TransformationsEnergy:
 
 
         self.fgtv_minimize_leaks_with_rep = sc.Transformation(
-            "FGTV: Minimize leaks with renewable energy production", 
+            "FGTV:DEC_LEAKS_REP", 
             [
                 self.transformation_fgtv_minimize_leaks,
 		        self.transformation_support_entc_clean_grid
@@ -956,7 +961,7 @@ class TransformationsEnergy:
         ##############
 
         self.inen_all = sc.Transformation(
-            "INEN: All Industrial Energy transformations", 
+            "INEN:ALL", 
             [
                 self.transformation_inen_fuel_switch_low_and_high_temp, # use instead of both functions to avoid incorrect results w/func composition
                 self.transformation_inen_maximize_efficiency_energy,
@@ -968,7 +973,7 @@ class TransformationsEnergy:
 
 
         self.inen_all_with_rep = sc.Transformation(
-            "INEN: All Industrial Energy transformations with renewable energy production", 
+            "INEN:ALL_REP", 
             [
                 self.transformation_inen_fuel_switch_low_and_high_temp, # use instead of both functions to avoid incorrect results w/func composition
                 self.transformation_inen_maximize_efficiency_energy,
@@ -981,7 +986,7 @@ class TransformationsEnergy:
 
 
         self.inen_fuel_switch_high_temp = sc.Transformation(
-            "INEN: Fuel switch medium and high-temp thermal processes to hydrogen and electricity", 
+            "INEN:FUEL_SWITCH_HI_HEAT", 
             self.transformation_inen_fuel_switch_high_temp, 
             attr_strategy
         )
@@ -989,7 +994,7 @@ class TransformationsEnergy:
 
 
         self.inen_fuel_switch_high_temp_with_rep = sc.Transformation(
-            "INEN: Fuel switch medium and high-temp thermal processes to hydrogen and electricity with renewable energy production", 
+            "INEN:FUEL_SWITCH_HI_HEAT_REP", 
             [
                 self.transformation_inen_fuel_switch_high_temp,
 		        self.transformation_support_entc_clean_grid
@@ -1000,7 +1005,7 @@ class TransformationsEnergy:
         
 
         self.inen_fuel_switch_low_temp_to_heat_pump = sc.Transformation(
-            "INEN: Fuel switch low-temp thermal processes to industrial heat pumps", 
+            "INEN:FUEL_SWITCH_LO_HEAT", 
             self.transformation_inen_fuel_switch_low_temp_to_heat_pump, 
             attr_strategy
         )
@@ -1008,7 +1013,7 @@ class TransformationsEnergy:
 
 
         self.inen_fuel_switch_low_temp_to_heat_pump_with_rep = sc.Transformation(
-            "INEN: Fuel switch low-temp thermal processes to industrial heat pumps with renewable energy production", 
+            "INEN:FUEL_SWITCH_LO_HEAT_REP", 
             [
                 self.transformation_inen_fuel_switch_low_temp_to_heat_pump,
 		        self.transformation_support_entc_clean_grid
@@ -1019,7 +1024,7 @@ class TransformationsEnergy:
 
         
         self.inen_maximize_energy_efficiency = sc.Transformation(
-            "INEN: Maximize industrial energy efficiency", 
+            "INEN:INC_EFFICIENCY_ENERGY", 
             self.transformation_inen_maximize_efficiency_energy, 
             attr_strategy
         )
@@ -1027,7 +1032,7 @@ class TransformationsEnergy:
 
 
         self.inen_maximize_energy_efficiency_with_rep = sc.Transformation(
-            "INEN: Maximize industrial energy efficiency with renewable energy production", 
+            "INEN:INC_EFFICIENCY_ENERGY_REP", 
             [
                 self.transformation_inen_maximize_efficiency_energy,
 		        self.transformation_support_entc_clean_grid
@@ -1038,7 +1043,7 @@ class TransformationsEnergy:
         
 
         self.inen_maximize_production_efficiency = sc.Transformation(
-            "INEN: Maximize industrial production efficiency", 
+            "INEN:INC_EFFICIENCY_PRODUCTION", 
             self.transformation_inen_maximize_efficiency_production, 
             attr_strategy
         )
@@ -1046,7 +1051,7 @@ class TransformationsEnergy:
 
 
         self.inen_maximize_production_efficiency_with_rep = sc.Transformation(
-            "INEN: Maximize industrial production efficiency with renewable energy production", 
+            "INEN:INC_EFFICIENCY_PRODUCTION_REP", 
             [
                 self.transformation_inen_maximize_efficiency_production,
 		        self.transformation_support_entc_clean_grid
@@ -1062,7 +1067,7 @@ class TransformationsEnergy:
         ##############
 
         self.scoe_all = sc.Transformation(
-            "SCOE: All Stationary Combustion and Other Energy transformations", 
+            "SCOE:ALL", 
             [
                 self.transformation_scoe_fuel_switch_electrify,
                 self.transformation_scoe_increase_applicance_efficiency,
@@ -1074,7 +1079,7 @@ class TransformationsEnergy:
 
 
         self.scoe_all_with_rep = sc.Transformation(
-            "SCOE: All Stationary Combustion and Other Energy transformations with renewable energy production", 
+            "SCOE:ALL_REP", 
             [
                 self.transformation_scoe_fuel_switch_electrify,
                 self.transformation_scoe_increase_applicance_efficiency,
@@ -1087,7 +1092,7 @@ class TransformationsEnergy:
 
 
         self.scoe_fuel_switch_electrify = sc.Transformation(
-            "SCOE: Switch to electricity for heat using heat pumps, electric stoves, etc.", 
+            "SCOE:FUEL_SWITCH_HEAT", 
             self.transformation_scoe_fuel_switch_electrify, 
             attr_strategy
         )
@@ -1095,7 +1100,7 @@ class TransformationsEnergy:
 
 
         self.scoe_fuel_switch_electrify_with_rep = sc.Transformation(
-            "SCOE: Switch to electricity for heat using heat pumps, electric stoves, etc. with renewable energy production", 
+            "SCOE:FUEL_SWITCH_HEAT_REP", 
             [
                 self.transformation_scoe_fuel_switch_electrify,
 		        self.transformation_support_entc_clean_grid
@@ -1106,7 +1111,7 @@ class TransformationsEnergy:
         
 
         self.scoe_increase_applicance_efficiency = sc.Transformation(
-            "SCOE: Increase appliance efficiency", 
+            "SCOE:INC_EFFICIENCY_APPLIANCE", 
             self.transformation_scoe_increase_applicance_efficiency, 
             attr_strategy
         )
@@ -1114,7 +1119,7 @@ class TransformationsEnergy:
 
 
         self.scoe_increase_applicance_efficiency_with_rep = sc.Transformation(
-            "SCOE: Increase appliance efficiency with renewable energy production", 
+            "SCOE:INC_EFFICIENCY_APPLIANCE_REP", 
             [
                 self.transformation_scoe_increase_applicance_efficiency,
 		        self.transformation_support_entc_clean_grid
@@ -1125,7 +1130,7 @@ class TransformationsEnergy:
         
 
         self.scoe_reduce_heat_energy_demand = sc.Transformation(
-            "SCOE: Reduce end-use demand for heat energy by improving building shell", 
+            "SOCE:DEC_DEMAND_HEAT", 
             self.transformation_scoe_reduce_heat_energy_demand, 
             attr_strategy
         )
@@ -1133,7 +1138,7 @@ class TransformationsEnergy:
 
 
         self.scoe_reduce_heat_energy_demand_with_rep = sc.Transformation(
-            "SCOE: Reduce end-use demand for heat energy by improving building shell with renewable energy production", 
+            "SOCE:DEC_DEMAND_HEAT_REP", 
             [
                 self.transformation_scoe_reduce_heat_energy_demand,
 		        self.transformation_support_entc_clean_grid
@@ -1149,7 +1154,7 @@ class TransformationsEnergy:
         ###################
 
         self.trde_reduce_demand = sc.Transformation(
-            "TRNS: Reduce demand for transport", 
+            "TRDE:DEC_DEMAND", 
             self.transformation_trde_reduce_demand, 
             attr_strategy
         )
@@ -1157,7 +1162,7 @@ class TransformationsEnergy:
 
 
         self.trde_reduce_demand_with_rep = sc.Transformation(
-            "TRNS: Reduce demand for transport with renewable energy production", 
+            "TRDE:DEC_DEMAND_REP", 
             [
                 self.transformation_trde_reduce_demand,
 		        self.transformation_support_entc_clean_grid
@@ -1168,7 +1173,7 @@ class TransformationsEnergy:
 
         
         self.trns_all = sc.Transformation(
-            "TRNS: All Transportation transformations", 
+            "TRNS:ALL", 
             [
                 self.transformation_trde_reduce_demand,
                 self.transformation_trns_electrify_road_light_duty,
@@ -1188,7 +1193,7 @@ class TransformationsEnergy:
 
 
         self.trns_all_with_rep = sc.Transformation(
-            "TRNS: All Transportation transformations with renewable energy production", 
+            "TRNS:ALL_REP", 
             [
                 self.transformation_trde_reduce_demand,
                 self.transformation_trns_electrify_road_light_duty,
@@ -1209,7 +1214,7 @@ class TransformationsEnergy:
 
         
         self.trns_bundle_demand_management = sc.Transformation(
-            "TRNS: Demand management bundle", 
+            "TRNS:BUNDLE_DEMAND_MANAGEMENT", 
             [
                 self.transformation_trde_reduce_demand,
                 self.transformation_trns_increase_occupancy_light_duty
@@ -1220,7 +1225,7 @@ class TransformationsEnergy:
 
 
         self.trns_bundle_demand_management_with_rep = sc.Transformation(
-            "TRNS: Demand management bundle with renewable energy production", 
+            "TRNS:BUNDLE_DEMAND_MANAGEMENT_REP", 
             [
                 self.transformation_trde_reduce_demand,
                 self.transformation_trns_increase_occupancy_light_duty,
@@ -1232,7 +1237,7 @@ class TransformationsEnergy:
 
         
         self.trns_bundle_efficiency = sc.Transformation(
-            "TRNS: Efficiency bundle", 
+            "TRNS_BUNDLE_EFFICIENCY", 
             [
                 self.transformation_trns_increase_efficiency_electric,
                 self.transformation_trns_increase_efficiency_non_electric
@@ -1243,7 +1248,7 @@ class TransformationsEnergy:
 
 
         self.trns_bundle_efficiency_with_rep = sc.Transformation(
-            "TRNS: Efficiency bundle with renewable energy production", 
+            "TRNS_BUNDLE_EFFICIENCY_REP", 
             [
                 self.transformation_trns_increase_efficiency_electric,
                 self.transformation_trns_increase_efficiency_non_electric,
@@ -1255,7 +1260,7 @@ class TransformationsEnergy:
 
         
         self.trns_bundle_fuel_swtich = sc.Transformation(
-            "TRNS: Fuel switch bundle", 
+            "TRNS:BUNDLE_FUEL_SWITCH", 
             [
                 self.transformation_trns_electrify_road_light_duty,
                 self.transformation_trns_electrify_rail,
@@ -1268,7 +1273,7 @@ class TransformationsEnergy:
 
 
         self.trns_bundle_fuel_swtich_with_rep = sc.Transformation(
-            "TRNS: Fuel switch bundle with renewable energy production", 
+            "TRNS:BUNDLE_FUEL_SWITCH_REP", 
             [
                 self.transformation_trns_electrify_road_light_duty,
                 self.transformation_trns_electrify_rail,
@@ -1282,7 +1287,7 @@ class TransformationsEnergy:
 
         
         self.trns_bundle_mode_shift = sc.Transformation(
-            "TRNS: Mode shift bundle", 
+            "TRNS:BUNDLE_MODE_SHIFT", 
             [
                 self.transformation_trns_mode_shift_freight,
                 self.transformation_trns_mode_shift_public_private,
@@ -1294,7 +1299,7 @@ class TransformationsEnergy:
 
 
         self.trns_bundle_mode_shift_with_rep = sc.Transformation(
-            "TRNS: Mode shift bundle with renewable energy production", 
+            "TRNS:BUNDLE_MODE_SHIFT_REP", 
             [
                 self.transformation_trns_mode_shift_freight,
                 self.transformation_trns_mode_shift_public_private,
@@ -1307,7 +1312,7 @@ class TransformationsEnergy:
 
         
         self.trns_electrify_light_duty_road = sc.Transformation(
-            "TRNS: Electrify light duty road transport", 
+            "TRNS:FUEL_SWITCH_LIGHT_DUTY", 
             self.transformation_trns_electrify_road_light_duty, 
             attr_strategy
         )
@@ -1315,7 +1320,7 @@ class TransformationsEnergy:
 
 
         self.trns_electrify_light_duty_road_with_rep = sc.Transformation(
-            "TRNS: Electrify light duty road transport with renewable energy production", 
+            "TRNS:FUEL_SWITCH_LIGHT_DUTY_REP", 
             [
                 self.transformation_trns_electrify_road_light_duty,
 		        self.transformation_support_entc_clean_grid
@@ -1326,7 +1331,7 @@ class TransformationsEnergy:
 
         
         self.trns_electrify_rail = sc.Transformation(
-            "TRNS: Electrify rail", 
+            "TRNS:FUEL_SWITCH_RAIL", 
             self.transformation_trns_electrify_rail, 
             attr_strategy
         )
@@ -1334,7 +1339,7 @@ class TransformationsEnergy:
 
 
         self.trns_electrify_rail_with_rep = sc.Transformation(
-            "TRNS: Electrify rail with renewable energy production", 
+            "TRNS:FUEL_SWITCH_RAIL_REP", 
             [
                 self.transformation_trns_electrify_rail,
 		        self.transformation_support_entc_clean_grid
@@ -1345,7 +1350,7 @@ class TransformationsEnergy:
 
         
         self.trns_fuel_switch_maritime = sc.Transformation(
-            "TRNS: Fuel switch maritime", 
+            "TRNS:FUEL_SWITCH_MARITIME", 
             self.transformation_trns_fuel_switch_maritime, 
             attr_strategy
         )
@@ -1353,7 +1358,7 @@ class TransformationsEnergy:
 
 
         self.trns_fuel_switch_maritime_with_rep = sc.Transformation(
-            "TRNS: Fuel switch maritime with renewable energy production", 
+            "TRNS:FUEL_SWITCH_MARITIME_REP", 
             [
                 self.transformation_trns_fuel_switch_maritime,
 		        self.transformation_support_entc_clean_grid
@@ -1364,7 +1369,7 @@ class TransformationsEnergy:
 
 
         self.trns_fuel_switch_medium_duty_road = sc.Transformation(
-            "TRNS: Fuel switch medium duty road transport", 
+            "TRNS:FUEL_SWITCH_MEDIUM_DUTY", 
             self.transformation_trns_fuel_switch_road_medium_duty, 
             attr_strategy
         )
@@ -1372,7 +1377,7 @@ class TransformationsEnergy:
 
 
         self.trns_fuel_switch_medium_duty_road_with_rep = sc.Transformation(
-            "TRNS: Fuel switch medium duty road transport with renewable energy production", 
+            "TRNS:FUEL_SWITCH_MEDIUM_DUTY_REP", 
             [
                 self.transformation_trns_fuel_switch_road_medium_duty,
 		        self.transformation_support_entc_clean_grid
@@ -1383,7 +1388,7 @@ class TransformationsEnergy:
 
 
         self.trns_increase_efficiency_electric = sc.Transformation(
-            "TRNS: Increase transportation electricity energy efficiency", 
+            "TRNS:INC_EFFICIENCY_ELEC", 
             self.transformation_trns_increase_efficiency_electric, 
             attr_strategy
         )
@@ -1391,7 +1396,7 @@ class TransformationsEnergy:
 
 
         self.trns_increase_efficiency_electric_with_rep = sc.Transformation(
-            "TRNS: Increase transportation electricity energy efficiency with renewable energy production", 
+            "TRNS:INC_EFFICIENCY_ELEC_REP", 
             [
                 self.transformation_trns_increase_efficiency_electric,
 		        self.transformation_support_entc_clean_grid
@@ -1402,7 +1407,7 @@ class TransformationsEnergy:
 
 
         self.trns_increase_efficiency_non_electric = sc.Transformation(
-            "TRNS: Increase transportation non-electricity energy efficiency", 
+            "TRNS:INC_EFFICIENCY_NON_ELEC", 
             self.transformation_trns_increase_efficiency_non_electric, 
             attr_strategy
         )
@@ -1410,7 +1415,7 @@ class TransformationsEnergy:
 
 
         self.trns_increase_efficiency_non_electric_with_rep = sc.Transformation(
-            "TRNS: Increase transportation non-electricity energy efficiency with renewable energy production", 
+            "TRNS:INC_EFFICIENCY_NON_ELEC_REP", 
             [
                 self.transformation_trns_increase_efficiency_non_electric,
 		        self.transformation_support_entc_clean_grid
@@ -1421,7 +1426,7 @@ class TransformationsEnergy:
 
 
         self.trns_increase_occupancy_light_duty = sc.Transformation(
-            "TRNS: Increase occupancy for private vehicles", 
+            "TRNS:INC_OCCUPANCY", 
             self.transformation_trns_increase_occupancy_light_duty, 
             attr_strategy
         )
@@ -1429,7 +1434,7 @@ class TransformationsEnergy:
 
 
         self.trns_increase_occupancy_light_duty_with_rep = sc.Transformation(
-            "TRNS: Increase occupancy for private vehicles with renewable energy production", 
+            "TRNS:INC_OCCUPANCY_REP", 
             [
                 self.transformation_trns_increase_occupancy_light_duty,
 		        self.transformation_support_entc_clean_grid
@@ -1440,7 +1445,7 @@ class TransformationsEnergy:
 
 
         self.trns_mode_shift_freight = sc.Transformation(
-            "TRNS: Mode shift freight", 
+            "TRNS:MODE_SHIFT_FREIGHT", 
             self.transformation_trns_mode_shift_freight, 
             attr_strategy
         )
@@ -1448,7 +1453,7 @@ class TransformationsEnergy:
 
 
         self.trns_mode_shift_freight_with_rep = sc.Transformation(
-            "TRNS: Mode shift freight with renewable energy production", 
+            "TRNS:MODE_SHIFT_FREIGHT_REP", 
             [
                 self.transformation_trns_mode_shift_freight,
 		        self.transformation_support_entc_clean_grid
@@ -1459,7 +1464,7 @@ class TransformationsEnergy:
 
 
         self.trns_mode_shift_public_private = sc.Transformation(
-            "TRNS: Mode shift passenger vehicles to others", 
+            "TRNS:MODE_SHIFT_PASSENGER", 
             self.transformation_trns_mode_shift_public_private, 
             attr_strategy
         )
@@ -1467,7 +1472,7 @@ class TransformationsEnergy:
 
 
         self.trns_mode_shift_public_private_with_rep = sc.Transformation(
-            "TRNS: Mode shift passenger vehicles to others with renewable energy production", 
+            "TRNS:MODE_SHIFT_PASSENGER_REP", 
             [
                 self.transformation_trns_mode_shift_public_private,
 		        self.transformation_support_entc_clean_grid
@@ -1478,7 +1483,7 @@ class TransformationsEnergy:
 
 
         self.trns_mode_shift_regional = sc.Transformation(
-            "TRNS: Mode shift regional passenger travel", 
+            "TRNS:MODE_SHIFT_REGIONAL", 
             self.transformation_trns_mode_shift_regional, 
             attr_strategy
         )
@@ -1486,7 +1491,7 @@ class TransformationsEnergy:
 
 
         self.trns_mode_shift_regional_with_rep = sc.Transformation(
-            "TRNS: Mode shift regional passenger travel with renewable energy production", 
+            "TRNS:MODE_SHIFT_REGIONAL_REP", 
             [
                 self.transformation_trns_mode_shift_regional,
 		        self.transformation_support_entc_clean_grid
@@ -1496,7 +1501,6 @@ class TransformationsEnergy:
         all_transformations.append(self.trns_mode_shift_regional_with_rep)
 
     
-
         ## specify dictionary of transformations and get all transformations + baseline/non-baseline
 
         dict_transformations = dict(
@@ -1683,32 +1687,46 @@ class TransformationsEnergy:
 
     def get_strategy(self,
         strat: Union[int, str, None],
+        field_strategy_code: str = "strategy_code",
         field_strategy_name: str = "strategy",
     ) -> None:
         """
-        Get strategy `strat` based on name or id. 
+        Get strategy `strat` based on strategy code, id, or name
         
         If strat is None or an invalid valid of strat is entered, returns None; 
             otherwise, returns the sc.Transformation object. 
             
         Function Arguments
         ------------------
-        - strat: strategy id or strategy name to use to retrieve 
+        - strat: strategy id, strategy name, or strategy code to use to retrieve 
             sc.Trasnformation object
             
         Keyword Arguments
         ------------------
-         - field_strategy_name: field in strategy_id attribute table containing
+        - field_strategy_code: field in strategy_id attribute table containing
+            the strategy code
+        - field_strategy_name: field in strategy_id attribute table containing
             the strategy name
         """
 
         if not (sf.isnumber(strat, integer = True) | isinstance(strat, str)):
             return None
 
-        dict_name_to_strat = self.attribute_strategy.field_maps.get(f"{field_strategy_name}_to_{self.attribute_strategy.key}")
+        dict_code_to_strat = self.attribute_strategy.field_maps.get(
+            f"{field_strategy_code}_to_{self.attribute_strategy.key}"
+        )
+        dict_name_to_strat = self.attribute_strategy.field_maps.get(
+            f"{field_strategy_name}_to_{self.attribute_strategy.key}"
+        )
 
-        # check strategy
-        strat = dict_name_to_strat.get(strat) if isinstance(strat, str) else strat
+        # check strategy by trying both dictionaries
+        if isinstance(strat, str):
+            strat = (
+                dict_name_to_strat.get(strat)
+                if strat in dict_name_to_strat.keys()
+                else dict_code_to_strat.get(strat)
+            )
+
         out = (
             None
             if strat not in self.attribute_strategy.key_values
@@ -1954,9 +1972,7 @@ class TransformationsEnergy:
         df_strat_cur = adt.transformation_entc_renewable_target(
             df_input,
             0.95,
-            self.cats_renewable,
             self.vec_implementation_ramp,
-            self.model_attributes,
             self.model_electricity,
             dict_cats_entc_max_investment = self.dict_entc_renewable_target_cats_max_investment,
             field_region = self.key_region,

@@ -403,7 +403,7 @@ class SISEPUEDEModels:
 				self._log(f"Error running Fugitive Emissions from Energy model: {e}", type_log = "error")
 
 
-		##  7. Add Socioeconomic outpu at the end to avoid double-initiation throughout models
+		##  7. Add Socioeconomic output at the end to avoid double-initiation throughout models
 
 		if len(df_return) > 0:
 			self._log("Appending Socioeconomic outputs", type_log = "info")

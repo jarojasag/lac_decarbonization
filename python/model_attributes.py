@@ -284,14 +284,21 @@ class Configuration:
         return dict_conf
 
 
-    # function to retrieve available emission mass specifications
+
     def get_valid_values_from_attribute_column(self,
         attribute_table: AttributeTable,
         column_match_str: str,
         return_type: type = None,
         field_map_to_val: str = None
-    ):
-        cols = [x.replace(column_match_str, "") for x in attribute_table.table.columns if (x[0:min(len(column_match_str), len(x))] == column_match_str)]
+    ) -> List[str]:
+        """
+        Retrieve valid key values from an attribute column
+        """
+        cols = [
+            x.replace(column_match_str, "") 
+            for x in attribute_table.table.columns 
+            if (x[0:min(len(column_match_str), len(x))] == column_match_str)
+        ]
         if return_type != None:
             cols = [return_type(x) for x in cols]
         # if a dictionary is specified, map the values to a name
@@ -304,7 +311,7 @@ class Configuration:
         return cols
 
 
-    # guess the input type for a configuration file
+
     def infer_type(self,
         val: Union[int, float, str, None]
     ) -> Union[int, float, str, None]:
@@ -320,19 +327,26 @@ class Configuration:
         return val
 
 
-    # apply to a list if necessary
+
     def infer_types(self,
         val_in: Union[float, int, str, None],
         delim = ","
     ) -> Union[type, List[type], None]:
+        """
+        Guess the type of input value val_in
+        """
         rv = None
         if val_in is not None:
-            rv = [self.infer_type(x) for x in val_in.split(delim)] if (delim in val_in) else self.infer_type(val_in)
+            rv = (
+                [self.infer_type(x) for x in val_in.split(delim)] 
+                if (delim in val_in) 
+                else self.infer_type(val_in)
+            )
 
         return rv
 
 
-    # function for parsing a configuration file into a dictionary
+
     def parse_config(self,
         fp_config: str,
         delim: str = ","
@@ -1993,7 +2007,6 @@ class ModelAttributes:
 
 
 
-    ##  get the baseline scenario associated with a scenario dimension
     def get_baseline_scenario_id(self,
         dim: str,
         infer_baseline_as_minimum: bool = True
@@ -2161,14 +2174,18 @@ class ModelAttributes:
         return out
 
 
-    ##  fuction to return a list of variables from one subsector that are ordered according to a primary category (which the variables are mapped to) from another subsector
+
     def get_ordered_vars_by_nonprimary_category(self,
         subsector_var: str,
         subsector_targ: str,
         varreq_type: str,
         return_type: str = "vars"
-    ):
-
+    ) -> Union[List[int], List[str]]:
+        """
+        Return a list of variables from one subsector that are ordered according 
+            to a primary category (which the variables are mapped to) from 
+            another subsector
+        """
         # get var requirements for the variable subsector + the attribute for the target categories
         varreq_var = self.get_subsector_attribute(subsector_var, varreq_type)
         pycat_targ = self.get_subsector_attribute(subsector_targ, "pycategory_primary")
@@ -2180,14 +2197,19 @@ class ModelAttributes:
         vec_var_targs = [clean_schema(x) for x in list(tab_for_cw[pycat_targ])]
         inds_varcats_to_cats = [vec_var_targs.index(x) for x in attr_targ.key_values]
 
-        if return_type == "inds":
-            return inds_varcats_to_cats
-        elif return_type == "vars":
-            vars_ordered = list(tab_for_cw["variable"])
-            return [vars_ordered[x] for x in inds_varcats_to_cats]
-        else:
+        # check reutnr type
+        if return_type not in ["inds", "vars"]:
             raise ValueError(f"Invalid return_type '{return_type}' in order_vars_by_category: valid types are 'inds', 'vars'.")
-
+        
+        vars_ordered = list(tab_for_cw["variable"])
+        return_val = (
+            inds_varcats_to_cats 
+            if (return_type == "inds") 
+            else [vars_ordered[x] for x in inds_varcats_to_cats]
+        )
+        
+        return return_val
+            
 
 
     def get_region_list_filtered(self,
@@ -2305,13 +2327,15 @@ class ModelAttributes:
     def get_time_periods(self
     ) -> tuple:
         """
-        Get all time periods defined in SISEPUEDE. Returns a tuple of the form (time_periods, n), where:
-        - time_periods is a list of all time periods
-        - n is the number of defined time periods
+        Get all time periods defined in SISEPUEDE. Returns a tuple of the form 
+            (time_periods, n), where:
 
+            * time_periods is a list of all time periods
+            * n is the number of defined time periods
         """
         pydim_time_period = self.get_dimensional_attribute(self.dim_time_period, "pydim")
         time_periods = self.dict_attributes[pydim_time_period].key_values
+
         return time_periods, len(time_periods)
 
 
@@ -2333,6 +2357,44 @@ class ModelAttributes:
             all_years = [int(x) for x in all_years]
 
         return all_years
+
+
+    
+    def get_valid_categories(self,
+        categories: Union[List[str], str],
+        subsector: str,
+    ) -> Union[List[str], None]:
+        """
+        Check categories specified in list `categories`. Returns all valid 
+            categories specified within subsector `subsector`. 
+        
+            * If none are found, returns None
+            * 
+
+        Function Arguments
+        ------------------
+        - categories: list of categories to check. If None, returns all valid 
+            categories in subsector
+        - subsector: SISEPUEDE subsector to check categories against. If not
+            a valid subsector, returns None. 
+        """
+
+        if subsector != self.check_subsector(subsector, throw_error_q = False):
+            return None
+
+        attr = self.get_attribute_table(subsector)
+
+        # filter categories 
+        categories = (
+            [x for x in categories if x in attr.key_values]
+            if sf.islistlike(categories)
+            else (
+                attr.key_values if (categories is None) else []
+            )
+        )
+        categories = None if (len(categories) == 0) else categories
+
+        return categories
 
 
 

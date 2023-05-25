@@ -1799,7 +1799,7 @@ def replace_numerical_column_from_merge(
 
 def reverse_dict(
     dict_in: dict,
-    allow_multi_keys: bool = False
+    allow_multi_keys: bool = False,
 ) -> dict:
     """
     Reverse a dictionary, mapping v -> k for a dictionary of key value pairs 

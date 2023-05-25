@@ -149,7 +149,6 @@ def join_list_for_query(
 
 
 
-##  get a table from a database
 def sql_table_to_df(
     engine: sqlalchemy.engine.Engine,
     table_name: str,
@@ -157,14 +156,20 @@ def sql_table_to_df(
     query_append: str = None
 ) -> pd.DataFrame:
     """
-        Query a database, retrieve a table, and convert it to a dataframe.
-        - engine: SQLalchemy Engine used to create a connection and query the 
-            database
-        - table_name: the table in the database to query
-        - fields_select: a list of fields to select or a string of fields to 
-            select (comma-delimited). If None, return all fields.
-        - query_append: any restrictions to place on the query (e.g., where). If 
-            None, return all records.
+    Query a database, retrieve a table, and convert it to a dataframe.
+
+    Function Arguments
+    ------------------
+    - engine: SQLalchemy Engine used to create a connection and query the 
+        database
+    - table_name: the table in the database to query
+
+    Keyword Arguments
+    -----------------
+    - fields_select: a list of fields to select or a string of fields to 
+        select (comma-delimited). If None, return all fields.
+    - query_append: any restrictions to place on the query (e.g., where). If 
+        None, return all records.
     """
 
     # check table names
@@ -192,15 +197,14 @@ def sql_table_to_df(
 
 
 
-##  using a dictionary, write dataframes to a database using a connection
 def _write_dataframes_to_db(
     dict_tables: dict,
     db_engine: Union[sqlalchemy.engine.Engine, str],
     preserve_table_schema: bool = True,
     append_q: bool = False
-):
+) -> None:
     """
-    Write a dictionary of tables to an SQL data base.
+    Write a dictionary of tables to an SQL database.
 
     Function Arguments
     ------------------

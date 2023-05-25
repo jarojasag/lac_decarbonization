@@ -1261,10 +1261,13 @@ class NonElectricEnergy:
                 "energy"
             )
         
-        # get demands on distribution
-        # NOTE: If any of the previous variables are not found, then default to
-        #     the assumption that ElectricEnergy was *not* successfully run, so
-        #     the variables have to be added
+        
+        """
+        Get demands on distribution
+        NOTE: If any of the previous variables are not found, then default to
+            the assumption that ElectricEnergy was *not* successfully run, so
+            the variables have to be added
+        """
         generate_demands_distribution = (
             arr_fgtv_demands is not None
         ) & (

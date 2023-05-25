@@ -115,8 +115,7 @@ class SISEPUEDE:
 		* If None, creates a unique ID for the session (used in output file
 			names)
 	- logger: Optional logging.Logger object to use for logging
-	- regions: list of regions to include in the experiment. [NOTE, in v1.0,
-		this should be limited to a single region]
+	- regions: list of regions to include in the experiment
 	- replace_output_dbs_on_init: default is set to false; if True, will
 		destroy exisiting output tables if an AnalysisID is specified.
 	- regex_template_prepend: string to prepend to output files tagged with the
@@ -131,7 +130,7 @@ class SISEPUEDE:
 		logger: Union[logging.Logger, None] = None,
 		regions: Union[List[str], None] = None,
 		regex_template_prepend: str = "sisepuede_run",
-		replace_output_dbs_on_init: bool = False
+		replace_output_dbs_on_init: bool = False,
 	):
 
 		self.logger = logger
@@ -986,20 +985,21 @@ class SISEPUEDE:
 
 		Function Arguments
 		------------------
-		- primary_keys: list of primary keys to run OR dictionary of index keys (e.g., strategy_id, design_id)
-			with scenarios associated as values (uses AND operation to filter scenarios). If None, returns
-			all possible primary keys.
+		- primary_keys: list of primary keys to run OR dictionary of index keys 
+			(e.g., strategy_id, design_id) with scenarios associated as values 
+			(uses AND operation to filter scenarios). If None, returns all 
+			possible primary keys.
 
 		Keyword Arguments
 		-----------------
 		- chunk_size: size of chunk to use to write to IterativeDatabaseTable.
 			If 1, updates table after every iteration; otherwise, stores chunks
 			in memory, aggregates, then writes to IterativeDatabaseTable.
-		- force_overwrite_existing_primary_keys: if the primary key is already found
-			in the output database table, should it be overwritten? Default is
-			False. It is recommended that iterations on the same scenarios be
-			undertaken using different AnalysisID structures. Otherwise, defaults
-			to initialization resolutsion (write_skip)
+		- force_overwrite_existing_primary_keys: if the primary key is already 
+			found in the output database table, should it be overwritten? 
+			It is recommended that iterations on the same scenarios be 
+			undertaken using different AnalysisID structures. Otherwise, 
+			defaults to initialization resolutsion (write_skip)
 		- **kwargs: passed to SISEPUEDE.models.project(..., **kwargs)
 		"""
 

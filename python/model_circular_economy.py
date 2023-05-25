@@ -418,6 +418,12 @@ class CircularEconomy:
         self.modvar_waso_waste_total_open_dumped = "Total Waste Open Dumped"
         self.modvar_waso_waste_total_recycled = "Total Waste Recycled"
 
+        self.modvars_waso_frac_non_recyled_pathways = [
+            self.modvar_waso_frac_nonrecycled_incineration, 
+            self.modvar_waso_frac_nonrecycled_landfill, 
+            self.modvar_waso_frac_nonrecycled_opendump
+        ]
+
         return None
 
 
@@ -1371,7 +1377,7 @@ class CircularEconomy:
         # check that the sum of these variables across categories equals one and force equality
         dict_waso_check_non_recycle_pathways = self.model_attributes.get_multivariables_with_bounded_sum_by_category(
             df_ce_trajectories,
-            [self.modvar_waso_frac_nonrecycled_incineration, self.modvar_waso_frac_nonrecycled_landfill, self.modvar_waso_frac_nonrecycled_opendump],
+            self.modvars_waso_frac_non_recyled_pathways,
             1,
             msg_append = "See the calculation of dict_waso_check_non_recycle_pathways.",
             force_sum_equality = True
@@ -1386,41 +1392,72 @@ class CircularEconomy:
         # start by adjusting the total to account for waste that is used in energy for incineration. This will be sent to the energy model as a fuel.
         vec_waso_frac_isw_incinerated_for_energy = self.model_attributes.get_standard_variables(
             df_ce_trajectories, 
-            self.modvar_waso_frac_recovered_for_energy_incineration_isw, False, return_type = "array_base", var_bounds = (0, 1))
+            self.modvar_waso_frac_recovered_for_energy_incineration_isw, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base", 
+            var_bounds = (0, 1)
+        )
         vec_waso_frac_msw_incinerated_for_energy = self.model_attributes.get_standard_variables(
             df_ce_trajectories, 
-            self.modvar_waso_frac_recovered_for_energy_incineration_msw, False, return_type = "array_base", var_bounds = (0, 1))
+            self.modvar_waso_frac_recovered_for_energy_incineration_msw, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base", 
+            var_bounds = (0, 1)
+        )
         array_waso_waste_incineration_isw_for_energy_by_cat = ((array_waso_waste_incineration*array_waso_frac_isw_total_by_cat).transpose()*vec_waso_frac_isw_incinerated_for_energy).transpose()
         array_waso_waste_incineration_msw_for_energy_by_cat = ((array_waso_waste_incineration*array_waso_frac_msw_total_by_cat).transpose()*vec_waso_frac_msw_incinerated_for_energy).transpose()
         vec_waso_waste_incineration_isw_for_energy = np.sum(array_waso_waste_incineration_isw_for_energy_by_cat, axis = 1)
         vec_waso_waste_incineration_msw_for_energy = np.sum(array_waso_waste_incineration_msw_for_energy_by_cat, axis = 1)
+        
         # update running waste total for incineration by removing waste for energy
         array_waso_waste_incineration -= array_waso_waste_incineration_isw_for_energy_by_cat + array_waso_waste_incineration_msw_for_energy_by_cat
         vec_waso_isw_total = np.sum(array_waso_waste_incineration*array_waso_frac_isw_total_by_cat, axis = 1)
         vec_waso_msw_total = np.sum(array_waso_waste_incineration*array_waso_frac_msw_total_by_cat, axis = 1)
+        
         # after adjusting for waste sent to the energy model, calculate emissions from incineration - start with co2 and n2o, which depend on type of waste
         vec_waso_ef_incineration_co2 = vec_waso_cat_attr_dry_matter_content_as_fraction_wet_weight*vec_waso_cat_attr_total_carbon_content_as_fraction_dry_weight*vec_waso_cat_attr_fossil_carbon_fraction_as_fraction_total_carbon*self.factor_c_to_co2
         array_waso_emissions_co2_incineration = np.sum(array_waso_waste_incineration*vec_waso_ef_incineration_co2*factor_waso_mass_to_emission_mass, axis = 1)
         array_waso_emissions_n2o_incineration = self.model_attributes.get_standard_variables(
             df_ce_trajectories, 
-            self.modvar_waso_ef_n2o_incineration, False, return_type = "array_base")
+            self.modvar_waso_ef_n2o_incineration, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_base"
+        )
         array_waso_emissions_n2o_incineration *= array_waso_waste_incineration*factor_waso_mass_to_emission_mass
         array_waso_emissions_n2o_incineration = np.sum(array_waso_emissions_n2o_incineration, axis = 1)
+        
         # add ch4, which is largely process dependent
         vec_waso_ef_ch4_incineration_isw = self.model_attributes.get_standard_variables(
             df_ce_trajectories, 
-            self.modvar_waso_ef_ch4_incineration_isw, False, return_type = "array_units_corrected_gas")
+            self.modvar_waso_ef_ch4_incineration_isw, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_units_corrected_gas"
+        )
         vec_waso_ef_ch4_incineration_msw = self.model_attributes.get_standard_variables(
             df_ce_trajectories, 
-            self.modvar_waso_ef_ch4_incineration_msw, False, return_type = "array_units_corrected_gas")
+            self.modvar_waso_ef_ch4_incineration_msw, 
+            override_vector_for_single_mv_q = False, 
+            return_type = "array_units_corrected_gas"
+        )
+        
         vec_waso_emissions_ch4_incineration_isw = vec_waso_ef_ch4_incineration_isw*vec_waso_isw_total*factor_waso_mass_to_emission_mass
         vec_waso_emissions_ch4_incineration_msw = vec_waso_ef_ch4_incineration_msw*vec_waso_msw_total*factor_waso_mass_to_emission_mass
         vec_waso_emissions_ch4_incineration = vec_waso_emissions_ch4_incineration_isw + vec_waso_emissions_ch4_incineration_msw
+        
         # add data frames
         df_out += [
-            self.model_attributes.array_to_df(vec_waso_emissions_ch4_incineration, self.modvar_waso_emissions_ch4_incineration, False),
-            self.model_attributes.array_to_df(array_waso_emissions_co2_incineration, self.modvar_waso_emissions_co2_incineration, False),
-            self.model_attributes.array_to_df(array_waso_emissions_n2o_incineration, self.modvar_waso_emissions_n2o_incineration, False)
+            self.model_attributes.array_to_df(
+                vec_waso_emissions_ch4_incineration, 
+                self.modvar_waso_emissions_ch4_incineration
+            ),
+            self.model_attributes.array_to_df(
+                array_waso_emissions_co2_incineration, 
+                self.modvar_waso_emissions_co2_incineration
+            ),
+            self.model_attributes.array_to_df(
+                array_waso_emissions_n2o_incineration, 
+                self.modvar_waso_emissions_n2o_incineration
+            )
         ]
 
 
@@ -1534,21 +1571,58 @@ class CircularEconomy:
         
         # get data frames
         df_out += [
-            self.model_attributes.array_to_df(array_waso_emissions_ch4_landfill, self.modvar_waso_emissions_ch4_landfill, False),
-            self.model_attributes.array_to_df(vec_waso_landfill_gas_recovered, self.modvar_waso_recovered_biogas_landfills, False),
-            self.model_attributes.array_to_df(array_waso_emissions_ch4_open_dump, self.modvar_waso_emissions_ch4_open_dump, False)
+            self.model_attributes.array_to_df(
+                array_waso_emissions_ch4_landfill, 
+                self.modvar_waso_emissions_ch4_landfill
+            ),
+            self.model_attributes.array_to_df(
+                vec_waso_landfill_gas_recovered, 
+                self.modvar_waso_recovered_biogas_landfills
+            ),
+            self.model_attributes.array_to_df(
+                array_waso_emissions_ch4_open_dump, 
+                self.modvar_waso_emissions_ch4_open_dump
+            )
         ]
+
 
         # add waste totals by pathway to df out
         df_out += [
-            self.model_attributes.array_to_df(array_waso_waste_biogas, self.modvar_waso_waste_total_biogas, False, True),
-            self.model_attributes.array_to_df(array_waso_waste_compost, self.modvar_waso_waste_total_compost, False, True),
-            self.model_attributes.array_to_df(array_waso_waste_incineration, self.modvar_waso_waste_total_incineration, False),
-            self.model_attributes.array_to_df(vec_waso_waste_incineration_isw_for_energy, self.modvar_waso_waste_total_for_energy_isw, False),
-            self.model_attributes.array_to_df(vec_waso_waste_incineration_msw_for_energy, self.modvar_waso_waste_total_for_energy_msw, False),
-            self.model_attributes.array_to_df(array_waso_waste_landfill, self.modvar_waso_waste_total_landfilled, False),
-            self.model_attributes.array_to_df(array_waso_waste_open_dump, self.modvar_waso_waste_total_open_dumped, False),
-            self.model_attributes.array_to_df(array_waso_waste_recycled, self.modvar_waso_waste_total_recycled, False, True)
+            self.model_attributes.array_to_df(
+                array_waso_waste_biogas, 
+                self.modvar_waso_waste_total_biogas, 
+                reduce_from_all_cats_to_specified_cats = True
+            ),
+            self.model_attributes.array_to_df(
+                array_waso_waste_compost, 
+                self.modvar_waso_waste_total_compost, 
+                reduce_from_all_cats_to_specified_cats = True
+            ),
+            self.model_attributes.array_to_df(
+                array_waso_waste_incineration, 
+                self.modvar_waso_waste_total_incineration
+            ),
+            self.model_attributes.array_to_df(
+                vec_waso_waste_incineration_isw_for_energy, 
+                self.modvar_waso_waste_total_for_energy_isw
+            ),
+            self.model_attributes.array_to_df(
+                vec_waso_waste_incineration_msw_for_energy, 
+                self.modvar_waso_waste_total_for_energy_msw
+            ),
+            self.model_attributes.array_to_df(
+                array_waso_waste_landfill, 
+                self.modvar_waso_waste_total_landfilled
+            ),
+            self.model_attributes.array_to_df(
+                array_waso_waste_open_dump, 
+                self.modvar_waso_waste_total_open_dumped
+            ),
+            self.model_attributes.array_to_df(
+                array_waso_waste_recycled, 
+                self.modvar_waso_waste_total_recycled, 
+                reduce_from_all_cats_to_specified_cats = True
+            )
         ]
 
         df_out = pd.concat(df_out, axis = 1).reset_index(drop = True)
