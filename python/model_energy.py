@@ -492,7 +492,12 @@ class NonElectricEnergy:
             self.modvar_enfu_energy_demand_by_fuel_scoe
         ]
         # key categories
-        self.cat_enfu_electricity = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_enfu, {self.model_attributes.field_enfu_electricity_demand_category: 1})[0]
+        self.cat_enfu_electricity = self.model_attributes.get_categories_from_attribute_characteristic(
+            self.subsec_name_enfu, 
+            {
+                self.model_attributes.field_enfu_electricity_demand_category: 1
+            }
+        )[0]
 
         return None
 
@@ -577,6 +582,7 @@ class NonElectricEnergy:
         self.modvar_inen_frac_en_oil = "Industrial Energy Fuel Fraction Oil"
         self.modvar_inen_frac_en_solar = "Industrial Energy Fuel Fraction Solar"
         self.modvar_inen_frac_en_solid_biomass = "Industrial Energy Fuel Fraction Solid Biomass"
+        
         # get some dictionaries implied by the inen attribute tables
         self.dict_inen_fuel_categories_to_fuel_variables, self.dict_inen_fuel_categories_to_unassigned_fuel_variables = self.get_inen_dict_fuel_categories_to_fuel_variables()
         self.modvars_inen_list_fuel_fraction = self.model_attributes.get_vars_by_assigned_class_from_akaf(
@@ -584,7 +590,12 @@ class NonElectricEnergy:
             "fuel_fraction"
         )
         # key categories
-        self.cat_inen_agricultural = self.model_attributes.get_categories_from_attribute_characteristic(self.subsec_name_inen, {"agricultural_category": 1})[0]
+        self.cat_inen_agricultural = self.model_attributes.get_categories_from_attribute_characteristic(
+            self.subsec_name_inen, 
+            {
+                "agricultural_category": 1
+            }
+        )[0]
 
         return None
 
@@ -647,7 +658,7 @@ class NonElectricEnergy:
             ["energy_efficiency_variable_by_fuel", "fuel_fraction_variable_by_fuel", "energy_demand_variable_by_fuel"]
         )
         # reassign as variables
-        self.modvar_dict_scoe_fuel_fractions_to_efficiency_factors = self.modvar_dicts_scoe_fuel_vars["fuel_fraction_variable_by_fuel_to_energy_efficiency_variable_by_fuel"]
+        self.modvar_dict_scoe_fuel_fractions_to_efficiency_factors = self.modvar_dicts_scoe_fuel_vars.get("fuel_fraction_variable_by_fuel_to_energy_efficiency_variable_by_fuel")
 
         return None
 

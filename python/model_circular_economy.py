@@ -89,6 +89,47 @@ class CircularEconomy:
         return None
 
 
+    
+    def get_wali_dict_trww_categories_to_wali_fraction_variables(self,
+    ) -> Dict:
+        """
+        use get_inen_dict_fuel_categories_to_fuel_variables to return a 
+            dictionary with fuel categories as keys based on the Industrial 
+            Energy attribute table:
+
+            {
+                cat_fuel: {
+                    "fuel_efficiency": VARNAME_FUELEFFICIENCY, 
+                    ...
+                }
+            }
+
+            for each key, the dict includes variables associated with the fuel 
+            cat_fuel:
+
+            - "fuel_fraction"
+        """
+
+        subsec_wali = self.model_attributes.subsec_name_wali
+        subsec_trww = self.model_attributes.subsec_name_trww
+        pycat_trww = self.model_attributes.get_subsector_attribute(
+            subsec_trww, 
+            "pycategory_primary"
+        )
+
+        dict_out = self.model_attributes.assign_keys_from_attribute_fields(
+            subsec_wali,
+            pycat_trww,
+            {
+                "Treatment Fraction": "treatment_fraction"
+            },
+            "varreqs_all",
+            True
+        )
+
+        return dict_out
+
+
 
     def _initialize_input_output_components(self,
     ) -> None:
@@ -350,6 +391,11 @@ class CircularEconomy:
         self.modvar_wali_treatpath_secondary_anaerobic = "Treatment Fraction Secondary Anaerobic"
         self.modvar_wali_treatpath_untreated_no_sewerage = "Treatment Fraction Untreated No Sewerage"
         self.modvar_wali_treatpath_untreated_with_sewerage = "Treatment Fraction Untreated With Sewerage"
+
+        tup = self.get_wali_dict_trww_categories_to_wali_fraction_variables()
+
+        self.dict_trww_categories_to_wali_fraction_variables = tup[0]
+        self.dict_trww_categories_to_unassigned_variables = tup[1]
 
         return None
 

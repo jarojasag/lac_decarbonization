@@ -1,11 +1,9 @@
 from attribute_table import AttributeTable
-import auxiliary_definitions_transformations as adt
 import ingestion as ing
 import logging
 import model_afolu as mafl
 import model_attributes as ma
-import model_electricity as ml
-import model_energy as me
+import model_circular_economy as mc
 import numpy as np
 import os, os.path
 import pandas as pd
@@ -14,14 +12,15 @@ from sisepuede_file_structure import *
 import support_classes as sc
 import support_functions as sf
 import time
+import transformations_base_circular_economy as tbc
 from typing import Union
 import warnings
 
 
 
-class TransformationsIPPU:
+class TransformationsCircularEconomy:
     """
-    Build IPPU transformations using general transformations defined in
+    Build energy transformations using general transformations defined in
         auxiliary_definitions_transformations. Wraps more general forms from 
         auxiliary_definitions_transformations into functions and classes
         with shared ramps, paramters, and build functionality.
@@ -87,10 +86,8 @@ class TransformationsIPPU:
     def __init__(self,
         model_attributes: ma.ModelAttributes,
         dict_config: Dict,
-        dir_jl: str,
-        fp_nemomod_reference_files: str,
         field_region: Union[str, None] = None,
-		fp_nemomod_temp_sqlite_db: Union[str, None] = None,
+        df_input: Union[pd.DataFrame, None] = None,
 		logger: Union[logging.Logger, None] = None,
     ):
 
@@ -98,9 +95,10 @@ class TransformationsIPPU:
 
         self._initialize_attributes(field_region, model_attributes)
         self._initialize_config(dict_config = dict_config)
-        self._initialize_models(dir_jl, fp_nemomod_reference_files)
+        self._initialize_models()
         self._initialize_parameters(dict_config = dict_config)
         self._initialize_ramp()
+        self._initialize_baseline_inputs(df_input)
         self._initialize_transformations()
 
 
@@ -109,226 +107,6 @@ class TransformationsIPPU:
     ##################################
     #    INITIALIZATION FUNCTIONS    #
     ##################################
-    
-    def get_entc_cats_max_investment_ramp(self,
-        dict_config: Union[Dict, None] = None,
-    ) -> List[str]:
-        """
-        Set categories to which a cap on maximum investment is applied in the 
-            renewables target shift.  If dict_config is None, uses self.config.
-        
-        Keyword Arguments
-        -----------------
-        - dict_config: dictionary mapping input configuration arguments to key 
-            values. Must include the following keys:
-
-            * categories_max_investment_ramp: list of categories to tag as 
-                renewable for the Renewable Targets transformation.
-        """
-        dict_config = self.config if not isinstance(dict_config, dict) else dict_config
-
-        cats_entc_max_investment_ramp = self.config.get(self.key_config_cats_entc_max_investment_ramp)
-        cats_entc_max_investment_ramp = (
-            list(cats_entc_max_investment_ramp)
-            if isinstance(cats_entc_max_investment_ramp, list) or isinstance(cats_entc_max_investment_ramp, np.ndarray)
-            else [
-                "pp_geothermal",
-                "pp_nuclear"
-            ]
-        )
-
-        return cats_entc_max_investment_ramp
-
-
-
-    def get_entc_cats_renewable(self,
-        dict_config: Union[Dict, None] = None,
-    ) -> List[str]:
-        """
-        Set renewable categories based on the input dictionary dict_config. If 
-            dict_config is None, uses self.config.
-        
-        Keyword Arguments
-        -----------------
-        - dict_config: dictionary mapping input configuration arguments to key 
-            values. Must include the following keys:
-
-            * categories_entc_renewable: list of categories to tag as renewable 
-                for the Renewable Targets transformation.
-        """
-        dict_config = self.config if not isinstance(dict_config, dict) else dict_config
-
-        cats_renewable = dict_config.get(self.key_config_cats_entc_renewable)
-        cats_renewable = (
-            list(cats_renewable)
-            if isinstance(cats_renewable, list) or isinstance(cats_renewable, np.ndarray)
-            else [
-                "pp_geothermal",
-                "pp_hydropower",
-                "pp_ocean",
-                "pp_solar",
-                "pp_wind"
-            ]
-        )
-
-        return cats_renewable
-
-
-    
-    def get_entc_dict_renewable_target_msp(self,
-        cats_renewable: Union[List[str], None], 
-        dict_config: Union[Dict, None] = None,
-    ) -> List[str]:
-        """
-        Set any targets for renewable energy categories. Relies on 
-            cats_renewable to verify keys in renewable_target_entc
-        
-        Keyword Arguments
-        -----------------
-        - dict_config: dictionary mapping input configuration arguments to key 
-            values. Must include the following keys:
-
-            * dict_entc_renewable_target_msp: dictionary of renewable energy
-                categories mapped to MSP targets under the renewable target
-                transformation
-        """
-        attr_tech = self.model_attributes.dict_attributes.get("cat_technology")
-        dict_config = self.config if not isinstance(dict_config, dict) else dict_config
-        cats_renewable = [x for x in cats_renewable if x in attr_tech.key_values]
-
-        dict_entc_renewable_target_msp = dict_config.get(self.key_config_dict_entc_renewable_target_msp)
-        dict_entc_renewable_target_msp = (
-            {}
-            if not isinstance(dict_entc_renewable_target_msp, dict)
-            else dict(
-                (k, v) for k, v in dict_entc_renewable_target_msp.items() 
-                if (k in cats_renewable) and (sf.isnumber(v))
-            )
-        )
-
-        return dict_entc_renewable_target_msp
-
-
-
-    def get_inen_parameters(self,
-        dict_config: Union[Dict, None] = None,
-    ) -> List[str]:
-        """
-        Get parameters for the implementation of transformations. Returns a 
-            tuple with the following elements (dictionary keys, if present, are 
-            shown within after comments; otherwise, calculated internally):
-
-            (
-                cats_inen_high_heat, # key "categories_inen_high_heat",
-                cats_inen_not_high_heat,
-                frac_inen_high_temp_elec_hydg, # key "frac_inen_low_temp_elec"
-                frac_inen_low_temp_elec, # key "frac_inen_low_temp_elec"
-                frac_inen_shift_denom, 
-            )
-        
-        If dict_config is None, uses self.config.
-
-        NOTE: Requires keys in dict_config to set. If not found, will set the 
-            following defaults:
-                * cats_inen_high_heat: [
-                    "cement", 
-                    "chemicals", 
-                    "glass", 
-                    "lime_and_carbonite", 
-                    "metals"
-                ]
-                * cats_inen_not_high_heat: derived from INEN Fuel Fraction 
-                    variables and cats_inen_high_heat (complement)
-                * frac_inen_high_temp_elec_hydg: (electrification and hydrogen
-                    potential fractionation of industrial energy demand, 
-                    targeted at high temperature demands: 50% of 1/2 of 90% of 
-                    total INEN energy demand for each fuel)
-                * frac_inen_low_temp_elec: 0.95*0.45 (electrification potential 
-                    fractionation of industrial energy demand, targeted at low 
-                    temperature demands: 95% of 1/2 of 90% of total INEN energy 
-                    demand)
-            
-            The value of `frac_inen_shift_denom` is 
-                frac_inen_low_temp_elec + 2*frac_inen_high_temp_elec_hydg
-
-
-        Keyword Arguments
-        -----------------
-        - dict_config: dictionary mapping input configuration arguments to key 
-            values. Must include the following keys:
-
-            * categories_entc_renewable: list of categories to tag as renewable 
-                for the Renewable Targets transformation.
-        """
-
-        attr_industry = self.model_attributes.dict_attributes.get("cat_industry")
-        dict_config = self.config if not isinstance(dict_config, dict) else dict_config
-
-
-        # INEN high heat and non-high heat categories
-        default_cats_inen_high_heat = [
-            x for x in attr_industry.key_values 
-            if x in [
-                "cement", 
-                "chemicals", 
-                "glass", 
-                "lime_and_carbonite", 
-                "metals"
-            ]
-        ]
-        cats_inen_high_heat = dict_config.get(self.key_config_cats_inen_high_heat)
-        cats_inen_high_heat = (
-            default_cats_inen_high_heat
-            if cats_inen_high_heat is None
-            else [x for x in cats_inen_high_heat if x in attr_industry.key_values]
-        )
-
-        # get categories without high heat
-        modvars_inen_fuel_switching = adt.transformation_inen_shift_modvars(
-            None,
-            None,
-            None,
-            self.model_attributes,
-            return_modvars_only = True
-        )
-        cats_inen_fuel_switching = set({})
-        for modvar in modvars_inen_fuel_switching:
-            cats_inen_fuel_switching = cats_inen_fuel_switching | set(self.model_attributes.get_variable_categories(modvar))
-        cats_inen_not_high_heat = sorted(list(cats_inen_fuel_switching - set(cats_inen_high_heat))) 
-
-        # fraction of energy that can be moved to electric/hydrogen, representing high heat transfer
-        default_frac_inen_high_temp_elec_hydg = 0.5*0.45
-        frac_inen_high_temp_elec_hydg = dict_config.get(self.key_config_frac_inen_high_temp_elec_hydg)
-        frac_inen_high_temp_elec_hydg = (
-            default_frac_inen_high_temp_elec_hydg
-            if not sf.isnumber(frac_inen_high_temp_elec_hydg)
-            else frac_inen_high_temp_elec_hydg
-        )
-
-        # fraction of energy that can be moved to electric, representing low heat transfer
-        default_frac_inen_low_temp_elec = 0.95*0.45
-        frac_inen_low_temp_elec = dict_config.get(self.key_config_frac_inen_low_temp_elec)
-        frac_inen_low_temp_elec = (
-            default_frac_inen_low_temp_elec
-            if not sf.isnumber(frac_inen_low_temp_elec)
-            else frac_inen_low_temp_elec
-        )
-
-        frac_inen_shift_denom = frac_inen_low_temp_elec + 2*frac_inen_high_temp_elec_hydg
-
-        
-        # setup return
-        tup_out = (
-            cats_inen_high_heat,
-            cats_inen_not_high_heat,
-            frac_inen_high_temp_elec_hydg,
-            frac_inen_low_temp_elec,
-            frac_inen_shift_denom,
-        )
-        
-        return tup_out
-
-
 
     def get_ramp_characteristics(self,
         dict_config: Union[Dict, None] = None,
@@ -351,8 +129,6 @@ class TransformationsIPPU:
                 * year_0_ramp: 9th year (10th time period)
                 * n_tp_ramp: n_tp - t0_ramp - 1 (ramps to 1 at final time 
                     period)
-                * vir_renewable_cap_delta_frac: 0.1
-                * vir_renewable_cap_max_frac: 0.01 
 
         Keyword Arguments
         -----------------
@@ -384,30 +160,8 @@ class TransformationsIPPU:
             else n_tp_ramp
         )
 
-        # get VIR (get_vir_max_capacity) delta_frac
-        default_vir_renewable_cap_delta_frac = 0.01
-        vir_renewable_cap_delta_frac = dict_config.get(self.key_config_vir_renewable_cap_delta_frac)
-        vir_renewable_cap_delta_frac = (
-            default_vir_renewable_cap_delta_frac
-            if not sf.isnumber(vir_renewable_cap_delta_frac)
-            else vir_renewable_cap_delta_frac
-        )
-        vir_renewable_cap_delta_frac = float(sf.vec_bounds(vir_renewable_cap_delta_frac, (0.0, 1.0)))
-
-        # get VIR (get_vir_max_capacity) max_frac
-        default_vir_renewable_cap_max_frac = 0.05
-        vir_renewable_cap_max_frac = dict_config.get(self.key_config_vir_renewable_cap_max_frac)
-        vir_renewable_cap_max_frac = (
-            default_vir_renewable_cap_max_frac
-            if not sf.isnumber(vir_renewable_cap_max_frac)
-            else vir_renewable_cap_max_frac
-        )
-        vir_renewable_cap_max_frac = float(sf.vec_bounds(vir_renewable_cap_max_frac, (0.0, 1.0)))
-
         tup_out = (
             n_tp_ramp,
-            vir_renewable_cap_delta_frac,
-            vir_renewable_cap_max_frac,
             year_0_ramp, 
         )
 
@@ -459,6 +213,29 @@ class TransformationsIPPU:
         self.model_attributes = model_attributes
         self.time_periods = time_periods
         self.regions = regions
+
+        return None
+    
+
+
+    def _initialize_baseline_inputs(self,
+        df_inputs: Union[pd.DataFrame, None],
+    ) -> None:
+        """
+        Initialize the baseline inputs dataframe based on the initialization 
+            value of df_inputs. It not initialied, sets as None. Sets the 
+            following properties:
+
+            * self.baseline_inputs
+        """
+
+        baseline_inputs = (
+            self.transformation_ce_baseline(df_inputs, strat = self.baseline_strategy) 
+            if isinstance(df_inputs, pd.DataFrame) 
+            else None
+        )
+
+        self.baseline_inputs = baseline_inputs
 
         return None
 
@@ -535,36 +312,14 @@ class TransformationsIPPU:
 
 
     def _initialize_models(self,
-        dir_jl: str,
-        fp_nemomod_reference_files: str,
     ) -> None:
         """
         Define model objects for use in variable access and base estimates.
-
-        Function Arguments
-        ------------------
-        - dir_jl: location of Julia directory containing Julia environment and 
-        support modules
-        - fp_nemomod_reference_files: directory housing reference files called 
-            by NemoMod when running electricity model. Required to access data 
-            in ElectricEnergy. Needs the following CSVs:
-
-            * Required keys or CSVs (without extension):
-                (1) CapacityFactor
-                (2) SpecifiedDemandProfile
         """
 
-        model_afolu = mafl.AFOLU(self.model_attributes)
-        model_electricity = ml.ElectricEnergy(
-            self.model_attributes, 
-            dir_jl,
-            fp_nemomod_reference_files,
-            initialize_julia = False
-        )
+        model_circecon = mc.CircularEconomy(self.model_attributes)
 
-        self.model_afolu = model_afolu
-        self.model_electricity = model_electricity
-        self.model_energy = model_electricity.model_energy
+        self.model_circecon = model_circecon
 
         return None
 
@@ -582,40 +337,15 @@ class TransformationsIPPU:
         dict_config = self.config if not isinstance(dict_config, dict) else dict_config
 
         # get parameters from configuration dictionary
-        cats_entc_max_investment_ramp = self.get_entc_cats_max_investment_ramp()
-        cats_renewable = self.get_entc_cats_renewable()
         (
             n_tp_ramp,
-            vir_renewable_cap_delta_frac,
-            vir_renewable_cap_max_frac,
             year_0_ramp
         ) = self.get_ramp_characteristics()
-
-        dict_entc_renewable_target_msp = self.get_entc_dict_renewable_target_msp(cats_renewable)
-
-        # get some INEN paraemeters ()
-        (
-            cats_inen_high_heat,
-            cats_inen_not_high_heat,
-            frac_inen_high_temp_elec_hydg,
-            frac_inen_low_temp_elec,
-            frac_inen_shift_denom,
-        ) = self.get_inen_parameters()
 
 
         ##  SET PROPERTIES
 
-        self.cats_entc_max_investment_ramp = cats_entc_max_investment_ramp
-        self.cats_inen_high_heat = cats_inen_high_heat
-        self.cats_inen_not_high_heat = cats_inen_not_high_heat
-        self.cats_renewable = cats_renewable
-        self.dict_entc_renewable_target_msp = dict_entc_renewable_target_msp
-        self.frac_inen_high_temp_elec_hydg = frac_inen_high_temp_elec_hydg
-        self.frac_inen_low_temp_elec = frac_inen_low_temp_elec
-        self.frac_inen_shift_denom = frac_inen_shift_denom
         self.n_tp_ramp = n_tp_ramp
-        self.vir_renewable_cap_delta_frac = vir_renewable_cap_delta_frac
-        self.vir_renewable_cap_max_frac = vir_renewable_cap_max_frac
         self.year_0_ramp = year_0_ramp
 
         return None
@@ -628,29 +358,13 @@ class TransformationsIPPU:
         Initialize the ramp vector for implementing transformations. Sets the 
             following properties:
 
-            * self.dict_entc_renewable_target_cats_max_investment
             * self.vec_implementation_ramp
-            * self.vec_implementation_ramp_renewable_cap
         """
         
         vec_implementation_ramp = self.build_implementation_ramp_vector()
-        vec_implementation_ramp_renewable_cap = self.get_vir_max_capacity(vec_implementation_ramp)
-
-        dict_entc_renewable_target_cats_max_investment = dict(
-            (
-                x, 
-                {
-                    "vec": vec_implementation_ramp_renewable_cap,
-                    "type": "scalar"
-                }
-            ) for x in self.cats_entc_max_investment_ramp
-        )
         
-
         ##  SET PROPERTIES
-        self.dict_entc_renewable_target_cats_max_investment = dict_entc_renewable_target_cats_max_investment
         self.vec_implementation_ramp = vec_implementation_ramp
-        self.vec_implementation_ramp_renewable_cap = vec_implementation_ramp_renewable_cap
 
         return None
 
@@ -667,7 +381,10 @@ class TransformationsIPPU:
             
         Sets the following properties:
 
+            * self.all_transformations
+            * self.all_transformations_non_baseline
             * self.dict_transformations
+            * self.transformation_id_baseline
             * self.transformation_***
         """
 
@@ -676,779 +393,194 @@ class TransformationsIPPU:
         dict_transformations = {}
 
 
-        ##############
-        #    CCSQ    #
-        ##############
+        ##################
+        #    BASELINE    #
+        ##################
 
-        self.ccsq_increase_air_capture = sc.Transformation(
-            "CCSQ: Increase direct air capture", 
-            self.transformation_ccsq_increase_air_capture, 
+        self.baseline = sc.Transformation(
+            "BASE", 
+            self.transformation_ce_baseline, 
             attr_strategy
         )
-        all_transformations.append(self.ccsq_increase_air_capture)
+        all_transformations.append(self.baseline)
 
 
-        self.ccsq_increase_air_capture_with_rep = sc.Transformation(
-            "CCSQ: Increase direct air capture with renewable energy production", 
+
+        #####################################################
+        #    CircularEconomy SECTOR-WIDE TRANSFORMATIONS    #
+        #####################################################
+        
+        self.ce_all = sc.Transformation(
+            "CE:ALL", 
             [
-                self.transformation_ccsq_increase_air_capture,
-                self.transformation_support_entc_clean_grid
+                self.transformation_trww_increase_biogas_capture,
+                self.transformation_trww_increase_septic_compliance,
+                self.transformation_wali_improve_sanitation_industrial,
+                self.transformation_wali_improve_sanitation_rural,
+                self.transformation_wali_improve_sanitation_urban,
+                self.transformation_waso_decrease_msw,
+                self.transformation_waso_increase_anaerobic_treatment_and_composting,
+                self.transformation_waso_increase_biogas_capture,
+                self.transformation_waso_increase_energy_from_biogas,
+                self.transformation_waso_increase_energy_from_incineration,
+                self.transformation_waso_increase_landfilling,
+                self.transformation_waso_increase_recycling,
             ],
             attr_strategy
         )
-        all_transformations.append(self.ccsq_increase_air_capture_with_rep)
+        all_transformations.append(self.ce_all)
 
 
 
-        ##############
-        #    ENTC    #
-        ##############
+        ##############################
+        #    TRWW TRANSFORMATIONS    #
+        ##############################
 
-        self.entc_all = sc.Transformation(
-            "EN: All Energy transformations", 
+        self.trww_all = sc.Transformation(
+            "TRWW:ALL", 
             [
-                self.transformation_ccsq_increase_air_capture,
-                self.transformation_entc_reduce_transmission_losses,
-                self.transformation_entc_renewables_target,
-                self.transformation_fgtv_maximize_flaring,
-                self.transformation_fgtv_minimize_leaks,
-                self.transformation_inen_fuel_switch_low_and_high_temp, # required instead of the two separate functions
-                self.transformation_inen_maximize_efficiency_energy,
-                self.transformation_inen_maximize_efficiency_production,
-                self.transformation_scoe_fuel_switch_electrify,
-                self.transformation_scoe_increase_applicance_efficiency,
-                self.transformation_scoe_reduce_heat_energy_demand,
-                self.transformation_trde_reduce_demand,
-                self.transformation_trns_electrify_road_light_duty,
-                self.transformation_trns_electrify_rail,
-                self.transformation_trns_fuel_switch_maritime,
-                self.transformation_trns_fuel_switch_road_medium_duty,
-                self.transformation_trns_increase_efficiency_electric,
-                self.transformation_trns_increase_efficiency_non_electric,
-                self.transformation_trns_increase_occupancy_light_duty,
-                self.transformation_trns_mode_shift_freight,
-                self.transformation_trns_mode_shift_public_private,
-                self.transformation_trns_mode_shift_regional,
-                self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.entc_all)
-
-
-        self.entc_bundle_efficiency = sc.Transformation(
-            "EN: Efficiency bundle", 
-            [
-                self.transformation_inen_fuel_switch_low_temp_to_heat_pump,
-                self.transformation_inen_maximize_efficiency_energy,
-                self.transformation_scoe_fuel_switch_electrify,
-                self.transformation_scoe_increase_applicance_efficiency,
-                self.transformation_scoe_reduce_heat_energy_demand,
-                self.transformation_trns_increase_efficiency_electric,
-                self.transformation_trns_increase_efficiency_non_electric
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.entc_bundle_efficiency)
-
-
-        self.entc_bundle_efficiency_with_rep = sc.Transformation(
-            "EN: Efficiency bundle with renewable energy production", 
-            [
-                self.transformation_inen_fuel_switch_low_temp_to_heat_pump,
-                self.transformation_inen_maximize_efficiency_energy,
-                self.transformation_scoe_fuel_switch_electrify,
-                self.transformation_scoe_increase_applicance_efficiency,
-                self.transformation_scoe_reduce_heat_energy_demand,
-                self.transformation_trns_increase_efficiency_electric,
-                self.transformation_trns_increase_efficiency_non_electric,
-                self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.entc_bundle_efficiency_with_rep)
-
-
-        self.entc_bundle_fuel_switch = sc.Transformation(
-            "EN: Fuel switch bundle", 
-            [
-                self.transformation_inen_fuel_switch_low_and_high_temp,
-                self.transformation_scoe_fuel_switch_electrify,
-                self.transformation_trns_electrify_road_light_duty,
-                self.transformation_trns_electrify_rail,
-                self.transformation_trns_fuel_switch_maritime,
-                self.transformation_trns_fuel_switch_road_medium_duty
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.entc_bundle_fuel_switch)
-
-
-        self.entc_bundle_fuel_switch_with_rep = sc.Transformation(
-            "EN: Fuel switch bundle with renewable energy production", 
-            [
-                self.transformation_inen_fuel_switch_low_and_high_temp,
-                self.transformation_scoe_fuel_switch_electrify,
-                self.transformation_trns_electrify_road_light_duty,
-                self.transformation_trns_electrify_rail,
-                self.transformation_trns_fuel_switch_maritime,
-                self.transformation_trns_fuel_switch_road_medium_duty,
-                self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.entc_bundle_fuel_switch_with_rep)
-
-
-        self.entc_least_cost = sc.Transformation(
-            "ENTC: Least cost solution", 
-            self.transformation_entc_least_cost, 
-            attr_strategy
-        )
-        all_transformations.append(self.entc_least_cost)
-
-        
-        self.entc_reduce_transmission_losses = sc.Transformation(
-            "ENTC: Reduce transmission losses", 
-            self.transformation_entc_reduce_transmission_losses, 
-            attr_strategy
-        )
-        all_transformations.append(self.entc_reduce_transmission_losses)
-
-
-        self.entc_reduce_transmission_losses_with_rep = sc.Transformation(
-            "ENTC: Reduce transmission losses with renewable energy production",
-            [
-                self.transformation_entc_reduce_transmission_losses,
-                self.transformation_support_entc_clean_grid
+                self.transformation_trww_increase_biogas_capture,
+                self.transformation_trww_increase_septic_compliance,
             ],
             attr_strategy
         )
-        all_transformations.append(self.entc_reduce_transmission_losses_with_rep)
+        all_transformations.append(self.trww_all)
 
 
-        self.entc_renewable_electricity = sc.Transformation(
-            "ENTC: 95% of electricity is generated by renewables in 2050", 
-            self.transformation_entc_renewables_target, 
+        self.trww_increase_biogas_capture = sc.Transformation(
+            "TRWW:INC_CAPTURE_BIOGAS", 
+            self.transformation_trww_increase_biogas_capture,
             attr_strategy
         )
-        all_transformations.append(self.entc_renewable_electricity)
+        all_transformations.append(self.trww_increase_biogas_capture)
 
 
+        self.trww_increase_septic_compliance = sc.Transformation(
+            "TRWW:INC_COMPLIANCE_SEPTIC", 
+            self.transformation_trww_increase_septic_compliance,
+            attr_strategy
+        )
+        all_transformations.append(self.trww_increase_septic_compliance)
 
-        ##############
-        #    FGTV    #
-        ##############
 
-        self.fgtv_all = sc.Transformation(
-            "FGTV: All Fugitive Emissions transformations", 
+        ##############################
+        #    WALI TRANSFORMATIONS    #
+        ##############################
+
+        self.wali_all = sc.Transformation(
+            "WALI:ALL", 
             [
-                self.transformation_fgtv_maximize_flaring,
-                self.transformation_fgtv_minimize_leaks
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.fgtv_all)
-
-
-        self.fgtv_all_with_rep = sc.Transformation(
-            "FGTV: All Fugitive Emissions transformations with renewable energy production", 
-            [
-                self.transformation_fgtv_maximize_flaring,
-                self.transformation_fgtv_minimize_leaks,
-                self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.fgtv_all_with_rep)
-
-
-        self.fgtv_maximize_flaring = sc.Transformation(
-            "FGTV: Maximize flaring", 
-            self.transformation_fgtv_maximize_flaring, 
-            attr_strategy
-        )
-        all_transformations.append(self.fgtv_maximize_flaring)
-
-
-        self.fgtv_maximize_flaring_with_rep = sc.Transformation(
-            "FGTV: Maximize flaring with renewable energy production", 
-            [
-                self.transformation_fgtv_maximize_flaring,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.fgtv_maximize_flaring_with_rep)
-
-
-        self.fgtv_minimize_leaks = sc.Transformation(
-            "FGTV: Minimize leaks", 
-            self.transformation_fgtv_minimize_leaks, 
-            attr_strategy
-        )
-        all_transformations.append(self.fgtv_minimize_leaks)
-
-
-        self.fgtv_minimize_leaks_with_rep = sc.Transformation(
-            "FGTV: Minimize leaks with renewable energy production", 
-            [
-                self.transformation_fgtv_minimize_leaks,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.fgtv_minimize_leaks_with_rep)
-
-
-
-        ##############
-        #    INEN    #
-        ##############
-
-        self.inen_all = sc.Transformation(
-            "INEN: All Industrial Energy transformations", 
-            [
-                self.transformation_inen_fuel_switch_low_and_high_temp, # use instead of both functions to avoid incorrect results w/func composition
-                self.transformation_inen_maximize_efficiency_energy,
-                self.transformation_inen_maximize_efficiency_production
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.inen_all)
-
-
-        self.inen_all_with_rep = sc.Transformation(
-            "INEN: All Industrial Energy transformations with renewable energy production", 
-            [
-                self.transformation_inen_fuel_switch_low_and_high_temp, # use instead of both functions to avoid incorrect results w/func composition
-                self.transformation_inen_maximize_efficiency_energy,
-                self.transformation_inen_maximize_efficiency_production,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.inen_all_with_rep)
-
-
-        self.inen_fuel_switch_high_temp = sc.Transformation(
-            "INEN: Fuel switch medium and high-temp thermal processes to hydrogen and electricity", 
-            self.transformation_inen_fuel_switch_high_temp, 
-            attr_strategy
-        )
-        all_transformations.append(self.inen_fuel_switch_high_temp)
-
-
-        self.inen_fuel_switch_high_temp_with_rep = sc.Transformation(
-            "INEN: Fuel switch medium and high-temp thermal processes to hydrogen and electricity with renewable energy production", 
-            [
-                self.transformation_inen_fuel_switch_high_temp,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.inen_fuel_switch_high_temp_with_rep)
-        
-
-        self.inen_fuel_switch_low_temp_to_heat_pump = sc.Transformation(
-            "INEN: Fuel switch low-temp thermal processes to industrial heat pumps", 
-            self.transformation_inen_fuel_switch_low_temp_to_heat_pump, 
-            attr_strategy
-        )
-        all_transformations.append(self.inen_fuel_switch_low_temp_to_heat_pump)
-
-
-        self.inen_fuel_switch_low_temp_to_heat_pump_with_rep = sc.Transformation(
-            "INEN: Fuel switch low-temp thermal processes to industrial heat pumps with renewable energy production", 
-            [
-                self.transformation_inen_fuel_switch_low_temp_to_heat_pump,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.inen_fuel_switch_low_temp_to_heat_pump_with_rep)
-
-        
-        self.inen_maximize_energy_efficiency = sc.Transformation(
-            "INEN: Maximize industrial energy efficiency", 
-            self.transformation_inen_maximize_efficiency_energy, 
-            attr_strategy
-        )
-        all_transformations.append(self.inen_maximize_energy_efficiency)
-
-
-        self.inen_maximize_energy_efficiency_with_rep = sc.Transformation(
-            "INEN: Maximize industrial energy efficiency with renewable energy production", 
-            [
-                self.transformation_inen_maximize_efficiency_energy,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.inen_maximize_energy_efficiency_with_rep)
-        
-
-        self.inen_maximize_production_efficiency = sc.Transformation(
-            "INEN: Maximize industrial production efficiency", 
-            self.transformation_inen_maximize_efficiency_production, 
-            attr_strategy
-        )
-        all_transformations.append(self.inen_maximize_production_efficiency)
-
-
-        self.inen_maximize_production_efficiency_with_rep = sc.Transformation(
-            "INEN: Maximize industrial production efficiency with renewable energy production", 
-            [
-                self.transformation_inen_maximize_efficiency_production,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.inen_maximize_production_efficiency_with_rep)
-        
-
-
-        ##############
-        #    SCOE    #
-        ##############
-
-        self.scoe_all = sc.Transformation(
-            "SCOE: All Stationary Combustion and Other Energy transformations", 
-            [
-                self.transformation_scoe_fuel_switch_electrify,
-                self.transformation_scoe_increase_applicance_efficiency,
-                self.transformation_scoe_reduce_heat_energy_demand,
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.scoe_all)
-
-
-        self.scoe_all_with_rep = sc.Transformation(
-            "SCOE: All Stationary Combustion and Other Energy transformations with renewable energy production", 
-            [
-                self.transformation_scoe_fuel_switch_electrify,
-                self.transformation_scoe_increase_applicance_efficiency,
-                self.transformation_scoe_reduce_heat_energy_demand,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.scoe_all_with_rep)
-
-
-        self.scoe_fuel_switch_electrify = sc.Transformation(
-            "SCOE: Switch to electricity for heat using heat pumps, electric stoves, etc.", 
-            self.transformation_scoe_fuel_switch_electrify, 
-            attr_strategy
-        )
-        all_transformations.append(self.scoe_fuel_switch_electrify)
-
-
-        self.scoe_fuel_switch_electrify_with_rep = sc.Transformation(
-            "SCOE: Switch to electricity for heat using heat pumps, electric stoves, etc. with renewable energy production", 
-            [
-                self.transformation_scoe_fuel_switch_electrify,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.scoe_fuel_switch_electrify_with_rep)
-        
-
-        self.scoe_increase_applicance_efficiency = sc.Transformation(
-            "SCOE: Increase appliance efficiency", 
-            self.transformation_scoe_increase_applicance_efficiency, 
-            attr_strategy
-        )
-        all_transformations.append(self.scoe_increase_applicance_efficiency)
-
-
-        self.scoe_increase_applicance_efficiency_with_rep = sc.Transformation(
-            "SCOE: Increase appliance efficiency with renewable energy production", 
-            [
-                self.transformation_scoe_increase_applicance_efficiency,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.scoe_increase_applicance_efficiency_with_rep)
-        
-
-        self.scoe_reduce_heat_energy_demand = sc.Transformation(
-            "SCOE: Reduce end-use demand for heat energy by improving building shell", 
-            self.transformation_scoe_reduce_heat_energy_demand, 
-            attr_strategy
-        )
-        all_transformations.append(self.scoe_reduce_heat_energy_demand)
-
-
-        self.scoe_reduce_heat_energy_demand_with_rep = sc.Transformation(
-            "SCOE: Reduce end-use demand for heat energy by improving building shell with renewable energy production", 
-            [
-                self.transformation_scoe_reduce_heat_energy_demand,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.scoe_reduce_heat_energy_demand_with_rep)
-
-
-
-        ###################
-        #    TRNS/TRDE    #
-        ###################
-
-        self.trde_reduce_demand = sc.Transformation(
-            "TRNS: Reduce demand for transport", 
-            self.transformation_trde_reduce_demand, 
-            attr_strategy
-        )
-        all_transformations.append(self.trde_reduce_demand)
-
-
-        self.trde_reduce_demand_with_rep = sc.Transformation(
-            "TRNS: Reduce demand for transport with renewable energy production", 
-            [
-                self.transformation_trde_reduce_demand,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.trde_reduce_demand_with_rep)
-
-        
-        self.trns_all = sc.Transformation(
-            "TRNS: All Transportation transformations", 
-            [
-                self.transformation_trde_reduce_demand,
-                self.transformation_trns_electrify_road_light_duty,
-                self.transformation_trns_electrify_rail,
-                self.transformation_trns_fuel_switch_maritime,
-                self.transformation_trns_fuel_switch_road_medium_duty,
-                self.transformation_trns_increase_efficiency_electric,
-                self.transformation_trns_increase_efficiency_non_electric,
-                self.transformation_trns_increase_occupancy_light_duty,
-                self.transformation_trns_mode_shift_freight,
-                self.transformation_trns_mode_shift_public_private,
-                self.transformation_trns_mode_shift_regional
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_all)
-
-
-        self.trns_all_with_rep = sc.Transformation(
-            "TRNS: All Transportation transformations with renewable energy production", 
-            [
-                self.transformation_trde_reduce_demand,
-                self.transformation_trns_electrify_road_light_duty,
-                self.transformation_trns_electrify_rail,
-                self.transformation_trns_fuel_switch_maritime,
-                self.transformation_trns_fuel_switch_road_medium_duty,
-                self.transformation_trns_increase_efficiency_electric,
-                self.transformation_trns_increase_efficiency_non_electric,
-                self.transformation_trns_increase_occupancy_light_duty,
-                self.transformation_trns_mode_shift_freight,
-                self.transformation_trns_mode_shift_public_private,
-                self.transformation_trns_mode_shift_regional,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_all_with_rep)
-
-        
-        self.trns_bundle_demand_management = sc.Transformation(
-            "TRNS: Demand management bundle", 
-            [
-                self.transformation_trde_reduce_demand,
-                self.transformation_trns_increase_occupancy_light_duty
+                self.transformation_wali_improve_sanitation_industrial,
+                self.transformation_wali_improve_sanitation_rural,
+                self.transformation_wali_improve_sanitation_urban
             ],
             attr_strategy
         )
-        all_transformations.append(self.trns_bundle_demand_management)
+        all_transformations.append(self.wali_all)
 
 
-        self.trns_bundle_demand_management_with_rep = sc.Transformation(
-            "TRNS: Demand management bundle with renewable energy production", 
+        self.wali_improve_sanitation_industrial = sc.Transformation(
+            "WALI:INC_TREATMENT_INDUSTRIAL", 
+            self.transformation_wali_improve_sanitation_industrial,
+            attr_strategy
+        )
+        all_transformations.append(self.wali_improve_sanitation_industrial)
+
+
+        self.wali_improve_sanitation_rural = sc.Transformation(
+            "WALI:INC_TREATMENT_RURAL", 
+            self.transformation_wali_improve_sanitation_rural,
+            attr_strategy
+        )
+        all_transformations.append(self.wali_improve_sanitation_rural)
+
+
+        self.wali_improve_sanitation_urban = sc.Transformation(
+            "WALI:INC_TREATMENT_URBAN", 
+            self.transformation_wali_improve_sanitation_urban,
+            attr_strategy
+        )
+        all_transformations.append(self.wali_improve_sanitation_urban)
+
+
+
+        ##############################
+        #    WASO TRANSFORMATIONS    #
+        ##############################
+
+        self.waso_all = sc.Transformation(
+            "WASO:ALL", 
             [
-                self.transformation_trde_reduce_demand,
-                self.transformation_trns_increase_occupancy_light_duty,
-		        self.transformation_support_entc_clean_grid
+                self.transformation_waso_decrease_msw,
+                self.transformation_waso_increase_anaerobic_treatment_and_composting,
+                self.transformation_waso_increase_biogas_capture,
+                self.transformation_waso_increase_energy_from_biogas,
+                self.transformation_waso_increase_energy_from_incineration,
+                self.transformation_waso_increase_landfilling,
+                self.transformation_waso_increase_recycling,
             ],
             attr_strategy
         )
-        all_transformations.append(self.trns_bundle_demand_management_with_rep)
+        all_transformations.append(self.waso_all)
+
+
+        self.waso_descrease_msw = sc.Transformation(
+            "WASO:DEC_MSW_PER_CAPITA", 
+            self.transformation_waso_decrease_msw, 
+            attr_strategy
+        )
+        all_transformations.append(self.waso_descrease_msw)
 
         
-        self.trns_bundle_efficiency = sc.Transformation(
-            "TRNS: Efficiency bundle", 
-            [
-                self.transformation_trns_increase_efficiency_electric,
-                self.transformation_trns_increase_efficiency_non_electric
-            ],
+        self.waso_increase_anaerobic_treatment_and_composting = sc.Transformation(
+            "WASO:INC_ANAEROBIC_AND_COMPOST", 
+            self.transformation_waso_increase_anaerobic_treatment_and_composting, 
             attr_strategy
         )
-        all_transformations.append(self.trns_bundle_efficiency)
+        all_transformations.append(self.waso_increase_anaerobic_treatment_and_composting)
 
 
-        self.trns_bundle_efficiency_with_rep = sc.Transformation(
-            "TRNS: Efficiency bundle with renewable energy production", 
-            [
-                self.transformation_trns_increase_efficiency_electric,
-                self.transformation_trns_increase_efficiency_non_electric,
-                self.transformation_support_entc_clean_grid
-            ],
+        self.waso_increase_biogas_capture = sc.Transformation(
+            "WASO:INC_CAPTURE_BIOGAS", 
+            self.transformation_waso_increase_biogas_capture, 
             attr_strategy
         )
-        all_transformations.append(self.trns_bundle_efficiency_with_rep)
+        all_transformations.append(self.waso_increase_biogas_capture)
+
+
+        self.waso_energy_from_biogas = sc.Transformation(
+            "WASO:INC_ENERGY_FROM_BIOGAS", 
+            self.transformation_waso_increase_energy_from_biogas, 
+            attr_strategy
+        )
+        all_transformations.append(self.waso_energy_from_biogas)
+
+
+        self.waso_energy_from_incineration = sc.Transformation(
+            "WASO:INC_ENERGY_FROM_INCINERATION", 
+            self.transformation_waso_increase_energy_from_incineration, 
+            attr_strategy
+        )
+        all_transformations.append(self.waso_energy_from_incineration)
+
+
+        self.waso_increase_landfilling = sc.Transformation(
+            "WASO:INC_LANDFILLING", 
+            self.transformation_waso_increase_landfilling, 
+            attr_strategy
+        )
+        all_transformations.append(self.waso_increase_landfilling)
 
         
-        self.trns_bundle_fuel_swtich = sc.Transformation(
-            "TRNS: Fuel switch bundle", 
-            [
-                self.transformation_trns_electrify_road_light_duty,
-                self.transformation_trns_electrify_rail,
-                self.transformation_trns_fuel_switch_maritime,
-                self.transformation_trns_fuel_switch_road_medium_duty
-            ], 
+        self.waso_increase_recycling = sc.Transformation(
+            "WASO:INC_RECYCLING", 
+            self.transformation_waso_increase_recycling, 
             attr_strategy
         )
-        all_transformations.append(self.trns_bundle_fuel_swtich)
+        all_transformations.append(self.waso_increase_recycling)
 
 
-        self.trns_bundle_fuel_swtich_with_rep = sc.Transformation(
-            "TRNS: Fuel switch bundle with renewable energy production", 
-            [
-                self.transformation_trns_electrify_road_light_duty,
-                self.transformation_trns_electrify_rail,
-                self.transformation_trns_fuel_switch_maritime,
-                self.transformation_trns_fuel_switch_road_medium_duty,
-                self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_bundle_fuel_swtich_with_rep)
-
-        
-        self.trns_bundle_mode_shift = sc.Transformation(
-            "TRNS: Mode shift bundle", 
-            [
-                self.transformation_trns_mode_shift_freight,
-                self.transformation_trns_mode_shift_public_private,
-                self.transformation_trns_mode_shift_regional
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_bundle_mode_shift)
-
-
-        self.trns_bundle_mode_shift_with_rep = sc.Transformation(
-            "TRNS: Mode shift bundle with renewable energy production", 
-            [
-                self.transformation_trns_mode_shift_freight,
-                self.transformation_trns_mode_shift_public_private,
-                self.transformation_trns_mode_shift_regional,
-                self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_bundle_mode_shift_with_rep)
-
-        
-        self.trns_electrify_light_duty_road = sc.Transformation(
-            "TRNS: Electrify light duty road transport", 
-            self.transformation_trns_electrify_road_light_duty, 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_electrify_light_duty_road)
-
-
-        self.trns_electrify_light_duty_road_with_rep = sc.Transformation(
-            "TRNS: Electrify light duty road transport with renewable energy production", 
-            [
-                self.transformation_trns_electrify_road_light_duty,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_electrify_light_duty_road_with_rep)
-
-        
-        self.trns_electrify_rail = sc.Transformation(
-            "TRNS: Electrify rail", 
-            self.transformation_trns_electrify_rail, 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_electrify_rail)
-
-
-        self.trns_electrify_rail_with_rep = sc.Transformation(
-            "TRNS: Electrify rail with renewable energy production", 
-            [
-                self.transformation_trns_electrify_rail,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_electrify_rail_with_rep)
-
-        
-        self.trns_fuel_switch_maritime = sc.Transformation(
-            "TRNS: Fuel switch maritime", 
-            self.transformation_trns_fuel_switch_maritime, 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_fuel_switch_maritime)
-
-
-        self.trns_fuel_switch_maritime_with_rep = sc.Transformation(
-            "TRNS: Fuel switch maritime with renewable energy production", 
-            [
-                self.transformation_trns_fuel_switch_maritime,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_fuel_switch_maritime_with_rep)
-
-
-        self.trns_fuel_switch_medium_duty_road = sc.Transformation(
-            "TRNS: Fuel switch medium duty road transport", 
-            self.transformation_trns_fuel_switch_road_medium_duty, 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_fuel_switch_medium_duty_road)
-
-
-        self.trns_fuel_switch_medium_duty_road_with_rep = sc.Transformation(
-            "TRNS: Fuel switch medium duty road transport with renewable energy production", 
-            [
-                self.transformation_trns_fuel_switch_road_medium_duty,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_fuel_switch_medium_duty_road_with_rep)
-
-
-        self.trns_increase_efficiency_electric = sc.Transformation(
-            "TRNS: Increase transportation electricity energy efficiency", 
-            self.transformation_trns_increase_efficiency_electric, 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_increase_efficiency_electric)
-
-
-        self.trns_increase_efficiency_electric_with_rep = sc.Transformation(
-            "TRNS: Increase transportation electricity energy efficiency with renewable energy production", 
-            [
-                self.transformation_trns_increase_efficiency_electric,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_increase_efficiency_electric_with_rep)
-
-
-        self.trns_increase_efficiency_non_electric = sc.Transformation(
-            "TRNS: Increase transportation non-electricity energy efficiency", 
-            self.transformation_trns_increase_efficiency_non_electric, 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_increase_efficiency_non_electric)
-
-
-        self.trns_increase_efficiency_non_electric_with_rep = sc.Transformation(
-            "TRNS: Increase transportation non-electricity energy efficiency with renewable energy production", 
-            [
-                self.transformation_trns_increase_efficiency_non_electric,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_increase_efficiency_non_electric_with_rep)
-
-
-        self.trns_increase_occupancy_light_duty = sc.Transformation(
-            "TRNS: Increase occupancy for private vehicles", 
-            self.transformation_trns_increase_occupancy_light_duty, 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_increase_occupancy_light_duty)
-
-
-        self.trns_increase_occupancy_light_duty_with_rep = sc.Transformation(
-            "TRNS: Increase occupancy for private vehicles with renewable energy production", 
-            [
-                self.transformation_trns_increase_occupancy_light_duty,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_increase_occupancy_light_duty_with_rep)
-
-
-        self.trns_mode_shift_freight = sc.Transformation(
-            "TRNS: Mode shift freight", 
-            self.transformation_trns_mode_shift_freight, 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_mode_shift_freight)
-
-
-        self.trns_mode_shift_freight_with_rep = sc.Transformation(
-            "TRNS: Mode shift freight with renewable energy production", 
-            [
-                self.transformation_trns_mode_shift_freight,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_mode_shift_freight_with_rep)
-
-
-        self.trns_mode_shift_public_private = sc.Transformation(
-            "TRNS: Mode shift passenger vehicles to others", 
-            self.transformation_trns_mode_shift_public_private, 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_mode_shift_public_private)
-
-
-        self.trns_mode_shift_public_private_with_rep = sc.Transformation(
-            "TRNS: Mode shift passenger vehicles to others with renewable energy production", 
-            [
-                self.transformation_trns_mode_shift_public_private,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_mode_shift_public_private_with_rep)
-
-
-        self.trns_mode_shift_regional = sc.Transformation(
-            "TRNS: Mode shift regional passenger travel", 
-            self.transformation_trns_mode_shift_regional, 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_mode_shift_regional)
-
-
-        self.trns_mode_shift_regional_with_rep = sc.Transformation(
-            "TRNS: Mode shift regional passenger travel with renewable energy production", 
-            [
-                self.transformation_trns_mode_shift_regional,
-		        self.transformation_support_entc_clean_grid
-            ], 
-            attr_strategy
-        )
-        all_transformations.append(self.trns_mode_shift_regional_with_rep)
-
-    
-
-        ## specify dictionary of transformations
+        ## specify dictionary of transformations and get all transformations + baseline/non-baseline
 
         dict_transformations = dict(
             (x.id, x) 
@@ -1456,11 +588,26 @@ class TransformationsIPPU:
             if x.id in attr_strategy.key_values
         )
         all_transformations = sorted(list(dict_transformations.keys()))
+        all_transformations_non_baseline = [
+            x for x in all_transformations 
+            if not dict_transformations.get(x).baseline
+        ]
+
+        transformation_id_baseline = [
+            x for x in all_transformations 
+            if x not in all_transformations_non_baseline
+        ]
+        transformation_id_baseline = transformation_id_baseline[0] if (len(transformation_id_baseline) > 0) else None
+
 
         # SET ADDDITIONAL PROPERTIES
 
         self.all_transformations = all_transformations
+        self.all_transformations_non_baseline = all_transformations_non_baseline
         self.dict_transformations = dict_transformations
+        self.transformation_id_baseline = transformation_id_baseline
+
+        return None
 
 
 
@@ -1500,7 +647,7 @@ class TransformationsIPPU:
 
 
     def build_strategies_long(self,
-        df_input: pd.DataFrame,
+        df_input: Union[pd.DataFrame, None] = None,
         include_base_df: bool = True,
         strategies: Union[List[str], List[int], None] = None,
     ) -> pd.DataFrame:
@@ -1510,12 +657,13 @@ class TransformationsIPPU:
 
         Function Arguments
 		------------------
-        - df_input: baseline (untransformed) data frame to use to build 
-            strategies. Must contain self.key_region and 
-            self.model_attributes.dim_time_period in columns
 
         Keyword Arguments
 		-----------------
+        - df_input: baseline (untransformed) data frame to use to build 
+            strategies. Must contain self.key_region and 
+            self.model_attributes.dim_time_period in columns. If None, defaults
+            to self.baseline_inputs
         - include_base_df: include df_input in the output DataFrame? If False,
             only includes strategies associated with transformation 
         - strategies: strategies to build for. Can be a mixture of strategy_ids
@@ -1525,26 +673,40 @@ class TransformationsIPPU:
         # INITIALIZE STRATEGIES TO LOOP OVER
 
         strategies = (
-            self.all_transformations
+            self.all_transformations_non_baseline
             if strategies is None
-            else strategies
+            else [x for x in self.all_transformations_non_baseline if x in strategies]
         )
         strategies = [self.get_strategy(x) for x in strategies]
         strategies = sorted([x.id for x in strategies if x is not None])
         n = len(strategies)
 
+
         # LOOP TO BUILD
         
         t0 = time.time()
         self._log(
-            f"TransformationsEnergy.build_strategies_long() starting build of {n} strategies...",
+            f"TransformationsCircularEconomy.build_strategies_long() starting build of {n} strategies...",
             type_log = "info"
         )
         
-        df_out = df_input.copy()
-        if self.key_strategy not in df_out.columns:
-            df_out[self.key_strategy] = self.baseline_strategy
-        df_out = [df_out for x in range(len(strategies) + 1)]
+        # initialize baseline
+        df_out = (
+            self.transformation_ce_baseline(df_input)
+            if df_input is not None
+            else (
+                self.baseline_inputs
+                if self.baseline_inputs is not None
+                else None
+            )
+        )
+
+        if df_out is None:
+            return None
+
+        # initialize to overwrite dataframes
+        iter_shift = int(include_base_df)
+        df_out = [df_out for x in range(len(strategies) + iter_shift)]
 
         for i, strat in enumerate(strategies):
             t0_cur = time.time()
@@ -1552,12 +714,13 @@ class TransformationsIPPU:
 
             if transformation is not None:
                 try:
-                    df_out[i + 1] = transformation(df_out[i + 1])
+                    df_out[i + iter_shift] = transformation(df_out[i + iter_shift])
                     t_elapse = sf.get_time_elapsed(t0_cur)
                     self._log(
                         f"\tSuccessfully built transformation {self.key_strategy} = {transformation.id} ('{transformation.name}') in {t_elapse} seconds.",
                         type_log = "info"
                     )
+                    print(f"YEAH - {df_out[i + iter_shift].size}")
 
                 except Exception as e: 
                     df_out[i + 1] = None
@@ -1571,7 +734,7 @@ class TransformationsIPPU:
 
         t_elapse = sf.get_time_elapsed(t0)
         self._log(
-            f"TransformationsEnergy.build_strategies_long() build complete in {t_elapse} seconds.",
+            f"TransformationsCircularEconomy.build_strategies_long() build complete in {t_elapse} seconds.",
             type_log = "info"
         )
 
@@ -1579,36 +742,48 @@ class TransformationsIPPU:
 
         
 
-
-    
     def get_strategy(self,
         strat: Union[int, str, None],
+        field_strategy_code: str = "strategy_code",
         field_strategy_name: str = "strategy",
     ) -> None:
         """
-        Get strategy `strat` based on name or id. 
+        Get strategy `strat` based on strategy code, id, or name
         
         If strat is None or an invalid valid of strat is entered, returns None; 
             otherwise, returns the sc.Transformation object. 
             
         Function Arguments
         ------------------
-        - strat: strategy id or strategy name to use to retrieve 
+        - strat: strategy id, strategy name, or strategy code to use to retrieve 
             sc.Trasnformation object
             
         Keyword Arguments
         ------------------
-         - field_strategy_name: field in strategy_id attribute table containing
+        - field_strategy_code: field in strategy_id attribute table containing
+            the strategy code
+        - field_strategy_name: field in strategy_id attribute table containing
             the strategy name
         """
 
         if not (sf.isnumber(strat, integer = True) | isinstance(strat, str)):
             return None
 
-        dict_name_to_strat = self.attribute_strategy.field_maps.get(f"{field_strategy_name}_to_{self.attribute_strategy.key}")
+        dict_code_to_strat = self.attribute_strategy.field_maps.get(
+            f"{field_strategy_code}_to_{self.attribute_strategy.key}"
+        )
+        dict_name_to_strat = self.attribute_strategy.field_maps.get(
+            f"{field_strategy_name}_to_{self.attribute_strategy.key}"
+        )
 
-        # check strategy
-        strat = dict_name_to_strat.get(strat) if isinstance(strat, str) else strat
+        # check strategy by trying both dictionaries
+        if isinstance(strat, str):
+            strat = (
+                dict_name_to_strat.get(strat)
+                if strat in dict_name_to_strat.keys()
+                else dict_code_to_strat.get(strat)
+            )
+
         out = (
             None
             if strat not in self.attribute_strategy.key_values
@@ -1616,67 +791,6 @@ class TransformationsIPPU:
         )
         
         return out
-
-
-
-    def get_vir_max_capacity(self,
-        vec_implementation_ramp: np.ndarray,
-        delta_frac: Union[float, None] = None,
-        dict_values_to_inds: Union[Dict, None] = None,
-        max_frac: Union[float, None] = None,
-    ) -> np.ndarray:
-        """
-        Buil a new value for the max_capacity based on vec_implementation_ramp.
-            Starts with max_frac of a technicology's maximum residual capacity
-            in the first period when vec_implementation_ramp != 0, then declines
-            by delta_frac the specified number of time periods. Ramp down a cap 
-            based on the renewable energy target.
-
-        Function Arguments
-        ------------------
-        - vec_implementation_ramp: vector of lever implementation ramp to use as
-            reference
-
-        Keyword Arguments
-        -----------------
-        - delta_frac: delta to apply at each time period after the first time
-            non-0 vec_implementation_ramp time_period. Defaults to 
-            self.vir_renewable_cap_delta_frac if unspecified
-        - dict_values_to_inds: optional dictionary mapping a value to row indicies
-            to pass the value to. Can be used, for example, to provide a cap on new
-            investments in early time periods. 
-         - max_frac: fraction of maximum residual capacity to use as cap in first
-            time period where vec_implementation_ramp > 0. Defaults to
-            self.vir_renewable_cap_max_frac if unspecified
-        """
-
-        delta_frac = (
-            self.vir_renewable_cap_delta_frac
-            if not sf.isnumber(delta_frac)
-            else float(sf.vec_bounds(delta_frac, (0.0, 1.0)))
-        )
-        max_frac = (
-            self.vir_renewable_cap_max_frac
-            if not sf.isnumber(max_frac)
-            else float(sf.vec_bounds(max_frac, (0.0, 1.0)))
-        )
-
-        vec_implementation_ramp_max_capacity = np.ones(len(vec_implementation_ramp))
-        i0 = None
-
-        for i in range(len(vec_implementation_ramp)):
-            if vec_implementation_ramp[i] == 0:
-                vec_implementation_ramp_max_capacity[i] = -999
-            else:
-                i0 = i if (i0 is None) else i0
-                vec_implementation_ramp_max_capacity[i] = max(max_frac - delta_frac*(i - i0), 0.0)
-
-
-        if isinstance(dict_values_to_inds, dict):
-            for k in dict_values_to_inds.keys():
-                np.put(vec_implementation_ramp_max_capacity, dict_values_to_inds.get(k), k)
-
-        return vec_implementation_ramp_max_capacity 
 
 
 
@@ -1711,288 +825,99 @@ class TransformationsIPPU:
     ###                                      ###
     ############################################
 
-    ##############################
-    #    CCSQ TRANSFORMATIONS    #
-    ##############################
+    ##########################################################
+    #    BASELINE - TREATED AS TRANSFORMATION TO INPUT DF    #
+    ##########################################################
+    """
+    NOTE: needed for certain modeling approaches; e.g., preventing new hydro 
+        from being built. The baseline can be preserved as the input DataFrame 
+        by the Transformation as a passthrough (e.g., return input DataFrame) 
 
-    def transformation_ccsq_increase_air_capture(self,
+    NOTE: modifications to input variables should ONLY affect Energy variables
+    """
+
+    def transformation_ce_baseline(self,
         df_input: pd.DataFrame,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
-        Implement the "Increase Direct Air Capture" CCSQ transformation on input 
+        Implement the "Baseline" from which other transformations deviate 
+            (pass through)
+        """
+        df_out = df_input.copy()
+
+        if isinstance(strat, int):
+            df_out = sf.add_data_frame_fields_from_dict(
+                df_out,
+                {
+                   self.model_attributes.dim_strategy_id: strat
+                },
+                prepend_q = True,
+                overwrite_fields = True
+            )
+
+        return df_out
+
+
+
+    ##############################
+    #    TRWW TRANSFORMATIONS    #
+    ##############################
+
+    
+    def transformation_trww_increase_biogas_capture(self,
+        df_input: Union[pd.DataFrame, None] = None,
+        strat: Union[int, None] = None,
+    ) -> pd.DataFrame:
+        """
+        Implement the "Increase Biogas Capture at Wastewater Treatment Plants" 
+            TRWW transformation on input DataFrame df_input
+        """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+
+        df_out = tbc.transformation_trww_increase_gas_capture(
+            df_input,
+            # as float, applies to both landfill and biogas; specify as dict to break out; 
+            # e.g., {"treated_advanced_anaerobic": 0.85, "treated_secondary_anaerobic": 0.5}
+            0.85, 
+            self.vec_implementation_ramp,
+            self.model_attributes,
+            field_region = self.key_region,
+            model_circecon = self.model_circecon,
+            strategy_id = strat
+        )
+
+        return df_out
+
+
+    
+    def transformation_trww_increase_septic_compliance(self,
+        df_input: Union[pd.DataFrame, None] = None,
+        strat: Union[int, None] = None,
+    ) -> pd.DataFrame:
+        """
+        Implement the "Increase Compliance" TRWW transformation on input 
             DataFrame df_input
         """
-        df_strat_cur = adt.transformation_ccsq_increase_direct_air_capture(
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+
+        df_out = tbc.transformation_trww_increase_septic_compliance(
             df_input,
-            50,
+            0.9, 
             self.vec_implementation_ramp,
             self.model_attributes,
             field_region = self.key_region,
-            model_energy = self.model_energy,
-            strategy_id = strat
-        )
-
-        return df_strat_cur
-
-
-
-    ##############################
-    #    ENTC TRANSFORMATIONS    #
-    ##############################
-
-    def transformation_entc_least_cost(self,
-        df_input: pd.DataFrame,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Least Cost" ENTC transformation on input DataFrame
-            df_input
-        """
-        df_strat_cur = adt.transformation_entc_least_cost_solution(
-            df_input,
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            field_region = self.key_region,
-            model_electricity = self.model_electricity,
-            strategy_id = strat
-        )
-
-        return df_strat_cur
-
-
-
-    def transformation_entc_reduce_transmission_losses(self,
-        df_input: pd.DataFrame,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Reduce Transmission Losses" ENTC transformation on input 
-            DataFrame df_input
-        """
-        df_strat_cur = adt.transformation_entc_specify_transmission_losses(
-            df_input,
-            0.06,
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            self.model_electricity,
-            field_region = self.key_region,
-            strategy_id = strat
-        )
-
-        return df_strat_cur
-
-
-
-    def transformation_entc_renewables_target(self,
-        df_input: pd.DataFrame,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "renewables target" transformation (shared repeatability),
-            which includes 95% renewable energy target and green hydrogen
-        """
-
-        df_strat_cur = adt.transformation_entc_renewable_target(
-            df_input,
-            0.95,
-            self.cats_renewable,
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            self.model_electricity,
-            dict_cats_entc_max_investment = self.dict_entc_renewable_target_cats_max_investment,
-            field_region = self.key_region,
-            magnitude_renewables = self.dict_entc_renewable_target_msp,
-            strategy_id = strat
-        )
-
-        return df_strat_cur
-
-
-
-    def transformation_support_entc_clean_grid(self,
-        df_input: pd.DataFrame,
-        strat: Union[int, None] = None,
-        include_hydrogen = True,
-    ) -> pd.DataFrame:
-        """
-        Function used to implement "clean grid" transformation (shared 
-            repeatability), which includes 95% renewable energy target and green 
-            hydrogen. Shared across numerous ENTC and EN functions. Set
-            `include_hydrogen = False` to exclude the green hydrogen component.
-        """
-        # ENTC: 95% of today's fossil-fuel electricity is generated by renewables in 2050
-        df_strat_cur = self.transformation_entc_renewables_target(
-            df_input,
-            strat
-        )
-
-        # ENTC: add green hydrogen
-        df_strat_cur = (
-            self.transformation_support_entc_green_hydrogen(df_strat_cur, strat)
-            if include_hydrogen
-            else df_strat_cur
-        )
-
-        return df_strat_cur
-
-
-
-    def transformation_support_entc_green_hydrogen(self,
-        df_input: pd.DataFrame,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement "green hydrogen" transformation requirements by forcing at 
-            least 95% of hydrogen production to come from electrolysis.
-        """
-
-        df_strat_cur = adt.transformation_entc_hydrogen_electrolysis(
-            df_input,
-            0.95,
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            self.model_electricity,
-            field_region = self.key_region,
-            strategy_id = strat
-        )
-
-        return df_strat_cur
-
-
-
-    ##############################
-    #    FGTV TRANSFORMATIONS    #
-    ##############################
-        
-    def transformation_fgtv_maximize_flaring(self,
-        df_input: pd.DataFrame,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Maximize Flaring" FGTV transformation on input DataFrame
-            df_input
-        """
-        df_strat_cur = adt.transformation_fgtv_maximize_flaring(
-            df_input,
-            0.8, 
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            field_region = self.key_region,
-            model_energy = self.model_energy,
-            strategy_id = strat
-        )
-
-        return df_strat_cur
-
-
-
-    def transformation_fgtv_minimize_leaks(self,
-        df_input: pd.DataFrame,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Minimize Leaks" FGTV transformation on input DataFrame
-            df_input
-        """
-        df_strat_cur = adt.transformation_fgtv_reduce_leaks(
-            df_input,
-            0.8, 
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            field_region = self.key_region,
-            model_energy = self.model_energy,
-            strategy_id = strat
-        )
-
-        return df_strat_cur
-
-
-
-    ##############################
-    #    INEN TRANSFORMATIONS    #
-    ##############################
-
-    def transformation_inen_fuel_switch_high_temp(self,
-        df_input: pd.DataFrame,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Fuel switch medium and high-temp thermal processes to 
-            hydrogen and electricity" INEN transformation on input DataFrame 
-            df_input
-        """
-        df_strat_cur = adt.transformation_inen_shift_modvars(
-            df_input,
-            2*self.frac_inen_high_temp_elec_hydg,
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            categories = self.cats_inen_high_heat,
-            dict_modvar_specs = {
-                self.model_energy.modvar_inen_frac_en_electricity: 0.5,
-                self.model_energy.modvar_inen_frac_en_hydrogen: 0.5,
-            },
-            field_region = self.key_region,
-            magnitude_relative_to_baseline = True,
-            model_energy = self.model_energy,
-            strategy_id = strat
-        )
-
-        return df_strat_cur
-
-
-
-    def transformation_inen_fuel_switch_low_and_high_temp(self,
-        df_input: pd.DataFrame,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Fuel switch low-temp thermal processes to industrial heat 
-            pumps" and "Fuel switch medium and high-temp thermal processes to 
-            hydrogen and electricity" INEN transformations on input DataFrame 
-            df_input (note: these must be combined in a new function instead of
-            as a composition due to the electricity shift in high-heat 
-            categories)
-        """
-        # set up fractions 
-        frac_shift_hh_elec = self.frac_inen_low_temp_elec + self.frac_inen_high_temp_elec_hydg
-        frac_shift_hh_elec /= self.frac_inen_shift_denom
-
-        frac_shift_hh_hydrogen = self.frac_inen_high_temp_elec_hydg
-        frac_shift_hh_hydrogen /= self.frac_inen_shift_denom
-
-
-        # HIGH HEAT CATS ONLY
-        # Fuel switch high-temp thermal processes + Fuel switch low-temp thermal processes to industrial heat pumps
-        df_out = adt.transformation_inen_shift_modvars(
-            df_input,
-            self.frac_inen_shift_denom,
-            self.vec_implementation_ramp, 
-            self.model_attributes,
-            categories = self.cats_inen_high_heat,
-            dict_modvar_specs = {
-                self.model_energy.modvar_inen_frac_en_electricity: frac_shift_hh_elec,
-                self.model_energy.modvar_inen_frac_en_hydrogen: frac_shift_hh_hydrogen,
-            },
-            field_region = self.key_region,
-            model_energy = self.model_energy,
-            strategy_id = strat
-        )
-
-        # LOW HEAT CATS ONLY
-        # + Fuel switch low-temp thermal processes to industrial heat pumps
-        df_out = adt.transformation_inen_shift_modvars(
-            df_out,
-            self.frac_inen_shift_denom,
-            self.vec_implementation_ramp, 
-            self.model_attributes,
-            categories = self.cats_inen_not_high_heat,
-            dict_modvar_specs = {
-                self.model_energy.modvar_inen_frac_en_electricity: 1.0
-            },
-            field_region = self.key_region,
-            magnitude_relative_to_baseline = True,
-            model_energy = self.model_energy,
+            model_circecon = self.model_circecon,
             strategy_id = strat
         )
 
@@ -2000,502 +925,324 @@ class TransformationsIPPU:
 
 
 
-    def transformation_inen_fuel_switch_low_temp_to_heat_pump(self,
-        df_input: pd.DataFrame,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Fuel switch low-temp thermal processes to industrial heat 
-            pumps" INEN transformation on input DataFrame df_input
-        """
-        df_strat_cur = adt.transformation_inen_shift_modvars(
-            df_input,
-            self.frac_inen_low_temp_elec,
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            dict_modvar_specs = {
-                self.model_energy.modvar_inen_frac_en_electricity: 1.0
-            },
-            field_region = self.key_region,
-            magnitude_relative_to_baseline = True,
-            model_energy = self.model_energy,
-            strategy_id = strat
-        )
-
-        return df_strat_cur
-
-
-
-    def transformation_inen_maximize_efficiency_energy(self,
-        df_input: pd.DataFrame,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Maximize Industrial Energy Efficiency" INEN 
-            transformation on input DataFrame df_input
-        """
-        df_strat_cur = adt.transformation_inen_maximize_energy_efficiency(
-            df_input,
-            0.3, 
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            field_region = self.key_region,
-            model_energy = self.model_energy,
-            strategy_id = strat
-        )
-
-        return df_strat_cur
-
-
-
-    def transformation_inen_maximize_efficiency_production(self,
-        df_input: pd.DataFrame,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Maximize Industrial Production Efficiency" INEN 
-            transformation on input DataFrame df_input
-        """
-        df_strat_cur = adt.transformation_inen_maximize_production_efficiency(
-            df_input,
-            0.4, 
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            field_region = self.key_region,
-            model_energy = self.model_energy,
-            strategy_id = strat
-        )
-
-        return df_strat_cur
-
-
-
     ##############################
-    #    SCOE TRANSFORMATIONS    #
+    #    WALI TRANSFORMATIONS    #
     ##############################
 
-    def transformation_scoe_fuel_switch_electrify(self,
-        df_input: pd.DataFrame,
+    def transformation_wali_improve_sanitation_industrial(self,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
-        Implement the "Switch to electricity for heat using heat pumps, electric 
-            stoves, etc." INEN transformation on input DataFrame df_input
-        """
-        df_strat_cur = adt.transformation_scoe_electrify_category_to_target(
-            df_input,
-            0.95,
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            field_region = self.key_region,
-            model_energy = self.model_energy,
-            strategy_id = strat
-        )
-
-        return df_strat_cur
-
-
-
-    def transformation_scoe_reduce_heat_energy_demand(self,
-        df_input: pd.DataFrame,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Reduce end-use demand for heat energy by improving 
-            building shell" SCOE transformation on input DataFrame df_input
-        """
-        df_strat_cur = adt.transformation_scoe_reduce_demand_for_heat_energy(
-            df_input,
-            0.5,
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            field_region = self.key_region,
-            model_energy = self.model_energy,
-            strategy_id = strat
-        )
-
-        return df_strat_cur
-
-
-
-    def transformation_scoe_increase_applicance_efficiency(self,
-        df_input: pd.DataFrame,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Increase appliance efficiency" SCOE transformation on 
+        Implement the "Improve Industrial Sanitation" WALI transformation on 
             input DataFrame df_input
         """
-        df_strat_cur = adt.transformation_scoe_reduce_demand_for_appliance_energy(
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+
+        # get categories and dictionary to specify parameters (move to config eventually)
+        df_out = tbc.transformation_wali_improve_sanitation(
             df_input,
-            0.5,
+            "ww_industrial",
+            {
+                "treated_advanced_anaerobic": 0.8,
+                "treated_secondary_aerobic": 0.1,
+                "treated_secondary_anaerobic": 0.1,
+            },
             self.vec_implementation_ramp,
             self.model_attributes,
             field_region = self.key_region,
-            model_energy = self.model_energy,
-            strategy_id = strat
+            model_circecon = self.model_circecon,
+            strategy_id = strat,
         )
 
-        return df_strat_cur
+
+        return df_out
+
+
+
+    def transformation_wali_improve_sanitation_rural(self,
+        df_input: Union[pd.DataFrame, None] = None,
+        strat: Union[int, None] = None,
+    ) -> pd.DataFrame:
+        """
+        Implement the "Improve Rural Sanitation" WALI transformation on 
+            input DataFrame df_input
+        """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+
+        # get categories and dictionary to specify parameters (move to config eventually)
+        df_out = tbc.transformation_wali_improve_sanitation(
+            df_input,
+            "ww_domestic_rural",
+            {
+                "treated_septic": 1.0,
+            },
+            self.vec_implementation_ramp,
+            self.model_attributes,
+            field_region = self.key_region,
+            model_circecon = self.model_circecon,
+            strategy_id = strat,
+        )
+
+
+        return df_out
+
+
+
+    def transformation_wali_improve_sanitation_urban(self,
+        df_input: Union[pd.DataFrame, None] = None,
+        strat: Union[int, None] = None,
+    ) -> pd.DataFrame:
+        """
+        Implement the "Improve Urban Sanitation" WALI transformation on 
+            input DataFrame df_input
+        """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+
+        # get categories and dictionary to specify parameters (move to config eventually)
+        df_out = tbc.transformation_wali_improve_sanitation(
+            df_input,
+            "ww_domestic_rural",
+            {
+                "treated_advanced_aerobic": 0.3,
+                "treated_advanced_anaerobic": 0.3,
+                "treated_secondary_aerobic": 0.2,
+                "treated_secondary_anaerobic": 0.2,
+            },
+            self.vec_implementation_ramp,
+            self.model_attributes,
+            field_region = self.key_region,
+            model_circecon = self.model_circecon,
+            strategy_id = strat,
+        )
+
+        return df_out
 
 
 
     ##############################
-    #    TRNS TRANSFORMATIONS    #
+    #    WASO TRANSFORMATIONS    #
     ##############################
 
-    def transformation_trde_reduce_demand(self,
-        df_trde: pd.DataFrame,
+    def transformation_waso_decrease_msw(self,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
-        Implement the "Reduce Demand" TRDE transformation on input DataFrame
-            df_trde
+        Implement the "Decrease Municipal Solid Waste" WASO transformation on 
+            input DataFrame df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
 
-        df_out = adt.transformation_trde_reduce_demand(
-            df_trde,
-            0.25, 
+        # get categories and dictionary to specify parameters (move to config eventually)
+        categories = self.model_attributes.get_attribute_table(self.model_attributes.subsec_name_waso).key_values
+        dict_specify = dict((x, 0.25) for x in categories)
+        dict_specify.update({"food": 0.75})
+
+        df_out = tbc.transformation_waso_decrease_municipal_waste(
+            df_input,
+            dict_specify,
             self.vec_implementation_ramp,
             self.model_attributes,
             field_region = self.key_region,
-            model_energy = self.model_energy,
+            model_circecon = self.model_circecon,
             strategy_id = strat
         )
-        
+
         return df_out
 
 
 
-    def transformation_trns_electrify_road_light_duty(self,
-        df_input: pd.DataFrame,
+    def transformation_waso_increase_anaerobic_treatment_and_composting(self,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
-        Implement the "Electrify Light-Duty" TRNS transformation on input 
+        Implement the "Increase Anaerobic Treatment and Composting" WASO 
+            transformation on input DataFrame df_input
+        """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+
+        df_out = tbc.transformation_waso_increase_anaerobic_treatment_and_composting(
+            df_input,
+            0.475,
+            0.475,
+            self.vec_implementation_ramp,
+            self.model_attributes,
+            field_region = self.key_region,
+            model_circecon = self.model_circecon,
+            strategy_id = strat
+        )
+
+        return df_out
+
+
+    
+    def transformation_waso_increase_biogas_capture(self,
+        df_input: Union[pd.DataFrame, None] = None,
+        strat: Union[int, None] = None,
+    ) -> pd.DataFrame:
+        """
+        Implement the "Increase Biogas Capture at Anaerobic Treatment Facilities
+            and Landfills" WASO transformation on input DataFrame df_input
+        """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+
+        df_out = tbc.transformation_waso_increase_gas_capture(
+            df_input,
+            0.85, # as float, applies to both landfill and biogas; specify as dict to break out
+            self.vec_implementation_ramp,
+            self.model_attributes,
+            field_region = self.key_region,
+            model_circecon = self.model_circecon,
+            strategy_id = strat
+        )
+
+        return df_out
+
+
+    
+    def transformation_waso_increase_energy_from_biogas(self,
+        df_input: Union[pd.DataFrame, None] = None,
+        strat: Union[int, None] = None,
+    ) -> pd.DataFrame:
+        """
+        Implement the "Energy from Captured Biogas" WASO transformation on input 
             DataFrame df_input
         """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
 
-        df_out = adt.transformation_trns_fuel_shift_to_target(
+        df_out = tbc.transformation_waso_increase_energy_from_biogas(
             df_input,
-            0.7,
+            0.85,
             self.vec_implementation_ramp,
             self.model_attributes,
-            categories = ["road_light"],
-            dict_modvar_specs = {
-                self.model_energy.modvar_trns_fuel_fraction_electricity: 1.0
-            },
             field_region = self.key_region,
-            magnitude_type = "transfer_scalar",
-            model_energy = self.model_energy,
+            model_circecon = self.model_circecon,
             strategy_id = strat
         )
-        
+
         return df_out
     
-    
-    
-    
-    def transformation_trns_electrify_rail(self,
-        df_input: pd.DataFrame,
+
+
+    def transformation_waso_increase_energy_from_incineration(self,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
-        Implement the "Electrify Rail" TRNS transformation on input DataFrame
-            df_input
+        Implement the "Energy from Solid Waste Incineration" WASO transformation 
+            on input DataFrame df_input
         """
-        model_energy = self.model_energy
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
 
-        df_out = adt.transformation_trns_fuel_shift_to_target(
+        df_out = tbc.transformation_waso_increase_energy_from_incineration(
             df_input,
-            0.25,
+            0.85,
             self.vec_implementation_ramp,
             self.model_attributes,
-            categories = ["rail_freight", "rail_passenger"],
-            dict_modvar_specs = {
-                self.model_energy.modvar_trns_fuel_fraction_electricity: 1.0
-            },
             field_region = self.key_region,
-            magnitude_type = "transfer_scalar",
-            model_energy = self.model_energy,
+            model_circecon = self.model_circecon,
             strategy_id = strat
         )
-        
+
         return df_out
+
+
     
-    
-    
-    
-    def transformation_trns_fuel_switch_maritime(self,
-        df_input: pd.DataFrame,
+    def transformation_waso_increase_landfilling(self,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
-        Implement the "Fuel-Swich Maritime" TRNS transformation on input 
+        Implement the "Increase Landfilling" WASO transformation on input 
             DataFrame df_input
         """
-        model_energy = self.model_energy
-
-        # transfer 70% of diesel + gasoline to hydrogen
-        df_out = adt.transformation_trns_fuel_shift_to_target(
-            df_input,
-            0.7,
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            categories = ["water_borne"],
-            dict_modvar_specs = {
-                self.model_energy.modvar_trns_fuel_fraction_hydrogen: 1.0
-            },
-            field_region = self.key_region,
-            modvars_source = [
-                self.model_energy.modvar_trns_fuel_fraction_diesel,
-                self.model_energy.modvar_trns_fuel_fraction_gasoline
-            ],
-            magnitude_type = "transfer_scalar",
-            model_energy = self.model_energy,
-            strategy_id = strat
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
         )
 
-        # transfer remaining diesel + gasoline to hydrogen
-        df_out = adt.transformation_trns_fuel_shift_to_target(
-            df_out,
+        df_out = tbc.transformation_waso_increase_landfilling(
+            df_input,
             1.0,
             self.vec_implementation_ramp,
             self.model_attributes,
-            categories = ["water_borne"],
-            dict_modvar_specs = {
-                self.model_energy.modvar_trns_fuel_fraction_electricity: 1.0
-            },
             field_region = self.key_region,
-            modvars_source = [
-                self.model_energy.modvar_trns_fuel_fraction_diesel,
-                self.model_energy.modvar_trns_fuel_fraction_gasoline
-            ],
-            magnitude_type = "transfer_scalar",
-            model_energy = self.model_energy,
+            model_circecon = self.model_circecon,
             strategy_id = strat
         )
-        
+
         return df_out
-    
-    
-    
-    def transformation_trns_fuel_switch_road_medium_duty(self,
-        df_input: pd.DataFrame,
+
+
+
+    def transformation_waso_increase_recycling(self,
+        df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
-        Implement the "Fuel-Switch Medium Duty" TRNS transformation on input 
+        Implement the "Increase Recycling" WASO transformation on input 
             DataFrame df_input
         """
-        model_energy = self.model_energy
-
-        # transfer 70% of diesel + gasoline to electricity
-        df_out = adt.transformation_trns_fuel_shift_to_target(
-            df_input,
-            0.7,
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            categories = ["road_heavy_freight", "road_heavy_regional", "public"],
-            dict_modvar_specs = {
-                self.model_energy.modvar_trns_fuel_fraction_electricity: 1.0
-            },
-            field_region = self.key_region,
-            modvars_source = [
-                self.model_energy.modvar_trns_fuel_fraction_diesel,
-                self.model_energy.modvar_trns_fuel_fraction_gasoline
-            ],
-            magnitude_type = "transfer_scalar",
-            model_energy = self.model_energy,
-            strategy_id = strat
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
         )
 
-        # transfer remaining diesel + gasoline to hydrogen
-        df_out = adt.transformation_trns_fuel_shift_to_target(
-            df_out,
-            1.0,
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            categories = ["road_heavy_freight", "road_heavy_regional", "public"],
-            dict_modvar_specs = {
-                self.model_energy.modvar_trns_fuel_fraction_hydrogen: 1.0
-            },
-            field_region = self.key_region,
-            modvars_source = [
-                self.model_energy.modvar_trns_fuel_fraction_diesel,
-                self.model_energy.modvar_trns_fuel_fraction_gasoline
-            ],
-            magnitude_type = "transfer_scalar",
-            model_energy = self.model_energy,
-            strategy_id = strat
-        )
-    
-        return df_out
-    
-
-    
-    def transformation_trns_increase_efficiency_electric(self,
-        df_input: pd.DataFrame,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Increase Electric Efficiency" TRNS transformation on 
-            input DataFrame df_input
-        """
-        df_out = adt.transformation_trns_increase_energy_efficiency_electric(
+        df_out = tbc.transformation_waso_increase_recycling(
             df_input,
-            0.25, 
+            0.95,
             self.vec_implementation_ramp,
             self.model_attributes,
             field_region = self.key_region,
-            model_energy = self.model_energy,
+            model_circecon = self.model_circecon,
             strategy_id = strat
         )
-        
+
         return df_out
 
-
-
-    def transformation_trns_increase_efficiency_non_electric(self,
-        df_input: pd.DataFrame,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Increase Non-Electric Efficiency" TRNS transformation on 
-            input DataFrame df_input
-        """
-        df_out = adt.transformation_trns_increase_energy_efficiency_non_electric(
-            df_input,
-            0.25, 
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            field_region = self.key_region,
-            model_energy = self.model_energy,
-            strategy_id = strat
-        )
-        
-        return df_out
-
-
-
-    def transformation_trns_increase_occupancy_light_duty(self,
-        df_input: pd.DataFrame,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Increase Vehicle Occupancy" TRNS transformation on input 
-            DataFrame df_input
-        """
-
-        df_out = adt.transformation_trns_increase_vehicle_occupancy(
-            df_input,
-            0.25, 
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            field_region = self.key_region,
-            model_energy = self.model_energy,
-            strategy_id = strat
-        )
-        
-        return df_out
-
-
-
-    def transformation_trns_mode_shift_freight(self,
-        df_input: pd.DataFrame,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Mode Shift Freight" TRNS transformation on input 
-            DataFrame df_input
-        """
-        df_out = adt.transformation_general(
-            df_input,
-            self.model_attributes,
-            {
-                self.model_energy.modvar_trns_modeshare_freight: {
-                    "bounds": (0, 1),
-                    "magnitude": 0.2,
-                    "magnitude_type": "transfer_value_scalar",
-                    "categories_source": ["aviation", "road_heavy_freight"],
-                    "categories_target": {
-                        "rail_freight": 1.0
-                    },
-                    "vec_ramp": self.vec_implementation_ramp
-                }
-            },
-            field_region = self.key_region,
-            model_energy = self.model_energy,
-            strategy_id = strat
-        )
-        
-        return df_out
-
-
-
-    def transformation_trns_mode_shift_public_private(self,
-        df_input: pd.DataFrame,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Mode Shift Passenger Vehicles to Others" TRNS 
-            transformation on input DataFrame df_input
-        """
-
-        df_out = adt.transformation_general(
-            df_input,
-            self.model_attributes,
-            {
-                self.model_energy.modvar_trns_modeshare_public_private: {
-                    "bounds": (0, 1),
-                    "magnitude": 0.3,
-                    "magnitude_type": "transfer_value_scalar",
-                    "categories_source": ["road_light"],
-                    "categories_target": {
-                        "human_powered": (1/6),
-                        "powered_bikes": (2/6),
-                        "public": 0.5
-                    },
-                    "vec_ramp": self.vec_implementation_ramp
-                }
-            },
-            field_region = self.key_region,
-            model_energy = self.model_energy,
-            strategy_id = strat
-        )
-        
-        return df_out
-    
-    
-
-    def transformation_trns_mode_shift_regional(self,
-        df_input: pd.DataFrame,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Mode Shift Regional Travel" TRNS transformation on input 
-            DataFrame df_input
-        """
-
-        df_out = adt.transformation_general(
-            df_input,
-            self.model_attributes,
-            {
-                self.model_energy.modvar_trns_modeshare_regional: {
-                    "bounds": (0, 1),
-                    "magnitude": 0.25,
-                    "magnitude_type": "transfer_value_scalar",
-                    "categories_source": ["aviation"],
-                    "categories_target": {
-                        "rail_passenger": 0.5,
-                        "road_heavy_regional": 0.5
-                    },
-                    "vec_ramp": self.vec_implementation_ramp
-                }
-            },
-            field_region = self.key_region,
-            model_energy = self.model_energy,
-            strategy_id = strat
-        )
-        
-        return df_out

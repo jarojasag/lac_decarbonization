@@ -1,5 +1,4 @@
 from attribute_table import AttributeTable
-import auxiliary_definitions_transformations as adt
 import ingestion as ing
 import logging
 import model_afolu as mafl
@@ -14,6 +13,7 @@ from sisepuede_file_structure import *
 import support_classes as sc
 import support_functions as sf
 import time
+import transformations_base_energy as tbe
 from typing import Union
 import warnings
 
@@ -288,7 +288,7 @@ class TransformationsEnergy:
         )
 
         # get categories without high heat
-        modvars_inen_fuel_switching = adt.transformation_inen_shift_modvars(
+        modvars_inen_fuel_switching = tbe.transformation_inen_shift_modvars(
             None,
             None,
             None,
@@ -1880,7 +1880,7 @@ class TransformationsEnergy:
             else df_input
         )
 
-        df_strat_cur = adt.transformation_ccsq_increase_direct_air_capture(
+        df_strat_cur = tbe.transformation_ccsq_increase_direct_air_capture(
             df_input,
             50,
             self.vec_implementation_ramp,
@@ -1912,7 +1912,7 @@ class TransformationsEnergy:
             if not isinstance(df_input, pd.DataFrame) 
             else df_input
         )
-        df_strat_cur = adt.transformation_entc_least_cost_solution(
+        df_strat_cur = tbe.transformation_entc_least_cost_solution(
             df_input,
             self.vec_implementation_ramp,
             self.model_attributes,
@@ -1940,7 +1940,7 @@ class TransformationsEnergy:
             else df_input
         )
         
-        df_strat_cur = adt.transformation_entc_specify_transmission_losses(
+        df_strat_cur = tbe.transformation_entc_specify_transmission_losses(
             df_input,
             0.06,
             self.vec_implementation_ramp,
@@ -1969,7 +1969,7 @@ class TransformationsEnergy:
             else df_input
         )
 
-        df_strat_cur = adt.transformation_entc_renewable_target(
+        df_strat_cur = tbe.transformation_entc_renewable_target(
             df_input,
             0.95,
             self.vec_implementation_ramp,
@@ -2071,7 +2071,7 @@ class TransformationsEnergy:
 
         # SET UP INPUT DICTIONARY
 
-        df_out = adt.transformation_entc_change_msp_max(
+        df_out = tbe.transformation_entc_change_msp_max(
             df_input,
             dict_cat_to_vector,
             self.model_electricity,
@@ -2135,7 +2135,7 @@ class TransformationsEnergy:
             else df_input
         )
 
-        df_strat_cur = adt.transformation_entc_hydrogen_electrolysis(
+        df_strat_cur = tbe.transformation_entc_hydrogen_electrolysis(
             df_input,
             0.95,
             self.vec_implementation_ramp,
@@ -2168,7 +2168,7 @@ class TransformationsEnergy:
             else df_input
         )
         
-        df_strat_cur = adt.transformation_fgtv_maximize_flaring(
+        df_strat_cur = tbe.transformation_fgtv_maximize_flaring(
             df_input,
             0.8, 
             self.vec_implementation_ramp,
@@ -2197,7 +2197,7 @@ class TransformationsEnergy:
             else df_input
         )
         
-        df_strat_cur = adt.transformation_fgtv_reduce_leaks(
+        df_strat_cur = tbe.transformation_fgtv_reduce_leaks(
             df_input,
             0.8, 
             self.vec_implementation_ramp,
@@ -2231,7 +2231,7 @@ class TransformationsEnergy:
             else df_input
         )
         
-        df_strat_cur = adt.transformation_inen_shift_modvars(
+        df_strat_cur = tbe.transformation_inen_shift_modvars(
             df_input,
             2*self.frac_inen_high_temp_elec_hydg,
             self.vec_implementation_ramp,
@@ -2280,7 +2280,7 @@ class TransformationsEnergy:
 
         # HIGH HEAT CATS ONLY
         # Fuel switch high-temp thermal processes + Fuel switch low-temp thermal processes to industrial heat pumps
-        df_out = adt.transformation_inen_shift_modvars(
+        df_out = tbe.transformation_inen_shift_modvars(
             df_input,
             self.frac_inen_shift_denom,
             self.vec_implementation_ramp, 
@@ -2297,7 +2297,7 @@ class TransformationsEnergy:
 
         # LOW HEAT CATS ONLY
         # + Fuel switch low-temp thermal processes to industrial heat pumps
-        df_out = adt.transformation_inen_shift_modvars(
+        df_out = tbe.transformation_inen_shift_modvars(
             df_out,
             self.frac_inen_shift_denom,
             self.vec_implementation_ramp, 
@@ -2331,7 +2331,7 @@ class TransformationsEnergy:
             else df_input
         )
         
-        df_strat_cur = adt.transformation_inen_shift_modvars(
+        df_strat_cur = tbe.transformation_inen_shift_modvars(
             df_input,
             self.frac_inen_low_temp_elec,
             self.vec_implementation_ramp,
@@ -2364,7 +2364,7 @@ class TransformationsEnergy:
             else df_input
         )
         
-        df_strat_cur = adt.transformation_inen_maximize_energy_efficiency(
+        df_strat_cur = tbe.transformation_inen_maximize_energy_efficiency(
             df_input,
             0.3, 
             self.vec_implementation_ramp,
@@ -2393,7 +2393,7 @@ class TransformationsEnergy:
             else df_input
         )
         
-        df_strat_cur = adt.transformation_inen_maximize_production_efficiency(
+        df_strat_cur = tbe.transformation_inen_maximize_production_efficiency(
             df_input,
             0.4, 
             self.vec_implementation_ramp,
@@ -2426,7 +2426,7 @@ class TransformationsEnergy:
             else df_input
         )
         
-        df_strat_cur = adt.transformation_scoe_electrify_category_to_target(
+        df_strat_cur = tbe.transformation_scoe_electrify_category_to_target(
             df_input,
             0.95,
             self.vec_implementation_ramp,
@@ -2455,7 +2455,7 @@ class TransformationsEnergy:
             else df_input
         )
         
-        df_strat_cur = adt.transformation_scoe_reduce_demand_for_heat_energy(
+        df_strat_cur = tbe.transformation_scoe_reduce_demand_for_heat_energy(
             df_input,
             0.5,
             self.vec_implementation_ramp,
@@ -2484,7 +2484,7 @@ class TransformationsEnergy:
             else df_input
         )
         
-        df_strat_cur = adt.transformation_scoe_reduce_demand_for_appliance_energy(
+        df_strat_cur = tbe.transformation_scoe_reduce_demand_for_appliance_energy(
             df_input,
             0.5,
             self.vec_implementation_ramp,
@@ -2517,7 +2517,7 @@ class TransformationsEnergy:
             else df_input
         )
 
-        df_out = adt.transformation_trde_reduce_demand(
+        df_out = tbe.transformation_trde_reduce_demand(
             df_trde,
             0.25, 
             self.vec_implementation_ramp,
@@ -2546,7 +2546,7 @@ class TransformationsEnergy:
             else df_input
         )
 
-        df_out = adt.transformation_trns_fuel_shift_to_target(
+        df_out = tbe.transformation_trns_fuel_shift_to_target(
             df_input,
             0.7,
             self.vec_implementation_ramp,
@@ -2583,7 +2583,7 @@ class TransformationsEnergy:
         
         model_energy = self.model_energy
 
-        df_out = adt.transformation_trns_fuel_shift_to_target(
+        df_out = tbe.transformation_trns_fuel_shift_to_target(
             df_input,
             0.25,
             self.vec_implementation_ramp,
@@ -2621,7 +2621,7 @@ class TransformationsEnergy:
         model_energy = self.model_energy
 
         # transfer 70% of diesel + gasoline to hydrogen
-        df_out = adt.transformation_trns_fuel_shift_to_target(
+        df_out = tbe.transformation_trns_fuel_shift_to_target(
             df_input,
             0.7,
             self.vec_implementation_ramp,
@@ -2641,7 +2641,7 @@ class TransformationsEnergy:
         )
 
         # transfer remaining diesel + gasoline to hydrogen
-        df_out = adt.transformation_trns_fuel_shift_to_target(
+        df_out = tbe.transformation_trns_fuel_shift_to_target(
             df_out,
             1.0,
             self.vec_implementation_ramp,
@@ -2682,7 +2682,7 @@ class TransformationsEnergy:
         model_energy = self.model_energy
 
         # transfer 70% of diesel + gasoline to electricity
-        df_out = adt.transformation_trns_fuel_shift_to_target(
+        df_out = tbe.transformation_trns_fuel_shift_to_target(
             df_input,
             0.7,
             self.vec_implementation_ramp,
@@ -2702,7 +2702,7 @@ class TransformationsEnergy:
         )
 
         # transfer remaining diesel + gasoline to hydrogen
-        df_out = adt.transformation_trns_fuel_shift_to_target(
+        df_out = tbe.transformation_trns_fuel_shift_to_target(
             df_out,
             1.0,
             self.vec_implementation_ramp,
@@ -2740,7 +2740,7 @@ class TransformationsEnergy:
             else df_input
         )
         
-        df_out = adt.transformation_trns_increase_energy_efficiency_electric(
+        df_out = tbe.transformation_trns_increase_energy_efficiency_electric(
             df_input,
             0.25, 
             self.vec_implementation_ramp,
@@ -2769,7 +2769,7 @@ class TransformationsEnergy:
             else df_input
         )
         
-        df_out = adt.transformation_trns_increase_energy_efficiency_non_electric(
+        df_out = tbe.transformation_trns_increase_energy_efficiency_non_electric(
             df_input,
             0.25, 
             self.vec_implementation_ramp,
@@ -2798,7 +2798,7 @@ class TransformationsEnergy:
             else df_input
         )
 
-        df_out = adt.transformation_trns_increase_vehicle_occupancy(
+        df_out = tbe.transformation_trns_increase_vehicle_occupancy(
             df_input,
             0.25, 
             self.vec_implementation_ramp,
@@ -2827,7 +2827,7 @@ class TransformationsEnergy:
             else df_input
         )
         
-        df_out = adt.transformation_general(
+        df_out = tbe.transformation_general(
             df_input,
             self.model_attributes,
             {
@@ -2866,7 +2866,7 @@ class TransformationsEnergy:
             else df_input
         )
 
-        df_out = adt.transformation_general(
+        df_out = tbe.transformation_general(
             df_input,
             self.model_attributes,
             {
@@ -2907,7 +2907,7 @@ class TransformationsEnergy:
             else df_input
         )
 
-        df_out = adt.transformation_general(
+        df_out = tbe.transformation_general(
             df_input,
             self.model_attributes,
             {
