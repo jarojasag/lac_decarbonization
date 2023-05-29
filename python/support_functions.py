@@ -1800,6 +1800,7 @@ def replace_numerical_column_from_merge(
 def reverse_dict(
     dict_in: dict,
     allow_multi_keys: bool = False,
+    force_list_values: bool = False,
 ) -> dict:
     """
     Reverse a dictionary, mapping v -> k for a dictionary of key value pairs 
@@ -1828,6 +1829,9 @@ def reverse_dict(
         }
 
         * Note: all keys in the reverse dict will be lists. 
+    - force_list_values: forces dictionary values to be a list. Useful if using
+        with allow_multi_keys = True to ensure that dictionary values are always
+        a list.
     """
     # check keys
     s_vals = set(dict_in.values())
@@ -1843,7 +1847,11 @@ def reverse_dict(
                 ks = [k for k in dict_in.keys() if (dict_in.get(k) == v)]
                 dict_out.update({v: ks})
     else:
-        dict_out = dict((v, k) for k, v in dict_in.items())
+        dict_out = (
+            dict((v, k) for k, v in dict_in.items())
+            if not force_list_values
+            else dict((v, [k]) for k, v in dict_in.items())
+        )
 
     return dict_out
 
@@ -1981,6 +1989,8 @@ def subset_df(
         if k in df.columns:
             val = [dict_in.get(k)] if not isinstance(dict_in.get(k), list) else dict_in.get(k)
             df = df[df[k].isin(val)]
+
+    df.reset_index(drop = True, inplace = True)
 
     return df
 

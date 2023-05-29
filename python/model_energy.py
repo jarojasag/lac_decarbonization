@@ -582,6 +582,7 @@ class NonElectricEnergy:
         self.modvar_inen_frac_en_oil = "Industrial Energy Fuel Fraction Oil"
         self.modvar_inen_frac_en_solar = "Industrial Energy Fuel Fraction Solar"
         self.modvar_inen_frac_en_solid_biomass = "Industrial Energy Fuel Fraction Solid Biomass"
+        self.modvar_inen_gas_captured_co2 = ":math:\\text{CO}_2 Captured in Industrial Energy"
         
         # get some dictionaries implied by the inen attribute tables
         self.dict_inen_fuel_categories_to_fuel_variables, self.dict_inen_fuel_categories_to_unassigned_fuel_variables = self.get_inen_dict_fuel_categories_to_fuel_variables()
@@ -2537,6 +2538,27 @@ class NonElectricEnergy:
         # get scalar to transform units of self.modvar_inen_en_prod_intensity_factor -> configuration units
         scalar_energy = self.model_attributes.get_scalar(self.modvar_inen_en_prod_intensity_factor, "energy")
 
+        
+        ##  ADD IN POINT OF CAPTURE
+
+        # get fraction captured (specified in IPPU)
+        array_ippu_emission_frac_captured = self.model_attributes.get_standard_variables(
+            df_neenergy_trajectories, 
+            self.model_ippu.modvar_ippu_frac_captured_co2, 
+            expand_to_all_cats = True,
+            return_type = "array_base",
+            var_bounds = (0, 1),
+        )
+        
+        # capture
+        array_inen_emissions_co2_captured = arr_inen_emissions_co2*array_ippu_emission_frac_captured
+        arr_inen_emissions_co2 -= array_inen_emissions_co2_captured
+
+        # apply a scalar
+        scalar_captured = self.model_attributes.get_scalar(self.modvar_inen_gas_captured_co2, "mass")
+        array_inen_emissions_co2_captured /= scalar_captured
+
+
 
         ##  ADD COSTS
 
@@ -2567,6 +2589,12 @@ class NonElectricEnergy:
             self.model_attributes.array_to_df(
                 arr_inen_emissions_n2o, 
                 self.modvar_inen_emissions_n2o, 
+                reduce_from_all_cats_to_specified_cats = True
+            ),
+            # CO2 CAPTURED
+            self.model_attributes.array_to_df(
+                array_inen_emissions_co2_captured, 
+                self.modvar_inen_gas_captured_co2, 
                 reduce_from_all_cats_to_specified_cats = True
             ),
             # ENERGY DEMAND BY FUEL

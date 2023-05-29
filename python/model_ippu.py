@@ -50,6 +50,7 @@ class IPPU:
         
         self._initialize_subsector_names()
         self._initialize_subsector_vars_ippu()
+        self._initialize_fc_emission_factor_modvars()
 
         self._initialize_input_output_components()
         self._initialize_models()
@@ -99,6 +100,70 @@ class IPPU:
         return None
 
 
+
+    def _initialize_fc_emission_factor_modvars(self,
+    ) -> None:
+        """
+        Initialize dictionary of FC emission factor model variables by type 
+            (hfc, other_fc, and pfc). Sets the following properties:
+
+            * self.all_fcs
+            * self.dict_fc_ef_modvars_by_type
+            * self.dict_fc_ef_modvars_to_gas
+            * self.dict_gas_to_fc_ef_modvars
+        """
+        subsec = self.model_attributes.subsec_name_ippu
+
+        attr_ippu = self.model_attributes.get_attribute_table(
+            subsec,
+            table_type = "key_varreqs_partial",
+        )
+
+        # get dictionaries mapping variables to gas
+        vec_modvars_ef_ippu = self.model_attributes.get_variables_from_attribute(
+            subsec, {"emission_factor": 1},
+        )
+
+        dict_fc_ef_modvars_to_gas = pd.DataFrame(
+            [
+                (x, self.model_attributes.get_variable_characteristic(x, self.model_attributes.varchar_str_emission_gas))
+                for x in vec_modvars_ef_ippu
+            ]
+        )
+        dict_fc_ef_modvars_to_gas = sf.build_dict(dict_fc_ef_modvars_to_gas)
+        dict_gas_to_fc_ef_modvars = sf.reverse_dict(
+            dict_fc_ef_modvars_to_gas, 
+            allow_multi_keys = True, 
+            force_list_values = True,
+        )
+        # all fluorinated compounds
+        all_fcs = sorted(list(dict_gas_to_fc_ef_modvars.keys()))
+
+        # get IPPU emission factor model variables by gas classification
+        dict_fc_ef_modvars_by_type = {}
+        for key, val in self.model_attributes.dict_fc_designation_to_gasses.items():
+
+            modvars = sum(
+                [
+                    dict_gas_to_fc_ef_modvars.get(x)
+                    for x in val
+                    if (dict_gas_to_fc_ef_modvars.get(x) is not None)
+                ], []
+            )
+            
+            dict_fc_ef_modvars_by_type.update({key: modvars})
+
+        
+        ##  SET PROPERTIES
+
+        self.all_fcs = all_fcs
+        self.dict_fc_ef_modvars_by_type = dict_fc_ef_modvars_by_type
+        self.dict_fc_ef_modvars_to_gas = dict_fc_ef_modvars_to_gas
+        self.dict_gas_to_fc_ef_modvars = dict_gas_to_fc_ef_modvars
+        
+        return None
+        
+        
     
     def _initialize_input_output_components(self,
     ) -> None:
@@ -249,6 +314,8 @@ class IPPU:
         self.modvar_ippu_demand_for_harvested_wood = "Demand for Harvested Wood"
         self.modvar_ippu_elast_ind_prod_to_gdp = "Elasticity of Industrial Production to GDP"
         self.modvar_ippu_elast_produserate_to_gdppc = "Elasticity of Product Use Rate to GDP per Capita"
+        self.modvar_ippu_frac_captured_co2 = "Industrial :math:\\text{CO}_2 Capture Fraction"
+        self.modvar_ippu_gas_captured_co2 = ":math:\\text{CO}_2 Captured in Industrial Processes and Product Use"
         self.modvar_ippu_max_recycled_material_ratio = "Maximum Recycled Material Ratio in Virgin Process"
         self.modvar_ippu_net_imports_clinker = "Net Imports of Cement Clinker"
         self.modvar_ippu_prod_qty_init = "Initial Industrial Production"
@@ -368,7 +435,6 @@ class IPPU:
         self.modvar_ippu_emissions_produse_pfc3110 = "PFC-31-10 Emissions from Industrial Product Use"
         self.modvar_ippu_emissions_process_pfc5114 = "PFC-51-14 Emissions from Industrial Production Processes"
         self.modvar_ippu_emissions_produse_pfc5114 = "PFC-51-14 Emissions from Industrial Product Use"
-        
 
         return None
 
@@ -387,7 +453,10 @@ class IPPU:
         vec_gdp: np.ndarray,
         dict_base_emissions: Union[dict, None],
         dict_simple_efs: dict,
-        modvar_prod_mass: str = None
+        include_carbon_capture: bool,
+        modvar_carbon_capture_fraction: Union[str, None] = None,
+        modvar_carbon_capture_total: Union[str, None] = None,
+        modvar_prod_mass: str = None,
     ) -> list:
         """
         Calculate emissions driven by GDP/Production and different factors. 
@@ -395,6 +464,10 @@ class IPPU:
             gdp vector, and dictionaries that contain (a) output variables as 
             keys and (b) lists of input gdp and/or production variables.
 
+        NOTE: Returns aggregated carbon capture outputs as a single variable in 
+            the output dataframe, so care should be taken if multiple calls to
+            calculate_emissions_by_gdp_and_production() include carbon capture
+            to aggregate across calls.
 
         Function Arguments
         ------------------
@@ -414,25 +487,62 @@ class IPPU:
                 }
                 
             Allows for multiple gasses to be summed over.
+        - include_carbon_capture: bool denoting whether to include carbon 
+            capture specification. For example, set to false when running with
+            product use emission factors
 
         Keyword Arguments
         -----------------
+        - modvar_carbon_capture_fraction: model variable signifying carbon 
+            capture fraction for industrial processes
+        - modvar_carbon_capture_total: model variable to use for total carbon
+            captured as masss
         - modvar_prod_mass: variable with mass of production denoted in 
             array_production; used to match emission factors
 
         """
 
-        # get the attribute table and initialize output
+        # get the attribute table and model variables
         attr_ippu = self.model_attributes.get_attribute_table(self.subsec_name_ippu)
-        modvar_prod_mass = self.modvar_ippu_qty_total_production if (modvar_prod_mass is None) else modvar_prod_mass
+        modvar_carbon_capture_fraction = (
+            self.modvar_ippu_frac_captured_co2
+            if (modvar_carbon_capture_fraction is None) 
+            else modvar_carbon_capture_fraction
+        )
+        modvar_carbon_capture_total = (
+            self.modvar_ippu_gas_captured_co2
+            if (modvar_carbon_capture_total is None) 
+            else modvar_carbon_capture_total
+        )
+        modvar_prod_mass = (
+            self.modvar_ippu_qty_total_production 
+            if (modvar_prod_mass is None) 
+            else modvar_prod_mass
+        )
+
+        # initialize cross-iteration variables
+        array_emission_captured = 0.0
         df_out = []
 
         # process is identical across emission factors -- sum gdp-driven and production-driven factors
         for modvar in dict_simple_efs.keys():
+            
+            # check subsector and skip if invalid
+            subsec = self.model_attributes.get_variable_subsector(
+                modvar, 
+                throw_error_q = False
+            )
+            if subsec is None:
+                continue
+
             # get variables and initialize total emissions
             all_modvar_ef_gdp = dict_simple_efs[modvar][0]
             all_modvar_ef_prod = dict_simple_efs[modvar][1]
             array_emission = np.zeros((len(df_ippu_trajectories), attr_ippu.n_key_values))
+            gas = self.model_attributes.get_variable_characteristic(
+                modvar, 
+                self.model_attributes.varchar_str_emission_gas
+            )
 
             # check if there are gdp driven factors
             if isinstance(vec_gdp, np.ndarray):
@@ -443,10 +553,13 @@ class IPPU:
                         expand_to_all_cats = True,
                         return_type = "array_units_corrected"
                     )
-                    if vec_gdp.shape == array_emission_cur.shape:
-                        array_emission += array_emission_cur*vec_gdp
-                    else:
-                        array_emission += (array_emission_cur.transpose()*vec_gdp).transpose()
+
+                    array_emission += (
+                        array_emission_cur*vec_gdp
+                        if vec_gdp.shape == array_emission_cur.shape
+                        else (array_emission_cur.transpose()*vec_gdp).transpose()
+                    )
+
 
             # check if there is a production driven factor
             if isinstance(array_production, np.ndarray):
@@ -456,23 +569,62 @@ class IPPU:
                         modvar_prod_mass,
                         "mass"
                     )
-                    array_emission_cur = self.model_attributes.get_standard_variables(df_ippu_trajectories, modvar_ef_prod, False, return_type = "array_units_corrected", expand_to_all_cats = True)
+
+                    array_emission_cur = self.model_attributes.get_standard_variables(
+                        df_ippu_trajectories, 
+                        modvar_ef_prod, 
+                        expand_to_all_cats = True,
+                        return_type = "array_units_corrected"
+                    )
+
                     array_emission += array_emission_cur*array_production/scalar_ippu_mass
 
             # add any baseline emissions from elsewhere
-            array_emission += dict_base_emissions.get(modvar, 0.0) if (dict_base_emissions is not None) else 0.0
-            subsec = self.model_attributes.get_variable_subsector(modvar, throw_error_q = False)
+            array_emission += (
+                dict_base_emissions.get(modvar, 0.0)
+                if dict_base_emissions is not None
+                else 0.0
+            )
+            
+
+            # check if carbon capture should be incorporated
+            if include_carbon_capture & (gas == "co2"):
+                array_emission_frac_captured = self.model_attributes.get_standard_variables(
+                    df_ippu_trajectories, 
+                    modvar_carbon_capture_fraction, 
+                    expand_to_all_cats = True,
+                    return_type = "array_base",
+                    var_bounds = (0, 1),
+                )
+
+                array_emission_captured_cur = array_emission*array_emission_frac_captured
+                array_emission_captured += array_emission_captured_cur
+                array_emission -= array_emission_captured_cur
+
 
             # add to output dataframe if it's a valid model variable
-            if subsec is not None:
-                df_out += [
-                    self.model_attributes.array_to_df(
-                        array_emission, 
-                        modvar, 
-                        reduce_from_all_cats_to_specified_cats = True
-                    )
-                ]
+            df_out += [
+                self.model_attributes.array_to_df(
+                    array_emission, 
+                    modvar, 
+                    reduce_from_all_cats_to_specified_cats = True
+                )
+            ]
 
+        # add on carbon captured if spcified
+        if include_carbon_capture & isinstance(array_emission_captured, np.ndarray):
+
+            scalar_captured = self.model_attributes.get_scalar(modvar_carbon_capture_total, "mass")
+            array_emission_captured /= scalar_captured
+
+            df_out += [
+                self.model_attributes.array_to_df(
+                    array_emission_captured, 
+                    modvar_carbon_capture_total, 
+                    reduce_from_all_cats_to_specified_cats = True
+                )
+            ]
+            
         return df_out
 
 
@@ -1089,14 +1241,14 @@ class IPPU:
             )
         }
 
-        # use dictionary to calculate emissions
+        # use dictionary to calculate emissions from processes
         df_out += self.calculate_emissions_by_gdp_and_production(
             df_ippu_trajectories,
             array_ippu_production,
             vec_gdp,
             dict_ippu_proc_emissions_to_add,
             dict_ippu_proc_simple_efs,
-            self.modvar_ippu_qty_total_production
+            True,
         )
 
 
@@ -1196,14 +1348,14 @@ class IPPU:
         }
 
 
-        # use dictionary to calculate emissions
+        # use dictionary to calculate emissions from product use
         df_out += self.calculate_emissions_by_gdp_and_production(
             df_ippu_trajectories,
             0,
             array_ippu_gdp_scalar_produse,
             dict_ippu_produse_emissions_to_add,
             dict_ippu_produse_simple_efs,
-            self.modvar_ippu_qty_total_production
+            False,
         )
 
 
@@ -1240,7 +1392,7 @@ class IPPU:
             vec_gdp,
             None,
             dict_ippu_proc_simple_efs_indiv_fgas,
-            self.modvar_ippu_qty_total_production
+            False,
         )
 
         # F-gasses that can be calibrated to from product use
@@ -1272,7 +1424,7 @@ class IPPU:
             array_ippu_gdp_scalar_produse,
             None,
             dict_ippu_produse_simple_efs_indiv_fgas,
-            self.modvar_ippu_qty_total_production
+            False,
         )
 
         """

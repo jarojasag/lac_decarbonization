@@ -7,6 +7,7 @@ import model_energy as me
 import model_socioeconomic as se
 import numpy as np
 import pandas as pd
+import support_classes as sc
 import support_functions as sf
 from typing import *
 
@@ -34,6 +35,86 @@ def get_time_period(
     return_val = min(attr_time_period.key_values) if (return_type == "min") else max(attr_time_period.key_values)
 
     return return_val
+
+
+
+def prepare_demand_scalars(
+    df_input: pd.DataFrame,
+    modvars: Union[List[str], str, None],
+    model_attributes: ma.ModelAttributes,
+    key_region: Union[str, None] = None,
+) -> pd.DataFrame:
+    """
+    Setup so that all input demand scalars are normalized to have value 1 during 
+        the initial time period
+
+    Function Arguments
+    ------------------
+    - df_input: input DataFrame to prepare
+    - modvars: list of model variables (or single model variable) to apply the 
+        modification to
+    - model_attributes: model attributes object used for accessing fields, time
+        periods, and region in formation
+
+    Keyword Arguments
+    -----------------
+    - key_region: optional specification of key region. If None, defaults to
+        model_attributes.dim_region
+    """
+    # check model variable specification
+    modvars = (
+        [modvars]
+        if isinstance(modvars, str)
+        else (
+            list(modvars)
+            if sf.islistlike(modvars)
+            else None
+        )
+    )
+
+    if modvars is None:
+        return df_input
+
+
+    # group by region
+    key_region = (
+        model_attributes.dim_region
+        if key_region is None
+        else key_region
+    )
+    df_out = (
+        [df for x, df in df_input.groupby([key_region])]
+        if key_region in df_input.columns
+        else None
+    )
+    if df_out is None:
+        return df_input
+
+    #  initialize time periods
+    time_periods = sc.TimePeriods(model_attributes)
+    tp_min = min(time_periods.all_time_periods)
+
+
+    # loop over each region to normalize to 1 at first time period
+    for i, df in enumerate(df_out):
+        
+        row = df[
+            df[time_periods.field_time_period].isin([tp_min]) 
+        ]
+
+        for modvar in modvars:
+            
+            fields = model_attributes.build_varlist(None, modvar)
+
+            vec_base = np.array(row[fields].iloc[0]).astype(float)
+            df[fields] = np.nan_to_num(
+                np.array(df[fields])/vec_base, 
+                1.0
+            )
+
+    df_out = pd.concat(df_out, axis = 0).reset_index(drop = True)
+
+    return df_out
 
 
 
@@ -694,4 +775,113 @@ def transformation_general_shift_fractions_from_modvars(
 
     return df_out
 
+
+
+def transformation_general_with_magnitude_differential_by_cat(
+    df_input: pd.DataFrame,
+    magnitude: Union[Dict[str, float], float],
+    modvar: str,
+    vec_ramp: np.ndarray,
+    model_attributes: ma.ModelAttributes,
+    bounds: Union[Tuple, None] = None,
+    categories: Union[List[str], None] = None,
+    magnitude_type: str = "baseline_scalar",
+    **kwargs
+) -> pd.DataFrame:
+    """
+    Implement a transformation_general transformation with optional difference
+        in specification of magnitude, either as a number or a dictionary of
+        categories that are mapped to magnitudes.
+
+
+    Function Arguments
+    ------------------
+    - df_input: input data frame containing baseline trajectories
+    - magnitude: float specifying magnitude  OR  dictionary mapping individual 
+        categories to magnitude (must be specified for each category)
+        * NOTE: overrides `categories` keyword argument if both are specified
+    - modvar: model variable that is adjusted
+    - model_attributes: ModelAttributes object used to call strategies/
+        variables
+    - vec_ramp: ramp vec used for implementation
+
+    Keyword Arguments
+    -----------------
+    - bounds: optional bounds to set on the magnitude (uniformly applied across
+        categories)
+    - categories: optional subset of categories to apply to
+    - field_region: field in df_input that specifies the region
+    - magnitude_type: see ?transformation_general for more information. Default 
+        is "baseline_scalar"
+    - **kwargs: passed to transformation_general
+    """
+
+    # get attribute table, CircularEconomy model for variables, and check categories
+    subsec = model_attributes.get_variable_subsector(modvar, throw_error_q = False)
+    if subsec is None:
+        return None
+    attr = model_attributes.get_attribute_table(subsec)
+
+    # call to general transformation differs based on whether magnitude is a number or a dictionary
+    if sf.isnumber(magnitude):
+        
+        magnitude = float(sf.vec_bounds(magnitude, bounds))
+
+        # check category specification
+        categories = model_attributes.get_valid_categories(categories, subsec)
+        if categories is None:
+            # LOGGING
+            return df_input
+            
+        # apply same magnitude to all categories
+        df_out = transformation_general(
+            df_input,
+            model_attributes,
+            {
+                modvar: {
+                    "bounds": bounds,
+                    "categories": categories,
+                    "magnitude": magnitude,
+                    "magnitude_type": magnitude_type,
+                    "vec_ramp": vec_ramp
+                }
+            },
+            **kwargs
+        )
+
+    if isinstance(magnitude, dict):
+
+        # invert the dictionary map
+        dict_rev = sf.reverse_dict(magnitude, allow_multi_keys = True)
+        df_out = df_input.copy()
+
+        # iterate over separately defined magnitudes
+        for mag, cats in dict_rev.items():
+            
+            # check categories
+            cats = [cats] if (not isinstance(cats, list)) else cats
+            cats = model_attributes.get_valid_categories(cats, subsec) 
+            if cats is None:
+                continue
+
+            mag = float(sf.vec_bounds(mag, bounds))
+
+            # call general transformation
+            df_out = transformation_general(
+                df_out,
+                model_attributes,
+                {
+                    modvar: {
+                        "bounds": (0, 1),
+                        "categories": cats,
+                        "magnitude": mag,
+                        "magnitude_type": magnitude_type,
+                        "vec_ramp": vec_ramp
+                    }
+                },
+                **kwargs
+            )
+    
+
+    return df_out
 

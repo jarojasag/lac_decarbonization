@@ -1237,7 +1237,7 @@ class TransformationsEnergy:
 
         
         self.trns_bundle_efficiency = sc.Transformation(
-            "TRNS_BUNDLE_EFFICIENCY", 
+            "TRNS:BUNDLE_EFFICIENCY", 
             [
                 self.transformation_trns_increase_efficiency_electric,
                 self.transformation_trns_increase_efficiency_non_electric
@@ -1248,7 +1248,7 @@ class TransformationsEnergy:
 
 
         self.trns_bundle_efficiency_with_rep = sc.Transformation(
-            "TRNS_BUNDLE_EFFICIENCY_REP", 
+            "TRNS:BUNDLE_EFFICIENCY_REP", 
             [
                 self.transformation_trns_increase_efficiency_electric,
                 self.transformation_trns_increase_efficiency_non_electric,

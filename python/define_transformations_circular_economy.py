@@ -720,7 +720,6 @@ class TransformationsCircularEconomy:
                         f"\tSuccessfully built transformation {self.key_strategy} = {transformation.id} ('{transformation.name}') in {t_elapse} seconds.",
                         type_log = "info"
                     )
-                    print(f"YEAH - {df_out[i + iter_shift].size}")
 
                 except Exception as e: 
                     df_out[i + 1] = None
@@ -833,7 +832,8 @@ class TransformationsCircularEconomy:
         from being built. The baseline can be preserved as the input DataFrame 
         by the Transformation as a passthrough (e.g., return input DataFrame) 
 
-    NOTE: modifications to input variables should ONLY affect Energy variables
+    NOTE: modifications to input variables should ONLY affect CircularEconomy 
+        variables
     """
 
     def transformation_ce_baseline(self,

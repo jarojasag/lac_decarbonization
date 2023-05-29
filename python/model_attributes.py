@@ -439,6 +439,8 @@ class ModelAttributes:
         self._initialize_variables_by_subsector()
         self._initialize_all_primary_category_flags()
         self._initialize_emission_modvars_by_gas()
+        self._initialize_gas_attributes()
+
         self._check_attribute_tables()
 
 
@@ -461,6 +463,7 @@ class ModelAttributes:
         self._check_attribute_tables_enst()
         self._check_attribute_tables_entc()
         self._check_attribute_tables_inen()
+        self._check_attribute_tables_ippu()
         self._check_attribute_tables_lndu()
         self._check_attribute_tables_lsmm()
         self._check_attribute_tables_trde()
@@ -1029,6 +1032,33 @@ class ModelAttributes:
         self.dict_gas_to_total_emission_modvars = dict_modvar_by_gas
 
         return None
+    
+
+
+    def _initialize_gas_attributes(self,
+    ) -> None:
+        """
+        Initialize some shared gas attribute objects. Sets the following 
+            properties:
+
+            * self.dict_fc_designation_to_gas
+            * self.dict_gas_to_fc_designation
+        """
+
+        dict_fc_designation_to_gas = self.get_fluorinated_compound_dictionaries()
+        dict_gas_to_fc_designation = dict(
+            sum(
+                [
+                    [(x, k) for x in v]
+                    for k, v in dict_fc_designation_to_gas.items()
+                ], []
+            )
+        )
+
+        self.dict_fc_designation_to_gasses = dict_fc_designation_to_gas
+        self.dict_gas_to_fc_designation = dict_gas_to_fc_designation
+
+        return None
 
 
 
@@ -1150,7 +1180,8 @@ class ModelAttributes:
 
     def _check_binary_category_partition(self,
         attr: AttributeTable,
-        fields: List[str]
+        fields: List[str],
+        allow_subset: bool = False,
     ) -> None:
         """
         Check a set of binary fields specificied in an attribute table to 
@@ -1158,15 +1189,21 @@ class ModelAttributes:
             fields are binary.
 
         Function Arguments
-        -----------------
+        ------------------
         - attr: AttributeTable to check
         - fields: fields to check
+
+        Keyword Arguments
+        -----------------
+        - allow_subset: if True, then allows values associated with the fields
+            to go unassigned
         """
 
         fields = [x for x in fields if x in attr.table.columns]
         vec_check = np.array(attr.table[fields]).sum(axis = 1).astype(int)
+        set_ref = set({0, 1}) if allow_subset else set({1})
 
-        if set(vec_check) != set({1}):
+        if set(vec_check) != set_ref:
             fields_print = ", ".join([f"'{x}'" for x in fields])
             raise RuntimeError(f"Invalid specifcation of attribute table with key {attr.key}--the fields {fields_print} do not partition the categories.")
 
@@ -1178,17 +1215,30 @@ class ModelAttributes:
         attr: AttributeTable,
         subsec: str,
         fields: str,
-        force_sum_to_one: bool = False
+        force_sum_to_one: bool = False,
     ) -> None:
-        # loop over fields to do checks
+        """
+        Check fields `fields` in attr to ensure they are all binary (1 or 0). 
+            Set `force_sum_to_one` = True to ensure that exactly one record 
+            associated with each field is 1.
+        """
         for fld in fields:
             valid_sum = (sum(attr.table[fld]) == 1) if force_sum_to_one else True
+
             if fld not in attr.table.columns:
-                raise ValueError(f"Error in subsector {subsec}: required field '{fld}' not found in the table at '{attr.fp_table}'.")
-            elif not set(attr.table[fld].astype(int)).issubset(set([1 , 0])):
-                raise ValueError(f"Error in subsector {subsec}:  invalid values found in field '{fld}' in the table at '{attr.fp_table}'. Only 0 or 1 should be specified.")
+                raise ValueError(
+                    f"Error in subsector {subsec}: required field '{fld}' not found in the table at '{attr.fp_table}'."
+                )
+
+            elif not all([((x == 1) | (x == 0)) for x in list(attr.table[fld])]):
+                raise ValueError(
+                    f"Error in subsector {subsec}:  invalid values found in field '{fld}' in the table at '{attr.fp_table}'. Only 0 or 1 should be specified."
+                )
+
             elif not valid_sum:
-                raise ValueError(f"Invalid specification of field '{fld}' found in {subsec} attribute table: exactly 1 category or variable should be specfied in the field '{fld}'.\n\nUse 1 to flag the category; all other values should be 0.")
+                raise ValueError(
+                    f"Invalid specification of field '{fld}' found in {subsec} attribute table: exactly 1 category or variable should be specfied in the field '{fld}'.\n\nUse 1 to flag the category; all other values should be 0."
+                )
 
         return None
 
@@ -1561,6 +1611,27 @@ class ModelAttributes:
             type_primary = "varreqs_partial", 
             injection_q = False
         )
+
+        return None
+
+
+
+    def _check_attribute_tables_ippu(self,
+    ) -> None:
+        """
+        Check specification of the Industrial Processes and Product Use 
+            attribute table, including specification of HFC/PFC/Other FC 
+            emission factors as a variable attribute.
+        """
+        # some shared values
+        subsec = self.subsec_name_ippu
+        attr = self.get_attribute_table(subsec, "key_varreqs_partial")
+
+        # check required fields - binary
+        fields_req_bin = [
+            "emission_factor",
+        ]
+        self._check_binary_fields(attr, subsec, fields_req_bin)
 
         return None
 
@@ -2057,22 +2128,6 @@ class ModelAttributes:
 
 
 
-    def get_df_dimensions_of_analysis(self, 
-        df_in: pd.DataFrame, 
-        df_in_shared: pd.DataFrame = None
-    ) -> list:
-        """
-        Get all dimensions of analysis in a data frame - can be used on two 
-            data frames for merges
-        """
-        if type(df_in_shared) == pd.DataFrame:
-            cols = [x for x in self.sort_ordered_dimensions_of_analysis if (x in df_in.columns) and (x in df_in_shared.columns)]
-        else:
-            cols = [x for x in self.sort_ordered_dimensions_of_analysis if x in df_in.columns]
-        return cols
-
-
-
     def get_categories_from_attribute_characteristic(self,
         subsector: str,
         dict_subset: dict,
@@ -2088,10 +2143,18 @@ class ModelAttributes:
 
         if auto_select_attr_q:
             pycat = self.get_subsector_attribute(subsector, attribute_type)
-            attr = self.dict_attributes.get(pycat) if (attribute_type == "pycategory_primary") else self.dict_varreqs.get(pycat)
+            attr = (
+                self.dict_attributes.get(pycat) 
+                if (attribute_type == "pycategory_primary") 
+                else self.dict_varreqs.get(pycat)
+            )
         else:
             attr = self.dict_attributes.get(subsector)
-            extract_key = subsector_extract_key if (subsector_extract_key is not None) else (attr.key if (attr is not None) else "")
+            extract_key = (
+                subsector_extract_key 
+                if (subsector_extract_key is not None) 
+                else (attr.key if (attr is not None) else "")
+            )
             pycat = extract_key if (attr is not None) else ""
 
         return_val = None
@@ -2104,6 +2167,22 @@ class ModelAttributes:
             )
 
         return return_val
+    
+
+
+    def get_df_dimensions_of_analysis(self, 
+        df_in: pd.DataFrame, 
+        df_in_shared: pd.DataFrame = None
+    ) -> list:
+        """
+        Get all dimensions of analysis in a data frame - can be used on two 
+            data frames for merges
+        """
+        if type(df_in_shared) == pd.DataFrame:
+            cols = [x for x in self.sort_ordered_dimensions_of_analysis if (x in df_in.columns) and (x in df_in_shared.columns)]
+        else:
+            cols = [x for x in self.sort_ordered_dimensions_of_analysis if x in df_in.columns]
+        return cols
 
 
 
@@ -2129,6 +2208,36 @@ class ModelAttributes:
             warnings.warn(f"Invalid dimensional attribute '{return_type}'. Valid return type values are:{valid_rts}")
         
         return out_val
+    
+
+
+    def get_fluorinated_compound_dictionaries(self,
+        field_fc_designation: str = "flourinated_compound_designation",
+    ) -> Dict[str, List[str]]:
+        """
+        Build a dictionary mapping FC designation to a list of gasses. Generates 
+            a dictionary with the following keys (from gas attribute table):
+            
+            * hfc
+            * none
+            * other_fc
+            * pfc
+        
+        Keyword Arguments
+        -----------------
+        - field_fc_designation: field in emission_gas attribute table containing
+            the fluorinated compound designation of the gas 
+        """
+        
+        attr_gas = self.dict_attributes.get("emission_gas")
+        dict_out = {}
+        df_by_designation = attr_gas.table.groupby([field_fc_designation])
+        
+        for desig, df in df_by_designation:
+            desig = str(desig).lower().replace(" ", "_")
+            dict_out.update({desig: list(df[attr_gas.key])})
+            
+        return dict_out
 
 
 
@@ -2686,15 +2795,19 @@ class ModelAttributes:
         return out
 
 
-    ##  swap an energy unit for an associated power unit--used to define conversions between energy and power
-    def get_energy_power_swap(self, input_unit: str) -> str:
+
+    def get_energy_power_swap(self, 
+        input_unit: str
+    ) -> str:
 
         """
-            Enter an energy unit E to retrieve the equivalent unit of power P so that P*year = E
-            OR
-            Enter a power unit P to retrieve the equivalent energy unit E so that E/year = P
+        Enter an energy unit E to retrieve the equivalent unit of power P so 
+            that P*year = E OR enter a power unit P to retrieve the equivalent 
+            energy unit E so that E/year = P
 
-            - input_unit: input unit to enter. Must be a valid power or energy unit
+        Function Arguments
+        ------------------
+        - input_unit: input unit to enter. Must be a valid power or energy unit
         """
         if input_unit is None:
             return None
@@ -3213,10 +3326,11 @@ class ModelAttributes:
         df_in: pd.DataFrame,
         list_subsectors: list,
         stop_on_missing_fields_q: bool = False
-    ):
+    ) -> str:
         """
         Add a total of all emission fields (across those output variables 
-            specified with $EMISSION-GAS$). Inline function (does not return).
+            specified with $EMISSION-GAS$). Inline operation on DataFrame that
+            returns the subsector total.
 
         Function Arguments
         ------------------
@@ -3429,6 +3543,7 @@ class ModelAttributes:
             "varreqs_all": "key_varreqs_all",
             "varreqs_partial": "key_varreqs_partial"
         }
+
         valid_types = list(dict_valid_types_to_attribute_keys.keys())
         str_valid_types = sf.format_print_list(valid_types)
         if type_table not in valid_types:
@@ -4141,7 +4256,8 @@ class ModelAttributes:
             * "data_frame"
             * "array_base" (np.ndarray not corrected for configuration 
                 emissions)
-            * "array_units_corrected" (emissions corrected for configuration)
+            * "array_units_corrected" (emissions corrected to reflect 
+                configuration output emission units)
         - throw_error_on_missing_fields: set to True to throw an error if the
             fields associated with modvar are not found in df_in.
             * If False, returns None if fields implied by modvar are not found 
@@ -4507,6 +4623,66 @@ class ModelAttributes:
             return vars_both
         else:
             raise ValueError(f"Invalid return_var_type specification '{return_var_type}' in get_variables_by_sector: valid values are 'input', 'output', and 'both'.")
+
+
+
+    def get_variables_from_attribute(self,
+        subsec: str,
+        dict_attributes: str,
+    ) -> Union[List[str], None]:
+        """
+        Retrieve a list of model variables from an attribute. Returns an 
+            empty list if no variables match the specification.
+            
+        NOTE: Returns None if subsec is invalid, attribute is not found. 
+        
+        Function Arguments
+        ------------------
+        - subsec: subsector to get variables from
+        - dict_attributes: dictionary mapping field in variable attribute tables
+            to values to use for filtering
+        
+        Keyword Arguments
+        -----------------
+        """
+        
+        subsec = self.check_subsector(subsec, throw_error_q = False)
+        if (subsec == False) or not isinstance(dict_attributes, dict):
+            return None
+        
+        vars_out = None
+        
+        # check each attribute table
+        for key in ["key_varreqs_all", "key_varreqs_partial"]:
+            
+            attr = self.get_attribute_table(subsec, table_type = key)
+            
+            # check if we should attempt to filter the dataframe
+            continue_q = True
+            if attr is not None:
+                continue_q = (
+                    not any([x in attr.table.columns for x in dict_attributes.keys()])
+                    if len(attr.table) > 0
+                    else True
+                )
+            if continue_q:
+                continue
+            
+            # otherwise, filter out
+            vars_match = list(
+                sf.subset_df(
+                    attr.table,
+                    dict_attributes
+                )[attr.key]
+            )
+            
+            vars_out = (
+                vars_match
+                if vars_out is None
+                else (vars_out + vars_match)
+            )
+            
+        return vars_out
 
 
 

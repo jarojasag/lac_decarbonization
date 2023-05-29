@@ -50,3 +50,69 @@
 2023-05-25 20:29:47,219 - INFO - 	Successfully built transformation strategy_id = 2015 ('WASO: Waste reduction') in 0.76 seconds.
 2023-05-25 20:29:51,950 - INFO - 	Successfully built transformation strategy_id = 2016 ('CE: All Circular Economy transformations') in 4.73 seconds.
 2023-05-25 20:29:52,907 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 16.21 seconds.
+2023-05-28 17:43:49,519 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 16 strategies...
+2023-05-28 17:43:50,012 - INFO - 	Successfully built transformation strategy_id = 2001 ('TRWW: All wastewater treatment transformations') in 0.49 seconds.
+2023-05-28 17:43:50,547 - INFO - 	Successfully built transformation strategy_id = 2002 ('TRWW: Increase biogas capture') in 0.53 seconds.
+2023-05-28 17:43:50,789 - INFO - 	Successfully built transformation strategy_id = 2003 ('TRWW: Increase septic compliance') in 0.24 seconds.
+2023-05-28 17:43:51,635 - INFO - 	Successfully built transformation strategy_id = 2004 ('WALI: All transformations') in 0.84 seconds.
+2023-05-28 17:43:51,940 - INFO - 	Successfully built transformation strategy_id = 2005 ('WALI: Improved industrial wastewater treatment') in 0.3 seconds.
+2023-05-28 17:43:52,218 - INFO - 	Successfully built transformation strategy_id = 2006 ('WALI: Improved rural wastewater treatment') in 0.28 seconds.
+2023-05-28 17:43:52,502 - INFO - 	Successfully built transformation strategy_id = 2007 ('WALI: Improved urban wastewater treatment') in 0.28 seconds.
+2023-05-28 17:43:54,820 - INFO - 	Successfully built transformation strategy_id = 2008 ('WASO: All solid waste') in 2.32 seconds.
+2023-05-28 17:43:55,055 - INFO - 	Successfully built transformation strategy_id = 2009 ('WASO: Biogas for energy production') in 0.23 seconds.
+2023-05-28 17:43:55,291 - INFO - 	Successfully built transformation strategy_id = 2010 ('WASO: Incineration for energy production') in 0.23 seconds.
+2023-05-28 17:43:55,757 - INFO - 	Successfully built transformation strategy_id = 2011 ('WASO: Increase biogas capture') in 0.46 seconds.
+2023-05-28 17:43:56,051 - INFO - 	Successfully built transformation strategy_id = 2012 ('WASO: Increase composting and biogas') in 0.29 seconds.
+2023-05-28 17:43:56,278 - INFO - 	Successfully built transformation strategy_id = 2013 ('WASO: Increase landfilling') in 0.23 seconds.
+2023-05-28 17:43:56,545 - INFO - 	Successfully built transformation strategy_id = 2014 ('WASO: Increase recycling') in 0.27 seconds.
+2023-05-28 17:43:57,052 - INFO - 	Successfully built transformation strategy_id = 2015 ('WASO: Waste reduction') in 0.51 seconds.
+2023-05-28 17:44:00,847 - INFO - 	Successfully built transformation strategy_id = 2016 ('CE: All Circular Economy transformations') in 3.79 seconds.
+2023-05-28 17:44:01,601 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 12.08 seconds.
+2023-05-28 23:17:29,881 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 0 strategies...
+2023-05-28 23:17:29,927 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 0.05 seconds.
+2023-05-28 23:30:17,263 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 6 strategies...
+2023-05-28 23:30:18,091 - ERROR - 	Error trying to build transformation strategy_id = 4001: name 'model_ippu' is not defined
+2023-05-28 23:30:18,865 - INFO - 	Successfully built transformation strategy_id = 4010 ('IPPU: Reduce use of HFCs') in 0.77 seconds.
+2023-05-28 23:30:18,867 - ERROR - 	Error trying to build transformation strategy_id = 4011: name 'model_ippu' is not defined
+2023-05-28 23:30:19,271 - INFO - 	Successfully built transformation strategy_id = 4013 ('IPPU: Reduce other fluorinated compounds') in 0.4 seconds.
+2023-05-28 23:30:19,779 - INFO - 	Successfully built transformation strategy_id = 4014 ('IPPU: Reduce use of PFCs') in 0.51 seconds.
+2023-05-28 23:30:21,641 - INFO - 	Successfully built transformation strategy_id = 4015 ('IPPU: Reduce fluorinated gasses bundle') in 1.86 seconds.
+2023-05-28 23:30:21,840 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 4.58 seconds.
+2023-05-28 23:31:58,286 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 6 strategies...
+2023-05-28 23:32:00,163 - INFO - 	Successfully built transformation strategy_id = 4001 ('IP: All IP transformations') in 1.88 seconds.
+2023-05-28 23:32:00,939 - INFO - 	Successfully built transformation strategy_id = 4010 ('IPPU: Reduce use of HFCs') in 0.77 seconds.
+2023-05-28 23:32:01,398 - INFO - 	Successfully built transformation strategy_id = 4011 ('IPPU: Reduce Nitrous Oxide emissions') in 0.46 seconds.
+2023-05-28 23:32:01,760 - INFO - 	Successfully built transformation strategy_id = 4013 ('IPPU: Reduce other fluorinated compounds') in 0.36 seconds.
+2023-05-28 23:32:02,259 - INFO - 	Successfully built transformation strategy_id = 4014 ('IPPU: Reduce use of PFCs') in 0.5 seconds.
+2023-05-28 23:32:03,914 - INFO - 	Successfully built transformation strategy_id = 4015 ('IPPU: Reduce fluorinated gasses bundle') in 1.65 seconds.
+2023-05-28 23:32:04,208 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 5.92 seconds.
+2023-05-29 12:05:52,612 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 1 strategies...
+2023-05-29 12:05:52,618 - ERROR - 	Error trying to build transformation strategy_id = 2015: name 'tbg' is not defined
+2023-05-29 12:05:52,658 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 0.04 seconds.
+2023-05-29 12:06:44,593 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 1 strategies...
+2023-05-29 12:06:45,054 - INFO - 	Successfully built transformation strategy_id = 2015 ('WASO: Waste reduction') in 0.46 seconds.
+2023-05-29 12:06:45,142 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 0.55 seconds.
+2023-05-29 12:15:33,619 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 1 strategies...
+2023-05-29 12:15:34,092 - INFO - 	Successfully built transformation strategy_id = 2015 ('WASO: Waste reduction') in 0.47 seconds.
+2023-05-29 12:15:34,180 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 0.56 seconds.
+2023-05-29 12:16:35,033 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 1 strategies...
+2023-05-29 12:16:35,858 - INFO - 	Successfully built transformation strategy_id = 2015 ('WASO: Waste reduction') in 0.82 seconds.
+2023-05-29 12:16:35,943 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 0.91 seconds.
+2023-05-29 12:44:15,909 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 7 strategies...
+2023-05-29 12:44:17,830 - INFO - 	Successfully built transformation strategy_id = 4001 ('IP: All IP transformations') in 1.9 seconds.
+2023-05-29 12:44:18,614 - INFO - 	Successfully built transformation strategy_id = 4010 ('IPPU: Reduce use of HFCs') in 0.78 seconds.
+2023-05-29 12:44:19,840 - INFO - 	Successfully built transformation strategy_id = 4011 ('IPPU: Reduce Nitrous Oxide emissions') in 1.22 seconds.
+2023-05-29 12:44:20,216 - INFO - 	Successfully built transformation strategy_id = 4013 ('IPPU: Reduce other fluorinated compounds') in 0.37 seconds.
+2023-05-29 12:44:20,720 - INFO - 	Successfully built transformation strategy_id = 4014 ('IPPU: Reduce use of PFCs') in 0.5 seconds.
+2023-05-29 12:44:22,354 - INFO - 	Successfully built transformation strategy_id = 4015 ('IPPU: Reduce fluorinated gasses bundle') in 1.63 seconds.
+2023-05-29 12:44:22,355 - ERROR - 	Error trying to build transformation strategy_id = 4016: name 'transformation_ippu_reduce_demand' is not defined
+2023-05-29 12:44:22,621 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 6.71 seconds.
+2023-05-29 12:44:50,928 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 7 strategies...
+2023-05-29 12:44:53,009 - INFO - 	Successfully built transformation strategy_id = 4001 ('IP: All IP transformations') in 2.08 seconds.
+2023-05-29 12:44:53,807 - INFO - 	Successfully built transformation strategy_id = 4010 ('IPPU: Reduce use of HFCs') in 0.8 seconds.
+2023-05-29 12:44:54,041 - INFO - 	Successfully built transformation strategy_id = 4011 ('IPPU: Reduce Nitrous Oxide emissions') in 0.23 seconds.
+2023-05-29 12:44:54,400 - INFO - 	Successfully built transformation strategy_id = 4013 ('IPPU: Reduce other fluorinated compounds') in 0.36 seconds.
+2023-05-29 12:44:54,897 - INFO - 	Successfully built transformation strategy_id = 4014 ('IPPU: Reduce use of PFCs') in 0.5 seconds.
+2023-05-29 12:44:56,501 - INFO - 	Successfully built transformation strategy_id = 4015 ('IPPU: Reduce fluorinated gasses bundle') in 1.6 seconds.
+2023-05-29 12:44:56,812 - INFO - 	Successfully built transformation strategy_id = 4016 ('IPPU: Demand management') in 0.31 seconds.
+2023-05-29 12:44:57,111 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 6.18 seconds.

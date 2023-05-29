@@ -382,6 +382,81 @@ def transformation_waso_decrease_municipal_waste(
         dataframe (only added if integer)
     """
 
+    # do some initializtion
+    bounds = (0, 1)
+    model_circecon = (
+        mc.CircularEconomy(model_attributes) 
+        if model_circecon is None
+        else model_circecon
+    )
+    modvar = model_circecon.modvar_waso_waste_per_capita_scalar
+
+    # convert the magnitude to a reduction as per input instructions
+    magnitude = (
+        float(sf.vec_bounds(1 - magnitude, bounds))
+        if sf.isnumber(magnitude)
+        else dict(
+            (k, float(sf.vec_bounds(1 - v, bounds)))
+            for k, v in magnitude.items()
+        )
+    )
+    
+    # call from general
+    df_out = tbg.transformation_general_with_magnitude_differential_by_cat(
+        df_input,
+        magnitude,
+        modvar,
+        vec_ramp,
+        model_attributes,
+        bounds = bounds,
+        categories = categories,
+        magnitude_type = "baseline_scalar",
+        **kwargs
+    )
+
+    return df_out
+
+
+
+def transformation_waso_decrease_municipal_waste_base(
+    df_input: pd.DataFrame,
+    magnitude: Union[Dict[str, float], float],
+    vec_ramp: np.ndarray,
+    model_attributes: ma.ModelAttributes,
+    categories: Union[List[str], None] = None,
+    model_circecon: Union[mc.CircularEconomy, None] = None,
+    **kwargs
+) -> pd.DataFrame:
+    """
+    Implement the "Decrease Municipal Waste" transformations.
+
+    NOTE: THIS IS CURRENTLY INCOMPLETE AND REQUIRES ADDITIONAL INTEGRATION
+        WITH SUPPLY-SIDE IMPACTS OF DECREASED WASTE (LESS CONSUMER CONSUMPTION)
+
+
+    Function Arguments
+    ------------------
+    - df_input: input data frame containing baseline trajectories
+    - magnitude: float specifying decrease as proprtion of final value (e.g.,
+        a 30% reduction is entered as 0.3) OR  dictionary mapping individual 
+        categories to reductions (must be specified for each category)
+        * NOTE: overrides `categories` keyword argument if both are specified
+    - model_attributes: ModelAttributes object used to call strategies/
+        variables
+    - vec_ramp: ramp vec used for implementation
+
+    Keyword Arguments
+    -----------------
+    - categories: optional subset of categories to apply to
+    - field_region: field in df_input that specifies the region
+    - model_circecon: optional CircularEconomy object to pass for variable 
+        access
+    - regions_apply: optional set of regions to use to define strategy. If None,
+        applies to all regions.
+    - strategy_id: optional specification of strategy id to add to output
+        dataframe (only added if integer)
+    """
+
     # get attribute table, CircularEconomy model for variables, and check categories
     attr_waso = model_attributes.get_attribute_table(model_attributes.subsec_name_waso)
     model_circecon = (

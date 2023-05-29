@@ -1,9 +1,8 @@
 from attribute_table import AttributeTable
 import ingestion as ing
 import logging
-import model_afolu as mafl
 import model_attributes as ma
-import model_circular_economy as mc
+import model_ippu as mi
 import numpy as np
 import os, os.path
 import pandas as pd
@@ -12,13 +11,14 @@ from sisepuede_file_structure import *
 import support_classes as sc
 import support_functions as sf
 import time
-import transformations_base_circular_economy as tbc
+import transformations_base_general as tbg
+import transformations_base_ippu as tbi
 from typing import Union
 import warnings
 
 
 
-class TransformationsCircularEconomy:
+class TransformationsIPPU:
     """
     Build energy transformations using general transformations defined in
         auxiliary_definitions_transformations. Wraps more general forms from 
@@ -188,7 +188,7 @@ class TransformationsCircularEconomy:
         error_q = False
         error_q = error_q | (model_attributes is None)
         if error_q:
-            raise RuntimeError(f"Error: invalid specification of model_attributes in transformations_energy")
+            raise RuntimeError(f"Error: invalid specification of model_attributes in TransformationsIPPU")
 
         # get strategy attribute, baseline strategy, and some fields
         attribute_strategy = model_attributes.dict_attributes.get(f"dim_{model_attributes.dim_strategy_id}")
@@ -230,7 +230,7 @@ class TransformationsCircularEconomy:
         """
 
         baseline_inputs = (
-            self.transformation_ce_baseline(df_inputs, strat = self.baseline_strategy) 
+            self.transformation_ip_baseline(df_inputs, strat = self.baseline_strategy) 
             if isinstance(df_inputs, pd.DataFrame) 
             else None
         )
@@ -317,9 +317,9 @@ class TransformationsCircularEconomy:
         Define model objects for use in variable access and base estimates.
         """
 
-        model_circecon = mc.CircularEconomy(self.model_attributes)
+        model_ippu = mi.IPPU(self.model_attributes)
 
-        self.model_circecon = model_circecon
+        self.model_ippu = model_ippu
 
         return None
 
@@ -399,186 +399,83 @@ class TransformationsCircularEconomy:
 
         self.baseline = sc.Transformation(
             "BASE", 
-            self.transformation_ce_baseline, 
+            self.transformation_ip_baseline, 
             attr_strategy
         )
         all_transformations.append(self.baseline)
 
 
 
-        #####################################################
-        #    CircularEconomy SECTOR-WIDE TRANSFORMATIONS    #
-        #####################################################
+        ##############################
+        #    IPPU TRANSFORMATIONS    #
+        ##############################
+
+        self.ip_all = sc.Transformation(
+            "IP:ALL", 
+            [
+                self.transformation_ippu_reduce_hfcs,
+                self.transformation_ippu_reduce_n2o,
+                self.transformation_ippu_reduce_other_fcs,
+                self.transformation_ippu_reduce_pfcs
+            ],
+            attr_strategy
+        )
+        all_transformations.append(self.ip_all)
+
+
+        self.ippu_bundle_reduce_fgas = sc.Transformation(
+            "IPPU:BUNDLE_DEC_FGAS", 
+            [
+                self.transformation_ippu_reduce_hfcs,
+                self.transformation_ippu_reduce_other_fcs,
+                self.transformation_ippu_reduce_pfcs
+            ],
+            attr_strategy
+        )
+        all_transformations.append(self.ippu_bundle_reduce_fgas)
+
+
+        self.ippu_demand_managment = sc.Transformation(
+            "IPPU:DEC_DEMAND", 
+            self.transformation_ippu_reduce_demand,
+            attr_strategy
+        )
+        all_transformations.append(self.ippu_demand_managment)
+
+
+        self.ippu_reduce_hfcs = sc.Transformation(
+            "IPPU:DEC_HFCS", 
+            self.transformation_ippu_reduce_hfcs,
+            attr_strategy
+        )
+        all_transformations.append(self.ippu_reduce_hfcs)
+
+
+        self.ippu_reduce_other_fcs = sc.Transformation(
+            "IPPU:DEC_OTHER_FCS", 
+            self.transformation_ippu_reduce_other_fcs,
+            attr_strategy
+        )
+        all_transformations.append(self.ippu_reduce_other_fcs)
+
+
+        self.ippu_reduce_n2o = sc.Transformation(
+            "IPPU:DEC_N2O", 
+            self.transformation_ippu_reduce_n2o,
+            attr_strategy
+        )
+        all_transformations.append(self.ippu_reduce_n2o)
+
+
+        self.ippu_reduce_pfcs = sc.Transformation(
+            "IPPU:DEC_PFCS", 
+            self.transformation_ippu_reduce_pfcs,
+            attr_strategy
+        )
+        all_transformations.append(self.ippu_reduce_pfcs)
         
-        self.ce_all = sc.Transformation(
-            "CE:ALL", 
-            [
-                self.transformation_trww_increase_biogas_capture,
-                self.transformation_trww_increase_septic_compliance,
-                self.transformation_wali_improve_sanitation_industrial,
-                self.transformation_wali_improve_sanitation_rural,
-                self.transformation_wali_improve_sanitation_urban,
-                self.transformation_waso_decrease_msw,
-                self.transformation_waso_increase_anaerobic_treatment_and_composting,
-                self.transformation_waso_increase_biogas_capture,
-                self.transformation_waso_increase_energy_from_biogas,
-                self.transformation_waso_increase_energy_from_incineration,
-                self.transformation_waso_increase_landfilling,
-                self.transformation_waso_increase_recycling,
-            ],
-            attr_strategy
-        )
-        all_transformations.append(self.ce_all)
-
-
-
-        ##############################
-        #    TRWW TRANSFORMATIONS    #
-        ##############################
-
-        self.trww_all = sc.Transformation(
-            "TRWW:ALL", 
-            [
-                self.transformation_trww_increase_biogas_capture,
-                self.transformation_trww_increase_septic_compliance,
-            ],
-            attr_strategy
-        )
-        all_transformations.append(self.trww_all)
-
-
-        self.trww_increase_biogas_capture = sc.Transformation(
-            "TRWW:INC_CAPTURE_BIOGAS", 
-            self.transformation_trww_increase_biogas_capture,
-            attr_strategy
-        )
-        all_transformations.append(self.trww_increase_biogas_capture)
-
-
-        self.trww_increase_septic_compliance = sc.Transformation(
-            "TRWW:INC_COMPLIANCE_SEPTIC", 
-            self.transformation_trww_increase_septic_compliance,
-            attr_strategy
-        )
-        all_transformations.append(self.trww_increase_septic_compliance)
-
-
-        ##############################
-        #    WALI TRANSFORMATIONS    #
-        ##############################
-
-        self.wali_all = sc.Transformation(
-            "WALI:ALL", 
-            [
-                self.transformation_wali_improve_sanitation_industrial,
-                self.transformation_wali_improve_sanitation_rural,
-                self.transformation_wali_improve_sanitation_urban
-            ],
-            attr_strategy
-        )
-        all_transformations.append(self.wali_all)
-
-
-        self.wali_improve_sanitation_industrial = sc.Transformation(
-            "WALI:INC_TREATMENT_INDUSTRIAL", 
-            self.transformation_wali_improve_sanitation_industrial,
-            attr_strategy
-        )
-        all_transformations.append(self.wali_improve_sanitation_industrial)
-
-
-        self.wali_improve_sanitation_rural = sc.Transformation(
-            "WALI:INC_TREATMENT_RURAL", 
-            self.transformation_wali_improve_sanitation_rural,
-            attr_strategy
-        )
-        all_transformations.append(self.wali_improve_sanitation_rural)
-
-
-        self.wali_improve_sanitation_urban = sc.Transformation(
-            "WALI:INC_TREATMENT_URBAN", 
-            self.transformation_wali_improve_sanitation_urban,
-            attr_strategy
-        )
-        all_transformations.append(self.wali_improve_sanitation_urban)
-
-
-
-        ##############################
-        #    WASO TRANSFORMATIONS    #
-        ##############################
-
-        self.waso_all = sc.Transformation(
-            "WASO:ALL", 
-            [
-                self.transformation_waso_decrease_msw,
-                self.transformation_waso_increase_anaerobic_treatment_and_composting,
-                self.transformation_waso_increase_biogas_capture,
-                self.transformation_waso_increase_energy_from_biogas,
-                self.transformation_waso_increase_energy_from_incineration,
-                self.transformation_waso_increase_landfilling,
-                self.transformation_waso_increase_recycling,
-            ],
-            attr_strategy
-        )
-        all_transformations.append(self.waso_all)
-
-
-        self.waso_descrease_msw = sc.Transformation(
-            "WASO:DEC_MSW_PER_CAPITA", 
-            self.transformation_waso_decrease_msw, 
-            attr_strategy
-        )
-        all_transformations.append(self.waso_descrease_msw)
 
         
-        self.waso_increase_anaerobic_treatment_and_composting = sc.Transformation(
-            "WASO:INC_ANAEROBIC_AND_COMPOST", 
-            self.transformation_waso_increase_anaerobic_treatment_and_composting, 
-            attr_strategy
-        )
-        all_transformations.append(self.waso_increase_anaerobic_treatment_and_composting)
-
-
-        self.waso_increase_biogas_capture = sc.Transformation(
-            "WASO:INC_CAPTURE_BIOGAS", 
-            self.transformation_waso_increase_biogas_capture, 
-            attr_strategy
-        )
-        all_transformations.append(self.waso_increase_biogas_capture)
-
-
-        self.waso_energy_from_biogas = sc.Transformation(
-            "WASO:INC_ENERGY_FROM_BIOGAS", 
-            self.transformation_waso_increase_energy_from_biogas, 
-            attr_strategy
-        )
-        all_transformations.append(self.waso_energy_from_biogas)
-
-
-        self.waso_energy_from_incineration = sc.Transformation(
-            "WASO:INC_ENERGY_FROM_INCINERATION", 
-            self.transformation_waso_increase_energy_from_incineration, 
-            attr_strategy
-        )
-        all_transformations.append(self.waso_energy_from_incineration)
-
-
-        self.waso_increase_landfilling = sc.Transformation(
-            "WASO:INC_LANDFILLING", 
-            self.transformation_waso_increase_landfilling, 
-            attr_strategy
-        )
-        all_transformations.append(self.waso_increase_landfilling)
-
-        
-        self.waso_increase_recycling = sc.Transformation(
-            "WASO:INC_RECYCLING", 
-            self.transformation_waso_increase_recycling, 
-            attr_strategy
-        )
-        all_transformations.append(self.waso_increase_recycling)
-
 
         ## specify dictionary of transformations and get all transformations + baseline/non-baseline
 
@@ -692,7 +589,7 @@ class TransformationsCircularEconomy:
         
         # initialize baseline
         df_out = (
-            self.transformation_ce_baseline(df_input)
+            self.transformation_ip_baseline(df_input)
             if df_input is not None
             else (
                 self.baseline_inputs
@@ -720,7 +617,6 @@ class TransformationsCircularEconomy:
                         f"\tSuccessfully built transformation {self.key_strategy} = {transformation.id} ('{transformation.name}') in {t_elapse} seconds.",
                         type_log = "info"
                     )
-                    print(f"YEAH - {df_out[i + iter_shift].size}")
 
                 except Exception as e: 
                     df_out[i + 1] = None
@@ -833,10 +729,10 @@ class TransformationsCircularEconomy:
         from being built. The baseline can be preserved as the input DataFrame 
         by the Transformation as a passthrough (e.g., return input DataFrame) 
 
-    NOTE: modifications to input variables should ONLY affect Energy variables
+    NOTE: modifications to input variables should ONLY affect IPPU variables
     """
 
-    def transformation_ce_baseline(self,
+    def transformation_ip_baseline(self,
         df_input: pd.DataFrame,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
@@ -844,16 +740,24 @@ class TransformationsCircularEconomy:
         Implement the "Baseline" from which other transformations deviate 
             (pass through)
         """
+
+        # clean production scalar so that they are always 1 in the first time period
+        #df_out = tbg.prepare_demand_scalars(
+        #    df_input,
+        #    self.model_ippu.modvar_ippu_scalar_production,
+        #    self.model_attributes,
+        #    key_region = self.key_region,
+        #)
         df_out = df_input.copy()
 
-        if isinstance(strat, int):
+        if sf.isnumber(strat, integer = True):
             df_out = sf.add_data_frame_fields_from_dict(
                 df_out,
                 {
-                   self.model_attributes.dim_strategy_id: strat
+                   self.model_attributes.dim_strategy_id: int(strat)
                 },
+                overwrite_fields = True,
                 prepend_q = True,
-                overwrite_fields = True
             )
 
         return df_out
@@ -861,17 +765,16 @@ class TransformationsCircularEconomy:
 
 
     ##############################
-    #    TRWW TRANSFORMATIONS    #
+    #    IPPU TRANSFORMATIONS    #
     ##############################
 
-    
-    def transformation_trww_increase_biogas_capture(self,
+    def transformation_ippu_reduce_demand(self,
         df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
-        Implement the "Increase Biogas Capture at Wastewater Treatment Plants" 
-            TRWW transformation on input DataFrame df_input
+        Implement the "Demand Management" IPPU transformation on input DataFrame 
+            df_input. Reduces industrial production.
         """
         # check input dataframe
         df_input = (
@@ -880,15 +783,13 @@ class TransformationsCircularEconomy:
             else df_input
         )
 
-        df_out = tbc.transformation_trww_increase_gas_capture(
+        df_out = tbi.transformation_ippu_reduce_demand(
             df_input,
-            # as float, applies to both landfill and biogas; specify as dict to break out; 
-            # e.g., {"treated_advanced_anaerobic": 0.85, "treated_secondary_anaerobic": 0.5}
-            0.85, 
+            0.3,
             self.vec_implementation_ramp,
             self.model_attributes,
             field_region = self.key_region,
-            model_circecon = self.model_circecon,
+            model_ippu = self.model_ippu,
             strategy_id = strat
         )
 
@@ -896,13 +797,13 @@ class TransformationsCircularEconomy:
 
 
     
-    def transformation_trww_increase_septic_compliance(self,
+    def transformation_ippu_reduce_hfcs(self,
         df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
-        Implement the "Increase Compliance" TRWW transformation on input 
-            DataFrame df_input
+        Implement the "Reduces HFCs" IPPU transformation on input DataFrame 
+            df_input
         """
         # check input dataframe
         df_input = (
@@ -911,31 +812,27 @@ class TransformationsCircularEconomy:
             else df_input
         )
 
-        df_out = tbc.transformation_trww_increase_septic_compliance(
+        df_out = tbi.transformation_ippu_scale_emission_factor(
             df_input,
-            0.9, 
+            {"hfc": 0.1}, # applies to all HFC emission factors
             self.vec_implementation_ramp,
             self.model_attributes,
             field_region = self.key_region,
-            model_circecon = self.model_circecon,
-            strategy_id = strat
-        )
+            model_ippu = self.model_ippu,
+            strategy_id = strat,
+        )        
 
         return df_out
+    
 
 
-
-    ##############################
-    #    WALI TRANSFORMATIONS    #
-    ##############################
-
-    def transformation_wali_improve_sanitation_industrial(self,
+    def transformation_ippu_reduce_n2o(self,
         df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
-        Implement the "Improve Industrial Sanitation" WALI transformation on 
-            input DataFrame df_input
+        Implement the "Reduces N2O" IPPU transformation on input DataFrame 
+            df_input
         """
         # check input dataframe
         df_input = (
@@ -944,34 +841,30 @@ class TransformationsCircularEconomy:
             else df_input
         )
 
-        # get categories and dictionary to specify parameters (move to config eventually)
-        df_out = tbc.transformation_wali_improve_sanitation(
+        df_out = tbi.transformation_ippu_scale_emission_factor(
             df_input,
-            "ww_industrial",
             {
-                "treated_advanced_anaerobic": 0.8,
-                "treated_secondary_aerobic": 0.1,
-                "treated_secondary_anaerobic": 0.1,
+                self.model_ippu.modvar_ippu_ef_n2o_per_gdp_process : 0.1,
+                self.model_ippu.modvar_ippu_ef_n2o_per_prod_process : 0.1,
             },
             self.vec_implementation_ramp,
             self.model_attributes,
             field_region = self.key_region,
-            model_circecon = self.model_circecon,
+            model_ippu = self.model_ippu,
             strategy_id = strat,
-        )
-
+        )        
 
         return df_out
 
 
-
-    def transformation_wali_improve_sanitation_rural(self,
+    
+    def transformation_ippu_reduce_other_fcs(self,
         df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
-        Implement the "Improve Rural Sanitation" WALI transformation on 
-            input DataFrame df_input
+        Implement the "Reduces Other FCs" IPPU transformation on input DataFrame 
+            df_input
         """
         # check input dataframe
         df_input = (
@@ -980,32 +873,27 @@ class TransformationsCircularEconomy:
             else df_input
         )
 
-        # get categories and dictionary to specify parameters (move to config eventually)
-        df_out = tbc.transformation_wali_improve_sanitation(
+        df_out = tbi.transformation_ippu_scale_emission_factor(
             df_input,
-            "ww_domestic_rural",
-            {
-                "treated_septic": 1.0,
-            },
+            {"other_fc": 0.1}, # applies to all Other Fluorinated Compound emission factors
             self.vec_implementation_ramp,
             self.model_attributes,
             field_region = self.key_region,
-            model_circecon = self.model_circecon,
+            model_ippu = self.model_ippu,
             strategy_id = strat,
-        )
-
+        )        
 
         return df_out
 
 
 
-    def transformation_wali_improve_sanitation_urban(self,
+    def transformation_ippu_reduce_pfcs(self,
         df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
-        Implement the "Improve Urban Sanitation" WALI transformation on 
-            input DataFrame df_input
+        Implement the "Reduces Other FCs" IPPU transformation on input DataFrame 
+            df_input
         """
         # check input dataframe
         df_input = (
@@ -1014,235 +902,18 @@ class TransformationsCircularEconomy:
             else df_input
         )
 
-        # get categories and dictionary to specify parameters (move to config eventually)
-        df_out = tbc.transformation_wali_improve_sanitation(
+        df_out = tbi.transformation_ippu_scale_emission_factor(
             df_input,
-            "ww_domestic_rural",
-            {
-                "treated_advanced_aerobic": 0.3,
-                "treated_advanced_anaerobic": 0.3,
-                "treated_secondary_aerobic": 0.2,
-                "treated_secondary_anaerobic": 0.2,
-            },
+            {"pfc": 0.1}, # applies to all PFC emission factors
             self.vec_implementation_ramp,
             self.model_attributes,
             field_region = self.key_region,
-            model_circecon = self.model_circecon,
+            model_ippu = self.model_ippu,
             strategy_id = strat,
-        )
-
-        return df_out
-
-
-
-    ##############################
-    #    WASO TRANSFORMATIONS    #
-    ##############################
-
-    def transformation_waso_decrease_msw(self,
-        df_input: Union[pd.DataFrame, None] = None,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Decrease Municipal Solid Waste" WASO transformation on 
-            input DataFrame df_input
-        """
-        # check input dataframe
-        df_input = (
-            self.baseline_inputs
-            if not isinstance(df_input, pd.DataFrame) 
-            else df_input
-        )
-
-        # get categories and dictionary to specify parameters (move to config eventually)
-        categories = self.model_attributes.get_attribute_table(self.model_attributes.subsec_name_waso).key_values
-        dict_specify = dict((x, 0.25) for x in categories)
-        dict_specify.update({"food": 0.75})
-
-        df_out = tbc.transformation_waso_decrease_municipal_waste(
-            df_input,
-            dict_specify,
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            field_region = self.key_region,
-            model_circecon = self.model_circecon,
-            strategy_id = strat
-        )
-
-        return df_out
-
-
-
-    def transformation_waso_increase_anaerobic_treatment_and_composting(self,
-        df_input: Union[pd.DataFrame, None] = None,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Increase Anaerobic Treatment and Composting" WASO 
-            transformation on input DataFrame df_input
-        """
-        # check input dataframe
-        df_input = (
-            self.baseline_inputs
-            if not isinstance(df_input, pd.DataFrame) 
-            else df_input
-        )
-
-        df_out = tbc.transformation_waso_increase_anaerobic_treatment_and_composting(
-            df_input,
-            0.475,
-            0.475,
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            field_region = self.key_region,
-            model_circecon = self.model_circecon,
-            strategy_id = strat
-        )
-
-        return df_out
-
-
-    
-    def transformation_waso_increase_biogas_capture(self,
-        df_input: Union[pd.DataFrame, None] = None,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Increase Biogas Capture at Anaerobic Treatment Facilities
-            and Landfills" WASO transformation on input DataFrame df_input
-        """
-        # check input dataframe
-        df_input = (
-            self.baseline_inputs
-            if not isinstance(df_input, pd.DataFrame) 
-            else df_input
-        )
-
-        df_out = tbc.transformation_waso_increase_gas_capture(
-            df_input,
-            0.85, # as float, applies to both landfill and biogas; specify as dict to break out
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            field_region = self.key_region,
-            model_circecon = self.model_circecon,
-            strategy_id = strat
-        )
-
-        return df_out
-
-
-    
-    def transformation_waso_increase_energy_from_biogas(self,
-        df_input: Union[pd.DataFrame, None] = None,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Energy from Captured Biogas" WASO transformation on input 
-            DataFrame df_input
-        """
-        # check input dataframe
-        df_input = (
-            self.baseline_inputs
-            if not isinstance(df_input, pd.DataFrame) 
-            else df_input
-        )
-
-        df_out = tbc.transformation_waso_increase_energy_from_biogas(
-            df_input,
-            0.85,
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            field_region = self.key_region,
-            model_circecon = self.model_circecon,
-            strategy_id = strat
-        )
+        )        
 
         return df_out
     
 
 
-    def transformation_waso_increase_energy_from_incineration(self,
-        df_input: Union[pd.DataFrame, None] = None,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Energy from Solid Waste Incineration" WASO transformation 
-            on input DataFrame df_input
-        """
-        # check input dataframe
-        df_input = (
-            self.baseline_inputs
-            if not isinstance(df_input, pd.DataFrame) 
-            else df_input
-        )
-
-        df_out = tbc.transformation_waso_increase_energy_from_incineration(
-            df_input,
-            0.85,
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            field_region = self.key_region,
-            model_circecon = self.model_circecon,
-            strategy_id = strat
-        )
-
-        return df_out
-
-
-    
-    def transformation_waso_increase_landfilling(self,
-        df_input: Union[pd.DataFrame, None] = None,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Increase Landfilling" WASO transformation on input 
-            DataFrame df_input
-        """
-        # check input dataframe
-        df_input = (
-            self.baseline_inputs
-            if not isinstance(df_input, pd.DataFrame) 
-            else df_input
-        )
-
-        df_out = tbc.transformation_waso_increase_landfilling(
-            df_input,
-            1.0,
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            field_region = self.key_region,
-            model_circecon = self.model_circecon,
-            strategy_id = strat
-        )
-
-        return df_out
-
-
-
-    def transformation_waso_increase_recycling(self,
-        df_input: Union[pd.DataFrame, None] = None,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Increase Recycling" WASO transformation on input 
-            DataFrame df_input
-        """
-        # check input dataframe
-        df_input = (
-            self.baseline_inputs
-            if not isinstance(df_input, pd.DataFrame) 
-            else df_input
-        )
-
-        df_out = tbc.transformation_waso_increase_recycling(
-            df_input,
-            0.95,
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            field_region = self.key_region,
-            model_circecon = self.model_circecon,
-            strategy_id = strat
-        )
-
-        return df_out
 
