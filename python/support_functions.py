@@ -2038,10 +2038,10 @@ def tryparse_str_to_num(
 
 
 def vec_bounds(
-    vec,
-    bounds: tuple,
-    cycle_vector_bounds_q: bool = False
-):
+    vec: Union[list, np.ndarray],
+    bounds: Union[Tuple[float, float], None],
+    cycle_vector_bounds_q: bool = False,
+) -> Union[list, np.ndarray]:
     """
     Bound a vector vec within a range set within 'bounds'.
 
@@ -2058,12 +2058,17 @@ def vec_bounds(
     - cycle_vector_bounds_q: cycle bounds if there is a mismatch and the bounds 
         are entered as a vector
     """
+    # check bounds
+    if (bounds is None) or (vec is None):
+        return vec
+
     # initialize bools -- using paried vector + is there a vector of bounds?
     paired_vector_check = False # later depends on use_bounding_vec
     use_bounding_vec = False
 
     # check if specification is a list of tuples
     if len(np.array(bounds).shape) > 1:
+
         # initialize error check
         if isinstance(bounds[0], np.ndarray) and isinstance(bounds[1], np.ndarray) and isinstance(vec, np.ndarray):
             paired_vector_check = (bounds[0].shape == bounds[1].shape) and (bounds[0].shape == vec.shape)
@@ -2109,14 +2114,14 @@ def vec_bounds(
 
 
 
-# use the concept of a limiter and 
 def vector_limiter(
     vecs:list, 
     var_bounds: tuple
 ) -> list:
     """
     Bound a collection vectors by sum. Must specify at least a lower bound. 
-        Renormalizes vector components that exceed a threshold.
+        Renormalizes vector components that exceed a threshold. Reflects the
+        concept of a limiter.
 
     Function Arguments
     ------------------

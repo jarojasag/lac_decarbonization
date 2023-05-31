@@ -176,3 +176,54 @@
 2023-05-30 18:40:11,804 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.21 seconds.
 2023-05-30 18:40:12,025 - INFO - 	Successfully built transformation strategy_id = 1003 ('AF: All AFOLU transformations') in 0.22 seconds.
 2023-05-30 18:40:12,218 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 0.85 seconds.
+2023-05-31 00:44:07,340 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 4 strategies...
+2023-05-31 00:44:07,795 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 0.44 seconds.
+2023-05-31 00:44:08,016 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.22 seconds.
+2023-05-31 00:44:08,487 - INFO - 	Successfully built transformation strategy_id = 1003 ('AF: All AFOLU transformations') in 0.47 seconds.
+2023-05-31 00:44:10,006 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 1.52 seconds.
+2023-05-31 00:44:10,269 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 2.93 seconds.
+2023-05-31 00:45:30,229 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 4 strategies...
+2023-05-31 00:45:30,873 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 0.64 seconds.
+2023-05-31 00:45:31,179 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.3 seconds.
+2023-05-31 00:45:31,802 - INFO - 	Successfully built transformation strategy_id = 1003 ('AF: All AFOLU transformations') in 0.62 seconds.
+2023-05-31 00:45:32,100 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.3 seconds.
+2023-05-31 00:45:32,432 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 2.2 seconds.
+2023-05-31 00:46:12,087 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 4 strategies...
+2023-05-31 00:46:12,748 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 0.66 seconds.
+2023-05-31 00:46:13,048 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.3 seconds.
+2023-05-31 00:46:13,676 - INFO - 	Successfully built transformation strategy_id = 1003 ('AF: All AFOLU transformations') in 0.63 seconds.
+2023-05-31 00:46:13,984 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.31 seconds.
+2023-05-31 00:46:14,336 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 2.25 seconds.
+2023-05-31 00:58:19,906 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 5 strategies...
+2023-05-31 00:58:20,546 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 0.64 seconds.
+2023-05-31 00:58:20,882 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.33 seconds.
+2023-05-31 00:58:21,543 - INFO - 	Successfully built transformation strategy_id = 1003 ('AF: All AFOLU transformations') in 0.66 seconds.
+2023-05-31 00:58:21,843 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.3 seconds.
+2023-05-31 00:58:21,857 - ERROR - 	Error trying to build transformation strategy_id = 1020: iteration over a 0-d array
+2023-05-31 00:58:22,155 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 2.25 seconds.
+2023-05-31 01:01:30,169 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 6 strategies...
+2023-05-31 01:01:31,160 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 0.99 seconds.
+2023-05-31 01:01:31,466 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.3 seconds.
+2023-05-31 01:01:32,086 - ERROR - 	Error trying to build transformation strategy_id = 1003: iteration over a 0-d array
+2023-05-31 01:01:32,418 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.33 seconds.
+2023-05-31 01:01:32,433 - ERROR - 	Error trying to build transformation strategy_id = 1020: iteration over a 0-d array
+2023-05-31 01:01:32,441 - ERROR - 	Error trying to build transformation strategy_id = 1021: iteration over a 0-d array
+2023-05-31 01:01:32,688 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 2.52 seconds.
+2023-05-31 01:02:46,168 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 1 strategies...
+2023-05-31 01:02:46,182 - ERROR - 	Error trying to build transformation strategy_id = 1021: iteration over a 0-d array
+2023-05-31 01:02:46,240 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 0.07 seconds.
+2023-05-31 01:03:09,147 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 1 strategies...
+2023-05-31 01:03:09,160 - ERROR - 	Error trying to build transformation strategy_id = 1021: iteration over a 0-d array
+2023-05-31 01:03:09,216 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 0.07 seconds.
+2023-05-31 01:03:48,066 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 1 strategies...
+2023-05-31 01:03:48,083 - ERROR - 	Error trying to build transformation strategy_id = 1021: iteration over a 0-d array
+2023-05-31 01:03:48,155 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 0.09 seconds.
+2023-05-31 01:10:01,915 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 1 strategies...
+2023-05-31 01:10:02,645 - INFO - 	Successfully built transformation strategy_id = 1021 ('LVST: Reduce enteric fermentation') in 0.73 seconds.
+2023-05-31 01:10:02,797 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 0.88 seconds.
+2023-05-31 01:12:42,843 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 1 strategies...
+2023-05-31 01:12:43,593 - INFO - 	Successfully built transformation strategy_id = 1021 ('LVST: Reduce enteric fermentation') in 0.75 seconds.
+2023-05-31 01:12:43,737 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 0.89 seconds.
+2023-05-31 01:13:53,806 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 1 strategies...
+2023-05-31 01:13:54,900 - INFO - 	Successfully built transformation strategy_id = 1021 ('LVST: Reduce enteric fermentation') in 1.09 seconds.
+2023-05-31 01:13:55,028 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 1.22 seconds.

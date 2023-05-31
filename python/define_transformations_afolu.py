@@ -432,7 +432,9 @@ class TransformationsAFOLU:
         self.af_all = sc.Transformation(
             "AF:ALL", 
             [
-                self.transformation_agrc_reduce_supply_chain_losses
+                self.transformation_agrc_improve_rice_management,
+                self.transformation_agrc_reduce_supply_chain_losses,
+                self.transformation_lvst_reduce_enteric_fermentation
             ],
             attr_strategy
         )
@@ -447,12 +449,21 @@ class TransformationsAFOLU:
         self.agrc_all = sc.Transformation(
             "AGRC:ALL", 
             [
-                self.transformation_agrc_reduce_supply_chain_losses
+                self.transformation_agrc_improve_rice_management,
+                self.transformation_agrc_reduce_supply_chain_losses,
             ],
             attr_strategy
         )
         all_transformations.append(self.agrc_all)
         
+
+        self.agrc_improve_rice_management = sc.Transformation(
+            "AGRC:DEC_CH4_RICE", 
+            self.transformation_agrc_improve_rice_management,
+            attr_strategy
+        )
+        all_transformations.append(self.agrc_improve_rice_management)
+
 
         self.agrc_reduce_supply_chain_losses = sc.Transformation(
             "AGRC:DEC_LOSSES_SUPPLY_CHAIN", 
@@ -462,6 +473,55 @@ class TransformationsAFOLU:
             attr_strategy
         )
         all_transformations.append(self.agrc_reduce_supply_chain_losses)
+        
+
+
+        ##############################
+        #    FRST TRANSFORMATIONS    #
+        ##############################
+
+
+
+        ##############################
+        #    LNDU TRANSFORMATIONS    #
+        ##############################
+
+
+
+        ##############################
+        #    LSMM TRANSFORMATIONS    #
+        ##############################
+
+
+
+        ##############################
+        #    LVST TRANSFORMATIONS    #
+        ##############################
+        
+        self.lvst_all = sc.Transformation(
+            "LVST:ALL", 
+            [
+                self.transformation_lvst_reduce_enteric_fermentation,
+            ],
+            attr_strategy
+        )
+        all_transformations.append(self.lvst_all)
+
+
+        self.lvst_reduce_enteric_fermentation = sc.Transformation(
+            "LVST:DEC_ENTERIC_FERMENTATION", 
+            self.transformation_lvst_reduce_enteric_fermentation,
+            attr_strategy
+        )
+        all_transformations.append(self.lvst_reduce_enteric_fermentation)
+        
+
+
+        ##############################
+        #    SOIL TRANSFORMATIONS    #
+        ##############################
+
+
         
 
         ## specify dictionary of transformations and get all transformations + baseline/non-baseline
@@ -748,6 +808,35 @@ class TransformationsAFOLU:
     #    AGRC TRANSFORMATIONS    #
     ##############################
 
+    def transformation_agrc_improve_rice_management(self,
+        df_input: Union[pd.DataFrame, None] = None,
+        strat: Union[int, None] = None,
+    ) -> pd.DataFrame:
+        """
+        Implement the "Improve Rice Management" AGRC transformation on input 
+            DataFrame df_input. 
+        """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
+        df_out = tba.transformation_agrc_improve_rice_management(
+            df_input,
+            0.45,
+            self.vec_implementation_ramp,
+            self.model_attributes,
+            model_afolu = self.model_afolu,
+            field_region = self.key_region,
+            strategy_id = strat,
+        )
+
+        return df_out
+
+
+
     def transformation_agrc_reduce_supply_chain_losses(self,
         df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
@@ -776,5 +865,66 @@ class TransformationsAFOLU:
         return df_out
 
 
+    
+    ##############################
+    #    FRST TRANSFORMATIONS    #
+    ##############################
 
 
+
+    ##############################
+    #    LNDU TRANSFORMATIONS    #
+    ##############################
+
+
+
+    ##############################
+    #    LSMM TRANSFORMATIONS    #
+    ##############################
+
+
+
+    ##############################
+    #    LVST TRANSFORMATIONS    #
+    ##############################
+
+    def transformation_lvst_reduce_enteric_fermentation(self,
+        df_input: Union[pd.DataFrame, None] = None,
+        strat: Union[int, None] = None,
+    ) -> pd.DataFrame:
+        """
+        Implement the "Reduce Entereif Fermentation" LVST transformation on input 
+            DataFrame df_input. 
+        """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
+        df_out = tba.transformation_lvst_reduce_enteric_fermentation(
+            df_input,
+            {
+                "buffalo": 0.2,
+                "cattle_dairy": 0.2,
+                "cattle_nondairy": 0.2,
+                "goats": 0.28,
+                "sheep": 0.28
+            },
+            self.vec_implementation_ramp,
+            self.model_attributes,
+            model_afolu = self.model_afolu,
+            field_region = self.key_region,
+            strategy_id = strat,
+        )
+        
+        return df_out
+
+
+    ##############################
+    #    SOIL TRANSFORMATIONS    #
+    ##############################
+
+
+    

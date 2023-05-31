@@ -20,6 +20,72 @@ from typing import *
 #    AGRC    #
 ##############
 
+def transformation_agrc_improve_rice_management(
+    df_input: pd.DataFrame,
+    magnitude: Union[Dict[str, float], float],
+    vec_ramp: np.ndarray,
+    model_attributes: ma.ModelAttributes,
+    model_afolu: Union[mafl.AFOLU, None] = None,
+    **kwargs
+) -> pd.DataFrame:
+    """
+    Implement the "Improve Rice Management" transformation.
+
+    Function Arguments
+    ------------------
+    - df_input: input data frame containing baseline trajectories
+    - magnitude: proportional reduction, by final time period, in methane 
+        emitted from rice production--e.g., to reduce methane from rice by 
+        30%, enter 0.3
+    - model_attributes: ModelAttributes object used to call strategies/
+        variables
+    - vec_ramp: ramp vec used for implementation
+
+    Keyword Arguments
+    -----------------
+    - field_region: field in df_input that specifies the region
+    - model_afolu: optional AFOLU object to pass for property and method access 
+    - regions_apply: optional set of regions to use to define strategy. If None,
+        applies to all regions.
+    - strategy_id: optional specification of strategy id to add to output
+        dataframe (only added if integer)
+    """
+    
+    model_afolu = (
+        mafl.AFOLU(model_attributes) 
+        if model_afolu is None
+        else model_afolu
+    )
+    
+    magnitude = (
+        float(sf.vec_bounds(1 - magnitude, (0.0, 1.0)))
+        if sf.isnumber(magnitude)
+        else None
+    )
+
+    if magnitude is None:
+        # LOGGING
+        return df_input
+    
+    # call general transformation
+    df_out = tbg.transformation_general(
+        df_input,
+        model_attributes,
+        {
+            model_afolu.modvar_agrc_ef_ch4: {
+                "bounds": (0, np.inf),
+                "categories": ["rice"],
+                "magnitude": magnitude,
+                "magnitude_type": "baseline_scalar",
+                "vec_ramp": vec_ramp
+            }
+        },
+        **kwargs
+    )
+    return df_out
+
+
+
 def transformation_agrc_reduce_supply_chain_losses(
     df_input: pd.DataFrame,
     magnitude: Union[Dict[str, float], float],
@@ -34,8 +100,9 @@ def transformation_agrc_reduce_supply_chain_losses(
     Function Arguments
     ------------------
     - df_input: input data frame containing baseline trajectories
-    - magnitude: minimum reduction, from final time period, in supply chain 
-        losses--e.g., to reduce supply chain losses by 30%, enter 0.3
+    - magnitude: proportional minimum reduction, from final time period, in 
+        supply chain losses--e.g., to reduce supply chain losses by 30%, enter 
+        0.3
     - model_attributes: ModelAttributes object used to call strategies/
         variables
     - vec_ramp: ramp vec used for implementation
@@ -81,75 +148,6 @@ def transformation_agrc_reduce_supply_chain_losses(
         **kwargs
     )
     return df_out
-
-
-
-
-def transformation_agrc_reduce_supply_chain_losses2(
-    df_input: pd.DataFrame,
-    magnitude: Union[Dict[str, float], float],
-    vec_ramp: np.ndarray,
-    model_attributes: ma.ModelAttributes,
-    categories: Union[List[str], None] = None,
-    model_afolu: Union[mafl.AFOLU, None] = None,
-    **kwargs
-) -> pd.DataFrame:
-    """
-    Implement the "Reduce Supply Chain Losses" transformation.
-
-
-    Function Arguments
-    ------------------
-    - df_input: input data frame containing baseline trajectories
-    - magnitude: float specifying decrease as proprtion of final value (e.g.,
-        a 30% reduction is entered as 0.3) OR  dictionary mapping individual 
-        categories to reductions (must be specified for each category)
-        * NOTE: overrides `categories` keyword argument if both are specified
-    - model_attributes: ModelAttributes object used to call strategies/
-        variables
-    - vec_ramp: ramp vec used for implementation
-
-    Keyword Arguments
-    -----------------
-    - categories: optional subset of categories to apply to
-    - field_region: field in df_input that specifies the region
-    - model_circecon: optional IPPU object to pass for variable access
-    - regions_apply: optional set of regions to use to define strategy. If None,
-        applies to all regions.
-    - strategy_id: optional specification of strategy id to add to output
-        dataframe (only added if integer)
-    """
-
-    # get attribute table, CircularEconomy model for variables, and check categories
-    attr_ippu = model_attributes.get_attribute_table(model_attributes.subsec_name_ippu)
-    bounds = (0, 1)
-    modvar = "tmp"
-
-    # convert the magnitude to a reduction as per input instructions
-    magnitude = (
-        float(sf.vec_bounds(1 - magnitude, bounds))
-        if sf.isnumber(magnitude)
-        else dict(
-            (k, float(sf.vec_bounds(1 - v, bounds)))
-            for k, v in magnitude.items()
-        )
-    )
-    
-    # call from general
-    df_out = tbg.transformation_general_with_magnitude_differential_by_cat(
-        df_input,
-        magnitude,
-        modvar,
-        vec_ramp,
-        model_attributes,
-        bounds = bounds,
-        categories = categories,
-        magnitude_type = "baseline_scalar",
-        **kwargs
-    )
-
-    return df_out
-
 
 
 
@@ -242,4 +240,74 @@ def transformation_waso_increase_recycling(
 #    LVST    #
 ##############
 
+def transformation_lvst_reduce_enteric_fermentation(
+    df_input: pd.DataFrame,
+    magnitude: Union[Dict[str, float], float],
+    vec_ramp: np.ndarray,
+    model_attributes: ma.ModelAttributes,
+    categories: Union[List[str], None] = None,
+    model_afolu: Union[mafl.AFOLU, None] = None,
+    **kwargs
+) -> pd.DataFrame:
+    """
+    Implement the "Reduce Enteric Fermentation" transformation.
 
+
+    Function Arguments
+    ------------------
+    - df_input: input data frame containing baseline trajectories
+    - magnitude: float specifying decrease as proprtion of final value (e.g.,
+        a 30% reduction is entered as 0.3) OR  dictionary mapping individual 
+        categories to reductions (must be specified for each category)
+        * NOTE: overrides `categories` keyword argument if both are specified
+    - model_attributes: ModelAttributes object used to call strategies/
+        variables
+    - vec_ramp: ramp vec used for implementation
+
+    Keyword Arguments
+    -----------------
+    - categories: optional subset of categories to apply to
+    - field_region: field in df_input that specifies the region
+    - model_afolu: optional AFOLU object to pass for variable access
+    - regions_apply: optional set of regions to use to define strategy. If None,
+        applies to all regions.
+    - strategy_id: optional specification of strategy id to add to output
+        dataframe (only added if integer)
+    """
+
+    # get attribute table, CircularEconomy model for variables, and check categories
+    modvar = model_afolu.modvar_lvst_ef_ch4_ef
+    bounds = (0, 1)
+
+    # convert the magnitude to a reduction as per input instructions
+    magnitude = (
+        float(sf.vec_bounds(1 - magnitude, bounds))
+        if sf.isnumber(magnitude)
+        else dict(
+            (k, float(sf.vec_bounds(1 - v, bounds)))
+            for k, v in magnitude.items()
+        )
+    )
+
+    # check category specification
+    categories = model_attributes.get_valid_categories(
+        categories,
+        model_attributes.subsec_name_lvst
+    )
+    if categories is None:
+        # LOGGING
+        return df_input
+
+    # call from general
+    df_out = tbg.transformation_general_with_magnitude_differential_by_cat(
+        df_input,
+        magnitude,
+        modvar,
+        vec_ramp,
+        model_attributes,
+        categories = categories,
+        magnitude_type = "baseline_scalar",
+        **kwargs
+    )
+
+    return df_out

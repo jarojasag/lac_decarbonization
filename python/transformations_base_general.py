@@ -872,7 +872,7 @@ def transformation_general_with_magnitude_differential_by_cat(
                 model_attributes,
                 {
                     modvar: {
-                        "bounds": (0, 1),
+                        "bounds": bounds,
                         "categories": cats,
                         "magnitude": mag,
                         "magnitude_type": magnitude_type,
