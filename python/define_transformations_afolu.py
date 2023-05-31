@@ -1,8 +1,8 @@
 from attribute_table import AttributeTable
 import ingestion as ing
 import logging
+import model_afolu as mafl
 import model_attributes as ma
-import model_ippu as mi
 import numpy as np
 import os, os.path
 import pandas as pd
@@ -11,14 +11,14 @@ from sisepuede_file_structure import *
 import support_classes as sc
 import support_functions as sf
 import time
+import transformations_base_afolu as tba
 import transformations_base_general as tbg
-import transformations_base_ippu as tbi
 from typing import Union
 import warnings
 
 
 
-class TransformationsIPPU:
+class TransformationsAFOLU:
     """
     Build energy transformations using general transformations defined in
         auxiliary_definitions_transformations. Wraps more general forms from 
@@ -81,9 +81,10 @@ class TransformationsIPPU:
 		used in Julia NemoMod Electricity model
         * If None, defaults to a temporary path sql database
     - logger: optional logger object
-    - model_ippu: optional IPPU object to pass for property and method access.
+    - model_afolu: optional AFOLU object to pass for property and method 
+        access
         * NOTE: if passing, ensure that the ModelAttributes objects used to 
-            instantiate the model + what is passed to the model_attributes
+            instantiate the model + what is passed to the model_attributes 
             argument are the same.
     """
     
@@ -93,14 +94,14 @@ class TransformationsIPPU:
         field_region: Union[str, None] = None,
         df_input: Union[pd.DataFrame, None] = None,
 		logger: Union[logging.Logger, None] = None,
-        model_ippu: Union[mi.IPPU, None] = None,
+        model_afolu: Union[mafl.AFOLU, None] = None,
     ):
 
         self.logger = logger
 
         self._initialize_attributes(field_region, model_attributes)
         self._initialize_config(dict_config = dict_config)
-        self._initialize_models(model_ippu = model_ippu)
+        self._initialize_models(model_afolu = model_afolu)
         self._initialize_parameters(dict_config = dict_config)
         self._initialize_ramp()
         self._initialize_baseline_inputs(df_input)
@@ -235,7 +236,7 @@ class TransformationsIPPU:
         """
 
         baseline_inputs = (
-            self.transformation_ip_baseline(df_inputs, strat = self.baseline_strategy) 
+            self.transformation_af_baseline(df_inputs, strat = self.baseline_strategy) 
             if isinstance(df_inputs, pd.DataFrame) 
             else None
         )
@@ -317,24 +318,27 @@ class TransformationsIPPU:
 
 
     def _initialize_models(self,
-        model_ippu: Union[mi.IPPU, None] = None,
+        model_afolu: Union[mafl.AFOLU, None] = None,
     ) -> None:
         """
         Define model objects for use in variable access and base estimates.
 
         Keyword Arguments
         -----------------
-        - model_ippu: optional IPPU object to pass for property and method 
+        - model_afolu: optional AFOLU object to pass for property and method 
             access
+            * NOTE: if passing, ensure that the ModelAttributes objects used to 
+                instantiate the model + what is passed to the model_attributes 
+                argument are the same.
         """
 
-        model_ippu = (
-            mi.IPPU(self.model_attributes)
-            if model_ippu is None
-            else model_ippu
+        model_afolu = (
+            mafl.AFOLU(self.model_attributes)
+            if model_afolu is None
+            else model_afolu
         )
 
-        self.model_ippu = model_ippu
+        self.model_afolu = model_afolu
 
         return None
 
@@ -414,92 +418,50 @@ class TransformationsIPPU:
 
         self.baseline = sc.Transformation(
             "BASE", 
-            self.transformation_ip_baseline, 
+            self.transformation_af_baseline, 
             attr_strategy
         )
         all_transformations.append(self.baseline)
 
 
+        
+        ######################################
+        #    AFOLU TRANSFORMATION BUNDLES    #
+        ######################################
 
-        ##############################
-        #    IPPU TRANSFORMATIONS    #
-        ##############################
-
-        self.ip_all = sc.Transformation(
-            "IP:ALL", 
+        self.af_all = sc.Transformation(
+            "AF:ALL", 
             [
-                self.transformation_ippu_reduce_cement_clinker,
-                self.transformation_ippu_reduce_demand,
-                self.transformation_ippu_reduce_hfcs,
-                self.transformation_ippu_reduce_n2o,
-                self.transformation_ippu_reduce_other_fcs,
-                self.transformation_ippu_reduce_pfcs
+                self.transformation_agrc_reduce_supply_chain_losses
             ],
             attr_strategy
         )
-        all_transformations.append(self.ip_all)
+        all_transformations.append(self.af_all)
 
 
-        self.ippu_bundle_reduce_fgas = sc.Transformation(
-            "IPPU:BUNDLE_DEC_FGAS", 
+
+        ##############################
+        #    AGRC TRANSFORMATIONS    #
+        ##############################
+
+        self.agrc_all = sc.Transformation(
+            "AGRC:ALL", 
             [
-                self.transformation_ippu_reduce_hfcs,
-                self.transformation_ippu_reduce_other_fcs,
-                self.transformation_ippu_reduce_pfcs
+                self.transformation_agrc_reduce_supply_chain_losses
             ],
             attr_strategy
         )
-        all_transformations.append(self.ippu_bundle_reduce_fgas)
-
-
-        self.ippu_demand_managment = sc.Transformation(
-            "IPPU:DEC_DEMAND", 
-            self.transformation_ippu_reduce_demand,
-            attr_strategy
-        )
-        all_transformations.append(self.ippu_demand_managment)
-
-
-        self.ippu_reduce_cement_clinker = sc.Transformation(
-            "IPPU:DEC_CLINKER", 
-            self.transformation_ippu_reduce_cement_clinker,
-            attr_strategy
-        )
-        all_transformations.append(self.ippu_reduce_cement_clinker)
-
-
-        self.ippu_reduce_hfcs = sc.Transformation(
-            "IPPU:DEC_HFCS", 
-            self.transformation_ippu_reduce_hfcs,
-            attr_strategy
-        )
-        all_transformations.append(self.ippu_reduce_hfcs)
-
-
-        self.ippu_reduce_other_fcs = sc.Transformation(
-            "IPPU:DEC_OTHER_FCS", 
-            self.transformation_ippu_reduce_other_fcs,
-            attr_strategy
-        )
-        all_transformations.append(self.ippu_reduce_other_fcs)
-
-
-        self.ippu_reduce_n2o = sc.Transformation(
-            "IPPU:DEC_N2O", 
-            self.transformation_ippu_reduce_n2o,
-            attr_strategy
-        )
-        all_transformations.append(self.ippu_reduce_n2o)
-
-
-        self.ippu_reduce_pfcs = sc.Transformation(
-            "IPPU:DEC_PFCS", 
-            self.transformation_ippu_reduce_pfcs,
-            attr_strategy
-        )
-        all_transformations.append(self.ippu_reduce_pfcs)
+        all_transformations.append(self.agrc_all)
         
 
+        self.agrc_reduce_supply_chain_losses = sc.Transformation(
+            "AGRC:DEC_LOSSES_SUPPLY_CHAIN", 
+            [
+                self.transformation_agrc_reduce_supply_chain_losses
+            ],
+            attr_strategy
+        )
+        all_transformations.append(self.agrc_reduce_supply_chain_losses)
         
 
         ## specify dictionary of transformations and get all transformations + baseline/non-baseline
@@ -608,13 +570,13 @@ class TransformationsIPPU:
         
         t0 = time.time()
         self._log(
-            f"TransformationsCircularEconomy.build_strategies_long() starting build of {n} strategies...",
+            f"TransformationsAFOLU.build_strategies_long() starting build of {n} strategies...",
             type_log = "info"
         )
         
         # initialize baseline
         df_out = (
-            self.transformation_ip_baseline(df_input)
+            self.transformation_af_baseline(df_input)
             if df_input is not None
             else (
                 self.baseline_inputs
@@ -655,7 +617,7 @@ class TransformationsIPPU:
 
         t_elapse = sf.get_time_elapsed(t0)
         self._log(
-            f"TransformationsCircularEconomy.build_strategies_long() build complete in {t_elapse} seconds.",
+            f"TransformationsAFOLU.build_strategies_long() build complete in {t_elapse} seconds.",
             type_log = "info"
         )
 
@@ -757,7 +719,7 @@ class TransformationsIPPU:
     NOTE: modifications to input variables should ONLY affect IPPU variables
     """
 
-    def transformation_ip_baseline(self,
+    def transformation_af_baseline(self,
         df_input: pd.DataFrame,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
@@ -766,13 +728,6 @@ class TransformationsIPPU:
             (pass through)
         """
 
-        # clean production scalar so that they are always 1 in the first time period
-        #df_out = tbg.prepare_demand_scalars(
-        #    df_input,
-        #    self.model_ippu.modvar_ippu_scalar_production,
-        #    self.model_attributes,
-        #    key_region = self.key_region,
-        #)
         df_out = df_input.copy()
 
         if sf.isnumber(strat, integer = True):
@@ -790,16 +745,16 @@ class TransformationsIPPU:
 
 
     ##############################
-    #    IPPU TRANSFORMATIONS    #
+    #    AGRC TRANSFORMATIONS    #
     ##############################
 
-    def transformation_ippu_reduce_cement_clinker(self,
+    def transformation_agrc_reduce_supply_chain_losses(self,
         df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
-        Implement the "Reduce cement clinker" IPPU transformation on input 
-            DataFrame df_input. Reduces industrial production.
+        Implement the "Reduce Supply Chain Losses" AGRC transformation on input 
+            DataFrame df_input. 
         """
         # check input dataframe
         df_input = (
@@ -808,171 +763,18 @@ class TransformationsIPPU:
             else df_input
         )
         
-        df_out = tbg.transformation_general(
-            df_input,
-            self.model_attributes,
-            {
-                self.model_ippu.modvar_ippu_clinker_fraction_cement: {
-                    "bounds": (0, 1),
-                    "magnitude": 0.5,
-                    "magnitude_type": "final_value_ceiling",
-                    "vec_ramp": self.vec_implementation_ramp
-                }
-            },
-            field_region = self.key_region,
-            strategy_id = strat,
-        )
-
-        return df_out
-
-
-
-    def transformation_ippu_reduce_demand(self,
-        df_input: Union[pd.DataFrame, None] = None,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Demand Management" IPPU transformation on input DataFrame 
-            df_input. Reduces industrial production.
-        """
-        # check input dataframe
-        df_input = (
-            self.baseline_inputs
-            if not isinstance(df_input, pd.DataFrame) 
-            else df_input
-        )
-
-        df_out = tbi.transformation_ippu_reduce_demand(
+        df_out = tba.transformation_agrc_reduce_supply_chain_losses(
             df_input,
             0.3,
             self.vec_implementation_ramp,
             self.model_attributes,
+            model_afolu = self.model_afolu,
             field_region = self.key_region,
-            model_ippu = self.model_ippu,
-            strategy_id = strat
-        )
-
-        return df_out
-
-
-    
-    def transformation_ippu_reduce_hfcs(self,
-        df_input: Union[pd.DataFrame, None] = None,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Reduces HFCs" IPPU transformation on input DataFrame 
-            df_input
-        """
-        # check input dataframe
-        df_input = (
-            self.baseline_inputs
-            if not isinstance(df_input, pd.DataFrame) 
-            else df_input
-        )
-
-        df_out = tbi.transformation_ippu_scale_emission_factor(
-            df_input,
-            {"hfc": 0.1}, # applies to all HFC emission factors
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            field_region = self.key_region,
-            model_ippu = self.model_ippu,
             strategy_id = strat,
-        )        
-
-        return df_out
-    
-
-
-    def transformation_ippu_reduce_n2o(self,
-        df_input: Union[pd.DataFrame, None] = None,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Reduces N2O" IPPU transformation on input DataFrame 
-            df_input
-        """
-        # check input dataframe
-        df_input = (
-            self.baseline_inputs
-            if not isinstance(df_input, pd.DataFrame) 
-            else df_input
         )
 
-        df_out = tbi.transformation_ippu_scale_emission_factor(
-            df_input,
-            {
-                self.model_ippu.modvar_ippu_ef_n2o_per_gdp_process : 0.1,
-                self.model_ippu.modvar_ippu_ef_n2o_per_prod_process : 0.1,
-            },
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            field_region = self.key_region,
-            model_ippu = self.model_ippu,
-            strategy_id = strat,
-        )        
-
         return df_out
 
-
-    
-    def transformation_ippu_reduce_other_fcs(self,
-        df_input: Union[pd.DataFrame, None] = None,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Reduces Other FCs" IPPU transformation on input DataFrame 
-            df_input
-        """
-        # check input dataframe
-        df_input = (
-            self.baseline_inputs
-            if not isinstance(df_input, pd.DataFrame) 
-            else df_input
-        )
-
-        df_out = tbi.transformation_ippu_scale_emission_factor(
-            df_input,
-            {"other_fc": 0.1}, # applies to all Other Fluorinated Compound emission factors
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            field_region = self.key_region,
-            model_ippu = self.model_ippu,
-            strategy_id = strat,
-        )        
-
-        return df_out
-
-
-
-    def transformation_ippu_reduce_pfcs(self,
-        df_input: Union[pd.DataFrame, None] = None,
-        strat: Union[int, None] = None,
-    ) -> pd.DataFrame:
-        """
-        Implement the "Reduces Other FCs" IPPU transformation on input DataFrame 
-            df_input
-        """
-        # check input dataframe
-        df_input = (
-            self.baseline_inputs
-            if not isinstance(df_input, pd.DataFrame) 
-            else df_input
-        )
-
-        df_out = tbi.transformation_ippu_scale_emission_factor(
-            df_input,
-            {"pfc": 0.1}, # applies to all PFC emission factors
-            self.vec_implementation_ramp,
-            self.model_attributes,
-            field_region = self.key_region,
-            model_ippu = self.model_ippu,
-            strategy_id = strat,
-        )        
-
-        return df_out
-    
 
 
 

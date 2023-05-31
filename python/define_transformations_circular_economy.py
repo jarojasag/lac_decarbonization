@@ -81,6 +81,11 @@ class TransformationsCircularEconomy:
 		used in Julia NemoMod Electricity model
         * If None, defaults to a temporary path sql database
     - logger: optional logger object
+    - model_circecon: optional CircularEconomy object to pass for property and 
+        method access
+        * NOTE: if passing, ensure that the ModelAttributes objects used to 
+            instantiate the model + what is passed to the model_attributes
+            argument are the same.
     """
     
     def __init__(self,
@@ -89,13 +94,14 @@ class TransformationsCircularEconomy:
         field_region: Union[str, None] = None,
         df_input: Union[pd.DataFrame, None] = None,
 		logger: Union[logging.Logger, None] = None,
+        model_circecon: Union[mc.CircularEconomy, None] = None,
     ):
 
         self.logger = logger
 
         self._initialize_attributes(field_region, model_attributes)
         self._initialize_config(dict_config = dict_config)
-        self._initialize_models()
+        self._initialize_models(model_circecon = model_circecon)
         self._initialize_parameters(dict_config = dict_config)
         self._initialize_ramp()
         self._initialize_baseline_inputs(df_input)
@@ -312,12 +318,22 @@ class TransformationsCircularEconomy:
 
 
     def _initialize_models(self,
+        model_circecon: Union[mc.CircularEconomy, None] = None,
     ) -> None:
         """
         Define model objects for use in variable access and base estimates.
+
+        Function Arguments
+        ------------------
+        - model_circecon: optional CircularEconomy object to pass for property 
+            and method access
         """
 
-        model_circecon = mc.CircularEconomy(self.model_attributes)
+        model_circecon = (
+            mc.CircularEconomy(self.model_attributes)
+            if model_circecon is None
+            else model_circecon
+        )
 
         self.model_circecon = model_circecon
 

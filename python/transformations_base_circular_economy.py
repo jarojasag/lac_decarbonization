@@ -1018,6 +1018,7 @@ def transformation_waso_increase_recycling(
         {
             model_circecon.modvar_waso_frac_recycled: {
                 "bounds": (0, 1),
+                "categories": categories,
                 "magnitude": magnitude,
                 "magnitude_type": "final_value_floor",
                 "vec_ramp": vec_ramp

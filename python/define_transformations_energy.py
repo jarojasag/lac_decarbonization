@@ -84,24 +84,37 @@ class TransformationsEnergy:
 		used in Julia NemoMod Electricity model
         * If None, defaults to a temporary path sql database
     - logger: optional logger object
+    - model_afolu: optional AFOLU object to pass for property and method access
+    - model_electricity: optional ElectricEnergy object to pass for property and
+        method access
+        * NOTE: If passing, `dir_jl` and `fp_nemomod_reference_files` are 
+            ignored (can pass None to those arguments if passing 
+            model_electricity)
     """
     
     def __init__(self,
         model_attributes: ma.ModelAttributes,
         dict_config: Dict,
-        dir_jl: str,
-        fp_nemomod_reference_files: str,
+        dir_jl: Union[str, None],
+        fp_nemomod_reference_files: Union[str, None],
         df_input: Union[pd.DataFrame, None] = None,
         field_region: Union[str, None] = None,
 		fp_nemomod_temp_sqlite_db: Union[str, None] = None,
 		logger: Union[logging.Logger, None] = None,
+        model_afolu: Union[mafl.AFOLU, None] = None,
+        model_electricity: Union[ml.ElectricEnergy, None] = None,
     ):
 
         self.logger = logger
 
         self._initialize_attributes(field_region, model_attributes)
         self._initialize_config(dict_config = dict_config)
-        self._initialize_models(dir_jl, fp_nemomod_reference_files)
+        self._initialize_models(
+            dir_jl, 
+            fp_nemomod_reference_files,
+            model_afolu = model_afolu,
+            model_electricity = model_electricity,
+        )
         self._initialize_parameters(dict_config = dict_config)
         self._initialize_ramp()
         self._initialize_baseline_inputs(df_input)
@@ -569,6 +582,8 @@ class TransformationsEnergy:
     def _initialize_models(self,
         dir_jl: str,
         fp_nemomod_reference_files: str,
+        model_afolu: Union[mafl.AFOLU, None] = None,
+        model_electricity: Union[ml.ElectricEnergy, None] = None,
     ) -> None:
         """
         Define model objects for use in variable access and base estimates.
@@ -584,14 +599,39 @@ class TransformationsEnergy:
             * Required keys or CSVs (without extension):
                 (1) CapacityFactor
                 (2) SpecifiedDemandProfile
+
+        Keyword Arguments
+        -----------------
+        - model_afolu: optional AFOLU object to pass for property and method 
+            access
+            * NOTE: if passing, ensure that the ModelAttributes objects used to 
+                instantiate the model + what is passed to the model_attributes 
+                argument are the same.
+        - model_electricity: optional ElectricEnergy object to pass for property 
+            and method access
+            * NOTE: If passing, `dir_jl` and `fp_nemomod_reference_files` are 
+                ignored (can pass None to those arguments if passing 
+                model_electricity)
+            * NOTE: if passing, ensure that the ModelAttributes objects used to 
+                instantiate the model + what is passed to the model_attributes 
+                argument are the same.
         """
 
-        model_afolu = mafl.AFOLU(self.model_attributes)
-        model_electricity = ml.ElectricEnergy(
-            self.model_attributes, 
-            dir_jl,
-            fp_nemomod_reference_files,
-            initialize_julia = False
+        model_afolu = (
+            mafl.AFOLU(self.model_attributes)
+            if model_afolu is None
+            else model_afolu
+        )
+
+        model_electricity = (
+            ml.ElectricEnergy(
+                self.model_attributes, 
+                dir_jl,
+                fp_nemomod_reference_files,
+                initialize_julia = False
+            )
+            if model_electricity is None
+            else model_electricity
         )
 
         self.model_afolu = model_afolu
@@ -2843,7 +2883,6 @@ class TransformationsEnergy:
                 }
             },
             field_region = self.key_region,
-            model_energy = self.model_energy,
             strategy_id = strat
         )
         
@@ -2884,7 +2923,6 @@ class TransformationsEnergy:
                 }
             },
             field_region = self.key_region,
-            model_energy = self.model_energy,
             strategy_id = strat
         )
         
@@ -2924,7 +2962,6 @@ class TransformationsEnergy:
                 }
             },
             field_region = self.key_region,
-            model_energy = self.model_energy,
             strategy_id = strat
         )
         

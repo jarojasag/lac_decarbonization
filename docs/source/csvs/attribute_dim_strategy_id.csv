@@ -1,6 +1,5 @@
 ﻿strategy_id,strategy,strategy_code,baseline_strategy_id,Description
 0,Baseline NDP,BASE,1,Base assumptions to which all transformations are applied
-1001,AFOLU Specific Strategies Start,AF:PLACEHOLD,0,Placeholder for AFOLU
 2001,TRWW: All wastewater treatment transformations,TRWW:ALL,0,
 2002,TRWW: Increase biogas capture,TRWW:INC_CAPTURE_BIOGAS,0,
 2003,TRWW: Increase septic compliance,TRWW:INC_COMPLIANCE_SEPTIC,0,
@@ -84,11 +83,15 @@
 3065,EN: Fuel switch bundle,EN:BUNDLE_FUEL_SWITCH,0,
 3066,EN: Fuel switch bundle with renewable energy production,EN:BUNDLE_FUEL_SWITCH_REP,0,
 3067,EN: All Energy transformations,EN:ALL,0,
-4001,IP: All IP transformations,IP:ALL,0,
-4010,IPPU: Reduce use of HFCs,IPPU:DEC_HFCS,0,
-4011,IPPU: Reduce Nitrous Oxide emissions,IPPU:DEC_N2O,0,
-4013,IPPU: Reduce other fluorinated compounds,IPPU:DEC_OTHER_FCS,0,"Includes SF6, NF3, HCFCs, and others"
-4014,IPPU: Reduce use of PFCs,IPPU:DEC_PFCS,0,
-4015,IPPU: Reduce fluorinated gasses bundle,IPPU:BUNDLE_DEC_FGAS,0,
-4016,IPPU: Demand management,IPPU:DEC_DEMAND,0,
+4001,IPPU: Demand management,IPPU:DEC_DEMAND,0,
+4002,IPPU: Reduce cement clinker,IPPU:DEC_CLINKER,0,Reduces use of clinker in cement production
+4003,IPPU: Reduce fluorinated gasses bundle,IPPU:BUNDLE_DEC_FGAS,0,
+4004,IPPU: Reduce Nitrous Oxide emissions,IPPU:DEC_N2O,0,
+4005,IPPU: Reduce other fluorinated compounds,IPPU:DEC_OTHER_FCS,0,"Includes SF6, NF3, HCFCs, and others"
+4006,IPPU: Reduce use of HFCs,IPPU:DEC_HFCS,0,
+4007,IPPU: Reduce use of PFCs,IPPU:DEC_PFCS,0,
+4008,IP: All IP transformations,IP:ALL,0,
 5001,PFLO: Industrial point of capture CCSQ,PFLO:IND_CCS,0,Specifies point-of-capture carbon capture and sequestration in IPPU and INEN
+1002,AGRC: Reduce supply chain losses,AGRC:DEC_LOSSES_SUPPLY_CHAIN,0,
+1001,AGRC: All transformations,AGRC:ALL,0,
+1003,AF: All AFOLU transformations,AF:ALL,0,

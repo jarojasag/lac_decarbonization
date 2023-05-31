@@ -116,3 +116,63 @@
 2023-05-29 12:44:56,501 - INFO - 	Successfully built transformation strategy_id = 4015 ('IPPU: Reduce fluorinated gasses bundle') in 1.6 seconds.
 2023-05-29 12:44:56,812 - INFO - 	Successfully built transformation strategy_id = 4016 ('IPPU: Demand management') in 0.31 seconds.
 2023-05-29 12:44:57,111 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 6.18 seconds.
+2023-05-29 17:29:49,639 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 8 strategies...
+2023-05-29 17:29:49,979 - INFO - 	Successfully built transformation strategy_id = 4001 ('IPPU: Demand management') in 0.34 seconds.
+2023-05-29 17:29:49,981 - ERROR - 	Error trying to build transformation strategy_id = 4002: 'TransformationsIPPU' object has no attribute 'model_energy'
+2023-05-29 17:29:51,674 - INFO - 	Successfully built transformation strategy_id = 4003 ('IPPU: Reduce fluorinated gasses bundle') in 1.69 seconds.
+2023-05-29 17:29:52,206 - INFO - 	Successfully built transformation strategy_id = 4004 ('IPPU: Reduce Nitrous Oxide emissions') in 0.53 seconds.
+2023-05-29 17:29:52,574 - INFO - 	Successfully built transformation strategy_id = 4005 ('IPPU: Reduce other fluorinated compounds') in 0.37 seconds.
+2023-05-29 17:29:53,356 - INFO - 	Successfully built transformation strategy_id = 4006 ('IPPU: Reduce use of HFCs') in 0.78 seconds.
+2023-05-29 17:29:53,861 - INFO - 	Successfully built transformation strategy_id = 4007 ('IPPU: Reduce use of PFCs') in 0.5 seconds.
+2023-05-29 17:29:53,864 - ERROR - 	Error trying to build transformation strategy_id = 4008: 'TransformationsIPPU' object has no attribute 'model_energy'
+2023-05-29 17:29:54,295 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 4.66 seconds.
+2023-05-29 17:32:05,666 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 8 strategies...
+2023-05-29 17:32:06,037 - INFO - 	Successfully built transformation strategy_id = 4001 ('IPPU: Demand management') in 0.37 seconds.
+2023-05-29 17:32:06,285 - INFO - 	Successfully built transformation strategy_id = 4002 ('IPPU: Reduce cement clinker') in 0.25 seconds.
+2023-05-29 17:32:08,087 - INFO - 	Successfully built transformation strategy_id = 4003 ('IPPU: Reduce fluorinated gasses bundle') in 1.8 seconds.
+2023-05-29 17:32:08,656 - INFO - 	Successfully built transformation strategy_id = 4004 ('IPPU: Reduce Nitrous Oxide emissions') in 0.57 seconds.
+2023-05-29 17:32:09,053 - INFO - 	Successfully built transformation strategy_id = 4005 ('IPPU: Reduce other fluorinated compounds') in 0.4 seconds.
+2023-05-29 17:32:09,892 - INFO - 	Successfully built transformation strategy_id = 4006 ('IPPU: Reduce use of HFCs') in 0.84 seconds.
+2023-05-29 17:32:10,435 - INFO - 	Successfully built transformation strategy_id = 4007 ('IPPU: Reduce use of PFCs') in 0.54 seconds.
+2023-05-29 17:32:13,044 - INFO - 	Successfully built transformation strategy_id = 4008 ('IP: All IP transformations') in 2.61 seconds.
+2023-05-29 17:32:13,478 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 7.81 seconds.
+2023-05-30 18:30:35,179 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 3 strategies...
+2023-05-30 18:30:35,184 - ERROR - 	Error trying to build transformation strategy_id = 1001: transformation_agrc_reduce_supply_chain_losses() missing 2 required positional arguments: 'vec_ramp' and 'model_attributes'
+2023-05-30 18:30:35,187 - ERROR - 	Error trying to build transformation strategy_id = 1002: transformation_agrc_reduce_supply_chain_losses() missing 2 required positional arguments: 'vec_ramp' and 'model_attributes'
+2023-05-30 18:30:35,191 - ERROR - 	Error trying to build transformation strategy_id = 1003: transformation_agrc_reduce_supply_chain_losses() missing 2 required positional arguments: 'vec_ramp' and 'model_attributes'
+2023-05-30 18:30:35,239 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 0.06 seconds.
+2023-05-30 18:31:35,367 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 3 strategies...
+2023-05-30 18:31:35,372 - ERROR - 	Error trying to build transformation strategy_id = 1001: 'TransformationsAFOLU' object has no attribute 'vec_ramp'
+2023-05-30 18:31:35,376 - ERROR - 	Error trying to build transformation strategy_id = 1002: 'TransformationsAFOLU' object has no attribute 'vec_ramp'
+2023-05-30 18:31:35,380 - ERROR - 	Error trying to build transformation strategy_id = 1003: 'TransformationsAFOLU' object has no attribute 'vec_ramp'
+2023-05-30 18:31:35,427 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 0.06 seconds.
+2023-05-30 18:31:46,630 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 3 strategies...
+2023-05-30 18:31:46,636 - ERROR - 	Error trying to build transformation strategy_id = 1001: cannot access local variable 'model_ippu' where it is not associated with a value
+2023-05-30 18:31:46,640 - ERROR - 	Error trying to build transformation strategy_id = 1002: cannot access local variable 'model_ippu' where it is not associated with a value
+2023-05-30 18:31:46,645 - ERROR - 	Error trying to build transformation strategy_id = 1003: cannot access local variable 'model_ippu' where it is not associated with a value
+2023-05-30 18:31:46,694 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 0.06 seconds.
+2023-05-30 18:32:51,082 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 3 strategies...
+2023-05-30 18:32:51,088 - ERROR - 	Error trying to build transformation strategy_id = 1001: name 'tbg' is not defined
+2023-05-30 18:32:51,092 - ERROR - 	Error trying to build transformation strategy_id = 1002: name 'tbg' is not defined
+2023-05-30 18:32:51,096 - ERROR - 	Error trying to build transformation strategy_id = 1003: name 'tbg' is not defined
+2023-05-30 18:32:51,141 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 0.06 seconds.
+2023-05-30 18:33:11,484 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 3 strategies...
+2023-05-30 18:33:11,489 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 0.0 seconds.
+2023-05-30 18:33:11,494 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.0 seconds.
+2023-05-30 18:33:11,498 - INFO - 	Successfully built transformation strategy_id = 1003 ('AF: All AFOLU transformations') in 0.0 seconds.
+2023-05-30 18:33:11,540 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 0.06 seconds.
+2023-05-30 18:36:38,923 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 3 strategies...
+2023-05-30 18:36:38,932 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 0.01 seconds.
+2023-05-30 18:36:38,935 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.0 seconds.
+2023-05-30 18:36:38,939 - INFO - 	Successfully built transformation strategy_id = 1003 ('AF: All AFOLU transformations') in 0.0 seconds.
+2023-05-30 18:36:38,981 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 0.06 seconds.
+2023-05-30 18:40:02,055 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 3 strategies...
+2023-05-30 18:40:02,287 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 0.23 seconds.
+2023-05-30 18:40:02,514 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.23 seconds.
+2023-05-30 18:40:03,100 - INFO - 	Successfully built transformation strategy_id = 1003 ('AF: All AFOLU transformations') in 0.58 seconds.
+2023-05-30 18:40:03,281 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 1.23 seconds.
+2023-05-30 18:40:11,366 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 3 strategies...
+2023-05-30 18:40:11,591 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 0.22 seconds.
+2023-05-30 18:40:11,804 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.21 seconds.
+2023-05-30 18:40:12,025 - INFO - 	Successfully built transformation strategy_id = 1003 ('AF: All AFOLU transformations') in 0.22 seconds.
+2023-05-30 18:40:12,218 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 0.85 seconds.
