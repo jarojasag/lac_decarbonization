@@ -272,11 +272,13 @@ class SISEPUEDEBatchDataRepository:
         dirs_ignore: Union[list[str], None] = None,
         ext_read: str = "csv",
         field_iso_out: Union[str, None] = None,
-        field_region_out:  Union[str, None] = None,
+        field_region_out: Union[str, None] = None,
         field_year_out: Union[str, None] = None,
         fps_ignore: Union[List[str], None] = None,
+        key_historical: Union[str, None] = None,
+        key_projected: Union[str, None] = None,
         write_q: bool = True,
-    ) -> None:
+    ) -> Tuple[Dict, Dict]:
         """
         Using directory dir_batch (in SISEPUEDE repository), generate inputs
             for sisepuede_data repo
@@ -295,6 +297,10 @@ class SISEPUEDEBatchDataRepository:
         - fields_ignore: list of fields to ignore in each input file when 
             checking for fields that will be written to self.dir_repository
         - fps_ignore: optional file paths to ignore
+        - key_historical: optional key to use for historical subdirectories. If
+            None, defaults to SISEPUEDEBatchDataRepository.key_historical
+        - key_projected: optional key to use for historical subdirectories. If
+            None, defaults to SISEPUEDEBatchDataRepository.key_projected
         - write_q: write output data to files
         """
 
@@ -322,6 +328,19 @@ class SISEPUEDEBatchDataRepository:
             self.regions.field_iso: self.field_repo_iso,
             self.time_periods.field_year: self.field_repo_year
         }
+
+        # subdirectory keys
+        key_historical = (
+            self.key_historical
+            if not isinstance(key_historical, str)
+            else key_historical
+        )
+
+        key_projected = (
+            self.key_projected
+            if not isinstance(key_projected, str)
+            else key_projected
+        )
         
         # directory checks--make output if not exstis + loop through subdirectories to check for available data
         subdirs = (

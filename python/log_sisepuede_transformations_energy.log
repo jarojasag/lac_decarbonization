@@ -227,3 +227,115 @@
 2023-05-31 01:13:53,806 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 1 strategies...
 2023-05-31 01:13:54,900 - INFO - 	Successfully built transformation strategy_id = 1021 ('LVST: Reduce enteric fermentation') in 1.09 seconds.
 2023-05-31 01:13:55,028 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 1.22 seconds.
+2023-05-31 23:06:42,617 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 9 strategies...
+2023-05-31 23:06:43,325 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 0.7 seconds.
+2023-05-31 23:06:43,630 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.3 seconds.
+2023-05-31 23:06:46,185 - ERROR - 	Error trying to build transformation strategy_id = 1003: name 'vec_ramp' is not defined
+2023-05-31 23:06:46,538 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.35 seconds.
+2023-05-31 23:06:47,140 - INFO - 	Successfully built transformation strategy_id = 1020 ('LVST: All transformations') in 0.6 seconds.
+2023-05-31 23:06:47,740 - INFO - 	Successfully built transformation strategy_id = 1021 ('LVST: Reduce enteric fermentation') in 0.6 seconds.
+2023-05-31 23:06:47,742 - ERROR - 	Error trying to build transformation strategy_id = 1030: name 'vec_ramp' is not defined
+2023-05-31 23:06:47,744 - ERROR - 	Error trying to build transformation strategy_id = 1031: cannot access local variable 'model_afolu' where it is not associated with a value
+2023-05-31 23:06:47,745 - ERROR - 	Error trying to build transformation strategy_id = 1032: cannot access local variable 'model_afolu' where it is not associated with a value
+2023-05-31 23:06:48,101 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 5.48 seconds.
+2023-05-31 23:11:44,433 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 9 strategies...
+2023-05-31 23:11:45,040 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 0.61 seconds.
+2023-05-31 23:11:45,823 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.78 seconds.
+2023-05-31 23:11:48,130 - INFO - 	Successfully built transformation strategy_id = 1003 ('AF: All AFOLU transformations') in 2.3 seconds.
+2023-05-31 23:11:48,425 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.29 seconds.
+2023-05-31 23:11:49,361 - INFO - 	Successfully built transformation strategy_id = 1020 ('LVST: All transformations') in 0.94 seconds.
+2023-05-31 23:11:49,959 - INFO - 	Successfully built transformation strategy_id = 1021 ('LVST: Reduce enteric fermentation') in 0.6 seconds.
+2023-05-31 23:11:50,259 - INFO - 	Successfully built transformation strategy_id = 1030 ('SOIL: Expand conservation agriculture') in 0.3 seconds.
+2023-05-31 23:11:50,553 - INFO - 	Successfully built transformation strategy_id = 1031 ('SOIL: Improve fertilizer application') in 0.29 seconds.
+2023-05-31 23:11:50,848 - INFO - 	Successfully built transformation strategy_id = 1032 ('SOIL: Improve lime application') in 0.29 seconds.
+2023-05-31 23:11:51,384 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 6.95 seconds.
+2023-06-01 00:22:32,228 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 10 strategies...
+2023-06-01 00:22:34,149 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 1.92 seconds.
+2023-06-01 00:22:34,501 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.35 seconds.
+2023-06-01 00:22:36,770 - INFO - 	Successfully built transformation strategy_id = 1003 ('AF: All AFOLU transformations') in 2.27 seconds.
+2023-06-01 00:22:37,428 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.65 seconds.
+2023-06-01 00:22:37,769 - INFO - 	Successfully built transformation strategy_id = 1005 ('AGRC: Improve crop productivity') in 0.34 seconds.
+2023-06-01 00:22:38,427 - INFO - 	Successfully built transformation strategy_id = 1020 ('LVST: All transformations') in 0.66 seconds.
+2023-06-01 00:22:39,021 - INFO - 	Successfully built transformation strategy_id = 1021 ('LVST: Reduce enteric fermentation') in 0.59 seconds.
+2023-06-01 00:22:39,353 - INFO - 	Successfully built transformation strategy_id = 1030 ('LNDU: Expand conservation agriculture') in 0.33 seconds.
+2023-06-01 00:22:39,684 - INFO - 	Successfully built transformation strategy_id = 1031 ('SOIL: Improve fertilizer application') in 0.33 seconds.
+2023-06-01 00:22:39,978 - INFO - 	Successfully built transformation strategy_id = 1032 ('SOIL: Improve lime application') in 0.29 seconds.
+2023-06-01 00:22:40,568 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 8.34 seconds.
+2023-06-01 00:51:57,507 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 11 strategies...
+2023-06-01 00:52:00,522 - INFO - 	Successfully built transformation strategy_id = 1001 ('AF: All AFOLU transformations') in 3.01 seconds.
+2023-06-01 00:52:01,108 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: All transformations') in 0.58 seconds.
+2023-06-01 00:52:01,424 - INFO - 	Successfully built transformation strategy_id = 1003 ('AGRC: Improve crop productivity') in 0.31 seconds.
+2023-06-01 00:52:01,716 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.29 seconds.
+2023-06-01 00:52:02,026 - INFO - 	Successfully built transformation strategy_id = 1005 ('AGRC: Reduce supply chain losses') in 0.31 seconds.
+2023-06-01 00:52:02,342 - INFO - 	Successfully built transformation strategy_id = 1006 ('LNDU: Expand conservation agriculture') in 0.31 seconds.
+2023-06-01 00:52:03,602 - INFO - 	Successfully built transformation strategy_id = 1007 ('LVST: All transformations') in 1.26 seconds.
+2023-06-01 00:52:03,905 - INFO - 	Successfully built transformation strategy_id = 1008 ('LVST: Increase livestock productivity') in 0.3 seconds.
+2023-06-01 00:52:04,505 - INFO - 	Successfully built transformation strategy_id = 1009 ('LVST: Reduce enteric fermentation') in 0.6 seconds.
+2023-06-01 00:52:04,805 - INFO - 	Successfully built transformation strategy_id = 1011 ('SOIL: Improve fertilizer application') in 0.3 seconds.
+2023-06-01 00:52:05,106 - INFO - 	Successfully built transformation strategy_id = 1012 ('SOIL: Improve lime application') in 0.3 seconds.
+2023-06-01 00:52:05,892 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 8.38 seconds.
+2023-06-01 00:55:18,212 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 11 strategies...
+2023-06-01 00:55:21,347 - INFO - 	Successfully built transformation strategy_id = 1001 ('AF: All AFOLU transformations') in 3.13 seconds.
+2023-06-01 00:55:22,001 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: All transformations') in 0.65 seconds.
+2023-06-01 00:55:22,644 - INFO - 	Successfully built transformation strategy_id = 1003 ('AGRC: Improve crop productivity') in 0.64 seconds.
+2023-06-01 00:55:22,936 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.29 seconds.
+2023-06-01 00:55:23,233 - INFO - 	Successfully built transformation strategy_id = 1005 ('AGRC: Reduce supply chain losses') in 0.3 seconds.
+2023-06-01 00:55:23,559 - INFO - 	Successfully built transformation strategy_id = 1006 ('LNDU: Expand conservation agriculture') in 0.32 seconds.
+2023-06-01 00:55:24,495 - INFO - 	Successfully built transformation strategy_id = 1007 ('LVST: All transformations') in 0.93 seconds.
+2023-06-01 00:55:24,797 - INFO - 	Successfully built transformation strategy_id = 1008 ('LVST: Increase livestock productivity') in 0.3 seconds.
+2023-06-01 00:55:25,705 - INFO - 	Successfully built transformation strategy_id = 1009 ('LVST: Reduce enteric fermentation') in 0.91 seconds.
+2023-06-01 00:55:25,996 - INFO - 	Successfully built transformation strategy_id = 1010 ('SOIL: Improve fertilizer application') in 0.29 seconds.
+2023-06-01 00:55:26,284 - INFO - 	Successfully built transformation strategy_id = 1011 ('SOIL: Improve lime application') in 0.29 seconds.
+2023-06-01 00:55:27,063 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 8.85 seconds.
+2023-06-01 01:01:08,592 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 11 strategies...
+2023-06-01 01:01:09,518 - ERROR - 	Error trying to build transformation strategy_id = 1001: '>' not supported between instances of 'float' and 'dict'
+2023-06-01 01:01:10,104 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: All transformations') in 0.58 seconds.
+2023-06-01 01:01:10,769 - INFO - 	Successfully built transformation strategy_id = 1003 ('AGRC: Improve crop productivity') in 0.66 seconds.
+2023-06-01 01:01:11,060 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.29 seconds.
+2023-06-01 01:01:11,345 - INFO - 	Successfully built transformation strategy_id = 1005 ('AGRC: Reduce supply chain losses') in 0.28 seconds.
+2023-06-01 01:01:11,347 - ERROR - 	Error trying to build transformation strategy_id = 1006: '>' not supported between instances of 'float' and 'dict'
+2023-06-01 01:01:12,253 - INFO - 	Successfully built transformation strategy_id = 1007 ('LVST: All transformations') in 0.9 seconds.
+2023-06-01 01:01:12,594 - INFO - 	Successfully built transformation strategy_id = 1008 ('LVST: Increase livestock productivity') in 0.34 seconds.
+2023-06-01 01:01:13,247 - INFO - 	Successfully built transformation strategy_id = 1009 ('LVST: Reduce enteric fermentation') in 0.65 seconds.
+2023-06-01 01:01:13,847 - INFO - 	Successfully built transformation strategy_id = 1010 ('SOIL: Improve fertilizer application') in 0.6 seconds.
+2023-06-01 01:01:14,141 - INFO - 	Successfully built transformation strategy_id = 1011 ('SOIL: Improve lime application') in 0.29 seconds.
+2023-06-01 01:01:14,851 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 6.26 seconds.
+2023-06-01 01:01:42,861 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 11 strategies...
+2023-06-01 01:01:46,238 - INFO - 	Successfully built transformation strategy_id = 1001 ('AF: All AFOLU transformations') in 3.38 seconds.
+2023-06-01 01:01:46,824 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: All transformations') in 0.58 seconds.
+2023-06-01 01:01:47,148 - INFO - 	Successfully built transformation strategy_id = 1003 ('AGRC: Improve crop productivity') in 0.32 seconds.
+2023-06-01 01:01:47,444 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.29 seconds.
+2023-06-01 01:01:47,738 - INFO - 	Successfully built transformation strategy_id = 1005 ('AGRC: Reduce supply chain losses') in 0.29 seconds.
+2023-06-01 01:01:48,657 - INFO - 	Successfully built transformation strategy_id = 1006 ('LNDU: Expand conservation agriculture') in 0.92 seconds.
+2023-06-01 01:01:49,553 - INFO - 	Successfully built transformation strategy_id = 1007 ('LVST: All transformations') in 0.89 seconds.
+2023-06-01 01:01:49,852 - INFO - 	Successfully built transformation strategy_id = 1008 ('LVST: Increase livestock productivity') in 0.3 seconds.
+2023-06-01 01:01:50,473 - INFO - 	Successfully built transformation strategy_id = 1009 ('LVST: Reduce enteric fermentation') in 0.62 seconds.
+2023-06-01 01:01:50,791 - INFO - 	Successfully built transformation strategy_id = 1010 ('SOIL: Improve fertilizer application') in 0.31 seconds.
+2023-06-01 01:01:51,489 - INFO - 	Successfully built transformation strategy_id = 1011 ('SOIL: Improve lime application') in 0.7 seconds.
+2023-06-01 01:01:52,266 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 9.41 seconds.
+2023-06-01 01:04:29,955 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 11 strategies...
+2023-06-01 01:04:32,684 - ERROR - 	Error trying to build transformation strategy_id = 1001: unsupported operand type(s) for -: 'int' and 'NoneType'
+2023-06-01 01:04:33,297 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: All transformations') in 0.61 seconds.
+2023-06-01 01:04:33,619 - INFO - 	Successfully built transformation strategy_id = 1003 ('AGRC: Improve crop productivity') in 0.32 seconds.
+2023-06-01 01:04:33,903 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.28 seconds.
+2023-06-01 01:04:34,202 - INFO - 	Successfully built transformation strategy_id = 1005 ('AGRC: Reduce supply chain losses') in 0.3 seconds.
+2023-06-01 01:04:34,793 - INFO - 	Successfully built transformation strategy_id = 1006 ('LNDU: Expand conservation agriculture') in 0.59 seconds.
+2023-06-01 01:04:36,011 - INFO - 	Successfully built transformation strategy_id = 1007 ('LVST: All transformations') in 1.22 seconds.
+2023-06-01 01:04:36,322 - INFO - 	Successfully built transformation strategy_id = 1008 ('LVST: Increase livestock productivity') in 0.31 seconds.
+2023-06-01 01:04:36,905 - INFO - 	Successfully built transformation strategy_id = 1009 ('LVST: Reduce enteric fermentation') in 0.58 seconds.
+2023-06-01 01:04:36,907 - ERROR - 	Error trying to build transformation strategy_id = 1010: unsupported operand type(s) for -: 'int' and 'NoneType'
+2023-06-01 01:04:36,908 - ERROR - 	Error trying to build transformation strategy_id = 1011: unsupported operand type(s) for -: 'int' and 'NoneType'
+2023-06-01 01:04:37,446 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 7.49 seconds.
+2023-06-01 01:05:20,083 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 11 strategies...
+2023-06-01 01:05:23,282 - INFO - 	Successfully built transformation strategy_id = 1001 ('AF: All AFOLU transformations') in 3.2 seconds.
+2023-06-01 01:05:24,208 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: All transformations') in 0.92 seconds.
+2023-06-01 01:05:24,542 - INFO - 	Successfully built transformation strategy_id = 1003 ('AGRC: Improve crop productivity') in 0.33 seconds.
+2023-06-01 01:05:24,832 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.29 seconds.
+2023-06-01 01:05:25,125 - INFO - 	Successfully built transformation strategy_id = 1005 ('AGRC: Reduce supply chain losses') in 0.29 seconds.
+2023-06-01 01:05:25,688 - INFO - 	Successfully built transformation strategy_id = 1006 ('LNDU: Expand conservation agriculture') in 0.56 seconds.
+2023-06-01 01:05:26,552 - INFO - 	Successfully built transformation strategy_id = 1007 ('LVST: All transformations') in 0.86 seconds.
+2023-06-01 01:05:26,846 - INFO - 	Successfully built transformation strategy_id = 1008 ('LVST: Increase livestock productivity') in 0.29 seconds.
+2023-06-01 01:05:27,738 - INFO - 	Successfully built transformation strategy_id = 1009 ('LVST: Reduce enteric fermentation') in 0.89 seconds.
+2023-06-01 01:05:28,019 - INFO - 	Successfully built transformation strategy_id = 1010 ('SOIL: Improve fertilizer application') in 0.28 seconds.
+2023-06-01 01:05:28,351 - INFO - 	Successfully built transformation strategy_id = 1011 ('SOIL: Improve lime application') in 0.33 seconds.
+2023-06-01 01:05:29,079 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 9.0 seconds.

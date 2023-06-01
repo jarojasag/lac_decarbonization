@@ -433,8 +433,13 @@ class TransformationsAFOLU:
             "AF:ALL", 
             [
                 self.transformation_agrc_improve_rice_management,
+                self.transformation_agrc_increase_crop_productivity,
                 self.transformation_agrc_reduce_supply_chain_losses,
-                self.transformation_lvst_reduce_enteric_fermentation
+                self.transformation_lndu_expand_conservation_agriculture,
+                self.transformation_lvst_increase_productivity,
+                self.transformation_lvst_reduce_enteric_fermentation,
+                self.transformation_soil_reduce_excess_fertilizer,
+                self.transformation_soil_reduce_excess_lime,
             ],
             attr_strategy
         )
@@ -465,6 +470,14 @@ class TransformationsAFOLU:
         all_transformations.append(self.agrc_improve_rice_management)
 
 
+        self.agrc_increase_crop_productivity = sc.Transformation(
+            "AGRC:INC_PRODUCTIVITY", 
+            self.transformation_agrc_increase_crop_productivity,
+            attr_strategy
+        )
+        all_transformations.append(self.agrc_increase_crop_productivity)
+
+
         self.agrc_reduce_supply_chain_losses = sc.Transformation(
             "AGRC:DEC_LOSSES_SUPPLY_CHAIN", 
             [
@@ -486,6 +499,12 @@ class TransformationsAFOLU:
         #    LNDU TRANSFORMATIONS    #
         ##############################
 
+        self.lndu_expand_conservation_agriculture = sc.Transformation(
+            "LNDU:DEC_SOC_LOSS", 
+            self.transformation_lndu_expand_conservation_agriculture,
+            attr_strategy
+        )
+        all_transformations.append(self.lndu_expand_conservation_agriculture)
 
 
         ##############################
@@ -501,12 +520,21 @@ class TransformationsAFOLU:
         self.lvst_all = sc.Transformation(
             "LVST:ALL", 
             [
+                self.transformation_lvst_increase_productivity,
                 self.transformation_lvst_reduce_enteric_fermentation,
             ],
             attr_strategy
         )
         all_transformations.append(self.lvst_all)
 
+
+        self.lvst_reduce_enteric_fermentation = sc.Transformation(
+            "LVST:INC_PRODUCTIVITY", 
+            self.transformation_lvst_increase_productivity,
+            attr_strategy
+        )
+        all_transformations.append(self.lvst_reduce_enteric_fermentation)
+        
 
         self.lvst_reduce_enteric_fermentation = sc.Transformation(
             "LVST:DEC_ENTERIC_FERMENTATION", 
@@ -520,8 +548,24 @@ class TransformationsAFOLU:
         ##############################
         #    SOIL TRANSFORMATIONS    #
         ##############################
+        
+        self.soil_reduce_excess_fertilizer = sc.Transformation(
+            "SOIL:DEC_N_APPLIED", 
+            self.transformation_soil_reduce_excess_fertilizer,
+            attr_strategy
+        )
+        all_transformations.append(self.soil_reduce_excess_fertilizer)
 
 
+        self.soil_reduce_excess_liming = sc.Transformation(
+            "SOIL:DEC_LIME_APPLIED", 
+            self.transformation_soil_reduce_excess_lime,
+            attr_strategy
+        )
+        all_transformations.append(self.soil_reduce_excess_liming)
+        
+
+        
         
 
         ## specify dictionary of transformations and get all transformations + baseline/non-baseline
@@ -836,6 +880,35 @@ class TransformationsAFOLU:
         return df_out
 
 
+    
+    def transformation_agrc_increase_crop_productivity(self,
+        df_input: Union[pd.DataFrame, None] = None,
+        strat: Union[int, None] = None,
+    ) -> pd.DataFrame:
+        """
+        Implement the "Increase Crop Productivity" AGRC transformation on input 
+            DataFrame df_input. 
+        """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
+        df_out = tba.transformation_agrc_increase_crop_productivity(
+            df_input,
+            0.2, # can be specified as dictionary to affect different crops differently
+            self.vec_implementation_ramp,
+            self.model_attributes,
+            model_afolu = self.model_afolu,
+            field_region = self.key_region,
+            strategy_id = strat,
+        )
+
+        return df_out
+
+
 
     def transformation_agrc_reduce_supply_chain_losses(self,
         df_input: Union[pd.DataFrame, None] = None,
@@ -876,6 +949,40 @@ class TransformationsAFOLU:
     #    LNDU TRANSFORMATIONS    #
     ##############################
 
+    def transformation_lndu_expand_conservation_agriculture(self,
+        df_input: Union[pd.DataFrame, None] = None,
+        strat: Union[int, None] = None,
+    ) -> pd.DataFrame:
+        """
+        Implement the "Expand Conservation Agriculture" SOIL transformation on input 
+            DataFrame df_input. 
+            
+        NOTE: Sets a new floor for F_MG (as described in in V4 Equation 2.25 
+            (2019R)) to reduce losses of soil organic carbon through no-till 
+            (cropland) and improved grassland management (grasslands).
+        """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+
+        df_out = tba.transformation_lndu_increase_soc_factor_fmg(
+            df_input,
+            {
+                "croplands": 1.067,
+                "grasslands": 1.1567
+            },
+            self.vec_implementation_ramp,
+            self.model_attributes,
+            model_afolu = self.model_afolu,
+            field_region = self.key_region,
+            strategy_id = strat,
+        )
+        
+        return df_out
+        
 
 
     ##############################
@@ -888,12 +995,41 @@ class TransformationsAFOLU:
     #    LVST TRANSFORMATIONS    #
     ##############################
 
+    def transformation_lvst_increase_productivity(self,
+        df_input: Union[pd.DataFrame, None] = None,
+        strat: Union[int, None] = None,
+    ) -> pd.DataFrame:
+        """
+        Implement the "Increase Livestock Productivity" LVST transformation on 
+            input DataFrame df_input. 
+        """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
+        df_out = tba.transformation_lvst_increase_productivity(
+            df_input,
+            0.2,
+            self.vec_implementation_ramp,
+            self.model_attributes,
+            model_afolu = self.model_afolu,
+            field_region = self.key_region,
+            strategy_id = strat,
+        )
+        
+        return df_out
+
+
+
     def transformation_lvst_reduce_enteric_fermentation(self,
         df_input: Union[pd.DataFrame, None] = None,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
-        Implement the "Reduce Entereif Fermentation" LVST transformation on input 
+        Implement the "Reduce Enteric Fermentation" LVST transformation on input 
             DataFrame df_input. 
         """
         # check input dataframe
@@ -922,9 +1058,68 @@ class TransformationsAFOLU:
         return df_out
 
 
+
     ##############################
     #    SOIL TRANSFORMATIONS    #
     ##############################
 
+    def transformation_soil_reduce_excess_fertilizer(self,
+        df_input: Union[pd.DataFrame, None] = None,
+        strat: Union[int, None] = None,
+    ) -> pd.DataFrame:
+        """
+        Implement the "Reduce Excess Fertilizer" SOIL transformation on input 
+            DataFrame df_input. 
+        """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
+        df_out = tba.transformation_soil_reduce_excess_fertilizer(
+            df_input,
+            {
+                "fertilizer_n": 0.05
+            },
+            self.vec_implementation_ramp,
+            self.model_attributes,
+            model_afolu = self.model_afolu,
+            field_region = self.key_region,
+            strategy_id = strat,
+        )
+        
+        return df_out
+    
 
+
+    def transformation_soil_reduce_excess_lime(self,
+        df_input: Union[pd.DataFrame, None] = None,
+        strat: Union[int, None] = None,
+    ) -> pd.DataFrame:
+        """
+        Implement the "Reduce Excess Liming" SOIL transformation on input 
+            DataFrame df_input. 
+        """
+        # check input dataframe
+        df_input = (
+            self.baseline_inputs
+            if not isinstance(df_input, pd.DataFrame) 
+            else df_input
+        )
+        
+        df_out = tba.transformation_soil_reduce_excess_fertilizer(
+            df_input,
+            {
+                "lime": 0.05
+            },
+            self.vec_implementation_ramp,
+            self.model_attributes,
+            model_afolu = self.model_afolu,
+            field_region = self.key_region,
+            strategy_id = strat,
+        )
+        
+        return df_out
     
