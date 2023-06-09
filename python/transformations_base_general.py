@@ -263,7 +263,7 @@ def transformation_general(
         
         # check magnitude type
         magnitude_type = dict_modvar_specs_cur.get("magnitude_type")
-        verified_modvar = (magnitude_type in magnitude_types_valid) & verified_modvar
+        verified_modvar &= (magnitude_type in magnitude_types_valid)
         
         # check magnitude
         magnitude = dict_modvar_specs_cur.get("magnitude")
@@ -280,7 +280,7 @@ def transformation_general(
         # check ramp vector
         vec_ramp = dict_modvar_specs_cur.get("vec_ramp")
         vec_ramp = np.array(vec_ramp) if isinstance(vec_ramp, list) else vec_ramp
-        verified_modvar = isinstance(vec_ramp, np.ndarray) & verified_modvar
+        verified_modvar &= isinstance(vec_ramp, np.ndarray)
         
         # check for bounds
         bounds = dict_modvar_specs_cur.get("bounds")
@@ -296,7 +296,7 @@ def transformation_general(
         categories_source = None if not isinstance(categories_source, list) else categories_source
         categories_target = dict_modvar_specs_cur.get("categories_target")
         categories_target = (
-            dict((k, v) for k, v in categories_target.items() if isinstance(v, int) or isinstance(v, float)) 
+            dict((k, v) for k, v in categories_target.items() if sf.isnumber(v)) 
             if isinstance(categories_target, dict) 
             else None
         )

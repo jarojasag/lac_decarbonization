@@ -237,15 +237,17 @@ def transformation_agrc_reduce_supply_chain_losses(
 #    LNDU    #
 ##############
 
+
+
 def transformation_support_lndu_transition_to_category_targets_single_region(
     df_input: pd.DataFrame,
-    magnitude: Dict[str, float],
+    magnitude: Dict[str, Dict[str, Any]],
     vec_ramp: np.ndarray,
     model_attributes: ma.ModelAttributes,
     cats_stable: Union[List[str], None] = None,
     magnitude_type: str = "final_value",
     max_value: float = 0.8,
-    model_afolu: Union[mafl.AFOLU, None = None,
+    model_afolu: Union[mafl.AFOLU, None] = None,
     **kwargs
  ) -> pd.DataFrame:
     """
@@ -255,7 +257,23 @@ def transformation_support_lndu_transition_to_category_targets_single_region(
     Function Arguments
     ------------------
     - df_input: input data frame containing baseline trajectories
-    - magnitude: dictionary mapping land use categories to target fractions.
+    - magnitude: dictionary mapping land use categories to fraction information.
+        Should take the following form:
+
+        {
+            category: {
+                "magnitude_type": magnitude_type,
+                "magnitude": value,
+                "categories_target": {
+                    "cat_target_0": prop_magnitude_0,
+                    "cat_target_1": prop_magnitude_1,
+                    ...
+                } 
+                # NOTE: 
+                # key "categories_target" REQUIRED only if 
+                #   magnitude_type == "transfer_value_scalar"
+            }
+        }
         NOTE: caution should be taken to not overuse this; transition matrices
             can be chaotic, and modifying too many target categories may cause 
             strange behavior. 
@@ -290,7 +308,7 @@ def transformation_support_lndu_transition_to_category_targets_single_region(
     - regions_apply: optional set of regions to use to define strategy. If None,
         applies to all regions.
     - strategy_id: optional specification of strategy id to add to output
-        dataframe (only added if integer)HEREHERE
+        dataframe (only added if integer)
     """
 
     model_afolu = (
@@ -405,7 +423,7 @@ def transformation_support_lndu_transition_to_category_targets_single_region(
     fracs_target_final_tp = np.array([magnitude.get(x) for x in cats_to_modify])
 
     """
-    OPTION FOR EXPANSION: SPECIFY 
+    OPTION FOR EXPANSION: SPECIFY NON-LINEAR TARGETS (READ OFF OF vec_implementation_ramp)
 
     df_tp = df_input[[model_attributes.dim_time_period]].copy()
     
@@ -510,11 +528,6 @@ def transformation_support_lndu_transition_to_category_targets_single_region(
         qs[i] = model_afolu.adjust_transition_matrix(qs[i], dict_adj)
         x = np.dot(x, qs[i])
 
-        #scalar_true = x/x_next_unadj
-        #scalar_error = (scalar_true[inds_to_modify] - scalars_to_adj)/scalars_to_adj
-        #print(f"scalar_error:\t{scalar_error}")
-        #print(f"scalar_true:\t{scalar_true[inds_to_modify]}")
-        #print(f"scalars_to_adj (target):\t{scalars_to_adj}")
 
     # convert to input format and overwrite in output data
     df_out = model_afolu.format_transition_matrix_as_input_dataframe(qs)
