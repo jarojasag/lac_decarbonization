@@ -2543,12 +2543,12 @@ class TransformationsEnergy:
     ##############################
 
     def transformation_trde_reduce_demand(self,
-        df_trde: pd.DataFrame,
+        df_input: pd.DataFrame,
         strat: Union[int, None] = None,
     ) -> pd.DataFrame:
         """
         Implement the "Reduce Demand" TRDE transformation on input DataFrame
-            df_trde
+            df_input
         """
         # check input dataframe
         df_input = (
@@ -2558,7 +2558,7 @@ class TransformationsEnergy:
         )
 
         df_out = tbe.transformation_trde_reduce_demand(
-            df_trde,
+            df_input,
             0.25, 
             self.vec_implementation_ramp,
             self.model_attributes,
@@ -2953,7 +2953,7 @@ class TransformationsEnergy:
                     "bounds": (0, 1),
                     "magnitude": 0.25,
                     "magnitude_type": "transfer_value_scalar",
-                    "categories_source": ["aviation"],
+                    "categories_source": ["aviation", "road_light"],
                     "categories_target": {
                         "rail_passenger": 0.5,
                         "road_heavy_regional": 0.5

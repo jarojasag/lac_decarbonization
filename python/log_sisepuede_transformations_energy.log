@@ -1,341 +1,537 @@
-2023-05-25 17:05:55,123 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 15 strategies...
-2023-05-25 17:05:55,588 - INFO - 	Successfully built transformation strategy_id = 2001 ('TRWW: ALL') in 0.46 seconds.
-2023-05-25 17:05:55,953 - INFO - 	Successfully built transformation strategy_id = 2002 ('TRWW: Increase biogas capture') in 0.36 seconds.
-2023-05-25 17:05:56,169 - INFO - 	Successfully built transformation strategy_id = 2003 ('TRWW: Increase septic compliance') in 0.21 seconds.
-2023-05-25 17:05:56,438 - ERROR - 	Error trying to build transformation strategy_id = 2005: name 'df_strat_cur' is not defined
-2023-05-25 17:05:56,697 - ERROR - 	Error trying to build transformation strategy_id = 2006: name 'df_strat_cur' is not defined
-2023-05-25 17:05:57,059 - ERROR - 	Error trying to build transformation strategy_id = 2007: name 'df_strat_cur' is not defined
-2023-05-25 17:05:58,641 - ERROR - 	Error trying to build transformation strategy_id = 2008: 'NoneType' object is not iterable
-2023-05-25 17:05:58,959 - INFO - 	Successfully built transformation strategy_id = 2009 ('WASO: Biogas for energy production') in 0.32 seconds.
-2023-05-25 17:05:59,203 - INFO - 	Successfully built transformation strategy_id = 2010 ('WASO: Incineration for energy production') in 0.24 seconds.
-2023-05-25 17:05:59,468 - INFO - 	Successfully built transformation strategy_id = 2011 ('WASO: Increase biogas capture') in 0.26 seconds.
-2023-05-25 17:05:59,853 - INFO - 	Successfully built transformation strategy_id = 2012 ('WASO: Increase composting and biogas') in 0.38 seconds.
-2023-05-25 17:05:59,854 - ERROR - 	Error trying to build transformation strategy_id = 2013: 'NoneType' object is not iterable
-2023-05-25 17:06:00,164 - INFO - 	Successfully built transformation strategy_id = 2014 ('WASO: Increase recycling') in 0.31 seconds.
-2023-05-25 17:06:00,741 - INFO - 	Successfully built transformation strategy_id = 2015 ('WASO: Waste reduction') in 0.58 seconds.
-2023-05-25 17:06:01,437 - ERROR - 	Error trying to build transformation strategy_id = 2016: name 'df_strat_cur' is not defined
-2023-05-25 17:06:02,064 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 6.94 seconds.
-2023-05-25 17:07:24,144 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 15 strategies...
-2023-05-25 17:07:24,716 - INFO - 	Successfully built transformation strategy_id = 2001 ('TRWW: ALL') in 0.57 seconds.
-2023-05-25 17:07:24,978 - INFO - 	Successfully built transformation strategy_id = 2002 ('TRWW: Increase biogas capture') in 0.26 seconds.
-2023-05-25 17:07:25,201 - INFO - 	Successfully built transformation strategy_id = 2003 ('TRWW: Increase septic compliance') in 0.22 seconds.
-2023-05-25 17:07:25,615 - INFO - 	Successfully built transformation strategy_id = 2005 ('WALI: Improved industrial wastewater treatment') in 0.41 seconds.
-2023-05-25 17:07:25,936 - INFO - 	Successfully built transformation strategy_id = 2006 ('WALI: Improved rural wastewater treatment') in 0.32 seconds.
-2023-05-25 17:07:26,250 - INFO - 	Successfully built transformation strategy_id = 2007 ('WALI: Improved urban wastewater treatment') in 0.31 seconds.
-2023-05-25 17:07:28,029 - ERROR - 	Error trying to build transformation strategy_id = 2008: 'NoneType' object is not iterable
-2023-05-25 17:07:28,289 - INFO - 	Successfully built transformation strategy_id = 2009 ('WASO: Biogas for energy production') in 0.26 seconds.
-2023-05-25 17:07:28,697 - INFO - 	Successfully built transformation strategy_id = 2010 ('WASO: Incineration for energy production') in 0.41 seconds.
-2023-05-25 17:07:28,968 - INFO - 	Successfully built transformation strategy_id = 2011 ('WASO: Increase biogas capture') in 0.27 seconds.
-2023-05-25 17:07:29,259 - INFO - 	Successfully built transformation strategy_id = 2012 ('WASO: Increase composting and biogas') in 0.29 seconds.
-2023-05-25 17:07:29,260 - ERROR - 	Error trying to build transformation strategy_id = 2013: 'NoneType' object is not iterable
-2023-05-25 17:07:29,539 - INFO - 	Successfully built transformation strategy_id = 2014 ('WASO: Increase recycling') in 0.28 seconds.
-2023-05-25 17:07:30,258 - INFO - 	Successfully built transformation strategy_id = 2015 ('WASO: Waste reduction') in 0.72 seconds.
-2023-05-25 17:07:33,130 - ERROR - 	Error trying to build transformation strategy_id = 2016: 'NoneType' object is not iterable
-2023-05-25 17:07:33,724 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 9.58 seconds.
-2023-05-25 20:29:36,700 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 16 strategies...
-2023-05-25 20:29:37,581 - INFO - 	Successfully built transformation strategy_id = 2001 ('TRWW: ALL') in 0.88 seconds.
-2023-05-25 20:29:37,980 - INFO - 	Successfully built transformation strategy_id = 2002 ('TRWW: Increase biogas capture') in 0.4 seconds.
-2023-05-25 20:29:38,333 - INFO - 	Successfully built transformation strategy_id = 2003 ('TRWW: Increase septic compliance') in 0.35 seconds.
-2023-05-25 20:29:39,693 - INFO - 	Successfully built transformation strategy_id = 2004 ('WALI: All transformations') in 1.36 seconds.
-2023-05-25 20:29:40,105 - INFO - 	Successfully built transformation strategy_id = 2005 ('WALI: Improved industrial wastewater treatment') in 0.41 seconds.
-2023-05-25 20:29:40,629 - INFO - 	Successfully built transformation strategy_id = 2006 ('WALI: Improved rural wastewater treatment') in 0.52 seconds.
-2023-05-25 20:29:41,020 - INFO - 	Successfully built transformation strategy_id = 2007 ('WALI: Improved urban wastewater treatment') in 0.39 seconds.
-2023-05-25 20:29:44,154 - INFO - 	Successfully built transformation strategy_id = 2008 ('WASO: All solid waste') in 3.13 seconds.
-2023-05-25 20:29:44,581 - INFO - 	Successfully built transformation strategy_id = 2009 ('WASO: Biogas for energy production') in 0.43 seconds.
-2023-05-25 20:29:44,911 - INFO - 	Successfully built transformation strategy_id = 2010 ('WASO: Incineration for energy production') in 0.33 seconds.
-2023-05-25 20:29:45,257 - INFO - 	Successfully built transformation strategy_id = 2011 ('WASO: Increase biogas capture') in 0.34 seconds.
-2023-05-25 20:29:45,642 - INFO - 	Successfully built transformation strategy_id = 2012 ('WASO: Increase composting and biogas') in 0.38 seconds.
-2023-05-25 20:29:46,056 - INFO - 	Successfully built transformation strategy_id = 2013 ('WASO: Increase landfilling') in 0.41 seconds.
-2023-05-25 20:29:46,454 - INFO - 	Successfully built transformation strategy_id = 2014 ('WASO: Increase recycling') in 0.4 seconds.
-2023-05-25 20:29:47,219 - INFO - 	Successfully built transformation strategy_id = 2015 ('WASO: Waste reduction') in 0.76 seconds.
-2023-05-25 20:29:51,950 - INFO - 	Successfully built transformation strategy_id = 2016 ('CE: All Circular Economy transformations') in 4.73 seconds.
-2023-05-25 20:29:52,907 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 16.21 seconds.
-2023-05-28 17:43:49,519 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 16 strategies...
-2023-05-28 17:43:50,012 - INFO - 	Successfully built transformation strategy_id = 2001 ('TRWW: All wastewater treatment transformations') in 0.49 seconds.
-2023-05-28 17:43:50,547 - INFO - 	Successfully built transformation strategy_id = 2002 ('TRWW: Increase biogas capture') in 0.53 seconds.
-2023-05-28 17:43:50,789 - INFO - 	Successfully built transformation strategy_id = 2003 ('TRWW: Increase septic compliance') in 0.24 seconds.
-2023-05-28 17:43:51,635 - INFO - 	Successfully built transformation strategy_id = 2004 ('WALI: All transformations') in 0.84 seconds.
-2023-05-28 17:43:51,940 - INFO - 	Successfully built transformation strategy_id = 2005 ('WALI: Improved industrial wastewater treatment') in 0.3 seconds.
-2023-05-28 17:43:52,218 - INFO - 	Successfully built transformation strategy_id = 2006 ('WALI: Improved rural wastewater treatment') in 0.28 seconds.
-2023-05-28 17:43:52,502 - INFO - 	Successfully built transformation strategy_id = 2007 ('WALI: Improved urban wastewater treatment') in 0.28 seconds.
-2023-05-28 17:43:54,820 - INFO - 	Successfully built transformation strategy_id = 2008 ('WASO: All solid waste') in 2.32 seconds.
-2023-05-28 17:43:55,055 - INFO - 	Successfully built transformation strategy_id = 2009 ('WASO: Biogas for energy production') in 0.23 seconds.
-2023-05-28 17:43:55,291 - INFO - 	Successfully built transformation strategy_id = 2010 ('WASO: Incineration for energy production') in 0.23 seconds.
-2023-05-28 17:43:55,757 - INFO - 	Successfully built transformation strategy_id = 2011 ('WASO: Increase biogas capture') in 0.46 seconds.
-2023-05-28 17:43:56,051 - INFO - 	Successfully built transformation strategy_id = 2012 ('WASO: Increase composting and biogas') in 0.29 seconds.
-2023-05-28 17:43:56,278 - INFO - 	Successfully built transformation strategy_id = 2013 ('WASO: Increase landfilling') in 0.23 seconds.
-2023-05-28 17:43:56,545 - INFO - 	Successfully built transformation strategy_id = 2014 ('WASO: Increase recycling') in 0.27 seconds.
-2023-05-28 17:43:57,052 - INFO - 	Successfully built transformation strategy_id = 2015 ('WASO: Waste reduction') in 0.51 seconds.
-2023-05-28 17:44:00,847 - INFO - 	Successfully built transformation strategy_id = 2016 ('CE: All Circular Economy transformations') in 3.79 seconds.
-2023-05-28 17:44:01,601 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 12.08 seconds.
-2023-05-28 23:17:29,881 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 0 strategies...
-2023-05-28 23:17:29,927 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 0.05 seconds.
-2023-05-28 23:30:17,263 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 6 strategies...
-2023-05-28 23:30:18,091 - ERROR - 	Error trying to build transformation strategy_id = 4001: name 'model_ippu' is not defined
-2023-05-28 23:30:18,865 - INFO - 	Successfully built transformation strategy_id = 4010 ('IPPU: Reduce use of HFCs') in 0.77 seconds.
-2023-05-28 23:30:18,867 - ERROR - 	Error trying to build transformation strategy_id = 4011: name 'model_ippu' is not defined
-2023-05-28 23:30:19,271 - INFO - 	Successfully built transformation strategy_id = 4013 ('IPPU: Reduce other fluorinated compounds') in 0.4 seconds.
-2023-05-28 23:30:19,779 - INFO - 	Successfully built transformation strategy_id = 4014 ('IPPU: Reduce use of PFCs') in 0.51 seconds.
-2023-05-28 23:30:21,641 - INFO - 	Successfully built transformation strategy_id = 4015 ('IPPU: Reduce fluorinated gasses bundle') in 1.86 seconds.
-2023-05-28 23:30:21,840 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 4.58 seconds.
-2023-05-28 23:31:58,286 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 6 strategies...
-2023-05-28 23:32:00,163 - INFO - 	Successfully built transformation strategy_id = 4001 ('IP: All IP transformations') in 1.88 seconds.
-2023-05-28 23:32:00,939 - INFO - 	Successfully built transformation strategy_id = 4010 ('IPPU: Reduce use of HFCs') in 0.77 seconds.
-2023-05-28 23:32:01,398 - INFO - 	Successfully built transformation strategy_id = 4011 ('IPPU: Reduce Nitrous Oxide emissions') in 0.46 seconds.
-2023-05-28 23:32:01,760 - INFO - 	Successfully built transformation strategy_id = 4013 ('IPPU: Reduce other fluorinated compounds') in 0.36 seconds.
-2023-05-28 23:32:02,259 - INFO - 	Successfully built transformation strategy_id = 4014 ('IPPU: Reduce use of PFCs') in 0.5 seconds.
-2023-05-28 23:32:03,914 - INFO - 	Successfully built transformation strategy_id = 4015 ('IPPU: Reduce fluorinated gasses bundle') in 1.65 seconds.
-2023-05-28 23:32:04,208 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 5.92 seconds.
-2023-05-29 12:05:52,612 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 1 strategies...
-2023-05-29 12:05:52,618 - ERROR - 	Error trying to build transformation strategy_id = 2015: name 'tbg' is not defined
-2023-05-29 12:05:52,658 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 0.04 seconds.
-2023-05-29 12:06:44,593 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 1 strategies...
-2023-05-29 12:06:45,054 - INFO - 	Successfully built transformation strategy_id = 2015 ('WASO: Waste reduction') in 0.46 seconds.
-2023-05-29 12:06:45,142 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 0.55 seconds.
-2023-05-29 12:15:33,619 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 1 strategies...
-2023-05-29 12:15:34,092 - INFO - 	Successfully built transformation strategy_id = 2015 ('WASO: Waste reduction') in 0.47 seconds.
-2023-05-29 12:15:34,180 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 0.56 seconds.
-2023-05-29 12:16:35,033 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 1 strategies...
-2023-05-29 12:16:35,858 - INFO - 	Successfully built transformation strategy_id = 2015 ('WASO: Waste reduction') in 0.82 seconds.
-2023-05-29 12:16:35,943 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 0.91 seconds.
-2023-05-29 12:44:15,909 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 7 strategies...
-2023-05-29 12:44:17,830 - INFO - 	Successfully built transformation strategy_id = 4001 ('IP: All IP transformations') in 1.9 seconds.
-2023-05-29 12:44:18,614 - INFO - 	Successfully built transformation strategy_id = 4010 ('IPPU: Reduce use of HFCs') in 0.78 seconds.
-2023-05-29 12:44:19,840 - INFO - 	Successfully built transformation strategy_id = 4011 ('IPPU: Reduce Nitrous Oxide emissions') in 1.22 seconds.
-2023-05-29 12:44:20,216 - INFO - 	Successfully built transformation strategy_id = 4013 ('IPPU: Reduce other fluorinated compounds') in 0.37 seconds.
-2023-05-29 12:44:20,720 - INFO - 	Successfully built transformation strategy_id = 4014 ('IPPU: Reduce use of PFCs') in 0.5 seconds.
-2023-05-29 12:44:22,354 - INFO - 	Successfully built transformation strategy_id = 4015 ('IPPU: Reduce fluorinated gasses bundle') in 1.63 seconds.
-2023-05-29 12:44:22,355 - ERROR - 	Error trying to build transformation strategy_id = 4016: name 'transformation_ippu_reduce_demand' is not defined
-2023-05-29 12:44:22,621 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 6.71 seconds.
-2023-05-29 12:44:50,928 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 7 strategies...
-2023-05-29 12:44:53,009 - INFO - 	Successfully built transformation strategy_id = 4001 ('IP: All IP transformations') in 2.08 seconds.
-2023-05-29 12:44:53,807 - INFO - 	Successfully built transformation strategy_id = 4010 ('IPPU: Reduce use of HFCs') in 0.8 seconds.
-2023-05-29 12:44:54,041 - INFO - 	Successfully built transformation strategy_id = 4011 ('IPPU: Reduce Nitrous Oxide emissions') in 0.23 seconds.
-2023-05-29 12:44:54,400 - INFO - 	Successfully built transformation strategy_id = 4013 ('IPPU: Reduce other fluorinated compounds') in 0.36 seconds.
-2023-05-29 12:44:54,897 - INFO - 	Successfully built transformation strategy_id = 4014 ('IPPU: Reduce use of PFCs') in 0.5 seconds.
-2023-05-29 12:44:56,501 - INFO - 	Successfully built transformation strategy_id = 4015 ('IPPU: Reduce fluorinated gasses bundle') in 1.6 seconds.
-2023-05-29 12:44:56,812 - INFO - 	Successfully built transformation strategy_id = 4016 ('IPPU: Demand management') in 0.31 seconds.
-2023-05-29 12:44:57,111 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 6.18 seconds.
-2023-05-29 17:29:49,639 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 8 strategies...
-2023-05-29 17:29:49,979 - INFO - 	Successfully built transformation strategy_id = 4001 ('IPPU: Demand management') in 0.34 seconds.
-2023-05-29 17:29:49,981 - ERROR - 	Error trying to build transformation strategy_id = 4002: 'TransformationsIPPU' object has no attribute 'model_energy'
-2023-05-29 17:29:51,674 - INFO - 	Successfully built transformation strategy_id = 4003 ('IPPU: Reduce fluorinated gasses bundle') in 1.69 seconds.
-2023-05-29 17:29:52,206 - INFO - 	Successfully built transformation strategy_id = 4004 ('IPPU: Reduce Nitrous Oxide emissions') in 0.53 seconds.
-2023-05-29 17:29:52,574 - INFO - 	Successfully built transformation strategy_id = 4005 ('IPPU: Reduce other fluorinated compounds') in 0.37 seconds.
-2023-05-29 17:29:53,356 - INFO - 	Successfully built transformation strategy_id = 4006 ('IPPU: Reduce use of HFCs') in 0.78 seconds.
-2023-05-29 17:29:53,861 - INFO - 	Successfully built transformation strategy_id = 4007 ('IPPU: Reduce use of PFCs') in 0.5 seconds.
-2023-05-29 17:29:53,864 - ERROR - 	Error trying to build transformation strategy_id = 4008: 'TransformationsIPPU' object has no attribute 'model_energy'
-2023-05-29 17:29:54,295 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 4.66 seconds.
-2023-05-29 17:32:05,666 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 8 strategies...
-2023-05-29 17:32:06,037 - INFO - 	Successfully built transformation strategy_id = 4001 ('IPPU: Demand management') in 0.37 seconds.
-2023-05-29 17:32:06,285 - INFO - 	Successfully built transformation strategy_id = 4002 ('IPPU: Reduce cement clinker') in 0.25 seconds.
-2023-05-29 17:32:08,087 - INFO - 	Successfully built transformation strategy_id = 4003 ('IPPU: Reduce fluorinated gasses bundle') in 1.8 seconds.
-2023-05-29 17:32:08,656 - INFO - 	Successfully built transformation strategy_id = 4004 ('IPPU: Reduce Nitrous Oxide emissions') in 0.57 seconds.
-2023-05-29 17:32:09,053 - INFO - 	Successfully built transformation strategy_id = 4005 ('IPPU: Reduce other fluorinated compounds') in 0.4 seconds.
-2023-05-29 17:32:09,892 - INFO - 	Successfully built transformation strategy_id = 4006 ('IPPU: Reduce use of HFCs') in 0.84 seconds.
-2023-05-29 17:32:10,435 - INFO - 	Successfully built transformation strategy_id = 4007 ('IPPU: Reduce use of PFCs') in 0.54 seconds.
-2023-05-29 17:32:13,044 - INFO - 	Successfully built transformation strategy_id = 4008 ('IP: All IP transformations') in 2.61 seconds.
-2023-05-29 17:32:13,478 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 7.81 seconds.
-2023-05-30 18:30:35,179 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 3 strategies...
-2023-05-30 18:30:35,184 - ERROR - 	Error trying to build transformation strategy_id = 1001: transformation_agrc_reduce_supply_chain_losses() missing 2 required positional arguments: 'vec_ramp' and 'model_attributes'
-2023-05-30 18:30:35,187 - ERROR - 	Error trying to build transformation strategy_id = 1002: transformation_agrc_reduce_supply_chain_losses() missing 2 required positional arguments: 'vec_ramp' and 'model_attributes'
-2023-05-30 18:30:35,191 - ERROR - 	Error trying to build transformation strategy_id = 1003: transformation_agrc_reduce_supply_chain_losses() missing 2 required positional arguments: 'vec_ramp' and 'model_attributes'
-2023-05-30 18:30:35,239 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 0.06 seconds.
-2023-05-30 18:31:35,367 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 3 strategies...
-2023-05-30 18:31:35,372 - ERROR - 	Error trying to build transformation strategy_id = 1001: 'TransformationsAFOLU' object has no attribute 'vec_ramp'
-2023-05-30 18:31:35,376 - ERROR - 	Error trying to build transformation strategy_id = 1002: 'TransformationsAFOLU' object has no attribute 'vec_ramp'
-2023-05-30 18:31:35,380 - ERROR - 	Error trying to build transformation strategy_id = 1003: 'TransformationsAFOLU' object has no attribute 'vec_ramp'
-2023-05-30 18:31:35,427 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 0.06 seconds.
-2023-05-30 18:31:46,630 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 3 strategies...
-2023-05-30 18:31:46,636 - ERROR - 	Error trying to build transformation strategy_id = 1001: cannot access local variable 'model_ippu' where it is not associated with a value
-2023-05-30 18:31:46,640 - ERROR - 	Error trying to build transformation strategy_id = 1002: cannot access local variable 'model_ippu' where it is not associated with a value
-2023-05-30 18:31:46,645 - ERROR - 	Error trying to build transformation strategy_id = 1003: cannot access local variable 'model_ippu' where it is not associated with a value
-2023-05-30 18:31:46,694 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 0.06 seconds.
-2023-05-30 18:32:51,082 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 3 strategies...
-2023-05-30 18:32:51,088 - ERROR - 	Error trying to build transformation strategy_id = 1001: name 'tbg' is not defined
-2023-05-30 18:32:51,092 - ERROR - 	Error trying to build transformation strategy_id = 1002: name 'tbg' is not defined
-2023-05-30 18:32:51,096 - ERROR - 	Error trying to build transformation strategy_id = 1003: name 'tbg' is not defined
-2023-05-30 18:32:51,141 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 0.06 seconds.
-2023-05-30 18:33:11,484 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 3 strategies...
-2023-05-30 18:33:11,489 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 0.0 seconds.
-2023-05-30 18:33:11,494 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.0 seconds.
-2023-05-30 18:33:11,498 - INFO - 	Successfully built transformation strategy_id = 1003 ('AF: All AFOLU transformations') in 0.0 seconds.
-2023-05-30 18:33:11,540 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 0.06 seconds.
-2023-05-30 18:36:38,923 - INFO - TransformationsCircularEconomy.build_strategies_long() starting build of 3 strategies...
-2023-05-30 18:36:38,932 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 0.01 seconds.
-2023-05-30 18:36:38,935 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.0 seconds.
-2023-05-30 18:36:38,939 - INFO - 	Successfully built transformation strategy_id = 1003 ('AF: All AFOLU transformations') in 0.0 seconds.
-2023-05-30 18:36:38,981 - INFO - TransformationsCircularEconomy.build_strategies_long() build complete in 0.06 seconds.
-2023-05-30 18:40:02,055 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 3 strategies...
-2023-05-30 18:40:02,287 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 0.23 seconds.
-2023-05-30 18:40:02,514 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.23 seconds.
-2023-05-30 18:40:03,100 - INFO - 	Successfully built transformation strategy_id = 1003 ('AF: All AFOLU transformations') in 0.58 seconds.
-2023-05-30 18:40:03,281 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 1.23 seconds.
-2023-05-30 18:40:11,366 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 3 strategies...
-2023-05-30 18:40:11,591 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 0.22 seconds.
-2023-05-30 18:40:11,804 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.21 seconds.
-2023-05-30 18:40:12,025 - INFO - 	Successfully built transformation strategy_id = 1003 ('AF: All AFOLU transformations') in 0.22 seconds.
-2023-05-30 18:40:12,218 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 0.85 seconds.
-2023-05-31 00:44:07,340 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 4 strategies...
-2023-05-31 00:44:07,795 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 0.44 seconds.
-2023-05-31 00:44:08,016 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.22 seconds.
-2023-05-31 00:44:08,487 - INFO - 	Successfully built transformation strategy_id = 1003 ('AF: All AFOLU transformations') in 0.47 seconds.
-2023-05-31 00:44:10,006 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 1.52 seconds.
-2023-05-31 00:44:10,269 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 2.93 seconds.
-2023-05-31 00:45:30,229 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 4 strategies...
-2023-05-31 00:45:30,873 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 0.64 seconds.
-2023-05-31 00:45:31,179 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.3 seconds.
-2023-05-31 00:45:31,802 - INFO - 	Successfully built transformation strategy_id = 1003 ('AF: All AFOLU transformations') in 0.62 seconds.
-2023-05-31 00:45:32,100 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.3 seconds.
-2023-05-31 00:45:32,432 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 2.2 seconds.
-2023-05-31 00:46:12,087 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 4 strategies...
-2023-05-31 00:46:12,748 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 0.66 seconds.
-2023-05-31 00:46:13,048 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.3 seconds.
-2023-05-31 00:46:13,676 - INFO - 	Successfully built transformation strategy_id = 1003 ('AF: All AFOLU transformations') in 0.63 seconds.
-2023-05-31 00:46:13,984 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.31 seconds.
-2023-05-31 00:46:14,336 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 2.25 seconds.
-2023-05-31 00:58:19,906 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 5 strategies...
-2023-05-31 00:58:20,546 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 0.64 seconds.
-2023-05-31 00:58:20,882 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.33 seconds.
-2023-05-31 00:58:21,543 - INFO - 	Successfully built transformation strategy_id = 1003 ('AF: All AFOLU transformations') in 0.66 seconds.
-2023-05-31 00:58:21,843 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.3 seconds.
-2023-05-31 00:58:21,857 - ERROR - 	Error trying to build transformation strategy_id = 1020: iteration over a 0-d array
-2023-05-31 00:58:22,155 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 2.25 seconds.
-2023-05-31 01:01:30,169 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 6 strategies...
-2023-05-31 01:01:31,160 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 0.99 seconds.
-2023-05-31 01:01:31,466 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.3 seconds.
-2023-05-31 01:01:32,086 - ERROR - 	Error trying to build transformation strategy_id = 1003: iteration over a 0-d array
-2023-05-31 01:01:32,418 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.33 seconds.
-2023-05-31 01:01:32,433 - ERROR - 	Error trying to build transformation strategy_id = 1020: iteration over a 0-d array
-2023-05-31 01:01:32,441 - ERROR - 	Error trying to build transformation strategy_id = 1021: iteration over a 0-d array
-2023-05-31 01:01:32,688 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 2.52 seconds.
-2023-05-31 01:02:46,168 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 1 strategies...
-2023-05-31 01:02:46,182 - ERROR - 	Error trying to build transformation strategy_id = 1021: iteration over a 0-d array
-2023-05-31 01:02:46,240 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 0.07 seconds.
-2023-05-31 01:03:09,147 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 1 strategies...
-2023-05-31 01:03:09,160 - ERROR - 	Error trying to build transformation strategy_id = 1021: iteration over a 0-d array
-2023-05-31 01:03:09,216 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 0.07 seconds.
-2023-05-31 01:03:48,066 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 1 strategies...
-2023-05-31 01:03:48,083 - ERROR - 	Error trying to build transformation strategy_id = 1021: iteration over a 0-d array
-2023-05-31 01:03:48,155 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 0.09 seconds.
-2023-05-31 01:10:01,915 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 1 strategies...
-2023-05-31 01:10:02,645 - INFO - 	Successfully built transformation strategy_id = 1021 ('LVST: Reduce enteric fermentation') in 0.73 seconds.
-2023-05-31 01:10:02,797 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 0.88 seconds.
-2023-05-31 01:12:42,843 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 1 strategies...
-2023-05-31 01:12:43,593 - INFO - 	Successfully built transformation strategy_id = 1021 ('LVST: Reduce enteric fermentation') in 0.75 seconds.
-2023-05-31 01:12:43,737 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 0.89 seconds.
-2023-05-31 01:13:53,806 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 1 strategies...
-2023-05-31 01:13:54,900 - INFO - 	Successfully built transformation strategy_id = 1021 ('LVST: Reduce enteric fermentation') in 1.09 seconds.
-2023-05-31 01:13:55,028 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 1.22 seconds.
-2023-05-31 23:06:42,617 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 9 strategies...
-2023-05-31 23:06:43,325 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 0.7 seconds.
-2023-05-31 23:06:43,630 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.3 seconds.
-2023-05-31 23:06:46,185 - ERROR - 	Error trying to build transformation strategy_id = 1003: name 'vec_ramp' is not defined
-2023-05-31 23:06:46,538 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.35 seconds.
-2023-05-31 23:06:47,140 - INFO - 	Successfully built transformation strategy_id = 1020 ('LVST: All transformations') in 0.6 seconds.
-2023-05-31 23:06:47,740 - INFO - 	Successfully built transformation strategy_id = 1021 ('LVST: Reduce enteric fermentation') in 0.6 seconds.
-2023-05-31 23:06:47,742 - ERROR - 	Error trying to build transformation strategy_id = 1030: name 'vec_ramp' is not defined
-2023-05-31 23:06:47,744 - ERROR - 	Error trying to build transformation strategy_id = 1031: cannot access local variable 'model_afolu' where it is not associated with a value
-2023-05-31 23:06:47,745 - ERROR - 	Error trying to build transformation strategy_id = 1032: cannot access local variable 'model_afolu' where it is not associated with a value
-2023-05-31 23:06:48,101 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 5.48 seconds.
-2023-05-31 23:11:44,433 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 9 strategies...
-2023-05-31 23:11:45,040 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 0.61 seconds.
-2023-05-31 23:11:45,823 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.78 seconds.
-2023-05-31 23:11:48,130 - INFO - 	Successfully built transformation strategy_id = 1003 ('AF: All AFOLU transformations') in 2.3 seconds.
-2023-05-31 23:11:48,425 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.29 seconds.
-2023-05-31 23:11:49,361 - INFO - 	Successfully built transformation strategy_id = 1020 ('LVST: All transformations') in 0.94 seconds.
-2023-05-31 23:11:49,959 - INFO - 	Successfully built transformation strategy_id = 1021 ('LVST: Reduce enteric fermentation') in 0.6 seconds.
-2023-05-31 23:11:50,259 - INFO - 	Successfully built transformation strategy_id = 1030 ('SOIL: Expand conservation agriculture') in 0.3 seconds.
-2023-05-31 23:11:50,553 - INFO - 	Successfully built transformation strategy_id = 1031 ('SOIL: Improve fertilizer application') in 0.29 seconds.
-2023-05-31 23:11:50,848 - INFO - 	Successfully built transformation strategy_id = 1032 ('SOIL: Improve lime application') in 0.29 seconds.
-2023-05-31 23:11:51,384 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 6.95 seconds.
-2023-06-01 00:22:32,228 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 10 strategies...
-2023-06-01 00:22:34,149 - INFO - 	Successfully built transformation strategy_id = 1001 ('AGRC: All transformations') in 1.92 seconds.
-2023-06-01 00:22:34,501 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: Reduce supply chain losses') in 0.35 seconds.
-2023-06-01 00:22:36,770 - INFO - 	Successfully built transformation strategy_id = 1003 ('AF: All AFOLU transformations') in 2.27 seconds.
-2023-06-01 00:22:37,428 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.65 seconds.
-2023-06-01 00:22:37,769 - INFO - 	Successfully built transformation strategy_id = 1005 ('AGRC: Improve crop productivity') in 0.34 seconds.
-2023-06-01 00:22:38,427 - INFO - 	Successfully built transformation strategy_id = 1020 ('LVST: All transformations') in 0.66 seconds.
-2023-06-01 00:22:39,021 - INFO - 	Successfully built transformation strategy_id = 1021 ('LVST: Reduce enteric fermentation') in 0.59 seconds.
-2023-06-01 00:22:39,353 - INFO - 	Successfully built transformation strategy_id = 1030 ('LNDU: Expand conservation agriculture') in 0.33 seconds.
-2023-06-01 00:22:39,684 - INFO - 	Successfully built transformation strategy_id = 1031 ('SOIL: Improve fertilizer application') in 0.33 seconds.
-2023-06-01 00:22:39,978 - INFO - 	Successfully built transformation strategy_id = 1032 ('SOIL: Improve lime application') in 0.29 seconds.
-2023-06-01 00:22:40,568 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 8.34 seconds.
-2023-06-01 00:51:57,507 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 11 strategies...
-2023-06-01 00:52:00,522 - INFO - 	Successfully built transformation strategy_id = 1001 ('AF: All AFOLU transformations') in 3.01 seconds.
-2023-06-01 00:52:01,108 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: All transformations') in 0.58 seconds.
-2023-06-01 00:52:01,424 - INFO - 	Successfully built transformation strategy_id = 1003 ('AGRC: Improve crop productivity') in 0.31 seconds.
-2023-06-01 00:52:01,716 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.29 seconds.
-2023-06-01 00:52:02,026 - INFO - 	Successfully built transformation strategy_id = 1005 ('AGRC: Reduce supply chain losses') in 0.31 seconds.
-2023-06-01 00:52:02,342 - INFO - 	Successfully built transformation strategy_id = 1006 ('LNDU: Expand conservation agriculture') in 0.31 seconds.
-2023-06-01 00:52:03,602 - INFO - 	Successfully built transformation strategy_id = 1007 ('LVST: All transformations') in 1.26 seconds.
-2023-06-01 00:52:03,905 - INFO - 	Successfully built transformation strategy_id = 1008 ('LVST: Increase livestock productivity') in 0.3 seconds.
-2023-06-01 00:52:04,505 - INFO - 	Successfully built transformation strategy_id = 1009 ('LVST: Reduce enteric fermentation') in 0.6 seconds.
-2023-06-01 00:52:04,805 - INFO - 	Successfully built transformation strategy_id = 1011 ('SOIL: Improve fertilizer application') in 0.3 seconds.
-2023-06-01 00:52:05,106 - INFO - 	Successfully built transformation strategy_id = 1012 ('SOIL: Improve lime application') in 0.3 seconds.
-2023-06-01 00:52:05,892 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 8.38 seconds.
-2023-06-01 00:55:18,212 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 11 strategies...
-2023-06-01 00:55:21,347 - INFO - 	Successfully built transformation strategy_id = 1001 ('AF: All AFOLU transformations') in 3.13 seconds.
-2023-06-01 00:55:22,001 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: All transformations') in 0.65 seconds.
-2023-06-01 00:55:22,644 - INFO - 	Successfully built transformation strategy_id = 1003 ('AGRC: Improve crop productivity') in 0.64 seconds.
-2023-06-01 00:55:22,936 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.29 seconds.
-2023-06-01 00:55:23,233 - INFO - 	Successfully built transformation strategy_id = 1005 ('AGRC: Reduce supply chain losses') in 0.3 seconds.
-2023-06-01 00:55:23,559 - INFO - 	Successfully built transformation strategy_id = 1006 ('LNDU: Expand conservation agriculture') in 0.32 seconds.
-2023-06-01 00:55:24,495 - INFO - 	Successfully built transformation strategy_id = 1007 ('LVST: All transformations') in 0.93 seconds.
-2023-06-01 00:55:24,797 - INFO - 	Successfully built transformation strategy_id = 1008 ('LVST: Increase livestock productivity') in 0.3 seconds.
-2023-06-01 00:55:25,705 - INFO - 	Successfully built transformation strategy_id = 1009 ('LVST: Reduce enteric fermentation') in 0.91 seconds.
-2023-06-01 00:55:25,996 - INFO - 	Successfully built transformation strategy_id = 1010 ('SOIL: Improve fertilizer application') in 0.29 seconds.
-2023-06-01 00:55:26,284 - INFO - 	Successfully built transformation strategy_id = 1011 ('SOIL: Improve lime application') in 0.29 seconds.
-2023-06-01 00:55:27,063 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 8.85 seconds.
-2023-06-01 01:01:08,592 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 11 strategies...
-2023-06-01 01:01:09,518 - ERROR - 	Error trying to build transformation strategy_id = 1001: '>' not supported between instances of 'float' and 'dict'
-2023-06-01 01:01:10,104 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: All transformations') in 0.58 seconds.
-2023-06-01 01:01:10,769 - INFO - 	Successfully built transformation strategy_id = 1003 ('AGRC: Improve crop productivity') in 0.66 seconds.
-2023-06-01 01:01:11,060 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.29 seconds.
-2023-06-01 01:01:11,345 - INFO - 	Successfully built transformation strategy_id = 1005 ('AGRC: Reduce supply chain losses') in 0.28 seconds.
-2023-06-01 01:01:11,347 - ERROR - 	Error trying to build transformation strategy_id = 1006: '>' not supported between instances of 'float' and 'dict'
-2023-06-01 01:01:12,253 - INFO - 	Successfully built transformation strategy_id = 1007 ('LVST: All transformations') in 0.9 seconds.
-2023-06-01 01:01:12,594 - INFO - 	Successfully built transformation strategy_id = 1008 ('LVST: Increase livestock productivity') in 0.34 seconds.
-2023-06-01 01:01:13,247 - INFO - 	Successfully built transformation strategy_id = 1009 ('LVST: Reduce enteric fermentation') in 0.65 seconds.
-2023-06-01 01:01:13,847 - INFO - 	Successfully built transformation strategy_id = 1010 ('SOIL: Improve fertilizer application') in 0.6 seconds.
-2023-06-01 01:01:14,141 - INFO - 	Successfully built transformation strategy_id = 1011 ('SOIL: Improve lime application') in 0.29 seconds.
-2023-06-01 01:01:14,851 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 6.26 seconds.
-2023-06-01 01:01:42,861 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 11 strategies...
-2023-06-01 01:01:46,238 - INFO - 	Successfully built transformation strategy_id = 1001 ('AF: All AFOLU transformations') in 3.38 seconds.
-2023-06-01 01:01:46,824 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: All transformations') in 0.58 seconds.
-2023-06-01 01:01:47,148 - INFO - 	Successfully built transformation strategy_id = 1003 ('AGRC: Improve crop productivity') in 0.32 seconds.
-2023-06-01 01:01:47,444 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.29 seconds.
-2023-06-01 01:01:47,738 - INFO - 	Successfully built transformation strategy_id = 1005 ('AGRC: Reduce supply chain losses') in 0.29 seconds.
-2023-06-01 01:01:48,657 - INFO - 	Successfully built transformation strategy_id = 1006 ('LNDU: Expand conservation agriculture') in 0.92 seconds.
-2023-06-01 01:01:49,553 - INFO - 	Successfully built transformation strategy_id = 1007 ('LVST: All transformations') in 0.89 seconds.
-2023-06-01 01:01:49,852 - INFO - 	Successfully built transformation strategy_id = 1008 ('LVST: Increase livestock productivity') in 0.3 seconds.
-2023-06-01 01:01:50,473 - INFO - 	Successfully built transformation strategy_id = 1009 ('LVST: Reduce enteric fermentation') in 0.62 seconds.
-2023-06-01 01:01:50,791 - INFO - 	Successfully built transformation strategy_id = 1010 ('SOIL: Improve fertilizer application') in 0.31 seconds.
-2023-06-01 01:01:51,489 - INFO - 	Successfully built transformation strategy_id = 1011 ('SOIL: Improve lime application') in 0.7 seconds.
-2023-06-01 01:01:52,266 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 9.41 seconds.
-2023-06-01 01:04:29,955 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 11 strategies...
-2023-06-01 01:04:32,684 - ERROR - 	Error trying to build transformation strategy_id = 1001: unsupported operand type(s) for -: 'int' and 'NoneType'
-2023-06-01 01:04:33,297 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: All transformations') in 0.61 seconds.
-2023-06-01 01:04:33,619 - INFO - 	Successfully built transformation strategy_id = 1003 ('AGRC: Improve crop productivity') in 0.32 seconds.
-2023-06-01 01:04:33,903 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.28 seconds.
-2023-06-01 01:04:34,202 - INFO - 	Successfully built transformation strategy_id = 1005 ('AGRC: Reduce supply chain losses') in 0.3 seconds.
-2023-06-01 01:04:34,793 - INFO - 	Successfully built transformation strategy_id = 1006 ('LNDU: Expand conservation agriculture') in 0.59 seconds.
-2023-06-01 01:04:36,011 - INFO - 	Successfully built transformation strategy_id = 1007 ('LVST: All transformations') in 1.22 seconds.
-2023-06-01 01:04:36,322 - INFO - 	Successfully built transformation strategy_id = 1008 ('LVST: Increase livestock productivity') in 0.31 seconds.
-2023-06-01 01:04:36,905 - INFO - 	Successfully built transformation strategy_id = 1009 ('LVST: Reduce enteric fermentation') in 0.58 seconds.
-2023-06-01 01:04:36,907 - ERROR - 	Error trying to build transformation strategy_id = 1010: unsupported operand type(s) for -: 'int' and 'NoneType'
-2023-06-01 01:04:36,908 - ERROR - 	Error trying to build transformation strategy_id = 1011: unsupported operand type(s) for -: 'int' and 'NoneType'
-2023-06-01 01:04:37,446 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 7.49 seconds.
-2023-06-01 01:05:20,083 - INFO - TransformationsAFOLU.build_strategies_long() starting build of 11 strategies...
-2023-06-01 01:05:23,282 - INFO - 	Successfully built transformation strategy_id = 1001 ('AF: All AFOLU transformations') in 3.2 seconds.
-2023-06-01 01:05:24,208 - INFO - 	Successfully built transformation strategy_id = 1002 ('AGRC: All transformations') in 0.92 seconds.
-2023-06-01 01:05:24,542 - INFO - 	Successfully built transformation strategy_id = 1003 ('AGRC: Improve crop productivity') in 0.33 seconds.
-2023-06-01 01:05:24,832 - INFO - 	Successfully built transformation strategy_id = 1004 ('AGRC: Improve rice management') in 0.29 seconds.
-2023-06-01 01:05:25,125 - INFO - 	Successfully built transformation strategy_id = 1005 ('AGRC: Reduce supply chain losses') in 0.29 seconds.
-2023-06-01 01:05:25,688 - INFO - 	Successfully built transformation strategy_id = 1006 ('LNDU: Expand conservation agriculture') in 0.56 seconds.
-2023-06-01 01:05:26,552 - INFO - 	Successfully built transformation strategy_id = 1007 ('LVST: All transformations') in 0.86 seconds.
-2023-06-01 01:05:26,846 - INFO - 	Successfully built transformation strategy_id = 1008 ('LVST: Increase livestock productivity') in 0.29 seconds.
-2023-06-01 01:05:27,738 - INFO - 	Successfully built transformation strategy_id = 1009 ('LVST: Reduce enteric fermentation') in 0.89 seconds.
-2023-06-01 01:05:28,019 - INFO - 	Successfully built transformation strategy_id = 1010 ('SOIL: Improve fertilizer application') in 0.28 seconds.
-2023-06-01 01:05:28,351 - INFO - 	Successfully built transformation strategy_id = 1011 ('SOIL: Improve lime application') in 0.33 seconds.
-2023-06-01 01:05:29,079 - INFO - TransformationsAFOLU.build_strategies_long() build complete in 9.0 seconds.
+2023-06-08 12:36:42,285 - DEBUG - Loaded backend module://matplotlib_inline.backend_inline version unknown.
+2023-06-08 12:36:42,287 - DEBUG - Loaded backend module://matplotlib_inline.backend_inline version unknown.
+2023-06-08 12:36:42,294 - DEBUG - findfont: Matching sans\-serif:style=normal:variant=normal:weight=normal:stretch=normal:size=10.0.
+2023-06-08 12:36:42,295 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSansDisplay.ttf', name='DejaVu Sans Display', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,295 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/STIXSizOneSymBol.ttf', name='STIXSizeOneSym', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,295 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSerif-Bold.ttf', name='DejaVu Serif', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,295 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSerif-Italic.ttf', name='DejaVu Serif', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,295 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/STIXSizThreeSymBol.ttf', name='STIXSizeThreeSym', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,295 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/STIXNonUniBol.ttf', name='STIXNonUnicode', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,296 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/cmmi10.ttf', name='cmmi10', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,296 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSans-BoldOblique.ttf', name='DejaVu Sans', style='oblique', variant='normal', weight=700, stretch='normal', size='scalable')) = 1.335
+2023-06-08 12:36:42,296 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSansMono-Bold.ttf', name='DejaVu Sans Mono', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,296 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/STIXNonUni.ttf', name='STIXNonUnicode', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,296 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/STIXSizFiveSymReg.ttf', name='STIXSizeFiveSym', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,296 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSansMono-Oblique.ttf', name='DejaVu Sans Mono', style='oblique', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,296 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSans-Oblique.ttf', name='DejaVu Sans', style='oblique', variant='normal', weight=400, stretch='normal', size='scalable')) = 1.05
+2023-06-08 12:36:42,296 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/STIXSizFourSymReg.ttf', name='STIXSizeFourSym', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,296 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSerifDisplay.ttf', name='DejaVu Serif Display', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,296 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/STIXSizTwoSymReg.ttf', name='STIXSizeTwoSym', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,296 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/STIXSizFourSymBol.ttf', name='STIXSizeFourSym', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,296 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/STIXGeneralItalic.ttf', name='STIXGeneral', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,296 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/STIXGeneralBol.ttf', name='STIXGeneral', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,296 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/STIXNonUniIta.ttf', name='STIXNonUnicode', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,296 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/cmtt10.ttf', name='cmtt10', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,296 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSansMono.ttf', name='DejaVu Sans Mono', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,296 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/STIXSizThreeSymReg.ttf', name='STIXSizeThreeSym', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,296 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/cmr10.ttf', name='cmr10', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,296 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/STIXSizOneSymReg.ttf', name='STIXSizeOneSym', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,296 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSerif.ttf', name='DejaVu Serif', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,297 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/STIXGeneral.ttf', name='STIXGeneral', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,297 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSans-Bold.ttf', name='DejaVu Sans', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 0.33499999999999996
+2023-06-08 12:36:42,297 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSans.ttf', name='DejaVu Sans', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 0.05
+2023-06-08 12:36:42,297 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/cmss10.ttf', name='cmss10', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,297 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/cmsy10.ttf', name='cmsy10', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,297 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/STIXNonUniBolIta.ttf', name='STIXNonUnicode', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,297 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/cmb10.ttf', name='cmb10', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,297 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSansMono-BoldOblique.ttf', name='DejaVu Sans Mono', style='oblique', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,297 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/STIXSizTwoSymBol.ttf', name='STIXSizeTwoSym', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,297 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSerif-BoldItalic.ttf', name='DejaVu Serif', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,297 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/cmex10.ttf', name='cmex10', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,297 - DEBUG - findfont: score(FontEntry(fname='/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/STIXGeneralBolIta.ttf', name='STIXGeneral', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,297 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Menlo.ttc', name='Menlo', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,297 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXNonUniIta.otf', name='STIXNonUnicode', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,297 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansEgyptianHieroglyphs-Regular.ttf', name='Noto Sans Egyptian Hieroglyphs', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,297 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Baskerville.ttc', name='Baskerville', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,297 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFNSDisplayCondensed-Thin.otf', name='.SF NS Display Condensed', style='normal', variant='normal', weight=400, stretch='condensed', size='scalable')) = 10.25
+2023-06-08 12:36:42,297 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansTaiTham-Regular.ttf', name='Noto Sans Tai Tham', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,297 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/RAND/FuturaStd-BookOblique.otf', name='Futura Std', style='oblique', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,297 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Bodoni 72 OS.ttc', name='Bodoni 72 Oldstyle', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,298 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Constantia Italic.ttf', name='Constantia', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,298 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Times New Roman Bold.ttf', name='Times New Roman', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,298 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Times New Roman Italic.ttf', name='Times New Roman', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,298 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Kannada MN.ttc', name='Kannada MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,298 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFNSDisplayCondensed-Bold.otf', name='.SF NS Display Condensed', style='normal', variant='normal', weight=800, stretch='condensed', size='scalable')) = 10.629999999999999
+2023-06-08 12:36:42,298 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Rockwell.ttc', name='Rockwell', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,298 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Arial Italic.ttf', name='Arial', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 7.413636363636363
+2023-06-08 12:36:42,298 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/ヒラギノ角ゴシック W1.ttc', name='Hiragino Sans', style='normal', variant='normal', weight=200, stretch='normal', size='scalable')) = 10.24
+2023-06-08 12:36:42,299 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Tw Cen MT Italic.ttf', name='Tw Cen MT', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,299 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Meiryo Bold Italic.ttf', name='Meiryo', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,299 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Avenir.ttc', name='Avenir', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,299 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Gill Sans MT Bold.ttf', name='Gill Sans MT', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,299 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Papyrus.ttc', name='Papyrus', style='normal', variant='normal', weight=400, stretch='condensed', size='scalable')) = 10.25
+2023-06-08 12:36:42,299 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Apple Braille Pinpoint 6 Dot.ttf', name='Apple Braille', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,299 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansOldTurkic-Regular.ttf', name='Noto Sans Old Turkic', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,299 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansHanunoo-Regular.ttf', name='Noto Sans Hanunoo', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,299 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Tw Cen MT.ttf', name='Tw Cen MT', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,299 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Mishafi Gold.ttf', name='Mishafi Gold', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,299 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Times New Roman.ttf', name='Times New Roman', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,299 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Batang.ttf', name='Batang', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,299 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Beirut.ttc', name='Beirut', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,299 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/AmericanTypewriter.ttc', name='American Typewriter', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,299 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Malayalam MN.ttc', name='Malayalam MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,299 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/SignPainter.ttc', name='SignPainter', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,299 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Calibri.ttf', name='Calibri', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,299 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Phosphate.ttc', name='Phosphate', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,300 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/NotoSansOriya.ttc', name='Noto Sans Oriya', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,300 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansNewTaiLue-Regular.ttf', name='Noto Sans New Tai Lue', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,300 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansOldItalic-Regular.ttf', name='Noto Sans Old Italic', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,300 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Franklin Gothic Book Italic.ttf', name='Franklin Gothic Book', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,300 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/MS PGothic.ttf', name='MS PGothic', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,300 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Tw Cen MT Bold.ttf', name='Tw Cen MT', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,300 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Tamil Sangam MN.ttc', name='Tamil Sangam MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,300 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/RAND/AGaramondPro-Italic.otf', name='Adobe Garamond Pro', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,300 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXIntDBol.otf', name='STIXIntegralsD', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,300 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Waseem.ttc', name='Waseem', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,300 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/ヒラギノ角ゴシック W9.ttc', name='Hiragino Sans', style='normal', variant='normal', weight=900, stretch='normal', size='scalable')) = 10.525
+2023-06-08 12:36:42,300 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Nadeem.ttc', name='Nadeem', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,300 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/ヒラギノ丸ゴ ProN W4.ttc', name='Hiragino Maru Gothic Pro', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,300 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansSaurashtra-Regular.ttf', name='Noto Sans Saurashtra', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,300 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Gurmukhi.ttf', name='Gurmukhi MT', style='normal', variant='normal', weight=500, stretch='normal', size='scalable')) = 10.145
+2023-06-08 12:36:42,300 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansBuhid-Regular.ttf', name='Noto Sans Buhid', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,300 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Corbel Bold Italic.ttf', name='Corbel', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,300 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Verdana Italic.ttf', name='Verdana', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 4.6863636363636365
+2023-06-08 12:36:42,300 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/AppleGothic.ttf', name='AppleGothic', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,300 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansOsmanya-Regular.ttf', name='Noto Sans Osmanya', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,300 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/ヒラギノ角ゴシック W4.ttc', name='Hiragino Sans', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,301 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Noteworthy.ttc', name='Noteworthy', style='normal', variant='normal', weight=300, stretch='normal', size='scalable')) = 10.145
+2023-06-08 12:36:42,301 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Gurmukhi Sangam MN.ttc', name='Gurmukhi Sangam MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,301 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Oriya MN.ttc', name='Oriya MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,301 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Trattatello.ttf', name='Trattatello', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,301 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Helvetica.ttc', name='Helvetica', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 7.322727272727273
+2023-06-08 12:36:42,301 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Arial Narrow.ttf', name='Arial Narrow', style='normal', variant='normal', weight=400, stretch='condensed', size='scalable')) = 10.25
+2023-06-08 12:36:42,301 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXGeneralBol.otf', name='STIXGeneral', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,301 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Telugu Sangam MN.ttc', name='Telugu Sangam MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,301 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansCoptic-Regular.ttf', name='Noto Sans Coptic', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,301 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Cambria Italic.ttf', name='Cambria', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,301 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Palatino Linotype.ttf', name='Palatino Linotype', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,301 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/MS Reference Sans Serif.ttf', name='MS Reference Sans Serif', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,301 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansMandaic-Regular.ttf', name='Noto Sans Mandaic', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,301 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Wingdings 2.ttf', name='Wingdings 2', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,301 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansUgaritic-Regular.ttf', name='Noto Sans Ugaritic', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,301 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFCompactTextItalic.ttf', name='.SF Compact Text', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,301 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Songti.ttc', name='Songti SC', style='normal', variant='normal', weight=900, stretch='normal', size='scalable')) = 10.525
+2023-06-08 12:36:42,301 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/MingLiU.ttf', name='MingLiU', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,301 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansChakma-Regular.ttf', name='Noto Sans Chakma', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,301 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFNSTextCondensed-Regular.otf', name='.SF NS Text Condensed', style='normal', variant='normal', weight=400, stretch='condensed', size='scalable')) = 10.25
+2023-06-08 12:36:42,301 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/KohinoorTelugu.ttc', name='Kohinoor Telugu', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,301 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Apple Symbols.ttf', name='Apple Symbols', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,302 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Comic Sans MS Bold.ttf', name='Comic Sans MS', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,302 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXSizFiveSymReg.otf', name='STIXSizeFiveSym', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,302 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansTagbanwa-Regular.ttf', name='Noto Sans Tagbanwa', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,302 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFNSMonoItalic.ttf', name='.SF NS Mono', style='italic', variant='normal', weight=300, stretch='normal', size='scalable')) = 11.145
+2023-06-08 12:36:42,302 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/KohinoorBangla.ttc', name='Kohinoor Bangla', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,302 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/ArialHB.ttc', name='Arial Hebrew', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,302 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Franklin Gothic Book.ttf', name='Franklin Gothic Book', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,302 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Arial.ttf', name='Arial', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 6.413636363636363
+2023-06-08 12:36:42,302 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/DecoTypeNaskh.ttc', name='DecoType Naskh', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,302 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Tahoma Bold.ttf', name='Tahoma', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,302 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Didot.ttc', name='Didot', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,302 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/PTSerif.ttc', name='PT Serif', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,302 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXNonUniBolIta.otf', name='STIXNonUnicode', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,302 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/NotoSansArmenian.ttc', name='Noto Sans Armenian', style='normal', variant='normal', weight=900, stretch='normal', size='scalable')) = 10.525
+2023-06-08 12:36:42,302 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/PTMono.ttc', name='PT Mono', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,302 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/EuphemiaCAS.ttc', name='Euphemia UCAS', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,302 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Candara Bold.ttf', name='Candara', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,302 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Muna.ttc', name='Muna', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,302 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Bodoni 72 Smallcaps Book.ttf', name='Bodoni 72 Smallcaps', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,302 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Andale Mono.ttf', name='Andale Mono', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,302 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/SimSun-ExtB.ttf', name='SimSun-ExtB', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,302 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Malayalam Sangam MN.ttc', name='Malayalam Sangam MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,303 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansGothic-Regular.ttf', name='Noto Sans Gothic', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,303 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Arial Italic.ttf', name='Arial', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 7.413636363636363
+2023-06-08 12:36:42,303 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/PlantagenetCherokee.ttf', name='Plantagenet Cherokee', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,303 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Georgia Italic.ttf', name='Georgia', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,303 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/ArabicUIText.ttc', name='.Arabic UI Text', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,303 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Webdings.ttf', name='Webdings', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,303 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFCompactRounded.ttf', name='.SF Compact Rounded', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,303 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Gill Sans MT.ttf', name='Gill Sans MT', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,303 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/taile.ttf', name='Microsoft Tai Le', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,303 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Wingdings 3.ttf', name='Wingdings 3', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,303 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Impact.ttf', name='Impact', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,303 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansCarian-Regular.ttf', name='Noto Sans Carian', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,303 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Meiryo Italic.ttf', name='Meiryo', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,303 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Consolas Italic.ttf', name='Consolas', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,303 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/STHeiti Medium.ttc', name='Heiti TC', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,303 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Georgia Bold.ttf', name='Georgia', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,303 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Mshtakan.ttc', name='Mshtakan', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,303 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Gujarati Sangam MN.ttc', name='Gujarati Sangam MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,303 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansThaana-Regular.ttf', name='Noto Sans Thaana', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,303 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Arial Black.ttf', name='Arial Black', style='normal', variant='normal', weight=900, stretch='normal', size='scalable')) = 10.525
+2023-06-08 12:36:42,303 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Thonburi.ttc', name='Thonburi', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,303 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Myanmar Sangam MN.ttc', name='Myanmar Sangam MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,304 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFNSItalic.ttf', name='System Font', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,304 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansTaiLe-Regular.ttf', name='Noto Sans Tai Le', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,304 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Kohinoor.ttc', name='Kohinoor Devanagari', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,304 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/NotoNastaliq.ttc', name='Noto Nastaliq Urdu', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,304 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/ヒラギノ明朝 ProN.ttc', name='Hiragino Mincho ProN', style='normal', variant='normal', weight=300, stretch='normal', size='scalable')) = 10.145
+2023-06-08 12:36:42,304 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Diwan Thuluth.ttf', name='Diwan Thuluth', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,304 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Corbel Bold.ttf', name='Corbel', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,304 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFNS.ttf', name='System Font', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,304 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Consolas Bold.ttf', name='Consolas', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,304 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Bookshelf Symbol 7.ttf', name='Bookshelf Symbol 7', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,304 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Franklin Gothic Medium.ttf', name='Franklin Gothic Medium', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,304 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Times New Roman.ttf', name='Times New Roman', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,304 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Perpetua.ttf', name='Perpetua', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,304 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansLisu-Regular.ttf', name='Noto Sans Lisu', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,304 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXGeneralBolIta.otf', name='STIXGeneral', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,304 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/PingFang.ttc', name='PingFang HK', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,304 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansOgham-Regular.ttf', name='Noto Sans Ogham', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,304 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansMongolian-Regular.ttf', name='Noto Sans Mongolian', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,304 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Wingdings.ttf', name='Wingdings', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,304 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXSizTwoSymReg.otf', name='STIXSizeTwoSym', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,305 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/ヒラギノ角ゴシック W5.ttc', name='Hiragino Sans', style='normal', variant='normal', weight=500, stretch='normal', size='scalable')) = 10.145
+2023-06-08 12:36:42,305 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXIntSmReg.otf', name='STIXIntegralsSm', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,305 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/AlBayan.ttc', name='Al Bayan', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,305 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/STHeiti Light.ttc', name='Heiti TC', style='normal', variant='normal', weight=300, stretch='normal', size='scalable')) = 10.145
+2023-06-08 12:36:42,305 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Avenir Next.ttc', name='Avenir Next', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,305 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansSundanese-Regular.ttf', name='Noto Sans Sundanese', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,305 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansKharoshthi-Regular.ttf', name='Noto Sans Kharoshthi', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,305 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansSylotiNagri-Regular.ttf', name='Noto Sans Syloti Nagri', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,305 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXNonUni.otf', name='STIXNonUnicode', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,305 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/MS Reference Specialty.ttf', name='MS Reference Specialty', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,305 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Verdana Bold.ttf', name='Verdana', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 3.9713636363636367
+2023-06-08 12:36:42,305 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Mishafi.ttf', name='Mishafi', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,305 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Apple Chancery.ttf', name='Apple Chancery', style='normal', variant='normal', weight=0, stretch='normal', size='scalable')) = 10.43
+2023-06-08 12:36:42,305 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansLimbu-Regular.ttf', name='Noto Sans Limbu', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,305 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/MingLiU_HKSCS-ExtB.ttf', name='MingLiU_HKSCS-ExtB', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,305 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansYi-Regular.ttf', name='Noto Sans Yi', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,305 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/GillSans.ttc', name='Gill Sans', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,305 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXSizFourSymReg.otf', name='STIXSizeFourSym', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,305 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXIntUpSmBol.otf', name='STIXIntegralsUpSm', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,305 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Iowan Old Style.ttc', name='Iowan Old Style', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,306 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXIntUpSmReg.otf', name='STIXIntegralsUpSm', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,306 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Hoefler Text.ttc', name='Hoefler Text', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,306 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Apple Braille.ttf', name='Apple Braille', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,306 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/DIN Alternate Bold.ttf', name='DIN Alternate', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,306 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFNSDisplayCondensed-Black.otf', name='.SF NS Display Condensed', style='normal', variant='normal', weight=900, stretch='condensed', size='scalable')) = 10.725
+2023-06-08 12:36:42,306 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Bradley Hand Bold.ttf', name='Bradley Hand', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,306 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Brush Script.ttf', name='Brush Script MT', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,306 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/LucidaGrande.ttc', name='Lucida Grande', style='normal', variant='normal', weight=500, stretch='normal', size='scalable')) = 2.872272727272727
+2023-06-08 12:36:42,306 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/ヒラギノ角ゴシック W2.ttc', name='Hiragino Sans', style='normal', variant='normal', weight=250, stretch='normal', size='scalable')) = 10.1925
+2023-06-08 12:36:42,306 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Perpetua Bold.ttf', name='Perpetua', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,306 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Constantia Bold Italic.ttf', name='Constantia', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,306 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFNSDisplayCondensed-Regular.otf', name='.SF NS Display Condensed', style='normal', variant='normal', weight=600, stretch='condensed', size='scalable')) = 10.44
+2023-06-08 12:36:42,306 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Al Tarikh.ttc', name='Al Tarikh', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,306 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Keyboard.ttf', name='.Keyboard', style='normal', variant='normal', weight=100, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,306 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansBamum-Regular.ttf', name='Noto Sans Bamum', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,306 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/ヒラギノ角ゴシック W0.ttc', name='Hiragino Sans', style='normal', variant='normal', weight=100, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,306 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/msyi.ttf', name='Microsoft Yi Baiti', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,306 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXSizOneSymReg.otf', name='STIXSizeOneSym', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,306 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/MS PMincho.ttf', name='MS PMincho', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,306 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFNSDisplayCondensed-Heavy.otf', name='.SF NS Display Condensed', style='normal', variant='normal', weight=800, stretch='condensed', size='scalable')) = 10.629999999999999
+2023-06-08 12:36:42,307 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXGeneral.otf', name='STIXGeneral', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,307 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansInscriptionalParthian-Regular.ttf', name='Noto Sans Inscriptional Parthian', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,307 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansOldSouthArabian-Regular.ttf', name='Noto Sans Old South Arabian', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,307 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Tw Cen MT Bold Italic.ttf', name='Tw Cen MT', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,307 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/MS Mincho.ttf', name='MS Mincho', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,307 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Raanana.ttc', name='Raanana', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,307 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/ヒラギノ角ゴシック W3.ttc', name='Hiragino Sans', style='normal', variant='normal', weight=300, stretch='normal', size='scalable')) = 10.145
+2023-06-08 12:36:42,307 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansCham-Regular.ttf', name='Noto Sans Cham', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,307 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Chalkduster.ttf', name='Chalkduster', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,307 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Apple Braille Outline 8 Dot.ttf', name='Apple Braille', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,307 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Verdana Bold Italic.ttf', name='Verdana', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 4.971363636363637
+2023-06-08 12:36:42,307 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFNSRounded.ttf', name='.SF NS Rounded', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,307 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/NewYorkItalic.ttf', name='.New York', style='italic', variant='normal', weight=425, stretch='normal', size='scalable')) = 11.07375
+2023-06-08 12:36:42,307 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/SimHei.ttf', name='SimHei', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,307 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Marion.ttc', name='Marion', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,307 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Tamil MN.ttc', name='Tamil MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,307 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Comic Sans MS.ttf', name='Comic Sans MS', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,307 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Al Nile.ttc', name='Al Nile', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,307 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Microsoft Sans Serif.ttf', name='Microsoft Sans Serif', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,307 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansShavian-Regular.ttf', name='Noto Sans Shavian', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,307 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFNSTextCondensed-Semibold.otf', name='.SF NS Text Condensed', style='normal', variant='normal', weight=600, stretch='condensed', size='scalable')) = 10.44
+2023-06-08 12:36:42,308 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Palatino.ttc', name='Palatino', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,308 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/monbaiti.ttf', name='Mongolian Baiti', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,308 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Copperplate.ttc', name='Copperplate', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,308 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Sana.ttc', name='Sana', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,308 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/GujaratiMT.ttc', name='Gujarati MT', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,308 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Lao Sangam MN.ttf', name='Lao Sangam MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,308 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansLinearB-Regular.ttf', name='Noto Sans Linear B', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,308 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Savoye LET.ttc', name='Savoye LET', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,308 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Arial Unicode.ttf', name='Arial Unicode MS', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,308 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Perpetua Bold Italic.ttf', name='Perpetua', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,308 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/BigCaslon.ttf', name='Big Caslon', style='normal', variant='normal', weight=500, stretch='normal', size='scalable')) = 10.145
+2023-06-08 12:36:42,308 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXIntSmBol.otf', name='STIXIntegralsSm', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,308 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/ChalkboardSE.ttc', name='Chalkboard SE', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,309 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansImperialAramaic-Regular.ttf', name='Noto Sans Imperial Aramaic', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,309 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Bodoni 72.ttc', name='Bodoni 72', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,309 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Khmer Sangam MN.ttf', name='Khmer Sangam MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,309 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Calibril.ttf', name='Calibri', style='normal', variant='normal', weight=300, stretch='normal', size='scalable')) = 10.145
+2023-06-08 12:36:42,309 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/ヒラギノ角ゴシック W7.ttc', name='Hiragino Sans', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,309 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Trebuchet MS Italic.ttf', name='Trebuchet MS', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,309 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansKaithi-Regular.ttf', name='Noto Sans Kaithi', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,309 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Arial Bold Italic.ttf', name='Arial', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 7.698636363636363
+2023-06-08 12:36:42,309 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Farisi.ttf', name='Farisi', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,309 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Galvji.ttc', name='Galvji', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,309 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Palatino Linotype Bold.ttf', name='Palatino Linotype', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,309 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Wingdings.ttf', name='Wingdings', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,309 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/PMingLiU-ExtB.ttf', name='PMingLiU-ExtB', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,309 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Tahoma.ttf', name='Tahoma', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,309 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Georgia.ttf', name='Georgia', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,310 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/NotoSerifMyanmar.ttc', name='Noto Serif Myanmar', style='normal', variant='normal', weight=900, stretch='normal', size='scalable')) = 10.525
+2023-06-08 12:36:42,310 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Kokonor.ttf', name='Kokonor', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,310 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansGlagolitic-Regular.ttf', name='Noto Sans Glagolitic', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,310 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Arial Unicode.ttf', name='Arial Unicode MS', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,310 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFNSMono.ttf', name='.SF NS Mono', style='normal', variant='normal', weight=300, stretch='normal', size='scalable')) = 10.145
+2023-06-08 12:36:42,310 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Corbel.ttf', name='Corbel', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,310 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXIntUpBol.otf', name='STIXIntegralsUp', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,310 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Lucida Console.ttf', name='Lucida Console', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,310 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFNSDisplayCondensed-Medium.otf', name='.SF NS Display Condensed', style='normal', variant='normal', weight=600, stretch='condensed', size='scalable')) = 10.44
+2023-06-08 12:36:42,310 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSerifBalinese-Regular.ttf', name='Noto Serif Balinese', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,310 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Avenir Next Condensed.ttc', name='Avenir Next Condensed', style='normal', variant='normal', weight=700, stretch='condensed', size='scalable')) = 10.535
+2023-06-08 12:36:42,310 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFNSDisplayCondensed-Semibold.otf', name='.SF NS Display Condensed', style='normal', variant='normal', weight=700, stretch='condensed', size='scalable')) = 10.535
+2023-06-08 12:36:42,310 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansAvestan-Regular.ttf', name='Noto Sans Avestan', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,310 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansLycian-Regular.ttf', name='Noto Sans Lycian', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,310 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Times New Roman Bold Italic.ttf', name='Times New Roman', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,310 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Hiragino Sans GB.ttc', name='Hiragino Sans GB', style='normal', variant='normal', weight=300, stretch='normal', size='scalable')) = 10.145
+2023-06-08 12:36:42,310 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Sathu.ttf', name='Sathu', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,310 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Trebuchet MS Bold Italic.ttf', name='Trebuchet MS', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,310 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/TaiLeb.ttf', name='Microsoft Tai Le', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,310 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansSyriac-Regular.ttf', name='Noto Sans Syriac', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,311 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Optima.ttc', name='Optima', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,311 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/RAND/FuturaStd-HeavyOblique.otf', name='Futura Std', style='oblique', variant='normal', weight=650, stretch='normal', size='scalable')) = 11.2875
+2023-06-08 12:36:42,311 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Times New Roman Bold.ttf', name='Times New Roman', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,311 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/himalaya.ttf', name='Microsoft Himalaya', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,311 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/PTSerifCaption.ttc', name='PT Serif Caption', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,311 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Palatino Linotype Italic.ttf', name='Palatino Linotype', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,311 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansCuneiform-Regular.ttf', name='Noto Sans Cuneiform', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,311 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansRejang-Regular.ttf', name='Noto Sans Rejang', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,311 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Perpetua Italic.ttf', name='Perpetua', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,311 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXVar.otf', name='STIXVariants', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,311 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/NotoSansMyanmar.ttc', name='Noto Sans Myanmar', style='normal', variant='normal', weight=900, stretch='normal', size='scalable')) = 10.525
+2023-06-08 12:36:42,311 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Candara Bold Italic.ttf', name='Candara', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,311 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Gulim.ttf', name='Gulim', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,311 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansTifinagh-Regular.ttf', name='Noto Sans Tifinagh', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,311 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/RAND/AGaramondPro-Regular.otf', name='Adobe Garamond Pro', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,311 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Verdana Bold.ttf', name='Verdana', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 3.9713636363636367
+2023-06-08 12:36:42,311 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Diwan Kufi.ttc', name='Diwan Kufi', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,311 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/AppleSDGothicNeo.ttc', name='Apple SD Gothic Neo', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,311 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFNSTextCondensed-Heavy.otf', name='.SF NS Text Condensed', style='normal', variant='normal', weight=800, stretch='condensed', size='scalable')) = 10.629999999999999
+2023-06-08 12:36:42,311 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Courier New.ttf', name='Courier New', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,312 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Verdana Italic.ttf', name='Verdana', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 4.6863636363636365
+2023-06-08 12:36:42,312 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Skia.ttf', name='Skia', style='normal', variant='normal', weight=5, stretch='normal', size='scalable')) = 10.42525
+2023-06-08 12:36:42,312 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/DevanagariMT.ttc', name='Devanagari MT', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,312 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Constantia Bold.ttf', name='Constantia', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,312 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Myanmar MN.ttc', name='Myanmar MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,312 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFNSTextCondensed-Bold.otf', name='.SF NS Text Condensed', style='normal', variant='normal', weight=700, stretch='condensed', size='scalable')) = 10.535
+2023-06-08 12:36:42,312 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/MuktaMahee.ttc', name='Mukta Mahee', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,312 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Times New Roman Italic.ttf', name='Times New Roman', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,312 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/PTSans.ttc', name='PT Sans', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,312 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Oriya Sangam MN.ttc', name='Oriya Sangam MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,312 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Charter.ttc', name='Charter', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,312 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansBuginese-Regular.ttf', name='Noto Sans Buginese', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,312 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFNSTextCondensed-Light.otf', name='.SF NS Text Condensed', style='normal', variant='normal', weight=300, stretch='condensed', size='scalable')) = 10.344999999999999
+2023-06-08 12:36:42,312 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/HelveticaNeue.ttc', name='Helvetica Neue', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,312 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Verdana.ttf', name='Verdana', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 3.6863636363636365
+2023-06-08 12:36:42,312 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/ヒラギノ角ゴシック W8.ttc', name='Hiragino Sans', style='normal', variant='normal', weight=800, stretch='normal', size='scalable')) = 10.43
+2023-06-08 12:36:42,312 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Palatino Linotype Bold Italic.ttf', name='Palatino Linotype', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,312 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Apple Braille Pinpoint 8 Dot.ttf', name='Apple Braille', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,312 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Meiryo Bold.ttf', name='Meiryo', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,313 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Cambria.ttf', name='Cambria', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,313 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Calibri Bold.ttf', name='Calibri', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,313 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Kailasa.ttc', name='Kailasa', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,313 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/RAND/AGaramondPro-Bold.otf', name='Adobe Garamond Pro', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,313 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansOlChiki-Regular.ttf', name='Noto Sans Ol Chiki', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,313 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/AquaKana.ttc', name='.Aqua Kana', style='normal', variant='normal', weight=300, stretch='normal', size='scalable')) = 10.145
+2023-06-08 12:36:42,313 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansJavanese-Regular.otf', name='Noto Sans Javanese', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,313 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Candara Italic.ttf', name='Candara', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,313 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/PMingLiU.ttf', name='PMingLiU', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,313 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/DIN Condensed Bold.ttf', name='DIN Condensed', style='normal', variant='normal', weight=700, stretch='condensed', size='scalable')) = 10.535
+2023-06-08 12:36:42,313 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Shree714.ttc', name='Shree Devanagari 714', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,313 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Franklin Gothic Medium Italic.ttf', name='Franklin Gothic Medium', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,313 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXIntUpDBol.otf', name='STIXIntegralsUpD', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,313 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Zapfino.ttf', name='Zapfino', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,313 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/AppleMyungjo.ttf', name='AppleMyungjo', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,313 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansBatak-Regular.ttf', name='Noto Sans Batak', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,313 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Calibri Bold Italic.ttf', name='Calibri', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,313 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Times New Roman Bold Italic.ttf', name='Times New Roman', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,313 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansPhoenician-Regular.ttf', name='Noto Sans Phoenician', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,313 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/RAND/FuturaStd-Book.otf', name='Futura Std', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,313 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Courier New Bold.ttf', name='Courier New', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,313 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Corsiva.ttc', name='Corsiva Hebrew', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,314 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/InaiMathi-MN.ttc', name='InaiMathi', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,314 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFCompactDisplay.ttf', name='.SF Compact Display', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,314 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Georgia Bold Italic.ttf', name='Georgia', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,314 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Arial Rounded Bold.ttf', name='Arial Rounded MT Bold', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,314 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Gabriola.ttf', name='Gabriola', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,314 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXSizThreeSymReg.otf', name='STIXSizeThreeSym', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,314 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Courier New Italic.ttf', name='Courier New', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,314 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Meiryo.ttf', name='Meiryo', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,314 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Bangla Sangam MN.ttc', name='Bangla Sangam MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,314 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/GeezaPro.ttc', name='Geeza Pro', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,314 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansVai-Regular.ttf', name='Noto Sans Vai', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,314 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Krungthep.ttf', name='Krungthep', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,314 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Silom.ttf', name='Silom', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,314 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/KohinoorGujarati.ttc', name='Kohinoor Gujarati', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,314 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Brush Script.ttf', name='Brush Script MT', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,314 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/SnellRoundhand.ttc', name='Snell Roundhand', style='normal', variant='normal', weight=500, stretch='normal', size='scalable')) = 10.145
+2023-06-08 12:36:42,314 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Gill Sans MT Italic.ttf', name='Gill Sans MT', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,314 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Bangla MN.ttc', name='Bangla MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,314 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXIntDReg.otf', name='STIXIntegralsD', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,314 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Gill Sans MT Bold Italic.ttf', name='Gill Sans MT', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,314 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/ZapfDingbats.ttf', name='Zapf Dingbats', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,314 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Cambria Bold.ttf', name='Cambria', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Trebuchet MS Bold.ttf', name='Trebuchet MS', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansLepcha-Regular.ttf', name='Noto Sans Lepcha', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Luminari.ttf', name='Luminari', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXSizTwoSymBol.otf', name='STIXSizeTwoSym', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Constantia.ttf', name='Constantia', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Baghdad.ttc', name='Baghdad', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Ayuthaya.ttf', name='Ayuthaya', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Arial Bold Italic.ttf', name='Arial', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 7.698636363636363
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansTagalog-Regular.ttf', name='Noto Sans Tagalog', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Marlett.ttf', name='Marlett', style='normal', variant='normal', weight=500, stretch='normal', size='scalable')) = 10.145
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFNSDisplayCondensed-Light.otf', name='.SF NS Display Condensed', style='normal', variant='normal', weight=500, stretch='condensed', size='scalable')) = 10.344999999999999
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Sinhala MN.ttc', name='Sinhala MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Khmer MN.ttc', name='Khmer MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Arial Bold.ttf', name='Arial', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 6.698636363636363
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Seravek.ttc', name='Seravek', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Arial Bold.ttf', name='Arial', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 6.698636363636363
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Bodoni Ornaments.ttf', name='Bodoni Ornaments', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Futura.ttc', name='Futura', style='normal', variant='normal', weight=500, stretch='normal', size='scalable')) = 10.145
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Verdana.ttf', name='Verdana', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 3.6863636363636365
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXSizThreeSymBol.otf', name='STIXSizeThreeSym', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/SimSun.ttf', name='SimSun', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Sinhala Sangam MN.ttc', name='Sinhala Sangam MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,315 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Hoefler Text Ornaments.ttf', name='Hoefler Text', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/ArabicUIDisplay.ttc', name='.Arabic UI Display', style='normal', variant='normal', weight=900, stretch='normal', size='scalable')) = 10.525
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Symbol.ttf', name='Symbol', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Lucida Sans Unicode.ttf', name='Lucida Sans Unicode', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/MS Gothic.ttf', name='MS Gothic', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXIntUpReg.otf', name='STIXIntegralsUp', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Wingdings 3.ttf', name='Wingdings 3', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Athelas.ttc', name='Athelas', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/RAND/AGaramondPro-BoldItalic.otf', name='Adobe Garamond Pro', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Chalkboard.ttc', name='Chalkboard', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Telugu MN.ttc', name='Telugu MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/NotoSansKannada.ttc', name='Noto Sans Kannada', style='normal', variant='normal', weight=900, stretch='normal', size='scalable')) = 10.525
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/MarkerFelt.ttc', name='Marker Felt', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Cambria Bold Italic.ttf', name='Cambria', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansNKo-Regular.ttf', name='Noto Sans NKo', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansBrahmi-Regular.ttf', name='Noto Sans Brahmi', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXSizFourSymBol.otf', name='STIXSizeFourSym', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXSizOneSymBol.otf', name='STIXSizeOneSym', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Arial Narrow Italic.ttf', name='Arial Narrow', style='italic', variant='normal', weight=400, stretch='condensed', size='scalable')) = 11.25
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Lao MN.ttc', name='Lao MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Calibri Italic.ttf', name='Calibri', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Kefa.ttc', name='Kefa', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansInscriptionalPahlavi-Regular.ttf', name='Noto Sans Inscriptional Pahlavi', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFNSDisplayCondensed-Ultralight.otf', name='.SF NS Display Condensed', style='normal', variant='normal', weight=400, stretch='condensed', size='scalable')) = 10.25
+2023-06-08 12:36:42,316 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansKayahLi-Regular.ttf', name='Noto Sans Kayah Li', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,317 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Courier New Bold Italic.ttf', name='Courier New', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,317 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansPhagsPa-Regular.ttf', name='Noto Sans PhagsPa', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,317 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansCypriot-Regular.ttf', name='Noto Sans Cypriot', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,317 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Verdana Bold Italic.ttf', name='Verdana', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 4.971363636363637
+2023-06-08 12:36:42,317 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Arial Narrow Bold Italic.ttf', name='Arial Narrow', style='italic', variant='normal', weight=700, stretch='condensed', size='scalable')) = 11.535
+2023-06-08 12:36:42,317 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Herculanum.ttf', name='Herculanum', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,317 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Cambria Math.ttf', name='Cambria Math', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,317 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/SuperClarendon.ttc', name='Superclarendon', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,317 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Farah.ttc', name='Farah', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,317 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansRunic-Regular.ttf', name='Noto Sans Runic', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,317 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/ITFDevanagari.ttc', name='ITF Devanagari', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,317 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Corbel Italic.ttf', name='Corbel', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,317 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFCompactText.ttf', name='.SF Compact Text', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,317 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Arial Narrow Bold.ttf', name='Arial Narrow', style='normal', variant='normal', weight=700, stretch='condensed', size='scalable')) = 10.535
+2023-06-08 12:36:42,317 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/KufiStandardGK.ttc', name='KufiStandardGK', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,317 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Apple Braille Outline 6 Dot.ttf', name='Apple Braille', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,317 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/SFNSTextCondensed-Medium.otf', name='.SF NS Text Condensed', style='normal', variant='normal', weight=500, stretch='condensed', size='scalable')) = 10.344999999999999
+2023-06-08 12:36:42,317 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/HelveticaNeueDeskInterface.ttc', name='.Helvetica Neue DeskInterface', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,317 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXVarBol.otf', name='STIXVariants', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,317 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Candara.ttf', name='Candara', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,317 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/ヒラギノ角ゴシック W6.ttc', name='Hiragino Sans', style='normal', variant='normal', weight=600, stretch='normal', size='scalable')) = 10.24
+2023-06-08 12:36:42,317 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Trebuchet MS.ttf', name='Trebuchet MS', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansTaiViet-Regular.ttf', name='Noto Sans Tai Viet', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Cochin.ttc', name='Cochin', style='normal', variant='normal', weight=500, stretch='normal', size='scalable')) = 10.145
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansSamaritan-Regular.ttf', name='Noto Sans Samaritan', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Gurmukhi MN.ttc', name='Gurmukhi MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/mingliu_hkscs.ttf', name='MingLiU_HKSCS', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Damascus.ttc', name='Damascus', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Consolas.ttf', name='Consolas', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansMeeteiMayek-Regular.ttf', name='Noto Sans Meetei Mayek', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/SukhumvitSet.ttc', name='Sukhumvit Set', style='normal', variant='normal', weight=250, stretch='normal', size='scalable')) = 10.1925
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Consolas Bold Italic.ttf', name='Consolas', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NewPeninimMT.ttc', name='New Peninim MT', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Arial.ttf', name='Arial', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 6.413636363636363
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Devanagari Sangam MN.ttc', name='Devanagari Sangam MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansOldPersian-Regular.ttf', name='Noto Sans Old Persian', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXIntUpDReg.otf', name='STIXIntegralsUpD', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXGeneralItalic.otf', name='STIXGeneral', style='italic', variant='normal', weight=400, stretch='normal', size='scalable')) = 11.05
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/RAND/FuturaStd-Heavy.otf', name='Futura Std', style='normal', variant='normal', weight=650, stretch='normal', size='scalable')) = 10.2875
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/Kannada Sangam MN.ttc', name='Kannada Sangam MN', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/Wingdings 2.ttf', name='Wingdings 2', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/STIXNonUniBol.otf', name='STIXNonUnicode', style='normal', variant='normal', weight=700, stretch='normal', size='scalable')) = 10.335
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Supplemental/NotoSansLydian-Regular.ttf', name='Noto Sans Lydian', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/Library/Fonts/Microsoft/MingLiU-ExtB.ttf', name='MingLiU-ExtB', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,318 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/NewYork.ttf', name='.New York', style='normal', variant='normal', weight=425, stretch='normal', size='scalable')) = 10.07375
+2023-06-08 12:36:42,319 - DEBUG - findfont: score(FontEntry(fname='/System/Library/Fonts/Times.ttc', name='Times', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
+2023-06-08 12:36:42,319 - DEBUG - findfont: Matching sans\-serif:style=normal:variant=normal:weight=normal:stretch=normal:size=10.0 to DejaVu Sans ('/Users/jsyme/anaconda3/envs/amber_is_your_energy/lib/python3.11/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSans.ttf') with score of 0.050000.
+2023-06-08 16:41:24,785 - INFO - TransformationsEnergy.build_strategies_long() starting build of 67 strategies...
+2023-06-08 16:41:25,931 - INFO - 	Successfully built transformation strategy_id = 3001 ('CCSQ: Increase direct air capture') in 1.14 seconds.
+2023-06-08 16:41:28,936 - INFO - 	Successfully built transformation strategy_id = 3002 ('CCSQ: Increase direct air capture with renewable energy production') in 3.0 seconds.
+2023-06-08 16:41:31,057 - INFO - 	Successfully built transformation strategy_id = 3003 ('ENTC: 95% of electricity is generated by renewables in 2050') in 2.12 seconds.
+2023-06-08 16:41:31,559 - INFO - 	Successfully built transformation strategy_id = 3004 ('ENTC: Least cost solution') in 0.5 seconds.
+2023-06-08 16:41:32,411 - INFO - 	Successfully built transformation strategy_id = 3005 ('ENTC: Reduce transmission losses') in 0.85 seconds.
+2023-06-08 16:41:35,591 - INFO - 	Successfully built transformation strategy_id = 3006 ('ENTC: Reduce transmission losses with renewable energy production') in 3.18 seconds.
+2023-06-08 16:41:36,493 - INFO - 	Successfully built transformation strategy_id = 3007 ('FGTV: All Fugitive Emissions transformations') in 0.9 seconds.
+2023-06-08 16:41:39,815 - INFO - 	Successfully built transformation strategy_id = 3008 ('FGTV: All Fugitive Emissions transformations with renewable energy production') in 3.32 seconds.
+2023-06-08 16:41:40,055 - INFO - 	Successfully built transformation strategy_id = 3009 ('FGTV: Maximize flaring') in 0.24 seconds.
+2023-06-08 16:41:42,727 - INFO - 	Successfully built transformation strategy_id = 3010 ('FGTV: Maximize flaring with renewable energy production') in 2.67 seconds.
+2023-06-08 16:41:42,980 - INFO - 	Successfully built transformation strategy_id = 3011 ('FGTV: Minimize leaks') in 0.25 seconds.
+2023-06-08 16:41:45,559 - INFO - 	Successfully built transformation strategy_id = 3012 ('FGTV: Minimize leaks with renewable energy production') in 2.58 seconds.
+2023-06-08 16:41:48,837 - INFO - 	Successfully built transformation strategy_id = 3013 ('INEN: All Industrial Energy transformations') in 3.28 seconds.
+2023-06-08 16:41:54,618 - INFO - 	Successfully built transformation strategy_id = 3014 ('INEN: All Industrial Energy transformations with renewable energy production') in 5.78 seconds.
+2023-06-08 16:41:56,896 - INFO - 	Successfully built transformation strategy_id = 3015 ('INEN: Fuel switch low-temp thermal processes to industrial heat pumps') in 2.28 seconds.
+2023-06-08 16:42:01,673 - INFO - 	Successfully built transformation strategy_id = 3016 ('INEN: Fuel switch low-temp thermal processes to industrial heat pumps with renewable energy production') in 4.78 seconds.
+2023-06-08 16:42:02,444 - INFO - 	Successfully built transformation strategy_id = 3017 ('INEN: Fuel switch medium and high-temp thermal processes to hydrogen and electricity') in 0.77 seconds.
+2023-06-08 16:42:05,774 - INFO - 	Successfully built transformation strategy_id = 3018 ('INEN: Fuel switch medium and high-temp thermal processes to hydrogen and electricity with renewable energy production') in 3.33 seconds.
+2023-06-08 16:42:06,293 - INFO - 	Successfully built transformation strategy_id = 3019 ('INEN: Maximize industrial energy efficiency') in 0.52 seconds.
+2023-06-08 16:42:09,270 - INFO - 	Successfully built transformation strategy_id = 3020 ('INEN: Maximize industrial energy efficiency with renewable energy production') in 2.98 seconds.
+2023-06-08 16:42:09,607 - INFO - 	Successfully built transformation strategy_id = 3021 ('INEN: Maximize industrial production efficiency') in 0.34 seconds.
+2023-06-08 16:42:12,629 - INFO - 	Successfully built transformation strategy_id = 3022 ('INEN: Maximize industrial production efficiency with renewable energy production') in 3.02 seconds.
+2023-06-08 16:42:13,521 - INFO - 	Successfully built transformation strategy_id = 3023 ('SCOE: All Stationary Combustion and Other Energy transformations') in 0.89 seconds.
+2023-06-08 16:42:17,314 - INFO - 	Successfully built transformation strategy_id = 3024 ('SCOE: All Stationary Combustion and Other Energy transformations with renewable energy production') in 3.79 seconds.
+2023-06-08 16:42:17,764 - INFO - 	Successfully built transformation strategy_id = 3025 ('SCOE: Increase appliance efficiency') in 0.45 seconds.
+2023-06-08 16:42:21,055 - INFO - 	Successfully built transformation strategy_id = 3026 ('SCOE: Increase appliance efficiency with renewable energy production') in 3.29 seconds.
+2023-06-08 16:42:21,313 - INFO - 	Successfully built transformation strategy_id = 3027 ('SCOE: Reduce end-use demand for heat energy by improving building shell') in 0.26 seconds.
+2023-06-08 16:42:24,429 - INFO - 	Successfully built transformation strategy_id = 3028 ('SCOE: Reduce end-use demand for heat energy by improving building shell with renewable energy production') in 3.12 seconds.
+2023-06-08 16:42:24,814 - INFO - 	Successfully built transformation strategy_id = 3029 ('SCOE: Switch to electricity for heat using heat pumps, electric stoves, etc.') in 0.38 seconds.
+2023-06-08 16:42:28,006 - INFO - 	Successfully built transformation strategy_id = 3030 ('SCOE: Switch to electricity for heat using heat pumps, electric stoves, etc. with renewable energy production') in 3.19 seconds.
+2023-06-08 16:42:32,760 - INFO - 	Successfully built transformation strategy_id = 3031 ('TRNS: All Transportation transformations') in 4.75 seconds.
+2023-06-08 16:42:39,657 - INFO - 	Successfully built transformation strategy_id = 3032 ('TRNS: All Transportation transformations with renewable energy production') in 6.9 seconds.
+2023-06-08 16:42:40,392 - INFO - 	Successfully built transformation strategy_id = 3033 ('TRNS: Demand management bundle') in 0.73 seconds.
+2023-06-08 16:42:43,767 - INFO - 	Successfully built transformation strategy_id = 3034 ('TRNS: Demand management bundle with renewable energy production') in 3.37 seconds.
+2023-06-08 16:42:44,580 - INFO - 	Successfully built transformation strategy_id = 3035 ('TRNS: Efficiency bundle') in 0.81 seconds.
+2023-06-08 16:42:48,038 - INFO - 	Successfully built transformation strategy_id = 3036 ('TRNS: Efficiency bundle with renewable energy production') in 3.46 seconds.
+2023-06-08 16:42:48,350 - INFO - 	Successfully built transformation strategy_id = 3037 ('TRNS: Electrify light duty road transport') in 0.31 seconds.
+2023-06-08 16:42:51,230 - INFO - 	Successfully built transformation strategy_id = 3038 ('TRNS: Electrify light duty road transport with renewable energy production') in 2.88 seconds.
+2023-06-08 16:42:51,596 - INFO - 	Successfully built transformation strategy_id = 3039 ('TRNS: Electrify rail') in 0.37 seconds.
+2023-06-08 16:42:54,748 - INFO - 	Successfully built transformation strategy_id = 3040 ('TRNS: Electrify rail with renewable energy production') in 3.15 seconds.
+2023-06-08 16:42:57,367 - INFO - 	Successfully built transformation strategy_id = 3041 ('TRNS: Fuel switch bundle') in 2.62 seconds.
+2023-06-08 16:43:03,474 - INFO - 	Successfully built transformation strategy_id = 3042 ('TRNS: Fuel switch bundle with renewable energy production') in 6.11 seconds.
+2023-06-08 16:43:04,250 - INFO - 	Successfully built transformation strategy_id = 3043 ('TRNS: Fuel switch maritime') in 0.77 seconds.
+2023-06-08 16:43:07,316 - INFO - 	Successfully built transformation strategy_id = 3044 ('TRNS: Fuel switch maritime with renewable energy production') in 3.07 seconds.
+2023-06-08 16:43:08,651 - INFO - 	Successfully built transformation strategy_id = 3045 ('TRNS: Fuel switch medium duty road transport') in 1.33 seconds.
+2023-06-08 16:43:12,410 - INFO - 	Successfully built transformation strategy_id = 3046 ('TRNS: Fuel switch medium duty road transport with renewable energy production') in 3.76 seconds.
+2023-06-08 16:43:12,670 - INFO - 	Successfully built transformation strategy_id = 3047 ('TRNS: Increase occupancy for private vehicles') in 0.26 seconds.
+2023-06-08 16:43:15,456 - INFO - 	Successfully built transformation strategy_id = 3048 ('TRNS: Increase occupancy for private vehicles with renewable energy production') in 2.79 seconds.
+2023-06-08 16:43:15,697 - INFO - 	Successfully built transformation strategy_id = 3049 ('TRNS: Increase transportation electricity energy efficiency') in 0.24 seconds.
+2023-06-08 16:43:18,600 - INFO - 	Successfully built transformation strategy_id = 3050 ('TRNS: Increase transportation electricity energy efficiency with renewable energy production') in 2.9 seconds.
+2023-06-08 16:43:19,025 - INFO - 	Successfully built transformation strategy_id = 3051 ('TRNS: Increase transportation non-electricity energy efficiency') in 0.42 seconds.
+2023-06-08 16:43:22,285 - INFO - 	Successfully built transformation strategy_id = 3052 ('TRNS: Increase transportation non-electricity energy efficiency with renewable energy production') in 3.26 seconds.
+2023-06-08 16:43:23,202 - INFO - 	Successfully built transformation strategy_id = 3053 ('TRNS: Mode shift bundle') in 0.92 seconds.
+2023-06-08 16:43:27,202 - INFO - 	Successfully built transformation strategy_id = 3054 ('TRNS: Mode shift bundle with renewable energy production') in 4.0 seconds.
+2023-06-08 16:43:27,493 - INFO - 	Successfully built transformation strategy_id = 3055 ('TRNS: Mode shift freight') in 0.29 seconds.
+2023-06-08 16:43:30,125 - INFO - 	Successfully built transformation strategy_id = 3056 ('TRNS: Mode shift freight with renewable energy production') in 2.63 seconds.
+2023-06-08 16:43:30,360 - INFO - 	Successfully built transformation strategy_id = 3057 ('TRNS: Mode shift passenger vehicles to others') in 0.23 seconds.
+2023-06-08 16:43:32,876 - INFO - 	Successfully built transformation strategy_id = 3058 ('TRNS: Mode shift passenger vehicles to others with renewable energy production') in 2.52 seconds.
+2023-06-08 16:43:33,122 - INFO - 	Successfully built transformation strategy_id = 3059 ('TRNS: Mode shift regional passenger travel') in 0.24 seconds.
+2023-06-08 16:43:35,952 - INFO - 	Successfully built transformation strategy_id = 3060 ('TRNS: Mode shift regional passenger travel with renewable energy production') in 2.83 seconds.
+2023-06-08 16:43:36,214 - INFO - 	Successfully built transformation strategy_id = 3061 ('TRDE: Reduce demand for transport') in 0.26 seconds.
+2023-06-08 16:43:39,359 - INFO - 	Successfully built transformation strategy_id = 3062 ('TRDE: Reduce demand for transport with renewable energy production') in 3.14 seconds.
+2023-06-08 16:43:43,809 - INFO - 	Successfully built transformation strategy_id = 3063 ('EN: Efficiency bundle') in 4.45 seconds.
+2023-06-08 16:43:51,361 - INFO - 	Successfully built transformation strategy_id = 3064 ('EN: Efficiency bundle with renewable energy production') in 7.55 seconds.
+2023-06-08 16:43:56,682 - INFO - 	Successfully built transformation strategy_id = 3065 ('EN: Fuel switch bundle') in 5.32 seconds.
+2023-06-08 16:44:04,106 - INFO - 	Successfully built transformation strategy_id = 3066 ('EN: Fuel switch bundle with renewable energy production') in 7.42 seconds.
+2023-06-08 16:44:20,028 - INFO - 	Successfully built transformation strategy_id = 3067 ('EN: All Energy transformations') in 15.92 seconds.
+2023-06-08 16:44:24,896 - INFO - TransformationsEnergy.build_strategies_long() build complete in 180.11 seconds.

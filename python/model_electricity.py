@@ -114,6 +114,16 @@ class ElectricEnergy:
 
 
 
+    def __call__(self,
+        *args,
+        **kwargs
+    ) -> pd.DataFrame:
+
+        return self.project(*args, **kwargs)
+
+
+
+
 
     ##################################
     #    INITIALIZATION FUNCTIONS    #

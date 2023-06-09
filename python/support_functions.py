@@ -1706,6 +1706,30 @@ def prepend_first_element(
 
 
 
+def ramp_generic(
+    x: Union[float, int], 
+    n: int, 
+    a: int, 
+    b: int, 
+    c: Union[float, int],
+    d: Union[float, int, None] = None,
+) -> float:
+    """
+    *defaults*
+
+    for linear:
+    set a = 0, b = 2, c = 1, d = n/2
+    for sigmoid:
+    set a = 1, b = 0, c = math.e, d = n/2
+    """
+
+    d = n/2 if (d is None) else d
+    out = (a*n + b*x)/(n*(1 + c**(d - x)))
+
+    return out
+
+
+
 def read_ascii(
     fp: str
 ) -> Union[np.ndarray, None]:

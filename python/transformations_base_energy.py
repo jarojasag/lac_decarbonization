@@ -1689,7 +1689,11 @@ def transformation_inen_shift_modvars(
     cats_all = [set(model_attributes.get_variable_categories(x)) for x in modvars_target]
     cats_all = set.intersection(*cats_all)
 
-    categories = [x for x in attr_inen.key_values if x in categories]
+    categories = (
+        [x for x in attr_inen.key_values if x in categories]
+        if isinstance(categories, list)
+        else attr_inen.key_values
+    )
     cats_all = (
         set(cats_all) & set(categories)
         if len(categories) > 0

@@ -1,4 +1,5 @@
 from attribute_table import AttributeTable
+import itertools
 import logging
 from model_attributes import *
 from model_socioeconomic import Socioeconomic
@@ -66,6 +67,15 @@ class AFOLU:
         self._initialize_models()
         self._initialize_integrated_variables()
         self._initialize_other_properties()
+    
+
+
+    def __call__(self,
+        *args,
+        **kwargs
+    ) -> pd.DataFrame:
+
+        return self.project(*args, **kwargs)
 
 
 
@@ -848,6 +858,7 @@ class AFOLU:
             mat_scale[:, ind[0]] = np.ones(m)*dict_tuples_scale[ind]
             mat_pos_scale[:, ind[0]] = np.ones(m)
             mat_mask[:, ind[0]] = np.zeros(m)
+        
         # it may be of interest to ignore the diagonals when scaling columns
         if ignore_diag_on_col_scale:
             mat_diag = np.diag(tuple(np.ones(m)))
@@ -855,6 +866,7 @@ class AFOLU:
             mat_scale = (np.ones(mat.shape) - mat_diag)*mat_scale + mat_diag
             mat_pos_scale = sf.vec_bounds(mat_pos_scale - mat_diag, (0, 1))
             mat_mask =  sf.vec_bounds(mat_mask + mat_diag, (0, 1))
+        
         # next, adjust points - operate on the transpose of the matrix
         for ind in [x for x in dict_tuples_scale.keys() if len(x) == 2]:
             mat_scale[ind[0], ind[1]] = dict_tuples_scale[ind]
@@ -878,16 +890,20 @@ class AFOLU:
         mat_new_scaled = sf.vec_bounds(mat*mat_scale, mat_bounds)
         sums_row = sum(mat_new_scaled.transpose())
         sums_row_mask = sum((mat_mask_response_nodes*mat_mask*mat).transpose())
+        
         # get shift and positive scalar to apply to valid masked elements
         mask_shift_total = sums_row - 1
         mask_scalar = np.nan_to_num(sf.vec_bounds((sums_row_mask - mask_shift_total)/sums_row_mask, (0, np.inf)), 1.0, posinf = 1.0)
+       
         # get the masked nodes, multiply by the response scalar (at applicable columns, denoted by mat_mask_response_nodes), then add to
         mat_out = ((mat_mask_response_nodes*mat_mask*mat).transpose() * mask_scalar).transpose()
         mat_out += sf.vec_bounds(mat_mask*(1 - mat_mask_response_nodes), (0, 1))*mat
         mat_out += mat_pos_scale*mat_new_scaled
         mat_out = (mat_out.transpose()/sum(mat_out.transpose())).transpose()
 
-        return sf.vec_bounds(mat_out, (0, 1))
+        mat_out = sf.vec_bounds(mat_out, mat_bounds)
+
+        return mat_out
 
 
 
@@ -984,16 +1000,20 @@ class AFOLU:
         shape_param = D/10 if (shape_param is None) else shape_param
 
         # get functions that characterize SOC stock change from conversion - sequestration (sigmoid) and emissions (complementary sigmoid with double phase)
-        def emission_curve(x):
+        def emission_curve(x: float) -> float:
             d = D/2
             x_pr = x/(2*shape_param) + d*(shape_param - 1)/shape_param
             sig = 1/(1 + np.e**(d - x_pr))
+
             return 2*(1 - sig) - 1
-        def sequestration_curve(x):
+
+
+        def sequestration_curve(x: float) -> float:
             d = D/2
             #f_fan(x/shape_param + d*(shape_param - 1)/shape_param, D, 1, 0, np.e, d)
             x_pr = x/shape_param + d*(shape_param - 1)/shape_param
             sig = 1/(1 + np.e**(d - x_pr))
+
             return sig
 
         # get emission/sequestration proportions
@@ -1061,19 +1081,29 @@ class AFOLU:
             self.model_attributes default.
 
         """
-
-        attribute_land_use = self.model_attributes.get_attribute_table(self.subsec_name_lndu) if (attribute_land_use is None) else attribute_land_use
+        attribute_land_use = (
+            self.model_attributes.get_attribute_table(self.subsec_name_lndu) 
+            if (attribute_land_use is None) 
+            else attribute_land_use
+        )
         lmo_approach = self.model_attributes.configuration.get("land_use_reallocation_max_out_directionality")
-        lmo_approach = "decrease_only" if (lmo_approach is None) else lmo_approach
+        lmo_approach = (
+            "decrease_only" 
+            if (lmo_approach is None) 
+            else lmo_approach
+        )
 
-        if (
-            ((lmo_approach == "decrease_only") & (scalar_in < 1))
-            | ((lmo_approach == "increase_only") & (scalar_in > 1))
-            | (lmo_approach == "decrease_and_increase")
-        ):
-            out = [(1 if (x in self.cats_lndu_max_out_transition_probs) else 0) for x in attribute_land_use.key_values]
-        else:
-            out = np.zeros(attribute_land_use.n_key_values).astype(int)
+        # proceed only if any of the following 3 conditions are true
+        proceed_q = False
+        proceed_q |= ((lmo_approach == "decrease_only") & (scalar_in < 1))
+        proceed_q |= ((lmo_approach == "increase_only") & (scalar_in > 1))
+        proceed_q |= (lmo_approach == "decrease_and_increase")
+
+        out = (
+            [int(x in self.cats_lndu_max_out_transition_probs) for x in attribute_land_use.key_values]
+            if proceed_q
+            else np.zeros(attribute_land_use.n_key_values).astype(int)
+        )
 
         return out
 
@@ -1110,8 +1140,8 @@ class AFOLU:
             this transformation
         """
         n_tp = n_tp if (n_tp != None) else self.n_time_periods
-        fields_pij = self.model_attributes.dict_model_variables_to_variables[self.modvar_lndu_prob_transition]
-        fields_efc = self.model_attributes.dict_model_variables_to_variables[self.modvar_lndu_ef_co2_conv]
+        fields_pij = self.model_attributes.dict_model_variables_to_variables.get(self.modvar_lndu_prob_transition)
+        fields_efc = self.model_attributes.dict_model_variables_to_variables.get(self.modvar_lndu_ef_co2_conv)
         sf.check_fields(df_ordered_trajectories, fields_pij + fields_efc)
 
         pycat_landuse = self.model_attributes.get_subsector_attribute(self.subsec_name_lndu, "pycategory_primary")
@@ -1121,6 +1151,7 @@ class AFOLU:
         # fetch arrays of transition probabilities and co2 emission factors
         arr_pr = np.array(df_ordered_trajectories[fields_pij])
         arr_pr = arr_pr.reshape((n_tp, n_categories, n_categories))
+        #
         arr_ef = np.array(df_ordered_trajectories[fields_efc])
         arr_ef = arr_ef.reshape((n_tp, n_categories, n_categories))
 
@@ -1401,26 +1432,52 @@ class AFOLU:
 
     def format_transition_matrix_as_input_dataframe(self,
         mat: np.ndarray,
-        key_vals: list = None,
-        field_key: str = "key"
-    ) -> pd.DataFrame:
+        field_key: str = "key",
+        key_vals: Union[List[str], None] = None,
+        vec_time_periods: Union[List, np.ndarray, None] = None,
+    ) -> Union[pd.DataFrame, None]:
         """
         Convert an input transition matrix mat to a wide dataframe using 
             AFOLU.modvar_lndu_prob_transition as variable template
 
+        NOTE: Returns None on error.
+
+
         Function Arguments
         ------------------
-        - mat: row-stochastic transition matrix to format as wide data frame
+        - mat: row-stochastic transition matrix to format as wide data frame OR
+            array of row-stochastic transition matrices to format. If specifying
+            as array matrices, format_transition_matrix_as_input_dataframe()
+            will interpret as being associated with sequential time periods. 
+                * NOTE: Time periods can be specified using vec_time_periods. 
+                    Time periods specified in this way must have the same length
+                    as the array of matrices.
 
         Keyword Arguments
         -----------------
+        - field_key: temporary field to use for merging
         - key_vals: ordered land use categories representing states in mat. If
             None, default to attr_lndu.key_values. Should be of length n for
              mat an nxn transition matrix.
-        - field_key: temporary field to use for merging
+        - vec_time_periods: optional vector of time periods to specify for 
+            matrices. Does not affect implementation with single matrix. If
+            None and mat is an array of arrays, takes value of: 
+            
+            * ModelAttributes.time_period key_values (if mat is of same length)
+            * range(len(mat)) otherwise
         """
         attr_lndu = self.model_attributes.get_attribute_table(self.subsec_name_lndu)
-        key_vals = attr_lndu.key_values if (key_vals is None) else [x for x in key_vals if x in attr_lndu.key_values]
+        field_time_period = self.model_attributes.dim_time_period
+        attr_time_period = self.model_attributes.dict_attributes.get(f"dim_{field_time_period}")
+        key_vals = (
+            attr_lndu.key_values 
+            if (key_vals is None)
+            else [x for x in key_vals if x in attr_lndu.key_values]
+        )
+        
+
+        """
+        # PRESERVING IN CASE ISSUES ARISE WITH REVISION
 
         # setup as matrix
         df_mat = pd.DataFrame(mat, columns = key_vals)
@@ -1437,9 +1494,108 @@ class AFOLU:
         df_mat_melt["field"] = fields_names
         df_mat_melt.set_index("field", inplace = True)
         df_mat_melt = df_mat_melt[["value"]].transpose().reset_index(drop = True)
+        
         # doing this only to drop index
         df_out = pd.DataFrame()
         df_out[df_mat_melt.columns] = df_mat_melt[df_mat_melt.columns]
+        """;
+
+        ##  INITIALIZATION AND CHECKS
+
+        # shared variables in melt/pivot
+        field_field = "field"
+        field_value = "value"
+        field_variable = "variable"
+
+        # check if is a single matrix; if so, treat as list and reduce later
+        is_single_matrix = (len(mat.shape) == 2)
+        mat = np.array([mat]) if is_single_matrix else mat
+        mat_shape = mat.shape
+        vec_time_periods = np.zeros(1) if is_single_matrix else vec_time_periods
+
+        # check specification of time periods
+        if vec_time_periods is None:
+            # default to model attributes time period key values if same length
+            vec_time_periods = (
+                np.arange(mat_shape[0]).astype(int)
+                if mat_shape[0] != len(attr_time_period.key_values)
+                else attr_time_period.key_values
+            )
+
+        elif not sf.islistlike(vec_time_periods):
+            tp = str(type(vec_time_periods))
+            self._log(
+                f"Error in format_transition_matrix_as_input_dataframe: invalid type specifiation '{tp}' of vec_time_periods.",
+                type_log = "error"
+            )
+            return None
+
+        elif len(vec_time_periods) != len(mat):
+            self._log(
+                f"Error in format_transition_matrix_as_input_dataframe: invalid specifiation of vec_time_periods. The length of vec_time_periods ({len(vec_time_periods)}) and mat ({mat.shape[0]}) must be the same.",
+                type_log = "error"
+            )
+            return None
+
+
+        ##  BUILD DATA FRAME
+
+        # setup new fields - key values and time periods
+        field_key_vals = [x[1] for x in itertools.product(np.ones(mat_shape[0]), key_vals)]
+        field_time_periods = (
+            np.concatenate(
+                np.outer(
+                    vec_time_periods, 
+                    np.ones(mat.shape[1])
+                )
+            )
+            .astype(int)
+        )
+
+        # generate data frame before melting
+        df_mat = pd.DataFrame(
+            np.concatenate(mat), 
+            columns = key_vals
+        )
+        df_mat[field_key] = field_key_vals
+        df_mat[field_time_period] = field_time_periods
+
+
+        ##  MELT, APPLY VARIABLES, THEN PIVOT
+
+        # note: sorting is important here to ensure that variable names generated below are in correct order
+        df_out = (
+            pd.melt(
+                df_mat, 
+                id_vars = [field_time_period, field_key], 
+                value_vars = key_vals,
+                var_name = field_variable,
+                value_name = field_value,
+            )
+            .sort_values(by = [field_time_period, field_key, field_variable])
+            .reset_index(drop = True)
+        )
+
+        # get vars and expand 
+        field_variables = self.model_attributes.build_varlist(
+            self.subsec_name_lndu,
+            self.modvar_lndu_prob_transition,
+            restrict_to_category_values = key_vals
+        )
+        field_variables = [x[1] for x in itertools.product(np.ones(mat_shape[0]), field_variables)]
+        df_out[field_field] = field_variables
+
+        # pivot and drop time period if returning as single matrix
+        df_out = sf.pivot_df_clean(
+            df_out[[field_time_period, field_value, field_field]],
+            [field_field],
+            [field_value]
+        )
+        (
+            df_out.drop([field_time_period], axis = 1, inplace = True)
+            if is_single_matrix
+            else None
+        )
 
         return df_out
 
@@ -1734,7 +1890,6 @@ class AFOLU:
 
 
 
-    ##  
     def project_integrated_land_use(self,
         vec_initial_area: np.ndarray,
         arrs_transitions: np.ndarray,
@@ -1803,7 +1958,7 @@ class AFOLU:
         - arr_land_use,
         - arr_lvst_change_to_net_imports_lost,
         - arr_lvst_net_import_increase,
-        - arr_lvst_pop_adj,
+        - arr_lvst_pop_ardj,
         - arrs_land_conv,
         - arrs_transitions_adj,
         - arrs_yields_per_livestock
@@ -1849,19 +2004,45 @@ class AFOLU:
         arrs_transitions_adj = np.zeros(arrs_transitions.shape)
         arrs_yields_per_livestock = np.array([arr_lndu_yield_by_lvst for k in range(n_tp)])
 
+        """
+        Rough note on the transition adjustment process:
+
+        a. Start with land use prevalance at time ind_first_nz 
+            i. estimated as prevalence at 
+                x_{ind_first_nz - 1}Q_{ind_first_nz - 1}
+        b. Using land use carrying capacity and pasture fraction & crop demands,
+             get requirements for livestock and use to adjust pasture and
+             cropland requirement (see scalar_lndu_pstr and scalar_lndu_crop,
+             respectively)
+            i. Use `model_afolu.get_lndu_scalar_max_out_states` to get true 
+                positional scalars. This accounts for states that might 
+                "max out" (as determined by 
+                model_afolu.mask_lndu_max_out_states), or reach 1 or 0 
+                probability during the scaling process.
+        c. Then, with the scalars obtained, adjust the matrix using 
+            model_afolu.adjust_transition_matrix
+        """
         # initialize running matrix of land use and iteration index i
         x = vec_initial_area
         i = 0
 
         while i < n_tp - 1:
+            
             # check emission factor index
             i_ef = i if (i < len(arrs_efs)) else len(arrs_efs) - 1
             if i_ef != i:
-                print(f"No emission factor matrix found for time period {self.time_periods[i]}; using the matrix from period {len(arrs_efs) - 1}.")
+                self._log(
+                    f"No emission factor matrix found for time period {self.time_periods[i]}; using the matrix from period {len(arrs_efs) - 1}.",
+                    type_log = "warning"
+                )
+
             # check transition matrix index
             i_tr = i if (i < len(arrs_transitions)) else len(arrs_transitions) - 1
             if i_tr != i:
-                print(f"No transition matrix found for time period {self.time_periods[i]}; using the matrix from period {len(arrs_efs) - 1}.")
+                self._log(
+                    f"No transition matrix found for time period {self.time_periods[i]}; using the matrix from period {len(arrs_efs) - 1}.",
+                    type_log = "warning"
+                )
 
             # calculate the unadjusted land use areas (projected to time step i + 1)
             area_crop_cur = x[self.ind_lndu_crop]
@@ -1870,28 +2051,35 @@ class AFOLU:
             area_pstr_proj = np.dot(x, arrs_transitions[i_tr][:, self.ind_lndu_grass])*vec_lndu_frac_grassland_pasture[i + 1]
             vec_agrc_cropland_area_proj = area_crop_proj*arr_agrc_frac_cropland[i]
 
-            # LIVESTOCK - calculate carrying capacities, demand used for pasture reallocation, and net surplus
+
+            ##  LIVESTOCK - calculate carrying capacities, demand used for pasture reallocation, and net surplus
+            
             vec_lvst_cc_proj = vec_lvst_scale_cc[i + 1]*vec_lvst_cc_init
             inds_lvst_where_pop_noncc = np.where(vec_lvst_cc_proj == 0)[0]
             vec_lvst_prod_proj = vec_lvst_cc_proj*area_pstr_proj*vec_lvst_pstr_weights
             vec_lvst_unmet_demand = np.nan_to_num(arr_lvst_dem[i + 1] - vec_lvst_prod_proj)
+            
             # calculate net surplus met
             vec_lvst_unmet_demand_to_impexp = sf.vec_bounds(vec_lvst_unmet_demand, (0, np.inf))*arr_lndu_frac_increasing_net_imports_met[i + 1, self.ind_lndu_grass]
             vec_lvst_unmet_demand_to_impexp += sf.vec_bounds(vec_lvst_unmet_demand, (-np.inf, 0))*arr_lndu_frac_increasing_net_exports_met[i + 1, self.ind_lndu_grass]
             vec_lvst_unmet_demand_lost = vec_lvst_unmet_demand - vec_lvst_unmet_demand_to_impexp
+            
             # update production in livestock to account for lost unmet demand (unmet demand is + if imports increase, - if exports increase)
             vec_lvst_pop_adj = vec_lvst_prod_proj + vec_lvst_unmet_demand_lost
             if len(inds_lvst_where_pop_noncc) > 0:
                 np.put(vec_lvst_unmet_demand_to_impexp, inds_lvst_where_pop_noncc, 0)
                 np.put(vec_lvst_unmet_demand_lost, inds_lvst_where_pop_noncc, 0)
                 np.put(vec_lvst_pop_adj, inds_lvst_where_pop_noncc, arr_lvst_dem[i + 1, inds_lvst_where_pop_noncc])
+            
             # get unmet demand, reallocation, and final increase to net imports, then update the population
             vec_lvst_unmet_demand = vec_lvst_unmet_demand_to_impexp
             vec_lvst_reallocation = vec_lvst_unmet_demand*vec_lndu_yrf[i + 1] # demand for livestock met by reallocating land
             vec_lvst_net_import_increase = vec_lvst_unmet_demand - vec_lvst_reallocation # demand for livestock met by increasing net imports (neg => net exports)
             vec_lvst_pop_adj += vec_lvst_reallocation
+            
             # update output arrays
             arr_lvst_pop_adj[i + 1] = np.round(vec_lvst_pop_adj).astype(int)
+            
             # set growth in livestock relative to baseline and carrying capacity
             vec_lvst_dem_gr_iterator = np.nan_to_num(vec_lvst_pop_adj/arr_lvst_dem[0], 1.0, posinf = 1.0)
             vec_lvst_cc_proj_adj = np.nan_to_num(vec_lvst_pop_adj/(area_pstr_proj*vec_lvst_pstr_weights), 0.0, posinf = 0.0)
@@ -1908,27 +2096,34 @@ class AFOLU:
                 mask_max_out_states = mask_lndu_max_out_states_pstr
             )
 
-            # AGRICULTURE - calculate demand increase in crops, which is a function of gdp/capita (exogenous) and livestock demand (used for feed)
+
+            ##  AGRICULTURE - calculate demand increase in crops, which is a function of gdp/capita (exogenous) and livestock demand (used for feed)
+            
             vec_agrc_feed_dem_yield = sum((arr_lndu_yield_by_lvst*vec_lvst_dem_gr_iterator).transpose())
             vec_agrc_total_dem_yield = (arr_agrc_production_nonfeed_unadj[i + 1] + vec_agrc_feed_dem_yield)
+            
             # calculate net surplus for yields
             vec_agrc_proj_yields = vec_agrc_cropland_area_proj*arr_agrc_yield_factors[i + 1]
             vec_agrc_unmet_demand_yields = vec_agrc_total_dem_yield - vec_agrc_proj_yields
             vec_agrc_unmet_demand_yields_to_impexp = sf.vec_bounds(vec_agrc_unmet_demand_yields, (0, np.inf))*arr_lndu_frac_increasing_net_imports_met[i + 1, self.ind_lndu_crop]
             vec_agrc_unmet_demand_yields_to_impexp += sf.vec_bounds(vec_agrc_unmet_demand_yields, (-np.inf, 0))*arr_lndu_frac_increasing_net_exports_met[i + 1, self.ind_lndu_crop]
             vec_agrc_unmet_demand_yields_lost = vec_agrc_unmet_demand_yields - vec_agrc_unmet_demand_yields_to_impexp
+            
             # adjust yields for import/export scalar
             vec_agrc_proj_yields_adj = vec_agrc_proj_yields + vec_agrc_unmet_demand_yields_lost
             vec_agrc_yield_factors_adj = np.nan_to_num(vec_agrc_proj_yields_adj/vec_agrc_cropland_area_proj, 0.0, posinf = 0.0) # replaces arr_agrc_yield_factors[i + 1] below
             vec_agrc_total_dem_yield = vec_agrc_proj_yields_adj + vec_agrc_unmet_demand_yields_to_impexp
+            
             # now, generate modified crop areas and net surplus of crop areas
             vec_agrc_dem_cropareas = np.nan_to_num(vec_agrc_total_dem_yield/vec_agrc_yield_factors_adj, posinf = 0.0)
             vec_agrc_unmet_demand = vec_agrc_dem_cropareas - vec_agrc_cropland_area_proj
             vec_agrc_reallocation = vec_agrc_unmet_demand*vec_lndu_yrf[i + 1]
+            
             # get surplus yield (increase to net imports)
             vec_agrc_net_imports_increase = (vec_agrc_unmet_demand - vec_agrc_reallocation)*vec_agrc_yield_factors_adj
             vec_agrc_cropareas_adj = vec_agrc_cropland_area_proj + vec_agrc_reallocation
             vec_agrc_yield_adj = vec_agrc_total_dem_yield - vec_agrc_net_imports_increase
+            
             # get the true scalar
             scalar_lndu_crop = sum(vec_agrc_cropareas_adj)/np.dot(x, arrs_transitions[i_tr][:, self.ind_lndu_crop])
             mask_lndu_max_out_states_crop = self.get_lndu_scalar_max_out_states(scalar_lndu_crop)
@@ -1950,11 +2145,13 @@ class AFOLU:
             dict_adj.update(
                 dict(zip([(r, self.ind_lndu_crop) for r in range(len(scalar_lndu_crop))], scalar_lndu_crop))
             )
+
             # force settlements and mangroves to stay stable
             dict_adj.update({
                 (self.ind_lndu_fstm, ): 1,
                 (self.ind_lndu_stlm, ): 1
             })
+
             # force primary forest to other categories to stay stable (if applicable)
             cats_ignore = [self.cat_lndu_crop, self.cat_lndu_fstp, self.cat_lndu_grass]
             ind_lndu_fstp = attr_lndu.get_key_value_index(self.cat_lndu_fstp)
@@ -1965,7 +2162,10 @@ class AFOLU:
 
 
             # adjust the transition matrix
-            trans_adj = self.adjust_transition_matrix(arrs_transitions[i_tr], dict_adj)
+            trans_adj = self.adjust_transition_matrix(
+                arrs_transitions[i_tr], 
+                dict_adj
+            )
             # calculate final land conversion and emissions
             arr_land_conv = (trans_adj.transpose()*x.transpose()).transpose()
             vec_emissions_conv = sum((trans_adj*arrs_efs[i_ef]).transpose()*x.transpose())
@@ -2022,19 +2222,18 @@ class AFOLU:
 
 
 
-    def project_land_use(
-        self,
+    def project_land_use(self,
         vec_initial_area: np.ndarray,
         arrs_transitions: np.ndarray,
         arrs_efs: np.ndarray,
-        n_tp: int = None
-    ) -> tuple:
+        n_tp: Union[int, None] = None,
+    ) -> Tuple:
 
         """
-            NEED DOCSTRING
+        NEED DOCSTRING
 
-            Function Arguments
-            ------------------
+        Function Arguments
+        ------------------
         """
 
         t0 = time.time()
@@ -2063,20 +2262,36 @@ class AFOLU:
         while i < n_tp:
             # check emission factor index
             i_ef = i if (i < len(arrs_efs)) else len(arrs_efs) - 1
-            if i_ef != i:
-                print(f"No emission factor matrix found for time period {self.time_periods[i]}; using the matrix from period {len(arrs_efs) - 1}.")
+            (
+                self._log(
+                    f"No emission factor matrix found for time period {self.time_periods[i]}; using the matrix from period {len(arrs_efs) - 1}.",
+                    type_log = "info"
+                )
+                if i_ef != i
+                else None
+            )
+
             # check transition matrix index
             i_tr = i if (i < len(arrs_transitions)) else len(arrs_transitions) - 1
-            if i_tr != i:
-                print(f"No transition matrix found for time period {self.time_periods[i]}; using the matrix from period {len(arrs_efs) - 1}.")
+            (
+                self._log(
+                    f"No transition matrix found for time period {self.time_periods[i]}; using the matrix from period {len(arrs_efs) - 1}.",
+                    type_log = "info"
+                )
+                if i_tr != i
+                else None
+            )
+
             # calculate land use, conversions, and emissions
             vec_emissions_conv = sum((arrs_transitions[i_tr] * arrs_efs[i_ef]).transpose()*x.transpose())
             arr_land_conv = (arrs_transitions[i_tr].transpose()*x.transpose()).transpose()
+            
             # update matrices
             rng_put = np.arange(i*attr_lndu.n_key_values, (i + 1)*attr_lndu.n_key_values)
             np.put(arr_land_use, rng_put, x)
             np.put(arr_emissions_conv, rng_put, vec_emissions_conv)
             np.put(arrs_land_conv, np.arange(i*attr_lndu.n_key_values**2, (i + 1)*attr_lndu.n_key_values**2), arr_land_conv)
+            
             # update land use vector
             x = np.matmul(x, arrs_transitions[i_tr])
 
@@ -2084,12 +2299,12 @@ class AFOLU:
 
         t1 = time.time()
         t_elapse = round(t1 - t0, 2)
-        print(f"Land use projection complete in {t_elapse} seconds.")
+        self._log(f"Land use projection complete in {t_elapse} seconds.", type_log = "info")
 
         return arr_emissions_conv, arr_land_use, arrs_land_conv
 
 
-    ##  harvested wood products in forestry -- requires lots of integration
+
     def project_harvested_wood_products(self,
         df_afolu_trajectories: pd.DataFrame,
         vec_hh: np.ndarray,
@@ -2100,14 +2315,28 @@ class AFOLU:
         n_projection_time_periods: int,
         projection_time_periods: np.ndarray,
         dict_check_integrated_variables: dict
-    ):
-
+    ) -> List[pd.DataFrame]:
         """
-            NEED DOCSTRING
+        Project sequestration from harvested wood products. Returns
 
-            Function Arguments
-            ------------------
+        Function Arguments
+        ------------------
+        - df_afolu_trajectories: DataFrame containing 
+        - vec_hh: np vector giving the number of households in same order as 
+            df_afolu_trajectories
+        - vec_gdp: np vector giving the GDP in same order as 
+            df_afolu_trajectories
+        - vec_rates_gdp: np vector giving rates of GDP growth in same order as 
+            df_afolu_trajectories [length = n_rows(df_afolu_trajectories) - 1]
+        - vec_rates_gdp_per_capita: np vector giving rates of GDP/Capita growth 
+            in same order as df_afolu_trajectories 
+            [length = n_rows(df_afolu_trajectories) - 1]
+        - dict_dims: 
+        - n_projection_time_periods:
+        - projection_time_periods:
+        - dict_check_integrated_variables:
         """
+
 
         # IPPU components
         if dict_check_integrated_variables[self.subsec_name_ippu]:
@@ -2417,10 +2646,12 @@ class AFOLU:
         ########################################
 
         # area of the country + the applicable scalar used to convert outputs
-        area = float(self.model_attributes.get_standard_variables(
-            df_afolu_trajectories,
-            self.model_socioeconomic.modvar_gnrl_area,
-            return_type = "array_base")[0]
+        area = float(
+            self.model_attributes.get_standard_variables(
+                df_afolu_trajectories,
+                self.model_socioeconomic.modvar_gnrl_area,
+                return_type = "array_base"
+            )[0]
         )
         scalar_lndu_input_area_to_output_area = self.model_attributes.get_scalar(self.model_socioeconomic.modvar_gnrl_area, "area")
         # get the initial distribution of land

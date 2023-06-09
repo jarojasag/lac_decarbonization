@@ -68,6 +68,15 @@ class NonElectricEnergy:
         self._initialize_models()
         self._initialize_other_properties()
         self._initialize_integrated_variables()
+    
+
+
+    def __call__(self,
+        *args,
+        **kwargs
+    ) -> pd.DataFrame:
+
+        return self.project(*args, **kwargs)
 
         
 

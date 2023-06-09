@@ -56,12 +56,16 @@ class Regions:
         """
 
         self.dict_iea_countries_lc_to_regions = {
+            "chinese_taipei": "taiwan",
             "czech_republic": "czechia",
+            "hong_kong_(china)": "hong_kong",
             "korea": "republic_of_korea",
             "people's_republic_of_china": "china",
+            "republic_of_north_macedonia": "north_macedonia",
             "republic_of_turkiye": "turkey",
+            "republic_of_türkiye": "turkey",
             "slovak_republic": "slovakia",
-            "united_states": "united_states_of_america"
+            "united_states": "united_states_of_america",
         }
 
         self.field_iea_balance = "Balance"
@@ -380,7 +384,8 @@ class Regions:
     def data_func_iea_get_isos_from_countries(self,
         df_in: Union[pd.DataFrame, List, np.ndarray, str],
         field_country: Union[str, None] = None,
-    ) -> np.ndarray:
+        return_modified_df: bool = False,
+    ) -> Union[np.ndarray, pd.DataFrame]:
         """
         Map IEA countries in field_country to ISO codes contained in 
             df_in[field_country]. If field_country is None, defaults to 
@@ -396,6 +401,8 @@ class Regions:
         -----------------
         - field_country: field in df_in used to identify IEA countries if df_in
             is a DataFrame
+        - return_modified_df: if True and df_in is a DataFrame, will return a 
+            DataFrame modified to include the iso field
         """
        
         field_country = self.field_iea_country if (field_country is None) else field_country
@@ -411,7 +418,12 @@ class Regions:
         vec_iso = [self.dict_iea_countries_lc_to_regions.get(x, x) for x in vec_iso]
         vec_iso = [self.dict_region_to_iso.get(x, x) for x in vec_iso]
         
-        return np.array(vec_iso).astype(str)
+        out = np.array(vec_iso).astype(str)
+        if isinstance(df_in, pd.DataFrame) & return_modified_df:
+            df_in[self.field_iso] = vec_iso
+            out = df_in
+
+        return out
 
 
 

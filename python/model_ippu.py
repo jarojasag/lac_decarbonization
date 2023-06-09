@@ -58,6 +58,15 @@ class IPPU:
         self._initialize_integrated_variables()
 
 
+    
+    def __call__(self,
+        *args,
+        **kwargs
+    ) -> pd.DataFrame:
+
+        return self.project(*args, **kwargs)
+
+
 
 
 
