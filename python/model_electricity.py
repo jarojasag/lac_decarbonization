@@ -9257,10 +9257,19 @@ class ElectricEnergy:
         ##  2. SET UP AND CALL NEMOMOD
 
         # get calculation time periods
-        attr_time_period = self.model_attributes.dict_attributes[f"dim_{self.model_attributes.dim_time_period}"]
-        vector_calc_time_periods = self.model_attributes.configuration.get("nemomod_time_periods") if (vector_calc_time_periods is None) else [x for x in attr_time_period.key_values if x in vector_calc_time_periods]
+        attr_time_period = self.model_attributes.dict_attributes.get(f"dim_{self.model_attributes.dim_time_period}")
+        vector_calc_time_periods = (
+            self.model_attributes.configuration.get("nemomod_time_periods") 
+            if (vector_calc_time_periods is None) 
+            else [x for x in attr_time_period.key_values if x in vector_calc_time_periods]
+        )
         vector_calc_time_periods = self.transform_field_year_nemomod(vector_calc_time_periods)
-        vector_calc_time_periods = np.array(vector_calc_time_periods).astype(np.int64)
+        
+        self.julia_main.vector_calc_time_periods = vector_calc_time_periods
+        self.julia_main.eval("vector_calc_time_periods = Int64.(collect(vector_calc_time_periods))")
+        print("TYPE HERE!")
+        print(self.julia_main.typeof(self.julia_main.vector_calc_time_periods))
+
         # get the optimizer (must reset each time) and vars to save
         optimizer = self.get_nemomod_optimizer(solver)
         vars_to_save = ", ".join(self.required_nemomod_output_tables)
@@ -9271,7 +9280,7 @@ class ElectricEnergy:
                 fp_database,
                 jumpmodel = optimizer,
                 numprocs = 1,
-                calcyears = vector_calc_time_periods,
+                calcyears = self.julia_main.vector_calc_time_periods,#vector_calc_time_periods
                 reportzeros = False,
                 varstosave = vars_to_save,
                 quiet = True
